@@ -9,7 +9,7 @@ if (!config.supabaseUrl || !config.supabaseKey) {
   );
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey, {
+const supabase = createClient(config.supabaseUrl, config.supabaseKey, {
   auth: {
     persistSession: false,
   },
