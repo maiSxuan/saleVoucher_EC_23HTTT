@@ -6,6 +6,7 @@
 > `Database → Model → Repository → Service → Controller/Route → Frontend → Test`.
 
 ---
+LƯU Ý: tất cả phải được lấy từ data thật, từ supabase
 
 ## 1. Mục tiêu 14 ngày
 

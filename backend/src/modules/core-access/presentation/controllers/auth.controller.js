@@ -12,7 +12,10 @@ class AuthController {
       const result = await this.authService.login(req.body);
       res.json({ success: true, data: result });
     } catch (error) {
-      next(error);
+      if (error.status) {
+        return res.status(error.status).json({ success: false, message: error.message });
+      }
+      res.status(400).json({ success: false, message: error.message });
     }
   }
 }

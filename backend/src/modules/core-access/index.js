@@ -9,6 +9,11 @@ const voucherVerificationService = require("./business/services/voucher-verifica
 const voucherRedemptionService = require("./business/services/voucher-redemption.service");
 const auditLogService = require("./business/services/audit-log.service");
 const adminDashboardService = require("./business/services/admin-dashboard.service");
+const authRoutes = require("./presentation/routes/auth.routes");
+
+function registerModule(app) {
+  app.use("/auth", authRoutes);
+}
 
 module.exports = {
   authService,
@@ -18,4 +23,5 @@ module.exports = {
   voucherRedemptionService,
   auditLogService,
   adminDashboardService,
+  registerModule,
 };

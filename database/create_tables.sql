@@ -73,7 +73,8 @@ create table NGUOIDUNG (
     ),
     trang_thai text not null default 'Dang hoat dong' check (trang_thai in ('Dang hoat dong', 'Tam khoa')),
     created_at timestamptz not null default now(),
-    ma_chi_nhanh uuid
+    ma_chi_nhanh uuid,
+    ma_hs uuid
 );
 -- =====================================================================
 -- 3. CHI_NHANH
@@ -84,6 +85,7 @@ create table CHINHANH (
     ma_chi_nhanh uuid primary key default gen_random_uuid(),
     ten_chi_nhanh text not null,
     dia_chi text,
+    khu_vuc text,
     trang_thai text not null default 'Cho duyet' check (
         trang_thai in (
             'Cho duyet',
@@ -145,6 +147,20 @@ create index idx_ho_so_dn_nvql_voucher on HOSODN(id_nvql_voucher);
 -- [FIX] FK duoc them bang ALTER TABLE vi CHINHANH tao truoc HOSODN
 alter table CHINHANH
     add constraint fk_chi_nhanh_ho_so_dn foreign key (ma_hs) references HOSODN(ma_hs);
+alter table NGUOIDUNG
+    add constraint fk_nguoi_dung_ho_so_dn
+        foreign key (ma_hs) references HOSODN(ma_hs),
+    -- [FIX] CHECK: chi NVql voucher moi co ho so doanh nghiep
+    add constraint chk_nguoi_dung_ho_so_dn_nvbh check (
+        (
+            vai_tro = 'Nhan vien quan ly voucher'
+            AND ma_hs IS NOT NULL
+        )
+        OR (
+            vai_tro != 'Nhan vien quan ly voucher'
+            AND ma_hs IS NULL
+        )
+    );
 -- =====================================================================
 -- TRIGGER: Kiem tra vai_tro cua id_nguoi_dai_dien va id_nvql_voucher
 -- trong HOSODN (thay the cho subquery trong CHECK constraint)
