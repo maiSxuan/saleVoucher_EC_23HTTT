@@ -1,14 +1,13 @@
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
-const routes = require("./routes");
+/**
+ * Purpose: File chạy thật của backend.
+ * File này khởi động Express bằng app đã được cấu hình ở app.js.
+ */
+const app = require("./app");
+const { loadEnvironment } = require("./config/environment");
 
-const app = express();
+loadEnvironment();
+
 const PORT = process.env.PORT || 3001;
-
-app.use(cors());
-app.use(express.json());
-app.use("/", routes);
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Backend running on http://0.0.0.0:${PORT}`);
