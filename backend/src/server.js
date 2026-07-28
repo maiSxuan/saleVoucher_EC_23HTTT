@@ -5,10 +5,8 @@
 const app = require("./app");
 const { loadEnvironment } = require("./config/environment");
 
-loadEnvironment();
+const config = loadEnvironment();
 
-const PORT = process.env.PORT || 3001;
-
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Backend running on http://0.0.0.0:${PORT}`);
+app.listen(config.port, () => {
+  console.log(`Backend running on port ${config.port}...`);
 });
