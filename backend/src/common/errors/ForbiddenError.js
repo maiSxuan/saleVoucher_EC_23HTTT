@@ -1,12 +1,12 @@
 /**
- * Purpose: Lỗi dùng khi người dùng không có quyền truy cập tính năng.
+ * Purpose: Lỗi 403 Forbidden — người dùng đã đăng nhập nhưng không đủ quyền.
  */
-const AppError = require("./AppError");
+const AppError = require('./AppError');
 
 class ForbiddenError extends AppError {
-  constructor(message = "Forbidden") {
-    super(message, 403);
-    this.name = "ForbiddenError";
+  constructor(message = 'Bạn không có quyền thực hiện thao tác này', details = null) {
+    super(message, 403, 'ACCESS_FORBIDDEN', details);
+    this.name = 'ForbiddenError';
   }
 }
 

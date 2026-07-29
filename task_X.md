@@ -90,3 +90,12 @@ App.tsx để chèn logic chặn màn hình theo auth và role.
 AdminAuth.tsx
 PartnerAuth.tsx
 CustomerAuth.tsx
+
+BƯỚC 2: HOÀN THÀNH TASK:
+- Audit log service.
+- Chuẩn response API.
+- Exception handler.
+- Cấu hình transaction.
+- Các enum và trạng thái dùng chung.
+
+sau đó bạn hãy ghi lại nội dung đã hoàn thành task (bước 2) vào file codeX_done.md để người ngu code nhất vẫn có thể hiểu được

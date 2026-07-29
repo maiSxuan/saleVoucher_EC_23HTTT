@@ -1,4 +1,4 @@
-const supabase = require('../../../config/supabase');
+const supabase = require('../../../../config/supabase');
 
 /**
  * Purpose: Repository cho thao tác trên bảng user.
