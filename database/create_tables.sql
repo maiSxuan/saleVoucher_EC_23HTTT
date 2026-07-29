@@ -83,6 +83,7 @@ create table NGUOIDUNG (
 create table CHINHANH (
     ma_chi_nhanh uuid primary key default gen_random_uuid(),
     ten_chi_nhanh text not null,
+    khu_vuc text,
     dia_chi text,
     trang_thai text not null default 'Cho duyet' check (
         trang_thai in (

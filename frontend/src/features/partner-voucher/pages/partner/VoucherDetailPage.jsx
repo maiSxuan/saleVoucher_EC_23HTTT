@@ -1,0 +1,188 @@
+import React, { useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import PartnerLayout from "../../../../layouts/PartnerLayout";
+import Card from "../../../../shared/components/Card";
+import Button from "../../../../shared/components/Button";
+import Badge from "../../../../shared/components/Badge";
+import Toast from "../../../../shared/components/Toast";
+import { mockStore } from "../../../../shared/store/mockDataStore";
+
+export function VoucherDetailPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const activePartner = mockStore.getActivePartner();
+  const voucher = mockStore.getVoucherById(id);
+
+  const [toastMessage, setToastMessage] = useState("");
+
+  if (!voucher) {
+    return (
+      <PartnerLayout>
+        <div className="p-12 text-center text-slate-500">Không tìm thấy thông tin Voucher.</div>
+      </PartnerLayout>
+    );
+  }
+
+  const activeBranches = activePartner?.branches?.filter((b) => voucher.ma_chi_nhanh?.includes(b.ma_chi_nhanh)) || [];
+
+  const handleSubmitForReview = () => {
+    mockStore.submitVoucherForReview(voucher.ma_voucher);
+    setToastMessage("Gửi yêu cầu xét duyệt Voucher thành công!");
+    window.location.reload();
+  };
+
+  const isRejected = voucher.trang_thai === "Tu choi" || voucher.trang_thai_kiem_duyet === "Tu choi";
+  const isDraft = voucher.trang_thai === "Nhap";
+
+  return (
+    <PartnerLayout>
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* Top Breadcrumb & Action Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Link to="/partner/vouchers" className="hover:underline">
+              Vouchers
+            </Link>
+            <span>/</span>
+            <span className="font-semibold text-slate-900">{voucher.ten_voucher}</span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Badge status={voucher.trang_thai} />
+            <Link to={`/partner/vouchers/${voucher.ma_voucher}/edit`}>
+              <Button variant="secondary" size="sm">
+                ✏️ Chỉnh sửa Voucher
+              </Button>
+            </Link>
+            {(isDraft || isRejected) && (
+              <Button variant="primary" size="sm" onClick={handleSubmitForReview}>
+                🚀 Gửi Admin xét duyệt
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Rejection Alert Card if Rejected */}
+        {isRejected && (
+          <div className="bg-rose-50 border border-rose-200 rounded-xl p-5 shadow-xs">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">⚠️</span>
+              <div className="space-y-1">
+                <h4 className="font-bold text-rose-900 text-sm">Voucher này bị Quản trị viên từ chối phê duyệt</h4>
+                <p className="text-xs text-rose-700 font-medium">
+                  Lý do từ chối: <span className="italic font-normal">{voucher.ly_do_tu_choi || "Chưa đáp ứng điều kiện niêm yết giá hoặc chi nhánh."}</span>
+                </p>
+                <div className="pt-2">
+                  <Link to={`/partner/vouchers/${voucher.ma_voucher}/edit`}>
+                    <Button variant="danger" size="sm">
+                      Chỉnh sửa thông tin & Gửi lại
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Hero Image & Information Card */}
+        <Card padding={false}>
+          <div className="relative h-64 w-full bg-slate-900 overflow-hidden">
+            <img
+              src={voucher.hinh_anh_url}
+              alt={voucher.ten_voucher}
+              className="w-full h-full object-cover opacity-90"
+            />
+            <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-slate-950/80 to-transparent text-white">
+              <span className="px-2.5 py-1 bg-blue-600 text-xs font-bold rounded-full mb-2 inline-block">
+                {voucher.ten_danh_muc}
+              </span>
+              <h1 className="text-2xl font-bold">{voucher.ten_voucher}</h1>
+              <p className="text-xs text-slate-300 mt-1">Mã hệ thống: {voucher.ma_voucher}</p>
+            </div>
+          </div>
+
+          <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-1">
+              <span className="text-xs text-slate-400 font-medium">Giá bán niêm yết:</span>
+              <div className="text-2xl font-bold text-emerald-600">{voucher.gia_ban?.toLocaleString()}đ</div>
+              <div className="text-xs text-slate-400 line-through">Giá gốc: {voucher.gia_goc?.toLocaleString()}đ</div>
+            </div>
+
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-1">
+              <span className="text-xs text-slate-400 font-medium">Tình hình tồn kho:</span>
+              <div className="text-2xl font-bold text-slate-900">
+                {voucher.so_luong_da_ban} / {voucher.so_luong_phat_hanh}
+              </div>
+              <div className="text-xs text-slate-500">Voucher đã được phát hành</div>
+            </div>
+
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-1">
+              <span className="text-xs text-slate-400 font-medium">Thời gian mở bán:</span>
+              <div className="text-xs font-bold text-slate-900 mt-1">
+                {new Date(voucher.tg_bat_dau_ban).toLocaleDateString("vi-VN")} -{" "}
+                {new Date(voucher.tg_ket_thuc_ban).toLocaleDateString("vi-VN")}
+              </div>
+              <div className="text-xs text-slate-500">Áp dụng trong khung giờ mở cửa</div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Approval Timeline Component */}
+        <Card title="Tiến Trình Kiểm Duyệt & Công Bố">
+          <div className="space-y-4">
+            <div className="relative border-l-2 border-slate-200 ml-4 space-y-6 pl-6">
+              {(voucher.lich_su_duyet || []).map((step, idx) => (
+                <div key={idx} className="relative">
+                  <span className="absolute -left-[31px] top-0.5 w-4 h-4 rounded-full bg-blue-600 ring-4 ring-white" />
+                  <div className="text-sm font-bold text-slate-900">{step.hanh_dong}</div>
+                  <div className="text-xs text-slate-500">
+                    {step.nguoi_thuc_hien} • {step.ngay}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+
+        {/* Details & Applicable Branches */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card title="Điều Kiện & Mô Tả">
+            <div className="space-y-3 text-xs text-slate-700">
+              <div>
+                <strong className="block text-slate-900 mb-1">Mô tả:</strong>
+                <p>{voucher.mo_ta}</p>
+              </div>
+              <div>
+                <strong className="block text-slate-900 mb-1">Điều kiện sử dụng:</strong>
+                <p>{voucher.dieu_kien_ap_dung}</p>
+              </div>
+              <div>
+                <strong className="block text-slate-900 mb-1">Chính sách hoàn hủy:</strong>
+                <p>{voucher.chinh_sach_hoan_huy}</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card title="Chi Nhánh Áp Dụng">
+            {activeBranches.length === 0 ? (
+              <p className="text-xs text-slate-400">Không có thông tin chi nhánh áp dụng.</p>
+            ) : (
+              <div className="space-y-2">
+                {activeBranches.map((b) => (
+                  <div key={b.ma_chi_nhanh} className="p-3 bg-slate-50 border border-slate-100 rounded-lg text-xs">
+                    <div className="font-bold text-slate-900">{b.ten_chi_nhanh}</div>
+                    <div className="text-slate-500">📍 {b.dia_chi}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+
+        <Toast message={toastMessage} onClose={() => setToastMessage("")} />
+      </div>
+    </PartnerLayout>
+  );
+}
+
+export default VoucherDetailPage;

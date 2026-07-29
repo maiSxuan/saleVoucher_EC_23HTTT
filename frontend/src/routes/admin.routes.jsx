@@ -1,2 +1,35 @@
-/**\n * Purpose: Định nghĩa route cho màn hình quản trị viên.\n * Dùng cho các trang chỉ admin có thể truy cập.\n */
-//import AdminLayout from \"../../layouts/AdminLayout\";\nimport AdminScreen from \"../../pages/admin\";\n\nexport const adminRoutes = [\n  {\n    path: \"/admin\",\n    element: <AdminLayout><AdminScreen /></AdminLayout>,\n  },\n];\n
+import React from "react";
+import PartnerManagementPage from "../features/partner-voucher/pages/admin/PartnerManagementPage";
+import PartnerDetailPage from "../features/partner-voucher/pages/admin/PartnerDetailPage";
+import VoucherApprovalListPage from "../features/partner-voucher/pages/admin/VoucherApprovalListPage";
+import VoucherApprovalDetailPage from "../features/partner-voucher/pages/admin/VoucherApprovalDetailPage";
+import AuditLogPage from "../features/partner-voucher/pages/admin/AuditLogPage";
+
+export const adminRoutes = [
+  {
+    path: "/admin/partners",
+    element: <PartnerManagementPage />,
+  },
+  {
+    path: "/admin/partners/:id",
+    element: <PartnerDetailPage />,
+  },
+  {
+    path: "/admin/vouchers",
+    element: <VoucherApprovalListPage />,
+  },
+  {
+    path: "/admin/vouchers/:id",
+    element: <VoucherApprovalDetailPage />,
+  },
+  {
+    path: "/admin/audit-logs",
+    element: <AuditLogPage />,
+  },
+  {
+    path: "/admin",
+    element: <PartnerManagementPage />,
+  },
+];
+
+export default adminRoutes;

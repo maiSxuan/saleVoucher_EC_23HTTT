@@ -339,6 +339,7 @@ values
 (
     '30000000-0000-0000-0000-000000000001',
     'Am Thuc Sai Gon - Nguyen Hue',
+    'Quan 1',
     '12 Nguyen Hue, TP. Ho Chi Minh',
     'Dang hoat dong',
     '20000000-0000-0000-0000-000000000001'
@@ -346,6 +347,7 @@ values
 (
     '30000000-0000-0000-0000-000000000002',
     'Am Thuc Sai Gon - Vo Van Tan',
+    'Quan 3',
     '120 Vo Van Tan, TP. Ho Chi Minh',
     'Dang hoat dong',
     '20000000-0000-0000-0000-000000000001'
@@ -353,6 +355,7 @@ values
 (
     '30000000-0000-0000-0000-000000000003',
     'Am Thuc Sai Gon - Thao Dien',
+    'Quan 2',
     '42 Quoc Huong, TP. Ho Chi Minh',
     'Tam ngung hoat dong',
     '20000000-0000-0000-0000-000000000001'
@@ -360,6 +363,7 @@ values
 (
     '30000000-0000-0000-0000-000000000004',
     'Spa An Nhien - Thanh Thai',
+    'Quan 1',
     '25 Thanh Thai, TP. Ho Chi Minh',
     'Cho duyet',
     '20000000-0000-0000-0000-000000000002'
@@ -367,6 +371,7 @@ values
 (
     '30000000-0000-0000-0000-000000000005',
     'Giao Duc Tuong Lai - Vo Van Tan',
+    'Quan 3',
     '80 Vo Van Tan, TP. Ho Chi Minh',
     'Tu choi',
     '20000000-0000-0000-0000-000000000003'
@@ -374,6 +379,7 @@ values
 (
     '30000000-0000-0000-0000-000000000006',
     'Du Lich Thanh Pho - Ben Thanh',
+    'Quan 1',
     '10 Pham Ngu Lao, TP. Ho Chi Minh',
     'Dang hoat dong',
     '20000000-0000-0000-0000-000000000004'
