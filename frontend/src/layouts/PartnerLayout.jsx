@@ -18,12 +18,11 @@ export function PartnerLayout({ children }) {
   };
 
   const navItems = [
-    { label: "Báo cáo & Thống kê", path: "/partner/reports", icon: "📊" },
-    { label: "Hồ sơ đối tác", path: "/partner/profile", icon: "🏢" },
-    { label: "Quản lý chi nhánh", path: "/partner/branches", icon: "📍" },
-    { label: "Danh sách Voucher", path: "/partner/vouchers", icon: "🎟️" },
-    { label: "Tạo Voucher mới", path: "/partner/vouchers/new", icon: "➕" },
-    { label: "Đăng ký doanh nghiệp mới", path: "/partner/register", icon: "📝" },
+    { label: "Báo cáo", path: "/partner/reports", icon: "📊" },
+    { label: "Voucher", path: "/partner/vouchers", icon: "🎟️" },
+    { label: "Chi nhánh", path: "/partner/branches", icon: "📍" },
+    { label: "Hồ sơ doanh nghiệp", path: "/partner/profile", icon: "🏢" },
+    { label: "Nhân viên", path: "/partner/staffs", icon: "👥" },
   ];
 
   return (
@@ -51,7 +50,7 @@ export function PartnerLayout({ children }) {
 
         {/* Top actions & Active partner switcher */}
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 text-xs">
+          {/* <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 text-xs">
             <span className="text-slate-500 font-medium">Đối tác hiện tại:</span>
             <select
               value={activePartner ? activePartner.ma_hs : ""}
@@ -65,15 +64,15 @@ export function PartnerLayout({ children }) {
               ))}
             </select>
             {activePartner && <Badge status={activePartner.trang_thai} size="sm" />}
-          </div>
+          </div> */}
 
           <div className="h-6 w-px bg-slate-200" />
 
           <button
-            onClick={() => navigate("/admin/partners")}
-            className="px-3 py-1.5 bg-slate-900 text-white text-xs font-semibold rounded-lg hover:bg-slate-800 transition-colors shadow-xs"
+            onClick={() => navigate("/logout")}
+            className="px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-500 transition-colors shadow-xs"
           >
-            🔄 Chuyển sang Admin Portal
+            Đăng xuất
           </button>
         </div>
       </header>
@@ -107,13 +106,13 @@ export function PartnerLayout({ children }) {
           </div>
 
           {/* Active Partner Mini Card in Sidebar */}
-          {!collapsed && activePartner && (
+          {/* {!collapsed && activePartner && (
             <div className="p-4 border-t border-slate-100 bg-slate-50/50">
               <div className="text-xs text-slate-500 font-medium">Tài khoản doanh nghiệp:</div>
               <div className="text-xs font-bold text-slate-900 truncate mt-0.5">{activePartner.ten_dn}</div>
               <div className="text-[11px] text-slate-400 mt-0.5">MST: {activePartner.ma_so_thue}</div>
             </div>
-          )}
+          )} */}
         </aside>
 
         {/* Main Content Area */}

@@ -6,6 +6,7 @@ import VoucherListPage from "../features/partner-voucher/pages/partner/VoucherLi
 import VoucherFormPage from "../features/partner-voucher/pages/partner/VoucherFormPage";
 import VoucherDetailPage from "../features/partner-voucher/pages/partner/VoucherDetailPage";
 import PartnerReportsPage from "../features/partner-voucher/pages/partner/PartnerReportsPage";
+import StaffManagementPage from "../features/partner-voucher/pages/partner/StaffManagementPage";
 
 export const partnerRoutes = [
   {
@@ -19,6 +20,10 @@ export const partnerRoutes = [
   {
     path: "/partner/branches",
     element: <BranchManagementPage />,
+  },
+  {
+    path: "partner/staffs",
+    element: <StaffManagementPage />,
   },
   {
     path: "/partner/vouchers",
@@ -44,6 +49,7 @@ export const partnerRoutes = [
     path: "/partner",
     element: <PartnerReportsPage />,
   },
+
 ];
 
 export default partnerRoutes;

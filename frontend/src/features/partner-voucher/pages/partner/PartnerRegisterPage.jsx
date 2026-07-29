@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import PartnerLayout from "../../../../layouts/PartnerLayout";
 import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
 import Toast from "../../../../shared/components/Toast";
@@ -91,8 +90,9 @@ export function PartnerRegisterPage() {
   };
 
   return (
-    <PartnerLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
+
+  <div className="min-h-screen bg-slate-100 py-10 px-4">
+    <div className="max-w-4xl mx-auto space-y-6">
         {/* Page Header */}
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Đăng ký Hồ sơ Đối tác</h2>
@@ -442,7 +442,7 @@ export function PartnerRegisterPage() {
 
         <Toast message={toastMessage} onClose={() => setToastMessage("")} />
       </div>
-    </PartnerLayout>
+      </div>
   );
 }
 

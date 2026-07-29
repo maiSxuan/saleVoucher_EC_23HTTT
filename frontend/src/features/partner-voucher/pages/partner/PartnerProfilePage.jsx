@@ -65,7 +65,7 @@ export function PartnerProfilePage() {
             <Badge status={activePartner.trang_thai} />
             {!isEditing && (
               <Button variant="secondary" onClick={() => setIsEditing(true)}>
-                ✏️ Chỉnh sửa hồ sơ
+                Chỉnh sửa hồ sơ
               </Button>
             )}
           </div>
@@ -195,7 +195,7 @@ export function PartnerProfilePage() {
                   <div className="text-sm font-bold text-slate-900 mt-0.5">{activePartner.ma_so_thue}</div>
                 </div>
                 <div className="md:col-span-2">
-                  <span className="text-xs text-slate-400 font-medium">Địa chỉ ĐKKD:</span>
+                  <span className="text-xs text-slate-400 font-medium">Địa chỉ đăng ký kinh doanh:</span>
                   <div className="text-sm font-medium text-slate-800 mt-0.5">{activePartner.dia_chi}</div>
                 </div>
               </div>

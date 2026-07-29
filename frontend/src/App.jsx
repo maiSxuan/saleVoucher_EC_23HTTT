@@ -1,4 +1,4 @@
-import RoleDashboard from "./components/RoleDashboard";
+import RoleDashboard from "./shared/components/RoleDashboard";
 
 function App() {
   return (

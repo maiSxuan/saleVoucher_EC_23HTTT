@@ -68,7 +68,7 @@ export function BranchManagementPage() {
         {/* Page Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">Quản Lý Chi Nhánh & Điểm Bán</h2>
+            <h2 className="text-2xl font-bold text-slate-900">Quản Lý Chi Nhánh</h2>
             <p className="text-sm text-slate-500 mt-1">
               Khai báo chi nhánh mới, chỉnh sửa thông tin hoặc yêu cầu đóng điểm bán hàng
             </p>
@@ -135,8 +135,8 @@ export function BranchManagementPage() {
                       </div>
                       <p className="text-xs text-slate-600">📍 {branch.dia_chi} ({branch.khu_vuc})</p>
                       <div className="flex items-center gap-4 text-xs text-slate-400 pt-1">
-                        <span>📞 {branch.sdt}</span>
-                        <span>⏰ Giờ mở cửa: {branch.gio_mo_cua}</span>
+                        {/* <span>📞 {branch.sdt}</span>
+                        <span>⏰ Giờ mở cửa: {branch.gio_mo_cua}</span> */}
                       </div>
                     </div>
 
@@ -146,7 +146,7 @@ export function BranchManagementPage() {
                         size="sm"
                         onClick={() => alert(`Yêu cầu chỉnh sửa chi nhánh ${branch.ten_chi_nhanh} đã được khởi tạo.`)}
                       >
-                        ✏️ Sửa chi nhánh
+                        Sửa
                       </Button>
                       <Button
                         variant="ghost"
@@ -154,7 +154,7 @@ export function BranchManagementPage() {
                         className="text-rose-600 hover:bg-rose-50"
                         onClick={() => alert(`Đã gửi yêu cầu đề nghị ngưng hoạt động chi nhánh ${branch.ten_chi_nhanh}`)}
                       >
-                        🗑️ Yêu cầu đóng cửa
+                        Xoá
                       </Button>
                     </div>
                   </div>
@@ -185,7 +185,6 @@ export function BranchManagementPage() {
 
                     <div className="text-xs text-slate-600 grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-lg border border-slate-100">
                       <div><strong>Địa chỉ:</strong> {req.dia_chi} ({req.khu_vuc})</div>
-                      <div><strong>SĐT:</strong> {req.sdt}</div>
                       <div><strong>Lý do gửi:</strong> {req.ly_do || "Khai báo điểm bán hàng mới"}</div>
                       <div><strong>Thời gian gửi:</strong> {new Date(req.ngay_tao).toLocaleString("vi-VN")}</div>
                     </div>
@@ -215,7 +214,7 @@ export function BranchManagementPage() {
           <div className="space-y-4 text-left">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Tên chi nhánh / Điểm bán <span className="text-rose-500">*</span>
+                Tên chi nhánh <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
@@ -240,7 +239,7 @@ export function BranchManagementPage() {
                 </select>
               </div>
 
-              <div>
+              {/* <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">SĐT liên hệ</label>
                 <input
                   type="text"
@@ -249,7 +248,7 @@ export function BranchManagementPage() {
                   onChange={(e) => setNewBranchForm({ ...newBranchForm, sdt: e.target.value })}
                   className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
-              </div>
+              </div> */}
             </div>
 
             <div>
@@ -265,7 +264,7 @@ export function BranchManagementPage() {
               />
             </div>
 
-            <div>
+            {/* <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">Giờ mở cửa</label>
               <input
                 type="text"
@@ -274,7 +273,7 @@ export function BranchManagementPage() {
                 onChange={(e) => setNewBranchForm({ ...newBranchForm, gio_mo_cua: e.target.value })}
                 className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
-            </div>
+            </div> */}
           </div>
         </Modal>
 

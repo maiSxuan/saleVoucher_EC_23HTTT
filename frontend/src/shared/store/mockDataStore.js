@@ -114,6 +114,124 @@ const INITIAL_BRANCH_REQUESTS = [
   },
 ];
 
+const INITIAL_STAFFS = [
+  {
+    ma_nv: "nv-001",
+    ma_hs: "hs-001",
+    ho_ten: "Nguyễn Thị Mai",
+    email: "mai.nguyen@sushiworld.vn",
+    sdt: "0901111111",
+    vai_tro: "Nhân viên chi nhánh",
+    chi_nhanh_phu_trach: [
+      "Chi nhánh Lý Tự Trọng"
+    ],
+    trang_thai: "Dang hoat dong",
+    ngay_tao: "2026-01-15",
+    avatar: ""
+  },
+
+  {
+    ma_nv: "nv-002",
+    ma_hs: "hs-001",
+    ho_ten: "Lê Văn Hùng",
+    email: "hung.le@sushiworld.vn",
+    sdt: "0902222222",
+    vai_tro: "Nhân viên chi nhánh",
+    chi_nhanh_phu_trach: [
+      "Chi nhánh Nguyễn Thị Minh Khai",
+      "Chi nhánh Quận 7"
+    ],
+    trang_thai: "Tam khoa",
+    ngay_tao: "2026-02-20",
+    avatar: ""
+  },
+
+  {
+    ma_nv: "nv-003",
+    ma_hs: "hs-001",
+    ho_ten: "Phạm Quốc Bảo",
+    email: "bao.pham@sushiworld.vn",
+    sdt: "0903333333",
+    vai_tro: "Quản lý vận hành",
+    chi_nhanh_phu_trach: [],
+    trang_thai: "Dang hoat dong",
+    ngay_tao: "2026-03-01",
+    avatar: ""
+  },
+
+  {
+    ma_nv: "nv-004",
+    ma_hs: "hs-001",
+    ho_ten: "Trần Thị Hoa",
+    email: "hoa.tran@sushiworld.vn",
+    sdt: "0904444444",
+    vai_tro: "Nhân viên chi nhánh",
+    chi_nhanh_phu_trach: [
+      "Chi nhánh Lý Tự Trọng",
+      "Chi nhánh Nguyễn Thị Minh Khai"
+    ],
+    trang_thai: "Tam ngung",
+    ngay_tao: "2025-12-10",
+    avatar: ""
+  },
+
+  {
+    ma_nv: "nv-005",
+    ma_hs: "hs-002",
+    ho_ten: "Đặng Minh Khôi",
+    email: "khoi.dang@lotusspa.vn",
+    sdt: "0905555555",
+    vai_tro: "Quản lý chi nhánh",
+    chi_nhanh_phu_trach: [
+      "Lotus Spa Hoàn Kiếm"
+    ],
+    trang_thai: "Dang hoat dong",
+    ngay_tao: "2026-04-11",
+    avatar: ""
+  },
+
+  {
+    ma_nv: "nv-006",
+    ma_hs: "hs-002",
+    ho_ten: "Ngô Thu Hà",
+    email: "ha.ngo@lotusspa.vn",
+    sdt: "0906666666",
+    vai_tro: "Nhân viên chi nhánh",
+    chi_nhanh_phu_trach: [
+      "Lotus Spa Hoàn Kiếm"
+    ],
+    trang_thai: "Dang hoat dong",
+    ngay_tao: "2026-05-05",
+    avatar: ""
+  },
+
+  {
+    ma_nv: "nv-007",
+    ma_hs: "hs-003",
+    ho_ten: "Phan Gia Huy",
+    email: "huy.phan@highlands.vn",
+    sdt: "0907777777",
+    vai_tro: "Quản lý vận hành",
+    chi_nhanh_phu_trach: [],
+    trang_thai: "Tam khoa",
+    ngay_tao: "2026-06-10",
+    avatar: ""
+  },
+
+  {
+    ma_nv: "nv-008",
+    ma_hs: "hs-003",
+    ho_ten: "Đỗ Thanh Tùng",
+    email: "tung.do@highlands.vn",
+    sdt: "0908888888",
+    vai_tro: "Nhân viên chi nhánh",
+    chi_nhanh_phu_trach: [],
+    trang_thai: "Dang hoat dong",
+    ngay_tao: "2026-06-25",
+    avatar: ""
+  }
+];
+
 const INITIAL_VOUCHERS = [
   {
     ma_voucher: "v-001",
@@ -232,6 +350,7 @@ class MockDataStore {
       const initialData = {
         partners: INITIAL_PARTNERS,
         branchRequests: INITIAL_BRANCH_REQUESTS,
+        staffs: INITIAL_STAFFS,
         vouchers: INITIAL_VOUCHERS,
         categories: INITIAL_CATEGORIES,
         auditLogs: INITIAL_AUDIT_LOGS,
@@ -278,6 +397,22 @@ class MockDataStore {
   getPartnerById(id) {
     return this.getPartners().find((p) => p.ma_hs === id);
   }
+
+  getStaffs() {
+    return this.getData().staffs || [];
+}
+
+getStaffsByPartner(partnerId) {
+    return this.getStaffs().filter(
+        staff => staff.ma_hs === partnerId
+    );
+}
+
+getStaffById(id) {
+    return this.getStaffs().find(
+        staff => staff.ma_nv === id
+    );
+}
 
   updatePartnerProfile(partnerId, updatedFields) {
     const data = this.getData();
