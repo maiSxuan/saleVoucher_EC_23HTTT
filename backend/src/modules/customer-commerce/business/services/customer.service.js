@@ -3,8 +3,9 @@
  */
 const bcrypt = require("bcryptjs");
 const customerRepository = require("../../data/repositories/customer.repository");
+const { sendOtpEmail } = require("../../../../common/utils/mailer");
 
-const pendingRegistrations = new Map(); // key: loginInfo -> { ho_ten, hashedPassword, otp, expiresAt, attempts }
+const pendingRegistrations = new Map(); // key: loginInfo -> { gmail, hashedPassword, otp, expiresAt, attempts }
 const OTP_TTL_MS = 5 * 60 * 1000;
 
 function genOtp() {
@@ -15,9 +16,9 @@ class CustomerService {
   async register({ loginInfo, password, confirmPassword }) {
     // A5: kiểm tra định dạng
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginInfo);
-    const isPhone = /^\d{10}$/.test(loginInfo);
-    if (!isEmail && !isPhone) {
-      const err = new Error("Email hoặc số điện thoại không đúng định dạng");
+
+    if (!isEmail) {
+      const err = new Error("Vui lòng nhập đúng định dạng địa chỉ email");
       err.status = 400;
       throw err;
     }
@@ -35,7 +36,7 @@ class CustomerService {
     // A6: kiểm tra trùng lặp
     const exists = await customerRepository.checkLoginInfoExists(loginInfo);
     if (exists) {
-      const err = new Error("Email hoặc số điện thoại đã được đăng ký");
+      const err = new Error("Email đã được đăng ký");
       err.status = 409;
       throw err;
     }
@@ -55,8 +56,25 @@ class CustomerService {
       attempts: 0,
     });
 
-    console.log(`[MOCK OTP] Gửi tới ${loginInfo}: ${otp}`); // mô phỏng gửi email/sms
-    return { loginInfo, message: "Đã gửi mã xác thực (xem console log)" };
+    try {
+      await sendOtpEmail(loginInfo, otp);
+    } catch (mailErr) {
+      pendingRegistrations.delete(loginInfo); // gửi thất bại thì hủy luôn, để user thử lại
+      console.error(
+        "[CustomerService] Gửi email OTP thất bại:",
+        mailErr.message,
+      );
+      const err = new Error(
+        "Không gửi được email xác thực. Vui lòng thử lại sau.",
+      );
+      err.status = 500;
+      throw err;
+    }
+
+    return {
+      loginInfo,
+      message: "Đã gửi mã xác thực, vui lòng kiểm tra email",
+    };
   }
 
   async verifyOtp({ loginInfo, otp }) {
@@ -91,9 +109,8 @@ class CustomerService {
 
     // OTP đúng -> mới thật sự tạo hồ sơ trong DB
     const { user, account } = await customerRepository.createCustomerAccount({
-      ho_ten: pending.ho_ten,
+      ho_ten: pending.defaultHoTen,
       email: loginInfo.includes("@") ? loginInfo : null,
-      sdt: !loginInfo.includes("@") ? loginInfo : null,
       loginInfo,
       hashedPassword: pending.hashedPassword,
     });
@@ -112,7 +129,10 @@ class CustomerService {
     pending.otp = genOtp();
     pending.expiresAt = Date.now() + OTP_TTL_MS;
     pending.attempts = 0;
-    console.log(`[MOCK OTP] Gửi lại tới ${loginInfo}: ${pending.otp}`);
+    pending.otp = genOtp();
+    pending.expiresAt = Date.now() + OTP_TTL_MS;
+    pending.attempts = 0;
+    await sendOtpEmail(loginInfo, pending.otp);
     return { message: "Đã gửi lại mã xác thực" };
   }
 }

@@ -2,7 +2,7 @@
  * Purpose: Repository cho thao tác dữ liệu khách hàng.
  */
 
-const supabase = require("../../../config/supabase");
+const supabase = require("../../../../config/supabase");
 
 class CustomerRepository {
   async checkLoginInfoExists(loginInfo) {
@@ -24,7 +24,7 @@ class CustomerRepository {
     //Insert NGUOIDUNG trước
     const { data: user, error: userErr } = await supabase
       .from("nguoidung")
-      .insert({ ho_ten, email, sdt, vai_tro: "Khach hang" })
+      .insert({ ho_ten, email, vai_tro: "Khach hang" })
       .select()
       .single();
     if (userErr) throw userErr;

@@ -12,13 +12,14 @@ import {
 const OTP_RESEND_SECONDS = 60;
 
 export default function RegisterPage() {
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
   const navigate = useNavigate();
 
   // step: 'form' -> nhập thông tin đăng ký | 'otp' -> nhập mã xác thực
   const [step, setStep] = useState("form");
 
   // form fields
-  const [loginInfo, setLoginInfo] = useState(""); // email hoặc số điện thoại
+  const [loginInfo, setLoginInfo] = useState(""); // email
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -45,10 +46,8 @@ export default function RegisterPage() {
   const validateForm = () => {
     const errs = {};
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginInfo);
-    const isPhone = /^\d{10}$/.test(loginInfo);
-    if (!loginInfo) errs.loginInfo = "Vui lòng nhập Email hoặc Số điện thoại.";
-    else if (!isEmail && !isPhone)
-      errs.loginInfo = "Email hoặc Số điện thoại không đúng định dạng.";
+    if (!loginInfo) errs.loginInfo = "Vui lòng nhập địa chỉ Email.";
+    else if (!isEmail) errs.loginInfo = "Vui lòng nhập đúng định dạng email.";
 
     if (!password) errs.password = "Vui lòng nhập mật khẩu.";
     else if (password.length < 6)
@@ -68,7 +67,7 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const res = await fetch(`/customer/register`, {
+      const res = await fetch(`${BASE_URL}/customer/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ loginInfo, password, confirmPassword }),
@@ -106,7 +105,7 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const res = await fetch(`/customer/register/verify-otp`, {
+      const res = await fetch(`${BASE_URL}/customer/register/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ loginInfo, otp }),
@@ -120,7 +119,7 @@ export default function RegisterPage() {
       }
 
       // Đăng ký thành công -> tự động đăng nhập bằng chính thông tin vừa tạo
-      const loginRes = await fetch(`/auth/login`, {
+      const loginRes = await fetch(`${BASE_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: loginInfo, password }),
@@ -153,7 +152,7 @@ export default function RegisterPage() {
     clearErrors();
     setLoading(true);
     try {
-      const res = await fetch(`/customer/register/resend-otp`, {
+      const res = await fetch(`${BASE_URL}/customer/register/resend-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ loginInfo }),
@@ -205,7 +204,7 @@ export default function RegisterPage() {
 
             <div className="mb-3">
               <label className="text-xs font-medium text-gray-600 block mb-1">
-                Email / Số điện thoại <span className="text-red-500">*</span>
+                Email<span className="text-red-500">*</span>
               </label>
               <input
                 value={loginInfo}
@@ -275,8 +274,6 @@ export default function RegisterPage() {
             <h2 className="font-bold text-gray-900 mb-1">Xác thực OTP</h2>
             <p className="text-sm text-gray-500 mb-4">
               Mã xác thực mô phỏng đã được gửi đến <strong>{loginInfo}</strong>.
-              <br />
-              (Kiểm tra console log của Backend để lấy mã.)
             </p>
 
             <div className="mb-4">

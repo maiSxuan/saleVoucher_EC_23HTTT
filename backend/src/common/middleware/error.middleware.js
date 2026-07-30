@@ -1,21 +1,35 @@
 /**
  * Purpose: Middleware xử lý lỗi tập trung cho toàn bộ API.
- * Khi service/dao ném lỗi, middleware này sẽ trả response chuẩn.
+ * - Nhận diện AppError và các subclass → trả errorCode chuẩn.
+ * - Log lỗi 500 ra console để debug.
+ * - Format response thống nhất: { success, message, errorCode, details }.
  */
-const { loadEnvironment } = require("../../config/environment");
+const AppError = require('../errors/AppError');
+const { loadEnvironment } = require('../../config/environment');
+
 const config = loadEnvironment();
 
 function errorMiddleware(err, req, res, next) {
-  const status = err.statusCode || 500;
-  const message = err.message || "Internal Server Error";
+  // Lỗi có cấu trúc (AppError và subclasses)
+  if (err instanceof AppError) {
+    return res.status(err.statusCode).json({
+      success: false,
+      message: err.message,
+      errorCode: err.errorCode,
+      ...(err.details ? { details: err.details } : {}),
+    });
+  }
 
-  res.status(status).json({
+  // Lỗi không mong đợi (500)
+  const isDev = config.nodeEnv === 'development';
+  console.error('[UNHANDLED ERROR]', err);
+
+  return res.status(500).json({
     success: false,
-    message,
-    error: config.nodeEnv === "development" ? err.stack : undefined,
+    message: 'Lỗi hệ thống. Vui lòng thử lại sau.',
+    errorCode: 'INTERNAL_ERROR',
+    ...(isDev ? { stack: err.stack } : {}),
   });
 }
 
-module.exports = {
-  errorMiddleware,
-};
+module.exports = { errorMiddleware };

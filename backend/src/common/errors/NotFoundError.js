@@ -1,12 +1,12 @@
 /**
- * Purpose: Lỗi dùng khi không tìm thấy dữ liệu hoặc tài nguyên.
+ * Purpose: Lỗi 404 Not Found — tài nguyên không tồn tại.
  */
-const AppError = require("./AppError");
+const AppError = require('./AppError');
 
 class NotFoundError extends AppError {
-  constructor(message = "Resource not found") {
-    super(message, 404);
-    this.name = "NotFoundError";
+  constructor(message = 'Không tìm thấy tài nguyên', details = null) {
+    super(message, 404, 'RESOURCE_NOT_FOUND', details);
+    this.name = 'NotFoundError';
   }
 }
 

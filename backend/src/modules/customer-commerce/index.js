@@ -11,7 +11,7 @@ const adminOrderService = require("./business/services/admin-order.service");
 const customerRoutes = require("./presentation/routes/customer.routes");
 
 function registerModule(app) {
-  app.use("/api/v1/customers", customerRoutes);
+  app.use("/customer", customerRoutes);
 }
 
 module.exports = {
