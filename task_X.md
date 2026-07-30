@@ -99,3 +99,16 @@ BƯỚC 2: HOÀN THÀNH TASK:
 - Các enum và trạng thái dùng chung.
 
 sau đó bạn hãy ghi lại nội dung đã hoàn thành task (bước 2) vào file codeX_done.md để người ngu code nhất vẫn có thể hiểu được
+
+BƯỚC 3: THỰC HIỆN TASK BR-ADM-01: quản lý người dùng
+các file (có truong src_UI_mau) mã nguồn thực tế liên quan đến chức năng quản lý người dùng của UC-ADM-01 như sau:
+- Users.tsx — file chính triển khai màn hình quản lý người dùng: danh sách, lọc, xem chi tiết, khóa/mở khóa tài khoản, cập nhật vai trò, lịch sử quản trị.
+- mockData.ts — định nghĩa model User, UserRole, UserStatus và dữ liệu mockUsers dùng cho chức năng này.
+- App.tsx — điều hướng từ admin sang trang Users.
+- AdminLayout.tsx — menu điều hướng Admin có mục “Người dùng”.
+- StatusBadge.tsx — component hiển thị trạng thái và vai trò người dùng.
+- ConfirmModal.tsx — modal xác nhận các hành động khóa/mở khóa/cập nhật vai trò.
+- SystemLogs.tsx — hiển thị nhật ký hệ thống liên quan đến module users.
+hiện tại nó đang là mockdata, tôi cần bạn thực hiện lấy data thật từ supabase.
+kết nối từ đăng nhập tài khoản admin sau đó từ authenticate --> authorize để xác nhận tài khoản là admin mới cho vào.
+Lưu ý: thực thiện code từng file một + ghi lại giải thích code từng dòng của từng file đó và ghi lại ý nghĩa tại sao phải làm như vậy, sau đó ghi lại vào codeX_done.md 

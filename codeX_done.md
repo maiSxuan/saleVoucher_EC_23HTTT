@@ -1,4 +1,4 @@
-# Báo cáo hoàn thành Task X (Core Access)
+# Báo cáo hoàn thành Task X (Core Access): BƯỚC 1
 
 Các hạng mục đã hoàn tất theo `plan_taskX.md` (bao gồm góp ý của bạn):
 
@@ -130,3 +130,245 @@ Giải thích LUỒNG CODE chức năng Đăng nhập
 - Nếu SAI: Gọi throw new UnauthorizedError('Sai mật khẩu'). Hệ thống ngừng ngay lập tức, chuyển qua Error Middleware báo lỗi 401.
 - Nếu ĐÚNG: Ký JWT Token, gọi AuditLogService để ghi nhận lịch sử vào DB. Cuối cùng Service trả token về cho Controller.
 7. AuthController dùng hàm successResponse bọc token lại thành cục JSON vuông vức và gửi trả về Client với mã 200 OK.
+
+----------------------------------------------------------------------
+# BƯỚC 3 Đã Hoàn Thành
+- FILE: user.model.js (trong feature/core-access/domain/models/)
+ * PURPOSE: Model đại diện cho entity người dùng trong module core-access.
+ *
+ * Tại sao cần file này?
+# BR-ADM-01: Quản lý người dùng — Đã Hoàn Thành (BƯỚC 3)
+
+Toàn bộ chức năng xem danh sách, xem chi tiết, khóa/mở khóa, cập nhật vai trò người dùng đã được kết nối với Supabase thật, ghi audit log, và hiển thị qua giao diện React.
+
+---
+
+## 1. Backend — Các file đã tạo/cập nhật
+
+### FILE: `backend/src/modules/core-access/data/models/user.model.js`
+**Purpose:** Model chuẩn hóa cấu trúc dữ liệu user khi trả về từ repository.
+
+**Tại sao cần?**
+- Service/controller chỉ làm việc với `UserModel` (camelCase), không cần biết tên cột DB (snake_case tiếng Việt).
+- Khi DB đổi tên cột, chỉ cần sửa model, không đụng vào service hay controller.
+
+**Mapping cột DB → field JS:**
+| DB Column (NGUOIDUNG) | UserModel field | Ý nghĩa |
+|---|---|---|
+| `ma_nguoi_dung` | `id` | Khóa chính UUID |
+| `ho_ten` | `name` | Họ tên |
+| `email` | `email` | Email |
+| `sdt` | `phone` | Số điện thoại |
+| `vai_tro` | `role` | Vai trò DB ('Admin', 'Khach hang'...) |
+| `trang_thai` | `status` | Trạng thái ('Dang hoat dong'/'Bi khoa') |
+| `ngay_tao` | `createdAt` | Ngày tạo tài khoản |
+| `ma_chi_nhanh` | `branchId` | FK chi nhánh (nullable) |
+| `ma_tk` | `accountId` | UUID tài khoản đăng nhập |
+
+---
+
+### FILE: `backend/src/modules/core-access/data/repositories/user.repository.js`
+**Purpose:** Repository duy nhất truy cập bảng `NGUOIDUNG` + `TAIKHOAN` từ Supabase.
+
+**Tại sao cần?**
+- Tập trung mọi câu query Supabase vào một chỗ (Single Responsibility).
+- Service KHÔNG được query Supabase trực tiếp — chỉ gọi qua repository.
+- Repository KHÔNG chứa business rule — chỉ SELECT / UPDATE.
+
+**5 method đã triển khai:**
+
+| Method | SQL tương đương | Dùng ở đâu |
+|---|---|---|
+| `findAccountByLoginInfo(email)` | SELECT + JOIN + WHERE | `auth.service.js` — xác thực đăng nhập |
+| `findAll({ page, limit, name, phone, role, status })` | SELECT + ILIKE + EQ + RANGE | `user.service.js` — admin xem danh sách |
+| `findById(userId)` | SELECT WHERE id = ? SINGLE | `user.service.js` — admin xem chi tiết |
+| `updateStatus(userId, newStatus)` | UPDATE trang_thai WHERE id = ? | `user.service.js` — khóa/mở khóa |
+| `updateRole(userId, newRole)` | UPDATE vai_tro WHERE id = ? | `user.service.js` — đổi vai trò |
+
+**Kỹ thuật Supabase dùng:**
+- `ilike('%...%')` → tìm không phân biệt hoa thường (tìm tên, SĐT)
+- `range(offset, offset+limit-1)` → phân trang
+- `{ count: 'exact' }` → đếm tổng số bản ghi để tính `totalPages`
+- `.single()` → trả về 1 bản ghi, null nếu không tìm thấy (PGRST116)
+
+---
+
+### FILE: `backend/src/modules/core-access/business/services/user.service.js`
+**Purpose:** Xử lý toàn bộ business logic cho BR-ADM-01.
+
+**Tại sao cần?**
+- Service là "người gác cổng" business rule — controller KHÔNG được chứa điều kiện nghiệp vụ.
+- Service điều phối: gọi repository lấy data → kiểm tra rule → gọi auditLogService ghi log → trả kết quả.
+
+**6 method và Business Rules:**
+
+| Method | Business Rules quan trọng | Strict Log? |
+|---|---|---|
+| `listUsers()` | Hỗ trợ lọc + phân trang, map DB → UserModel | Không |
+| `getUserById()` | Trả 404 nếu không tìm thấy | Không |
+| `lockUser()` | Admin không tự khóa mình; chỉ khóa TK đang active | ✅ Có (RB-15) |
+| `unlockUser()` | Chỉ mở khóa TK đang bị khóa | ✅ Có (RB-15) |
+| `updateUserRole()` | Admin không đổi role mình; role mới phải hợp lệ | ✅ Có (RB-15) |
+| `getProfile()` | Lấy thông tin người đang đăng nhập theo `userId` từ JWT | Không |
+
+**Tại sao Strict Log (RB-15)?**
+Theo `skills.md §15`: Thao tác bắt buộc log (khóa/mở khóa/đổi role) mà ghi log thất bại → KHÔNG được báo thành công cho frontend. Dùng `auditLogService.log({...}, true)` để enforce.
+
+---
+
+### FILE: `backend/src/modules/core-access/presentation/controllers/user.controller.js`
+**Purpose:** Controller tiếp nhận HTTP request, gọi service, trả HTTP response.
+
+**Nguyên tắc thiết kế:**
+- Controller chỉ làm 3 việc: đọc `req.params/body/query` → gọi service → trả `res.json()`
+- KHÔNG chứa business rule (vi phạm kiến trúc)
+- `actorId` (người thực hiện) LUÔN lấy từ `req.user.id` (JWT token) — KHÔNG lấy từ body client
+
+**5 handler:**
+- `listUsers(req, res)` → GET /admin/users
+- `getUserById(req, res)` → GET /admin/users/:userId
+- `lockUser(req, res)` → PATCH /admin/users/:userId/lock
+- `unlockUser(req, res)` → PATCH /admin/users/:userId/unlock
+- `updateUserRole(req, res)` → PATCH /admin/users/:userId/role
+- `getProfile(req, res)` → GET /users/profile
+
+---
+
+### FILE: `backend/src/modules/core-access/presentation/routes/user.routes.js`
+**Purpose:** Khai báo HTTP routes với middleware chain đúng thứ tự.
+
+**Middleware chain cho mỗi request admin:**
+```
+Request → authenticateMiddleware (kiểm tra JWT) → authorizeMiddleware(ADMIN) → controller handler
+```
+
+**API Contract đầy đủ:**
+| Method | URL | Middleware | Controller |
+|---|---|---|---|
+| GET | `/admin/users` | auth + ADMIN | `listUsers` |
+| GET | `/admin/users/:userId` | auth + ADMIN | `getUserById` |
+| PATCH | `/admin/users/:userId/lock` | auth + ADMIN | `lockUser` |
+| PATCH | `/admin/users/:userId/unlock` | auth + ADMIN | `unlockUser` |
+| PATCH | `/admin/users/:userId/role` | auth + ADMIN | `updateUserRole` |
+| GET | `/users/profile` | auth (any role) | `getProfile` |
+
+---
+
+## 2. Frontend — Các file đã tạo/cập nhật
+
+### FILE: `frontend/src/features/core-access/api/userApi.js`
+**Purpose:** Tầng gọi API backend cho chức năng quản lý người dùng.
+
+**Tại sao cần?**
+- Frontend KHÔNG được gọi Supabase trực tiếp (`skills.md §8.6 + §19`).
+- Tập trung tất cả URL, headers, xử lý response lỗi ở một chỗ.
+
+**Cách lấy token:** `localStorage.getItem('accessToken')` → gửi kèm `Authorization: Bearer <token>`
+
+**5 function export:**
+```js
+fetchUsers({ page, limit, name, phone, role, status })   // GET /admin/users
+fetchUserById(userId)                                      // GET /admin/users/:userId
+lockUser(userId, reason)                                   // PATCH /admin/users/:userId/lock
+unlockUser(userId, reason)                                 // PATCH /admin/users/:userId/unlock
+updateUserRole(userId, newRole, reason)                    // PATCH /admin/users/:userId/role
+```
+
+---
+
+### FILE: `frontend/src/features/core-access/pages/admin/UserListPage.jsx`
+**Purpose:** Trang Admin quản lý người dùng — dữ liệu thật từ Supabase qua API.
+
+**Thay thế MockData bằng API thật:**
+- Trước: dùng `mockUsers` từ `mockData.ts`
+- Sau: gọi `fetchUsers()` từ `userApi.js` → backend → Supabase
+
+**4 UI States được xử lý (`skills.md §8.6`):**
+| State | Hiển thị |
+|---|---|
+| `loading = true` | Spinner (Loader2 + animate-spin) |
+| `error` | Thông báo lỗi + nút "Thử lại" |
+| `users.length === 0` | "Không tìm thấy tài khoản phù hợp" |
+| `users.length > 0` | Bảng danh sách + phân trang |
+
+**Tính năng:**
+- Bộ lọc: theo tên, SĐT, vai trò, trạng thái (debounce qua useEffect)
+- Phân trang: Trước / Sau
+- Xem chi tiết: click row → `UserDetailPanel`
+- Khóa/Mở khóa: Modal xác nhận có nhập lý do bắt buộc
+- Cập nhật vai trò: Modal với select dropdown + lý do tùy chọn
+- Cập nhật UI local: sau thành công → cập nhật state ngay không cần reload
+
+---
+
+### FILE: `frontend/src/features/core-access/layouts/AdminLayout.jsx`
+**Purpose:** Layout bao ngoài cho toàn bộ trang admin — sidebar + topbar + Outlet.
+
+**Tại sao cần?**
+- Admin cần layout riêng (sidebar điều hướng) khác với customer/partner (chỉ có Header chung).
+- Tách layout ra để các trang admin (`UserListPage`, `AuditLogPage`...) chỉ render nội dung, không lo layout.
+
+**Tính năng:**
+- Sidebar thu gọn/mở rộng trên desktop (toggle ChevronLeft)
+- Sidebar overlay trên mobile (Menu icon)
+- Breadcrumb topbar tự cập nhật theo `useLocation()`
+- Active menu dùng `useLocation().pathname` để highlight đúng item
+- Logout: xóa `accessToken` + `user` khỏi localStorage → `/login`
+- Avatar chữ cái đầu lấy từ `currentUser.name` trong localStorage
+
+---
+
+### FILE: `frontend/src/app/router.jsx`
+**Purpose:** Cập nhật route `/admin/*` để dùng `AdminLayout` + bảo vệ bởi `ProtectedRoute(ADMIN)`.
+
+**Cấu trúc route admin:**
+```
+/admin     → ProtectedRoute(ADMIN) → AdminLayout → AdminDashboardPage
+/admin/users → ProtectedRoute(ADMIN) → AdminLayout → UserListPage (BR-ADM-01)
+/admin/logs  → ProtectedRoute(ADMIN) → AdminLayout → AuditLogPage (placeholder)
+```
+
+**Tại sao admin route tách ra khỏi "/" ?**
+Admin dùng `AdminLayout` (có sidebar), customer/partner dùng `App` (có Header chung). Tách ra tránh render nhầm layout.
+
+---
+
+## 3. Luồng hoàn chỉnh BR-ADM-01 (Xem danh sách người dùng)
+
+```
+Admin truy cập /admin/users
+  → ProtectedRoute: kiểm tra localStorage.accessToken + user.role === 'ADMIN'
+  → AdminLayout render sidebar + topbar
+  → UserListPage mount → useEffect gọi fetchUsers()
+  → userApi.js: fetch GET /admin/users?page=1&limit=20 + header Authorization: Bearer <token>
+  → Backend user.routes.js: authenticateMiddleware (decode JWT → req.user)
+  → authorizeMiddleware('ADMIN'): kiểm tra req.user.role === 'ADMIN'
+  → UserController.listUsers(): đọc query params
+  → UserService.listUsers(): gọi userRepository.findAll()
+  → UserRepository: query Supabase bảng nguoidung + áp bộ lọc + phân trang
+  → Supabase trả data thật
+  → UserService: map rows → UserModel[]
+  → Controller: res.json({ success: true, data: [...], pagination: {...} })
+  → Frontend: setUsers(data) → render bảng danh sách
+```
+
+---
+
+## 4. Kết quả kiểm thử (node -e)
+- `user.service.js` load OK — 6 methods: `listUsers, getUserById, lockUser, unlockUser, updateUserRole, getProfile`
+- `user.routes.js` load OK — 6 routes đăng ký đúng: `/admin/users`, `/admin/users/:userId`, `/admin/users/:userId/lock`, `/admin/users/:userId/unlock`, `/admin/users/:userId/role`, `/users/profile`
+- `core-access/index.js` load OK — 7 services export: `authService, userService, auditLogService, voucherIssuanceService, voucherVerificationService, voucherRedemptionService, adminDashboardService`
+
+- FILE: user.controller.js
+ * PURPOSE: Controller tiếp nhận HTTP request, gọi userService, trả HTTP response.
+ *
+ * Tại sao cần file này?
+ * - Controller là cầu nối giữa HTTP layer và business layer.
+ * - Controller chỉ làm 3 việc: đọc params/body, gọi service, trả response.
+ * - Không chứa business rule (việc đó là của service).
+ * - Không gọi repository trực tiếp (vi phạm kiến trúc).
+ *
+ * Lưu ý: req.user được gắn bởi authenticateMiddleware (đã decode JWT token).
+ *   req.user.id       = ma_nguoi_dung của người đang đăng nhập
+ *   req.user.accountId = ma_tk của người đang đăng nhập
+ *   req.user.role     = JWT role ('ADMIN', 'CUSTOMER', ...)
