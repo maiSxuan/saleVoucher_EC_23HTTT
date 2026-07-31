@@ -30,7 +30,7 @@ import UserListPage from "../features/core-access/pages/admin/UserListPage";
 
 // Customer
 import CustomerLayout from "../features/customer-commerce/layouts/CustomerLayout";
-import CustomerHomePage from "../features/customer-commerce/pages/customer/HomePage";
+import VoucherSearchPage from "../features/customer-commerce/pages/customer/VoucherSearchPage";
 import { Home } from "lucide-react";
 
 // Placeholder trang chưa làm
@@ -93,7 +93,7 @@ const router = createBrowserRouter([
             children: [
               {
                 index: true,
-                element: <CustomerHomePage />,
+                element: <VoucherSearchPage />,
               },
             ],
           },

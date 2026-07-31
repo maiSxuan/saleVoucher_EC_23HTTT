@@ -215,6 +215,7 @@ export default function CustomerLayout() {
             setSearchValue,
             activeCategory,
             setActiveCategory,
+            categories,
           }}
         />
       </main>

@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
-import { Search, SlidersHorizontal, Clock } from "lucide-react";
-import { fetchSellingVouchers, fetchCategories } from "../../api/catalogApi";
+import { Search, SlidersHorizontal } from "lucide-react";
+import { fetchSellingVouchers } from "../../api/catalogApi";
+import VoucherCard from "../../components/VoucherCard";
 
-export default function HomePage() {
+export default function VoucherSearchPage() {
   const navigate = useNavigate();
 
   const [vouchers, setVouchers] = useState([]);
@@ -13,8 +14,13 @@ export default function HomePage() {
   const [priceRange, setPriceRange] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [showFilters, setShowFilters] = useState(false);
-  const { searchValue, setSearchValue, activeCategory, setActiveCategory } =
-    useOutletContext();
+  const {
+    searchValue,
+    setSearchValue,
+    activeCategory,
+    setActiveCategory,
+    categories = [],
+  } = useOutletContext();
 
   useEffect(() => {
     let ignore = false;
@@ -57,10 +63,6 @@ export default function HomePage() {
       });
   }, [vouchers, searchValue, activeCategory, priceRange, sortBy]);
 
-  const discountPct = (v) =>
-    Math.round((1 - v.salePrice / v.originalPrice) * 100);
-  const remaining = (v) => v.totalQty - v.soldQty;
-
   if (loading)
     return (
       <div className="py-24 text-center text-gray-500 text-base font-medium">
@@ -76,7 +78,7 @@ export default function HomePage() {
 
   return (
     <div className="space-y-6">
-      {/* Banner lớn hơn, font chữ to & rõ nét */}
+      {/* Banner */}
       <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-md">
         <div className="absolute -right-10 -top-10 w-48 h-48 rounded-full bg-white/10 pointer-events-none" />
         <div className="absolute -right-4 -bottom-6 w-32 h-32 rounded-full bg-white/10 pointer-events-none" />
@@ -94,14 +96,14 @@ export default function HomePage() {
           </div>
           <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2.5 text-center min-w-[100px]">
             <p className="text-lg sm:text-xl font-bold">
-              {activeCategory.length - 1}
+              {Array.isArray(categories) ? categories.length : 0}
             </p>
             <p className="text-xs sm:text-sm opacity-90">Danh mục</p>
           </div>
         </div>
       </div>
 
-      {/* Filter and Sort Toolbar - Cỡ chữ & nút to chuẩn */}
+      {/* Toolbar Lọc và Sắp xếp */}
       <div className="flex items-center gap-3">
         <button
           onClick={() => setShowFilters((s) => !s)}
@@ -181,80 +183,17 @@ export default function HomePage() {
             </span>
           </h2>
 
-          {/* Tăng từ 3 cột lên 4 cột ở màn hình XL để tận dụng độ rộng màn hình */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {filtered.map((v) => (
               <VoucherCard
                 key={v.id}
                 voucher={v}
                 onClick={() => navigate(`/customer/vouchers/${v.id}`)}
-                discountPct={discountPct(v)}
-                remaining={remaining(v)}
               />
             ))}
           </div>
         </div>
       )}
     </div>
-  );
-}
-
-function VoucherCard({ voucher: v, onClick, discountPct, remaining }) {
-  return (
-    <button
-      onClick={onClick}
-      className="bg-white rounded-2xl shadow-sm hover:shadow-lg border border-gray-100 overflow-hidden text-left transition-all duration-200 group flex flex-col h-full"
-    >
-      <div className="relative overflow-hidden">
-        {/* Tăng độ cao ảnh từ h-36 lên h-44 */}
-        <img
-          src={v.image}
-          alt={v.name}
-          className="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-        {discountPct > 0 && (
-          <span className="absolute top-2.5 right-2.5 bg-red-500 text-white text-xs px-2.5 py-1 rounded-md font-bold shadow">
-            -{discountPct}%
-          </span>
-        )}
-      </div>
-
-      <div className="p-4 flex flex-col flex-1 justify-between">
-        <div>
-          <p className="text-xs text-orange-600 font-semibold uppercase tracking-wider mb-1">
-            {v.partner}
-          </p>
-          {/* Tăng kích thước tên voucher từ text-sm lên text-base */}
-          <p className="text-base font-bold text-gray-900 line-clamp-2 mb-3 group-hover:text-orange-600 transition-colors">
-            {v.name}
-          </p>
-        </div>
-
-        <div>
-          <div className="flex items-baseline gap-2 mb-2">
-            <p className="text-lg font-extrabold text-orange-600">
-              {v.salePrice.toLocaleString("vi-VN")}đ
-            </p>
-            <p className="text-xs text-gray-400 line-through font-medium">
-              {v.originalPrice.toLocaleString("vi-VN")}đ
-            </p>
-          </div>
-
-          <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-gray-50">
-            {remaining <= 20 && remaining > 0 ? (
-              <span className="text-red-500 font-semibold">
-                Còn lại {remaining}
-              </span>
-            ) : (
-              <span>Còn lại {remaining}</span>
-            )}
-            <div className="flex items-center gap-1">
-              <Clock size={12} />
-              <span>{new Date(v.endSaleDate).toLocaleDateString("vi-VN")}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </button>
   );
 }
