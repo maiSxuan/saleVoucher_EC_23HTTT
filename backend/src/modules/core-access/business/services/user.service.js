@@ -75,6 +75,23 @@ class UserService {
     // Thêm jwtRole vào payload để frontend hiển thị đúng
     const jwtRole = DB_TO_JWT[user.vai_tro] || 'CUSTOMER';
 
+    let extraInfo = {};
+    let orderHistory = [];
+    let auditLogs = [];
+
+    // Lấy thông tin bổ sung dựa trên vai trò
+    if (user.vai_tro === 'Khach hang') {
+      orderHistory = await userRepository.getUserOrderHistory(userId);
+    } else if (user.vai_tro === 'Nhan vien quan ly voucher' || user.vai_tro === 'Nguoi dai dien') {
+      extraInfo = await userRepository.getUserCompanyInfo(user.ma_hsdn);
+      auditLogs = await userRepository.getUserAuditLogs(userId);
+    } else if (user.vai_tro === 'Nhan vien ban hang') {
+      extraInfo = await userRepository.getUserBranchInfo(user.ma_chi_nhanh);
+      auditLogs = await userRepository.getUserAuditLogs(userId);
+    } else {
+      auditLogs = await userRepository.getUserAuditLogs(userId);
+    }
+
     return {
       ...new UserModel({
         ma_nguoi_dung: user.ma_nguoi_dung,
@@ -87,7 +104,11 @@ class UserService {
         ma_chi_nhanh: user.ma_chi_nhanh,
         ma_tk: null,
       }),
+      ma_hsdn: user.ma_hsdn,
       jwtRole, // Thêm JWT role để frontend dùng nếu cần
+      extraInfo,
+      orderHistory,
+      auditLogs,
     };
   }
 
@@ -182,7 +203,7 @@ class UserService {
   //      - newRole phải là một trong các vai trò hợp lệ trong DB.
   //      - Phải ghi audit log (strict=true).
   // -----------------------------------------------------------------------
-  async updateUserRole({ actorId, actorRole, targetUserId, newRole, reason }) {
+  async updateUserRole({ actorId, actorRole, targetUserId, newRole, maChiNhanh, maHsdn, reason }) {
     // Business rule 1: Admin không đổi role của chính mình
     if (actorId === targetUserId) {
       throw new AppError('Không thể cập nhật vai trò của chính mình', 400, 'SELF_ACTION_FORBIDDEN');
@@ -202,9 +223,30 @@ class UserService {
       throw new AppError('Không tìm thấy người dùng', 404, 'USER_NOT_FOUND');
     }
 
+    // Business rule 2.5: Chỉ được phép cập nhật vai trò đối với Nhân viên bán hàng và Nhân viên quản lý voucher
+    const isTargetValid = targetUser.vai_tro === 'Nhan vien ban hang' || targetUser.vai_tro === 'Nhan vien quan ly voucher';
+    if (!isTargetValid) {
+      throw new AppError('Chỉ được phép cập nhật vai trò đối với Nhân viên bán hàng và Nhân viên quản lý voucher.', 400, 'INVALID_ROLE_TRANSITION');
+    }
+
+    const isNewRoleValid = newRole === 'Nhan vien ban hang' || newRole === 'Nhan vien quan ly voucher';
+    if (!isNewRoleValid) {
+      throw new AppError('Chỉ được phép chuyển đổi giữa Nhân viên bán hàng và Nhân viên quản lý voucher.', 400, 'INVALID_ROLE_TRANSITION');
+    }
+
     // Business rule 3: Nếu vai trò không thay đổi thì không cần update
     if (targetUser.vai_tro === newRole) {
       throw new AppError('Vai trò mới giống vai trò hiện tại, không cần cập nhật', 400, 'SAME_ROLE');
+    }
+
+    // Business rule 4: Nhân viên bán hàng yêu cầu mã chi nhánh.
+    if (newRole === 'Nhan vien ban hang' && !maChiNhanh) {
+      throw new AppError('Bắt buộc phải chọn Chi nhánh cho Nhân viên bán hàng.', 400, 'MISSING_BRANCH');
+    }
+    
+    // Business rule 5: Nhân viên quản lý voucher yêu cầu mã đối tác.
+    if (newRole === 'Nhan vien quan ly voucher' && !maHsdn) {
+      throw new AppError('Bắt buộc phải chọn Đối tác (Doanh nghiệp) cho vai trò này.', 400, 'MISSING_PARTNER');
     }
 
     // Ghi audit log bắt buộc (strict=true)
@@ -223,7 +265,7 @@ class UserService {
       true // strict = true
     );
 
-    const updated = await userRepository.updateRole(targetUserId, newRole);
+    const updated = await userRepository.updateRole(targetUserId, newRole, maChiNhanh, maHsdn);
     return updated;
   }
 

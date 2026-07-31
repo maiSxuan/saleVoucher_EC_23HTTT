@@ -59,6 +59,22 @@ router.patch(
   controller.updateUserRole.bind(controller)
 );
 
+// Lấy danh sách chi nhánh (để lấy danh sách combo box)
+router.get(
+  '/admin/branches',
+  authenticateMiddleware,
+  authorizeMiddleware(JWT_ROLES.ADMIN),
+  controller.listBranches.bind(controller)
+);
+
+// Lấy danh sách đối tác (để lấy danh sách combo box)
+router.get(
+  '/admin/partners',
+  authenticateMiddleware,
+  authorizeMiddleware(JWT_ROLES.ADMIN),
+  controller.listPartners.bind(controller)
+);
+
 // -----------------------------------------------------------------------
 // USER ROUTE — Mọi người dùng đã đăng nhập (bất kể role)
 // -----------------------------------------------------------------------

@@ -402,3 +402,61 @@ Admin truy cập /admin/users
   2. `forgot-password`: Hiển thị form để người dùng nhập email cần khôi phục.
   3. `enter-otp`: Hiển thị form yêu cầu người dùng nhập 6 chữ số OTP được gửi qua email.
 - **Logic chuyển đổi:** Khi người dùng nhập email và bấm gửi, hệ thống gọi API `/auth/forgot-password`. Nhận thành công, báo cho người dùng kiểm tra email, và UI tự động chuyển sang chế độ `enter-otp`. Khi nhập OTP thành công sẽ điều hướng vào hệ thống tương tự đăng nhập bằng mật khẩu.
+
+---
+
+# BƯỚC 5 Đã Hoàn Thành: Hoàn thiện logic BR-ADM-01 Quản lý người dùng
+
+Dựa trên yêu cầu của file đặc tả `đặc tả hệ thống của admin.pdf`, các tính năng **Khóa/mở khóa**, **Phân quyền** và **Audit log service cơ bản** đã được triển khai hoàn chỉnh từ Backend tới Frontend.
+
+## 1. Dịch vụ Audit Log (`audit-log.service.js` & `audit-log.repository.js`)
+- **Mục đích:** Ghi nhận mọi thao tác quan trọng của Quản trị viên (Khóa, Mở khóa, Đổi vai trò) vào hệ thống (đáp ứng NFR-06).
+- **Giải thích code:** 
+  - File Service nhận các tham số như `actorId` (người thực hiện), `actorRole`, `action`, `targetType` (đối tượng tác động), `before` (dữ liệu cũ), `after` (dữ liệu mới), và `reason` (lý do).
+  - Có cơ chế `strict = true`. Theo luật nghiệp vụ (RB-15), nếu thao tác bắt buộc ghi log mà tiến trình ghi log bị lỗi (VD: rớt mạng DB), hệ thống sẽ chủ động `throw new Error` và **hủy bỏ luôn thao tác chính** (không cho phép đổi role hay khóa tài khoản nếu không ghi log được). Điều này đảm bảo tính toàn vẹn dữ liệu kiểm toán.
+
+## 2. Xử lý nghiệp vụ Người dùng (`user.service.js`)
+- **Mục đích:** Xử lý logic khóa, mở khóa, cập nhật vai trò, kèm theo các ràng buộc nghiệp vụ (Business Rules).
+- **Khóa tài khoản (`lockUser`) / Mở khóa (`unlockUser`):**
+  - Kiểm tra xem admin có đang tự khóa chính mình không (`actorId === targetUserId`). Nếu có, ném lỗi `AppError('Không thể khóa tài khoản của chính mình')`.
+  - Kiểm tra trạng thái hiện tại. Không thể khóa tài khoản đã bị khóa, và không thể mở khóa tài khoản đang hoạt động.
+  - Gọi `auditLogService.log(..., true)` để ghi log bắt buộc kèm lý do (`reason`).
+  - Gọi Repository để thực sự cập nhật DB sang `Tam khoa` hoặc `Dang hoat dong`.
+- **Cập nhật vai trò (`updateUserRole`):**
+  - Không cho phép admin tự đổi role của chính mình.
+  - Kiểm tra vai trò mới có nằm trong danh sách `VALID_ROLES` của hệ thống hay không.
+  - Kiểm tra nếu vai trò mới trùng vai trò cũ thì báo lỗi `SAME_ROLE` không cần cập nhật.
+  - Ghi Audit Log bắt buộc (`strict = true`) lưu lại `before: { vai_tro: ... }` và `after: { vai_tro: newRole }`.
+
+## 3. Tương tác cơ sở dữ liệu (`user.repository.js`)
+- **Mục đích:** Gọi trực tiếp vào Supabase để cập nhật dữ liệu bằng `.update()`.
+- Lệnh `.update({ trang_thai: newStatus }).eq('ma_nguoi_dung', userId).single()` sẽ giúp cập nhật trạng thái người dùng an toàn.
+- *Lưu ý:* Vừa qua mình đã sửa lại lỗi `Cannot coerce the result to a single JSON object` ở hàm `findAccountByLoginInfo` bằng cách thay `.single()` thành `.limit(1).maybeSingle()` để phòng ngừa trường hợp database có dữ liệu trùng lặp gây sập ứng dụng.
+
+## 4. Giao diện Frontend (`UserListPage.jsx`)
+- **Mục đích:** Hiển thị danh sách, popup xác nhận (ConfirmModal) và xử lý sự kiện người dùng bấm Khóa / Cập nhật vai trò.
+- **Giải thích code:**
+  - Component `UserListPage` tải dữ liệu bằng `fetchUsers` thông qua `userApi.js`.
+  - Component `UserDetailPanel` dùng để xem thông tin chi tiết một người dùng và chứa các nút hành động (Khóa/Mở khóa/Cập nhật vai trò).
+  - Component `ConfirmModal` hiển thị hộp thoại cảnh báo có yêu cầu nhập **Lý do (Bắt buộc)** theo như đặc tả của chức năng khóa tài khoản. Khi bấm xác nhận, nó sẽ gọi hàm xử lý tương ứng (`handleLock`, `handleUnlock`, `handleRoleUpdate`).
+  - Sau khi API Backend trả về thành công, Frontend tự động cập nhật local state (`setUsers`) để giao diện phản ánh thay đổi ngay lập tức mà không cần F5 tải lại trang.
+
+---
+
+# BƯỚC 5.1 Đã Hoàn Thành: Hoàn thiện Logic Phân Quyền Combobox và Hiển Thị 3 Tab Chi Tiết
+
+Dựa trên yêu cầu của bạn, chức năng **Cập nhật vai trò** đã được phân quyền chặt chẽ: **Chỉ hỗ trợ chuyển đổi qua lại giữa Nhân viên bán hàng và Nhân viên quản lý voucher**, và bắt buộc phải chọn Chi nhánh/Đối tác tương ứng qua Combobox.
+
+## 1. Backend (`user.repository.js`, `user.service.js`, `user.controller.js`, `user.routes.js`)
+- Bổ sung thêm API lấy danh sách Chi nhánh (`GET /admin/branches`) và Đối tác Doanh nghiệp (`GET /admin/partners`) phục vụ cho việc hiển thị Combobox (Dropdown) trên giao diện.
+- Nâng cấp API lấy chi tiết người dùng (`GET /admin/users/:userId`) để đính kèm thông tin Chi nhánh, Doanh nghiệp, Lịch sử mua hàng, và Lịch sử Audit Logs quản trị của tài khoản đó.
+- Bổ sung Business Rule chặt chẽ vào `updateUserRole`: 
+  - Chỉ cho phép thao tác nếu người dùng đang có vai trò là `Nhan vien ban hang` hoặc `Nhan vien quan ly voucher`.
+  - Chỉ cho phép đổi sang vai trò ngược lại giữa 2 vai trò này.
+  - Khi đổi sang `Nhan vien ban hang`, bắt buộc phải có mã Chi nhánh. Khi đổi sang `Nhan vien quan ly voucher`, bắt buộc phải có mã Đối tác.
+- Hàm `updateRole` ở `user.repository.js` hỗ trợ cập nhật `ma_chi_nhanh` và `ma_hsdn` xuống Database, đồng thời set các giá trị không cần thiết về `null` để đảm bảo không vi phạm Check Constraint của Database (như `chk_nguoi_dung_chi_nhanh_nvbh`).
+
+## 2. Frontend (`UserListPage.jsx` & `userApi.js`)
+- Cập nhật giao diện `UserDetailPanel` hiển thị 3 Tab: **Thông tin cá nhân**, **Lịch sử mua voucher**, và **Lịch sử quản trị**.
+- Nút "Cập nhật vai trò" giờ đây chỉ xuất hiện khi xem chi tiết các tài khoản thuộc vai trò `Nhan vien ban hang` hoặc `Nhan vien quan ly voucher`.
+- Modal Cập nhật Vai trò tự động giới hạn tuỳ chọn (chỉ cho phép đổi sang vai trò còn lại trong 2 vai trò trên) và yêu cầu chọn Chi nhánh/Đối tác từ Combobox tương ứng.

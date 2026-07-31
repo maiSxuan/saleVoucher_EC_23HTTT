@@ -91,14 +91,33 @@ export async function unlockUser(userId, reason) {
 
 // -----------------------------------------------------------------------
 // 5. CẬP NHẬT VAI TRÒ
-//    PATCH /admin/users/:userId/role    Body: { newRole, reason }
+//    PATCH /admin/users/:userId/role    Body: { newRole, maChiNhanh, maHsdn, reason }
 // -----------------------------------------------------------------------
-export async function updateUserRole(userId, newRole, reason) {
+export async function updateUserRole(userId, newRole, maChiNhanh, maHsdn, reason) {
   const res = await fetch(`${BASE_URL}/admin/users/${userId}/role`, {
     method: 'PATCH',
     headers: getAuthHeaders(),
-    body: JSON.stringify({ newRole, reason }),
+    body: JSON.stringify({ newRole, maChiNhanh, maHsdn, reason }),
   });
   return handleResponse(res);
-  // Trả về: { success: true, message: 'Cập nhật vai trò thành công', data: updatedUser }
 }
+
+// -----------------------------------------------------------------------
+// 6. LẤY DANH SÁCH CHI NHÁNH VÀ ĐỐI TÁC (CHO COMBOBOX)
+// -----------------------------------------------------------------------
+export async function fetchBranches() {
+  const res = await fetch(`${BASE_URL}/admin/branches`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function fetchPartners() {
+  const res = await fetch(`${BASE_URL}/admin/partners`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(res);
+}
+

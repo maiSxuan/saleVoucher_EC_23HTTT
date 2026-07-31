@@ -18,7 +18,8 @@ class UserRepository {
         )
       `)
       .eq('thong_tin_dang_nhap', loginInfo)
-      .single();
+      .limit(1)
+      .maybeSingle();
 
     if (error) {
       // Trả null thay vì throw — để auth.service.js xử lý "không tìm thấy"
@@ -26,6 +27,73 @@ class UserRepository {
       return null;
     }
     return data;
+  }
+
+  // -----------------------------------------------------------------------
+  // API TÌM CHI NHÁNH VÀ ĐỐI TÁC CHO COMBOBOX
+  // -----------------------------------------------------------------------
+  async findAllBranches() {
+    const { data, error } = await supabase
+      .from('chinhanh')
+      .select('ma_chi_nhanh, ten_chi_nhanh, trang_thai');
+    if (error) throw new Error(`Lỗi lấy danh sách chi nhánh: ${error.message}`);
+    return data;
+  }
+
+  async findAllPartners() {
+    const { data, error } = await supabase
+      .from('hosodn')
+      .select('ma_hs, ten_dn, trang_thai');
+    if (error) throw new Error(`Lỗi lấy danh sách đối tác: ${error.message}`);
+    return data;
+  }
+
+  // -----------------------------------------------------------------------
+  // CÁC HÀM LẤY THÔNG TIN CHI TIẾT THEO YÊU CẦU 5.1
+  // -----------------------------------------------------------------------
+  async getUserCompanyInfo(maHsdn) {
+    if (!maHsdn) return null;
+    const { data, error } = await supabase
+      .from('hosodn')
+      .select('ma_hs, ten_dn, dia_chi')
+      .eq('ma_hs', maHsdn)
+      .maybeSingle();
+    return data;
+  }
+
+  async getUserBranchInfo(maChiNhanh) {
+    if (!maChiNhanh) return null;
+    const { data, error } = await supabase
+      .from('chinhanh')
+      .select('ma_chi_nhanh, ten_chi_nhanh, dia_chi, ma_hs, hosodn:ma_hs(ten_dn)')
+      .eq('ma_chi_nhanh', maChiNhanh)
+      .maybeSingle();
+    return data;
+  }
+
+  async getUserOrderHistory(userId) {
+    const { data: tkData } = await supabase.from('taikhoan').select('ma_tk').eq('ma_nguoi_dung', userId).maybeSingle();
+    if (!tkData) return [];
+    const { data, error } = await supabase
+      .from('donhang')
+      .select('*')
+      .eq('ma_tk_dat', tkData.ma_tk)
+      .eq('trang_thai', 'Hoan thanh')
+      .order('ngay_dat', { ascending: false });
+    if (error) throw new Error(`Lỗi lấy lịch sử đơn hàng: ${error.message}`);
+    return data || [];
+  }
+
+  async getUserAuditLogs(userId) {
+    const { data: tkData } = await supabase.from('taikhoan').select('ma_tk').eq('ma_nguoi_dung', userId).maybeSingle();
+    if (!tkData) return [];
+    const { data, error } = await supabase
+      .from('log_ht')
+      .select('*')
+      .eq('ma_tk_thuc_hien', tkData.ma_tk)
+      .order('thoi_diem_thuc_hien', { ascending: false });
+    if (error) throw new Error(`Lỗi lấy lịch sử quản trị: ${error.message}`);
+    return data || [];
   }
 
   // -----------------------------------------------------------------------
@@ -111,10 +179,25 @@ class UserRepository {
   //    Được gọi từ user.service.js sau khi kiểm tra quyền.
   //    Chỉ update cột vai_tro.
   // -----------------------------------------------------------------------
-  async updateRole(userId, newRole) {
+  async updateRole(userId, newRole, maChiNhanh = null, maHsdn = null) {
+    const updateData = { vai_tro: newRole };
+    
+    // Gán mã chi nhánh / đối tác theo đúng logic.
+    // Nếu đổi sang Khách hàng / Admin thì set null cả 2.
+    if (newRole === 'Nhan vien ban hang') {
+      updateData.ma_chi_nhanh = maChiNhanh;
+      updateData.ma_hs = maHsdn; // NHBH cũng thuộc về 1 HOSODN
+    } else if (newRole === 'Nhan vien quan ly voucher' || newRole === 'Nguoi dai dien') {
+      updateData.ma_chi_nhanh = null;
+      updateData.ma_hs = maHsdn;
+    } else {
+      updateData.ma_chi_nhanh = null;
+      updateData.ma_hs = null;
+    }
+
     const { data, error } = await supabase
       .from('nguoidung')
-      .update({ vai_tro: newRole })  // Chỉ cập nhật đúng 1 cột
+      .update(updateData)  // Cập nhật vai trò + mã chi nhánh + mã đối tác
       .eq('ma_nguoi_dung', userId)
       .select()
       .single();

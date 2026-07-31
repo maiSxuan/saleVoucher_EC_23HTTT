@@ -114,3 +114,21 @@ kết nối từ đăng nhập tài khoản admin sau đó từ authenticate -->
 Lưu ý: thực thiện code từng file một + ghi lại giải thích code từng dòng của từng file đó và ghi lại ý nghĩa tại sao phải làm như vậy, sau đó ghi lại vào codeX_done.md 
 
 BƯỚC 4: THỰC HIỆN TASK thêm chức năng quên mật khẩu, và trả otp để đăng nhập qua email
+
+BƯỚC 5: HOÀN THIỆN LOGIC HOÀN CHỈNH của BR-ADM-01 Quản lý người dùng:
+Khóa/mở khóa.
+Phân quyền.
+Audit log service cơ bản.
+thực hiện đúng logic theo mô tả trong docs/đặc tả hệ thống của admin.pdf
+
+BƯỚC 5.1: CHỈNH SỬA VÀ BỔ SUNG THÊM LOGIC PHÂN QUYỀN VÀ HIỂN THỊ THÔNG TIN NGƯỜI DÙNG
+a. hiển thị thông tin người dùng
+- Đối với khách hàng: hiển thị các thông tin cá nhân (toàn bộ thông tin ở bảng NGUOIDUNG, trừ mã chi nhánh và ma_hsdn), và lịch sử đã mua voucher (lấy toàn bộ thông tin ở bảng DONHANG với trạng thái hoàn thành)
+- Đối với nhân viên quản lý voucher: hiển thị các thông tin cá nhân (NGUOIDUNG), thông tin công ty mà họ đang làm (lấy ở bảng HOSODN, chỉ lấy ma_hs, tenDN, địa chỉ), và lịch sử quản trị
+- Đối với nhân viên bán hàng: hiển thị các thông tin cá nhân (NGUOIDUNG), thông tin chi nhánh mà họ đang làm (lấy ở bảng CHINHANH thuộc HOSODN nào), và lịch sử quản trị
+- Đối với người đại diện: hiển thị các thông tin cá nhân (NGUOIDUNG), thông tin công ty mà họ đang làm (lấy ở bảng HOSODN), và lịch sử quản trị
+lưu ý cần phân ra theo tab: tab thông tin cá nhân (đối với các nhân viên và người đại diện thông tin doanh nghiệp/chi nhánh cần hiển thị bên dưới thông tin cá nhân), tab lịch sử đã mua voucher, tab lịch sử quản trị
+
+b. bổ sung them logic phân quyền: chỉ cập nhật vai trò khi nhân viên quản lí voucher sang nhân viên bán hàng có kèm hiển thị mã chi nhánh ở dạng combobox để chọn,  ngược lại khi chuyển từ nhân viên bán hàng thành nhân viên quản lý cần kèm hiển thị mã đối tác ở dạng combobox để chọn
+
+BƯỚC 6: THỰC HIỆN TASK Khung bảng voucher code và usage log (đọc trong folder docs để hiểu và làm)

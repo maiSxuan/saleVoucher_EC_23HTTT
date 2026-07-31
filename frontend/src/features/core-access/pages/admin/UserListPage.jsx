@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { Search, X, ArrowLeft, Eye, Loader2, AlertCircle } from 'lucide-react';
 import {
   fetchUsers,     // GET /admin/users — lấy danh sách
+  fetchUserById,  // GET /admin/users/:id — lấy chi tiết (có extra info, lịch sử)
+  fetchBranches,  // GET /admin/branches
+  fetchPartners,  // GET /admin/partners
   lockUser,       // PATCH /admin/users/:id/lock — khóa tài khoản
   unlockUser,     // PATCH /admin/users/:id/unlock — mở khóa
   updateUserRole, // PATCH /admin/users/:id/role — đổi vai trò
@@ -155,15 +158,83 @@ function ConfirmModal({ open, onClose, onConfirm, title, targetName, beforeStatu
 // UserDetailPanel — Hiển thị chi tiết người dùng (phần tab Info)
 // Tách ra component riêng để UserListPage gọn hơn
 // -----------------------------------------------------------------------
-function UserDetailPanel({ user, onLock, onUnlock, onRoleUpdate, onBack }) {
+function UserDetailPanel({ user: initialUser, onLock, onUnlock, onRoleUpdate, onBack }) {
   const [activeTab, setActiveTab] = useState('info');
+  const [user, setUser] = useState(initialUser);
+  const [loadingDetails, setLoadingDetails] = useState(true);
+  
   const [lockModal, setLockModal] = useState(false);
   const [unlockModal, setUnlockModal] = useState(false);
   const [roleModal, setRoleModal] = useState(false);
-  const [selectedNewRole, setSelectedNewRole] = useState(user.role);
+  const [selectedNewRole, setSelectedNewRole] = useState(initialUser.role);
   const [roleReason, setRoleReason] = useState('');
+  
+  // State cho combo boxes
+  const [branches, setBranches] = useState([]);
+  const [partners, setPartners] = useState([]);
+  const [selectedBranch, setSelectedBranch] = useState('');
+  const [selectedPartner, setSelectedPartner] = useState('');
+  const [loadingCombo, setLoadingCombo] = useState(false);
+
   const [roleError, setRoleError] = useState('');
   const [roleProcessing, setRoleProcessing] = useState(false);
+
+  // Lấy chi tiết user (công ty, chi nhánh, lịch sử)
+  useEffect(() => {
+    const loadDetails = async () => {
+      try {
+        setLoadingDetails(true);
+        const res = await fetchUserById(initialUser.id);
+        if (res.success && res.data) {
+          // Normalize lại data tương tự như list
+          const normalized = {
+            id: res.data.id || res.data.ma_nguoi_dung,
+            name: res.data.name || res.data.ho_ten,
+            email: res.data.email,
+            phone: res.data.phone || res.data.sdt,
+            role: res.data.role || res.data.vai_tro,
+            status: res.data.status || res.data.trang_thai,
+            createdAt: res.data.createdAt || res.data.created_at,
+            extraInfo: res.data.extraInfo,
+            orderHistory: res.data.orderHistory,
+            auditLogs: res.data.auditLogs
+          };
+          setUser(normalized);
+        }
+      } catch (err) {
+        console.error('Lỗi lấy chi tiết user:', err);
+      } finally {
+        setLoadingDetails(false);
+      }
+    };
+    loadDetails();
+  }, [initialUser.id]);
+
+  // Load danh sách branch/partner khi mở roleModal và chọn vai trò tương ứng
+  useEffect(() => {
+    if (roleModal) {
+      const loadCombos = async () => {
+        try {
+          setLoadingCombo(true);
+          if (selectedNewRole === 'Nhan vien ban hang' && branches.length === 0) {
+            const res = await fetchBranches();
+            setBranches(res.data || []);
+            if (res.data && res.data.length > 0) setSelectedBranch(res.data[0].ma_chi_nhanh);
+          }
+          if ((selectedNewRole === 'Nhan vien quan ly voucher' || selectedNewRole === 'Nguoi dai dien') && partners.length === 0) {
+            const res = await fetchPartners();
+            setPartners(res.data || []);
+            if (res.data && res.data.length > 0) setSelectedPartner(res.data[0].ma_hs);
+          }
+        } catch (err) {
+          console.error('Lỗi load combo:', err);
+        } finally {
+          setLoadingCombo(false);
+        }
+      };
+      loadCombos();
+    }
+  }, [roleModal, selectedNewRole, branches.length, partners.length]);
 
   const isActive = user.status === 'Dang hoat dong';
 
@@ -172,9 +243,18 @@ function UserDetailPanel({ user, onLock, onUnlock, onRoleUpdate, onBack }) {
       setRoleError('Vai trò mới giống vai trò hiện tại.');
       return;
     }
+    if (selectedNewRole === 'Nhan vien ban hang' && !selectedBranch) {
+      setRoleError('Vui lòng chọn chi nhánh.');
+      return;
+    }
+    if ((selectedNewRole === 'Nhan vien quan ly voucher' || selectedNewRole === 'Nguoi dai dien') && !selectedPartner) {
+      setRoleError('Vui lòng chọn đối tác.');
+      return;
+    }
+
     setRoleProcessing(true);
     try {
-      await onRoleUpdate(user.id, selectedNewRole, roleReason.trim() || undefined);
+      await onRoleUpdate(user.id, selectedNewRole, selectedBranch, selectedPartner, roleReason.trim() || undefined);
       setRoleModal(false);
     } catch (err) {
       setRoleError(err.message);
@@ -208,12 +288,14 @@ function UserDetailPanel({ user, onLock, onUnlock, onRoleUpdate, onBack }) {
           </div>
           {/* Action buttons */}
           <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => { setSelectedNewRole(user.role); setRoleReason(''); setRoleError(''); setRoleModal(true); }}
-              className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              Cập nhật vai trò
-            </button>
+            {(user.role === 'Nhan vien ban hang' || user.role === 'Nhan vien quan ly voucher') && (
+              <button
+                onClick={() => { setSelectedNewRole(user.role); setRoleReason(''); setRoleError(''); setRoleModal(true); }}
+                className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cập nhật vai trò
+              </button>
+            )}
             {isActive ? (
               <button
                 onClick={() => setLockModal(true)}
@@ -235,35 +317,140 @@ function UserDetailPanel({ user, onLock, onUnlock, onRoleUpdate, onBack }) {
 
       {/* Tabs */}
       <div className="flex border-b border-gray-200 mb-4 bg-white rounded-t-xl border border-b-0 px-4">
-        {['info'].map(tab => (
+        {[
+          { id: 'info', label: 'Thông tin cá nhân' },
+          { id: 'orders', label: 'Lịch sử mua voucher' },
+          { id: 'audit', label: 'Lịch sử quản trị' }
+        ].map(tab => (
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-800'}`}
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-800'}`}
           >
-            Thông tin cá nhân
+            {tab.label}
           </button>
         ))}
       </div>
 
       {/* Tab content */}
       <div className="bg-white rounded-b-xl border border-gray-200 border-t-0 p-5">
-        {activeTab === 'info' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[
-              { label: 'Họ tên', value: user.name },
-              { label: 'Email', value: user.email },
-              { label: 'Số điện thoại', value: user.phone || '—' },
-              { label: 'Vai trò', value: ROLE_CONFIG[user.role]?.label || user.role },
-              { label: 'Trạng thái', value: STATUS_CONFIG[user.status]?.label || user.status },
-              { label: 'Ngày tham gia', value: user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : '—' },
-            ].map(f => (
-              <div key={f.label}>
-                <p className="text-xs text-gray-500 mb-0.5">{f.label}</p>
-                <p className="text-sm font-medium text-gray-900">{f.value}</p>
+        {loadingDetails ? (
+          <div className="flex justify-center py-10"><Loader2 size={24} className="animate-spin text-gray-400" /></div>
+        ) : (
+          <>
+            {activeTab === 'info' && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wide">Thông tin tài khoản</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {[
+                      { label: 'Họ tên', value: user.name },
+                      { label: 'Email', value: user.email },
+                      { label: 'Số điện thoại', value: user.phone || '—' },
+                      { label: 'Vai trò', value: ROLE_CONFIG[user.role]?.label || user.role },
+                      { label: 'Trạng thái', value: STATUS_CONFIG[user.status]?.label || user.status },
+                      { label: 'Ngày tham gia', value: user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : '—' },
+                    ].map(f => (
+                      <div key={f.label}>
+                        <p className="text-xs text-gray-500 mb-0.5">{f.label}</p>
+                        <p className="text-sm font-medium text-gray-900">{f.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {user.extraInfo && user.role === 'Nhan vien ban hang' && (
+                  <div className="pt-4 border-t border-gray-100">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wide">Thông tin Chi nhánh làm việc</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs text-gray-500 mb-0.5">Tên chi nhánh</p>
+                        <p className="text-sm font-medium text-gray-900">{user.extraInfo.ten_chi_nhanh}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-0.5">Thuộc đối tác</p>
+                        <p className="text-sm font-medium text-gray-900">{user.extraInfo.hosodn?.ten_dn || '—'}</p>
+                      </div>
+                      <div className="col-span-1 sm:col-span-2">
+                        <p className="text-xs text-gray-500 mb-0.5">Địa chỉ chi nhánh</p>
+                        <p className="text-sm font-medium text-gray-900">{user.extraInfo.dia_chi || '—'}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {user.extraInfo && (user.role === 'Nhan vien quan ly voucher' || user.role === 'Nguoi dai dien') && (
+                  <div className="pt-4 border-t border-gray-100">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wide">Thông tin Đối tác (Doanh nghiệp)</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs text-gray-500 mb-0.5">Tên doanh nghiệp</p>
+                        <p className="text-sm font-medium text-gray-900">{user.extraInfo.ten_dn}</p>
+                      </div>
+                      <div className="col-span-1 sm:col-span-2">
+                        <p className="text-xs text-gray-500 mb-0.5">Địa chỉ</p>
+                        <p className="text-sm font-medium text-gray-900">{user.extraInfo.dia_chi || '—'}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
+            )}
+            {activeTab === 'orders' && (
+              <div>
+                {user.orderHistory && user.orderHistory.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead>
+                        <tr className="border-b text-gray-500 uppercase text-xs">
+                          <th className="pb-2 font-medium">Mã đơn</th>
+                          <th className="pb-2 font-medium">Ngày đặt</th>
+                          <th className="pb-2 font-medium">Tổng tiền</th>
+                          <th className="pb-2 font-medium">Trạng thái</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {user.orderHistory.map(o => (
+                          <tr key={o.ma_dh}>
+                            <td className="py-2 text-blue-600">{o.ma_dh.slice(0, 8)}...</td>
+                            <td className="py-2">{new Date(o.ngay_dat).toLocaleDateString('vi-VN')}</td>
+                            <td className="py-2 font-medium">{o.tong_tien.toLocaleString('vi-VN')} đ</td>
+                            <td className="py-2"><StatusBadge status={o.trang_thai} /></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : <p className="text-sm text-gray-500 text-center py-6">Chưa có lịch sử mua voucher nào.</p>}
+              </div>
+            )}
+            {activeTab === 'audit' && (
+              <div>
+                {user.auditLogs && user.auditLogs.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead>
+                        <tr className="border-b text-gray-500 uppercase text-xs">
+                          <th className="pb-2 font-medium">Thời gian</th>
+                          <th className="pb-2 font-medium">Hành động</th>
+                          <th className="pb-2 font-medium">Kết quả</th>
+                          <th className="pb-2 font-medium">Lý do</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {user.auditLogs.map(l => (
+                          <tr key={l.log_id}>
+                            <td className="py-2">{new Date(l.thoi_diem_thuc_hien).toLocaleString('vi-VN')}</td>
+                            <td className="py-2 font-medium">{l.hanh_dong}</td>
+                            <td className="py-2"><StatusBadge status={l.ket_qua === 'Thanh cong' ? 'Dang hoat dong' : 'Bi khoa'} /></td>
+                            <td className="py-2 text-gray-500">{l.ly_do_thuc_hien || '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : <p className="text-sm text-gray-500 text-center py-6">Chưa có lịch sử quản trị nào.</p>}
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -312,10 +499,50 @@ function UserDetailPanel({ user, onLock, onUnlock, onRoleUpdate, onBack }) {
               onChange={e => { setSelectedNewRole(e.target.value); setRoleError(''); }}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
             >
-              {VALID_ROLES.map(r => (
+              {(user.role === 'Nhan vien ban hang' ? [
+                { value: 'Nhan vien ban hang', label: 'Nhân viên bán hàng' },
+                { value: 'Nhan vien quan ly voucher', label: 'Nhân viên QL Voucher' }
+              ] : [
+                { value: 'Nhan vien quan ly voucher', label: 'Nhân viên QL Voucher' },
+                { value: 'Nhan vien ban hang', label: 'Nhân viên bán hàng' }
+              ]).map(r => (
                 <option key={r.value} value={r.value}>{r.label}</option>
               ))}
             </select>
+
+            {selectedNewRole === 'Nhan vien ban hang' && (
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Chi nhánh <span className="text-red-500">*</span></label>
+                <select
+                  value={selectedBranch}
+                  onChange={e => { setSelectedBranch(e.target.value); setRoleError(''); }}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={loadingCombo}
+                >
+                  <option value="">-- Chọn chi nhánh --</option>
+                  {branches.map(b => (
+                    <option key={b.ma_chi_nhanh} value={b.ma_chi_nhanh}>{b.ten_chi_nhanh}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {(selectedNewRole === 'Nhan vien quan ly voucher' || selectedNewRole === 'Nguoi dai dien') && (
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Đối tác (Doanh nghiệp) <span className="text-red-500">*</span></label>
+                <select
+                  value={selectedPartner}
+                  onChange={e => { setSelectedPartner(e.target.value); setRoleError(''); }}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={loadingCombo}
+                >
+                  <option value="">-- Chọn đối tác --</option>
+                  {partners.map(p => (
+                    <option key={p.ma_hs} value={p.ma_hs}>{p.ten_dn}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <label className="block text-sm font-medium text-gray-700 mb-1">Lý do thay đổi (tuỳ chọn)</label>
             <textarea
@@ -436,8 +663,8 @@ export default function UserListPage() {
   // -----------------------------------------------------------------------
   // handleRoleUpdate — Gọi API cập nhật vai trò
   // -----------------------------------------------------------------------
-  const handleRoleUpdate = async (userId, newRole, reason) => {
-    await updateUserRole(userId, newRole, reason);
+  const handleRoleUpdate = async (userId, newRole, maChiNhanh, maHsdn, reason) => {
+    await updateUserRole(userId, newRole, maChiNhanh, maHsdn, reason);
     setUsers(prev => prev.map(u =>
       u.ma_nguoi_dung === userId || u.id === userId
         ? { ...u, vai_tro: newRole, role: newRole }
