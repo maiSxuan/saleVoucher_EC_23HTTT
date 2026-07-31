@@ -34,10 +34,38 @@ class AuthController {
       const user = await this.authService.getMe(token);
       res.status(200).json({ success: true, user });
     } catch (error) {
-      res.status(error.statusCode || 401).json({
-        success: false,
-        message: error.message || "Unauthenticated",
+      if (error.status) {
+        return res.status(error.status).json({ success: false, message: error.message });
+      }
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async forgotPassword(req, res, next) {
+    try {
+      const { email } = req.body;
+      await this.authService.generateOTP(email);
+      res.json({ 
+        success: true, 
+        message: 'Mã OTP đã được gửi đến email của bạn'
       });
+    } catch (error) {
+      if (error.status) {
+        return res.status(error.status).json({ success: false, message: error.message });
+      }
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async loginWithOTP(req, res, next) {
+    try {
+      const result = await this.authService.loginWithOTP(req.body);
+      res.json({ success: true, data: result });
+    } catch (error) {
+      if (error.status) {
+        return res.status(error.status).json({ success: false, message: error.message });
+      }
+      res.status(400).json({ success: false, message: error.message });
     }
   }
 }

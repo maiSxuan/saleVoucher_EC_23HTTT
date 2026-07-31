@@ -6,7 +6,7 @@ const router = express.Router();
 const controller = new AuthController(authService);
 
 router.post("/login", controller.login.bind(controller));
-router.post("/logout", controller.logout.bind(controller));
-router.get("/me", controller.getMe.bind(controller));
+router.post("/forgot-password", controller.forgotPassword.bind(controller));
+router.post("/login-with-otp", controller.loginWithOTP.bind(controller));
 
 module.exports = router;
