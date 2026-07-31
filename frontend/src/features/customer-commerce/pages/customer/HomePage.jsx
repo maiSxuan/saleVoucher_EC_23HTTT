@@ -4,28 +4,18 @@ import { Search, SlidersHorizontal, Clock } from "lucide-react";
 import { fetchSellingVouchers, fetchCategories } from "../../api/catalogApi";
 
 export default function HomePage() {
-  const { searchValue, setSearchValue } = useOutletContext();
   const navigate = useNavigate();
-  const [categories, setCategories] = useState([]);
 
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const [activeCategory, setActiveCategory] = useState("Tất cả");
   const [priceRange, setPriceRange] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [showFilters, setShowFilters] = useState(false);
+  const { searchValue, setSearchValue, activeCategory, setActiveCategory } =
+    useOutletContext();
 
-  const categoryTabs = ["Tất cả", ...categories.map((c) => c.name)];
-
-  useEffect(() => {
-    fetchCategories()
-      .then(setCategories)
-      .catch(() => setCategories([]));
-  }, []);
-
-  // Bước 2-3 luồng cơ bản: hệ thống tiếp nhận yêu cầu, đối chiếu voucher đang bán
   useEffect(() => {
     let ignore = false;
     setLoading(true);
@@ -36,14 +26,13 @@ export default function HomePage() {
         () =>
           !ignore &&
           setErrorMsg("Không thể tải danh sách voucher. Vui lòng thử lại sau."),
-      ) // E1
+      )
       .finally(() => !ignore && setLoading(false));
     return () => {
       ignore = true;
     };
   }, []);
 
-  // Bước 4: áp dụng điều kiện tìm kiếm và lọc
   const filtered = useMemo(() => {
     return vouchers
       .filter((v) => {
@@ -74,75 +63,76 @@ export default function HomePage() {
 
   if (loading)
     return (
-      <div className="py-16 text-center text-gray-400 text-sm">
-        Đang tìm kiếm...
+      <div className="py-24 text-center text-gray-500 text-base font-medium">
+        Đang tìm kiếm voucher...
       </div>
     );
   if (errorMsg)
     return (
-      <div className="py-16 text-center text-red-500 text-sm">{errorMsg}</div>
-    ); // E1/E2
+      <div className="py-24 text-center text-red-500 text-base font-medium">
+        {errorMsg}
+      </div>
+    );
 
   return (
-    <div>
-      <div className="bg-gradient-to-r from-orange-500 to-amber-400 rounded-2xl p-5 mb-5 text-white relative overflow-hidden">
-        <div className="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-white/10" />
-        <div className="absolute -right-4 -bottom-4 w-24 h-24 rounded-full bg-white/10" />
-        <p className="text-xs font-medium opacity-80 mb-1">🔥 Ưu đãi hôm nay</p>
-        <h1 className="text-lg font-bold mb-2">
-          Voucher giảm giá đặc biệt
-          <br />
-          đến 60%
+    <div className="space-y-6">
+      {/* Banner lớn hơn, font chữ to & rõ nét */}
+      <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-md">
+        <div className="absolute -right-10 -top-10 w-48 h-48 rounded-full bg-white/10 pointer-events-none" />
+        <div className="absolute -right-4 -bottom-6 w-32 h-32 rounded-full bg-white/10 pointer-events-none" />
+        <p className="text-sm sm:text-base font-medium tracking-wide opacity-90 mb-1">
+          🔥 Ưu đãi hot hôm nay
+        </p>
+        <h1 className="text-2xl sm:text-3xl font-extrabold mb-4 leading-tight">
+          Voucher giảm giá đặc biệt <br className="hidden sm:block" />
+          lên đến 60%
         </h1>
-        <div className="flex gap-3">
-          <div className="bg-white/20 rounded-lg px-3 py-1.5 text-center">
-            <p className="text-sm font-bold">{filtered.length}</p>
-            <p className="text-xs opacity-80">Voucher đang bán</p>
+        <div className="flex gap-4">
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2.5 text-center min-w-[100px]">
+            <p className="text-lg sm:text-xl font-bold">{filtered.length}</p>
+            <p className="text-xs sm:text-sm opacity-90">Voucher đang bán</p>
           </div>
-          <div className="bg-white/20 rounded-lg px-3 py-1.5 text-center">
-            <p className="text-sm font-bold">{categoryTabs.length - 1}</p>
-            <p className="text-xs opacity-80">Danh mục</p>
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2.5 text-center min-w-[100px]">
+            <p className="text-lg sm:text-xl font-bold">
+              {activeCategory.length - 1}
+            </p>
+            <p className="text-xs sm:text-sm opacity-90">Danh mục</p>
           </div>
         </div>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-none">
-        {categoryTabs.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium flex-shrink-0 transition-colors ${activeCategory === cat ? "bg-orange-500 text-white" : "bg-white border border-gray-200 text-gray-600 hover:bg-orange-50"}`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex items-center gap-2 mb-4">
+      {/* Filter and Sort Toolbar - Cỡ chữ & nút to chuẩn */}
+      <div className="flex items-center gap-3">
         <button
           onClick={() => setShowFilters((s) => !s)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border transition-colors ${showFilters ? "bg-orange-50 border-orange-300 text-orange-700" : "bg-white border-gray-200 text-gray-600"}`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${
+            showFilters
+              ? "bg-orange-50 border-orange-300 text-orange-700"
+              : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+          }`}
         >
-          <SlidersHorizontal size={13} /> Bộ lọc
+          <SlidersHorizontal size={15} /> Bộ lọc
         </button>
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
-          className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs bg-white text-gray-600 focus:outline-none"
+          className="border border-gray-200 rounded-xl px-3.5 py-2 text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-200"
         >
           <option value="newest">Mới nhất</option>
           <option value="price-asc">Giá tăng dần</option>
           <option value="price-desc">Giá giảm dần</option>
         </select>
-        <span className="ml-auto text-xs text-gray-400">
+        <span className="ml-auto text-sm text-gray-500 font-medium">
           {filtered.length} kết quả
         </span>
       </div>
 
       {showFilters && (
-        <div className="bg-white border border-gray-200 rounded-xl p-3 mb-4">
-          <p className="text-xs font-semibold text-gray-700 mb-2">Khoảng giá</p>
-          <div className="flex gap-2 flex-wrap">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+          <p className="text-sm font-semibold text-gray-800 mb-2.5">
+            Khoảng giá
+          </p>
+          <div className="flex gap-2.5 flex-wrap">
             {[
               { value: "", label: "Tất cả" },
               { value: "under200", label: "Dưới 200K" },
@@ -152,7 +142,11 @@ export default function HomePage() {
               <button
                 key={opt.value}
                 onClick={() => setPriceRange(opt.value)}
-                className={`px-2.5 py-1 rounded text-xs border ${priceRange === opt.value ? "bg-orange-500 text-white border-orange-500" : "border-gray-200 text-gray-600"}`}
+                className={`px-3.5 py-1.5 rounded-lg text-sm border font-medium transition-all ${
+                  priceRange === opt.value
+                    ? "bg-orange-500 text-white border-orange-500 shadow-sm"
+                    : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                }`}
               >
                 {opt.label}
               </button>
@@ -162,30 +156,33 @@ export default function HomePage() {
       )}
 
       {filtered.length === 0 ? (
-        // A4: Không tìm thấy voucher phù hợp
-        <div className="flex flex-col items-center py-16 text-gray-400">
-          <Search size={36} className="mb-2" />
-          <p className="text-sm">Không tìm thấy voucher phù hợp</p>
+        <div className="flex flex-col items-center py-20 text-gray-400">
+          <Search size={48} className="mb-3 stroke-1" />
+          <p className="text-base font-medium text-gray-600">
+            Không tìm thấy voucher phù hợp
+          </p>
           <button
             onClick={() => {
               setSearchValue("");
               setActiveCategory("Tất cả");
               setPriceRange("");
             }}
-            className="mt-3 text-orange-500 text-sm hover:underline"
+            className="mt-3 text-orange-600 font-semibold text-sm hover:underline"
           >
             Xóa bộ lọc
           </button>
         </div>
       ) : (
-        <div className="mb-6">
-          <h2 className="font-semibold text-gray-900 mb-3">
+        <div>
+          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
             {searchValue ? "Kết quả tìm kiếm" : "Voucher đang bán"}
-            <span className="ml-2 text-xs font-normal text-gray-400">
+            <span className="text-sm font-normal text-gray-500">
               ({filtered.length})
             </span>
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+          {/* Tăng từ 3 cột lên 4 cột ở màn hình XL để tận dụng độ rộng màn hình */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {filtered.map((v) => (
               <VoucherCard
                 key={v.id}
@@ -206,46 +203,56 @@ function VoucherCard({ voucher: v, onClick, discountPct, remaining }) {
   return (
     <button
       onClick={onClick}
-      className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden text-left hover:shadow-md transition-shadow group"
+      className="bg-white rounded-2xl shadow-sm hover:shadow-lg border border-gray-100 overflow-hidden text-left transition-all duration-200 group flex flex-col h-full"
     >
-      <div className="relative">
+      <div className="relative overflow-hidden">
+        {/* Tăng độ cao ảnh từ h-36 lên h-44 */}
         <img
           src={v.image}
           alt={v.name}
-          className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+          className="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-300"
         />
         {discountPct > 0 && (
-          <span className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded font-bold">
+          <span className="absolute top-2.5 right-2.5 bg-red-500 text-white text-xs px-2.5 py-1 rounded-md font-bold shadow">
             -{discountPct}%
           </span>
         )}
       </div>
-      <div className="p-3">
-        <p className="text-xs text-orange-600 font-medium mb-0.5">
-          {v.partner}
-        </p>
-        <p className="text-sm font-semibold text-gray-900 line-clamp-2 mb-2">
-          {v.name}
-        </p>
-        <div className="flex items-end gap-2 mb-2">
-          <p className="text-base font-bold text-orange-600">
-            {v.salePrice.toLocaleString("vi-VN")}đ
+
+      <div className="p-4 flex flex-col flex-1 justify-between">
+        <div>
+          <p className="text-xs text-orange-600 font-semibold uppercase tracking-wider mb-1">
+            {v.partner}
           </p>
-          <p className="text-xs text-gray-400 line-through">
-            {v.originalPrice.toLocaleString("vi-VN")}đ
+          {/* Tăng kích thước tên voucher từ text-sm lên text-base */}
+          <p className="text-base font-bold text-gray-900 line-clamp-2 mb-3 group-hover:text-orange-600 transition-colors">
+            {v.name}
           </p>
         </div>
-        <div className="flex items-center justify-between text-xs text-gray-400">
-          {remaining <= 20 && remaining > 0 && (
-            <span className="text-red-500 font-medium">Còn {remaining}</span>
-          )}
-          {remaining > 20 && <span>Còn {remaining}</span>}
-        </div>
-        <div className="flex items-center gap-1 mt-1.5 text-xs text-gray-400">
-          <Clock size={10} />
-          <span>
-            Bán đến {new Date(v.endSaleDate).toLocaleDateString("vi-VN")}
-          </span>
+
+        <div>
+          <div className="flex items-baseline gap-2 mb-2">
+            <p className="text-lg font-extrabold text-orange-600">
+              {v.salePrice.toLocaleString("vi-VN")}đ
+            </p>
+            <p className="text-xs text-gray-400 line-through font-medium">
+              {v.originalPrice.toLocaleString("vi-VN")}đ
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-gray-50">
+            {remaining <= 20 && remaining > 0 ? (
+              <span className="text-red-500 font-semibold">
+                Còn lại {remaining}
+              </span>
+            ) : (
+              <span>Còn lại {remaining}</span>
+            )}
+            <div className="flex items-center gap-1">
+              <Clock size={12} />
+              <span>{new Date(v.endSaleDate).toLocaleDateString("vi-VN")}</span>
+            </div>
+          </div>
         </div>
       </div>
     </button>

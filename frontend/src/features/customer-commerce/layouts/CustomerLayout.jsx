@@ -1,5 +1,5 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ShoppingCart,
   Search,
@@ -10,6 +10,7 @@ import {
   LogOut,
   Package,
 } from "lucide-react";
+import { fetchCategories } from "../api/catalogApi";
 
 function getStoredUser() {
   try {
@@ -19,27 +20,39 @@ function getStoredUser() {
   }
 }
 
-const CATEGORY_TABS = [
-  "Ẩm thực",
-  "Làm đẹp & Spa",
-  "Cà phê & Bánh",
-  "Giải trí",
-  "Du lịch & Khách sạn",
-  "Thể thao & Sức khỏe",
-];
+const MAX_VISIBLE_CATEGORIES = 8;
 
 export default function CustomerLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const user = getStoredUser();
   const isLoggedIn = !!localStorage.getItem("accessToken");
+
   const [searchValue, setSearchValue] = useState("");
-  const cartCount = 0; // TODO: nối API giỏ hàng ở task khác
+  const [categories, setCategories] = useState([]);
+  const [activeCategory, setActiveCategory] = useState("Tất cả");
+  const [showMoreCategories, setShowMoreCategories] = useState(false);
+  const cartCount = 0;
+
+  useEffect(() => {
+    fetchCategories()
+      .then(setCategories)
+      .catch(() => setCategories([]));
+  }, []);
+
+  const visibleCategories = categories.slice(0, MAX_VISIBLE_CATEGORIES);
+  const overflowCategories = categories.slice(MAX_VISIBLE_CATEGORIES);
 
   function handleLogout() {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("user");
     navigate("/login");
+  }
+
+  function selectCategory(name) {
+    setActiveCategory(name);
+    setShowMoreCategories(false);
+    if (location.pathname !== "/customer") navigate("/customer");
   }
 
   return (
@@ -54,7 +67,7 @@ export default function CustomerLayout() {
               <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center">
                 <Tag size={14} className="text-orange-500" />
               </div>
-              <span className="font-bold text-sm hidden sm:block">
+              <span className="font-bold text-base hidden sm:block">
                 EC Voucher
               </span>
             </button>
@@ -69,7 +82,7 @@ export default function CustomerLayout() {
                 onChange={(e) => setSearchValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && navigate("/customer")}
                 placeholder="Tìm voucher ưu đãi..."
-                className="w-full pl-9 pr-3 py-1.5 rounded-full text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300"
+                className="w-full pl-9 pr-3 py-1.5 rounded-full text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
             </div>
 
@@ -78,9 +91,9 @@ export default function CustomerLayout() {
               className="relative flex items-center gap-1 bg-white/20 hover:bg-white/30 px-2.5 py-1.5 rounded-full transition-colors"
             >
               <ShoppingCart size={15} />
-              <span className="text-xs hidden sm:block">Giỏ hàng</span>
+              <span className="text-sm hidden sm:block">Giỏ hàng</span>
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-sm rounded-full w-4 h-4 flex items-center justify-center">
                   {cartCount}
                 </span>
               )}
@@ -88,11 +101,11 @@ export default function CustomerLayout() {
 
             {isLoggedIn ? (
               <div className="relative group flex-shrink-0">
-                <button className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 px-2.5 py-1.5 rounded-full text-sm transition-colors">
+                <button className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 px-2.5 py-1.5 rounded-full text-base transition-colors">
                   <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center">
                     <User size={11} className="text-orange-500" />
                   </div>
-                  <span className="hidden sm:block text-xs max-w-20 truncate">
+                  <span className="hidden sm:block text-sm max-w-20 truncate">
                     {user?.name}
                   </span>
                   <ChevronDown size={11} />
@@ -126,13 +139,13 @@ export default function CustomerLayout() {
               <div className="flex gap-1.5 flex-shrink-0">
                 <button
                   onClick={() => navigate("/login")}
-                  className="text-xs bg-white text-orange-600 px-2.5 py-1.5 rounded-full font-semibold hover:bg-orange-50"
+                  className="text-sm bg-white text-orange-600 px-2.5 py-1.5 rounded-full font-semibold hover:bg-orange-50"
                 >
                   Đăng nhập
                 </button>
                 <button
                   onClick={() => navigate("/customer/register")}
-                  className="text-xs bg-white/20 hover:bg-white/30 px-2.5 py-1.5 rounded-full hidden sm:block"
+                  className="text-sm bg-white/20 hover:bg-white/30 px-2.5 py-1.5 rounded-full hidden sm:block"
                 >
                   Đăng ký
                 </button>
@@ -140,25 +153,70 @@ export default function CustomerLayout() {
             )}
           </div>
 
-          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none text-xs">
-            {CATEGORY_TABS.map((cat) => (
+          {/* Thanh danh mục dưới Header - Đã tăng cỡ chữ & khoảng cách hài hòa */}
+          <div className="flex items-center gap-6 overflow-x-auto pb-2.5 pt-1 scrollbar-none text-base font-medium">
+            <button
+              onClick={() => selectCategory("Tất cả")}
+              className={`whitespace-nowrap py-1 border-b-2 transition-all ${
+                activeCategory === "Tất cả"
+                  ? "border-white text-white font-semibold"
+                  : "border-transparent text-white/80 hover:text-white"
+              }`}
+            >
+              Tất cả
+            </button>
+
+            {visibleCategories.map((cat) => (
               <button
-                key={cat}
-                onClick={() => {
-                  setSearchValue(cat);
-                  navigate("/customer");
-                }}
-                className="whitespace-nowrap text-white/80 hover:text-white py-1 border-b-2 border-transparent hover:border-white/60 transition-colors"
+                key={cat.id}
+                onClick={() => selectCategory(cat.name)}
+                className={`whitespace-nowrap py-1 border-b-2 transition-all ${
+                  activeCategory === cat.name
+                    ? "border-white text-white font-semibold"
+                    : "border-transparent text-white/80 hover:text-white"
+                }`}
               >
-                {cat}
+                {cat.name}
               </button>
             ))}
+
+            {overflowCategories.length > 0 && (
+              <div className="relative flex-shrink-0">
+                <button
+                  onClick={() => setShowMoreCategories((s) => !s)}
+                  className="whitespace-nowrap flex items-center gap-1.5 py-1 text-white/80 hover:text-white font-medium"
+                >
+                  Danh mục khác <ChevronDown size={14} />
+                </button>
+
+                {showMoreCategories && (
+                  <div className="absolute right-0 top-full mt-1.5 w-52 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-50 max-h-64 overflow-y-auto">
+                    {overflowCategories.map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => selectCategory(cat.name)}
+                        className="w-full text-left px-4 py-2 text-base text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
+                      >
+                        {cat.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </header>
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-4">
-        <Outlet context={{ searchValue, setSearchValue }} />
+        <Outlet
+          context={{
+            searchValue,
+            setSearchValue,
+            activeCategory,
+            setActiveCategory,
+          }}
+        />
       </main>
 
       <nav className="sm:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 z-30 flex">
@@ -184,12 +242,12 @@ export default function CustomerLayout() {
               <div className="relative">
                 <Icon size={18} />
                 {item.badge ? (
-                  <span className="absolute -top-1 -right-2 bg-red-500 text-white text-xs rounded-full w-3.5 h-3.5 flex items-center justify-center">
+                  <span className="absolute -top-1 -right-2 bg-red-500 text-white text-sm rounded-full w-3.5 h-3.5 flex items-center justify-center">
                     {item.badge}
                   </span>
                 ) : null}
               </div>
-              <span className="text-xs">{item.label}</span>
+              <span className="text-sm">{item.label}</span>
             </button>
           );
         })}
@@ -203,7 +261,7 @@ function MenuLink({ icon: Icon, label, onClick, danger }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 ${danger ? "text-red-600" : "text-gray-700"}`}
+      className={`w-full flex items-center gap-2 px-3 py-2 text-base hover:bg-gray-50 ${danger ? "text-red-600" : "text-gray-700"}`}
     >
       <Icon size={14} />
       {label}
