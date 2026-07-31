@@ -20,7 +20,7 @@ const partnerStatusData = [
   { id: 'approved', name: 'Đã duyệt', value: 2, color: '#16a34a' },
   { id: 'pending', name: 'Chờ duyệt', value: 1, color: '#d97706' },
   { id: 'rejected', name: 'Bị từ chối', value: 1, color: '#dc2626' },
-  { id: 'locked', name: 'Bị khóa', value: 1, color: '#6b7280' },
+  { id: 'locked', name: 'Tạm khóa', value: 1, color: '#6b7280' },
 ];
 
 export default function Dashboard({ onNavigate }: DashboardProps) {
@@ -35,7 +35,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
 
   const kpiCards = [
     { label: 'Tổng người dùng', value: mockUsers.length, icon: Users, color: 'blue', page: 'users' as Page },
-    { label: 'Tài khoản bị khóa', value: lockedUsers, icon: AlertCircle, color: 'red', page: 'users' as Page, filter: { status: 'locked' } },
+    { label: 'Tài khoản Tạm khóa', value: lockedUsers, icon: AlertCircle, color: 'red', page: 'users' as Page, filter: { status: 'locked' } },
     { label: 'Đối tác chờ duyệt', value: pendingPartners, icon: Building2, color: 'amber', page: 'partners' as Page, filter: { profileStatus: 'pending' } },
     { label: 'Yêu cầu chi nhánh', value: pendingBranchRequests, icon: Building2, color: 'orange', page: 'partners' as Page },
     { label: 'Voucher chờ duyệt', value: pendingVouchers, icon: Tag, color: 'amber', page: 'vouchers' as Page },

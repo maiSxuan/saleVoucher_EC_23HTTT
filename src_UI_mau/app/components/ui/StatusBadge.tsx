@@ -38,7 +38,7 @@ export function StatusBadge({ label, variant, size = 'sm', dot = false }: BadgeP
 // Helper functions to get badge variant from status strings
 export function getUserStatusBadge(status: string): BadgeProps {
   if (status === 'active') return { label: 'Đang hoạt động', variant: 'green', dot: true };
-  return { label: 'Bị khóa', variant: 'red', dot: true };
+  return { label: 'Tạm khóa', variant: 'red', dot: true };
 }
 
 export function getProfileStatusBadge(status: string): BadgeProps {
@@ -46,7 +46,7 @@ export function getProfileStatusBadge(status: string): BadgeProps {
     pending: { label: 'Chờ duyệt', variant: 'amber', dot: true },
     approved: { label: 'Đã duyệt', variant: 'green', dot: true },
     rejected: { label: 'Bị từ chối', variant: 'red', dot: true },
-    locked: { label: 'Bị khóa', variant: 'red', dot: true },
+    locked: { label: 'Tạm khóa', variant: 'red', dot: true },
   };
   return map[status] || { label: status, variant: 'gray' };
 }

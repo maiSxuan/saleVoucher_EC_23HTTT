@@ -19,7 +19,7 @@ const ROLE_CONFIG = {
 // Mapping trạng thái DB → label + màu
 const STATUS_CONFIG = {
   'Dang hoat dong': { label: 'Đang hoạt động', dotClass: 'bg-green-500', textClass: 'text-green-700 bg-green-50 border border-green-200' },
-  'Bi khoa': { label: 'Bị khóa', dotClass: 'bg-red-500', textClass: 'text-red-700 bg-red-50 border border-red-200' },
+  'Bi khoa': { label: 'Tạm khóa', dotClass: 'bg-red-500', textClass: 'text-red-700 bg-red-50 border border-red-200' },
 };
 
 // Danh sách vai trò hợp lệ cho select input (cập nhật role)
@@ -272,14 +272,14 @@ function UserDetailPanel({ user, onLock, onUnlock, onRoleUpdate, onBack }) {
         open={lockModal}
         onClose={() => setLockModal(false)}
         onConfirm={async (reason) => { await onLock(user.id, reason); setLockModal(false); }}
-        title="Khóa tài khoản"
+        title="Tạm khóa tài khoản"
         targetName={user.name}
         beforeStatus="Đang hoạt động"
-        afterStatus="Bị khóa"
-        warning="Tài khoản bị khóa sẽ không thể đăng nhập. Lịch sử giao dịch vẫn được giữ nguyên."
+        afterStatus="Tạm khóa"
+        warning="Tài khoản bị tạm khóa sẽ không thể đăng nhập. Lịch sử giao dịch vẫn được giữ nguyên."
         requireReason
-        reasonLabel="Lý do khóa tài khoản"
-        confirmLabel="Xác nhận khóa"
+        reasonLabel="Lý do tạm khóa"
+        confirmLabel="Xác nhận tạm khóa"
         isDanger
       />
 
@@ -290,7 +290,7 @@ function UserDetailPanel({ user, onLock, onUnlock, onRoleUpdate, onBack }) {
         onConfirm={async (reason) => { await onUnlock(user.id, reason); setUnlockModal(false); }}
         title="Mở khóa tài khoản"
         targetName={user.name}
-        beforeStatus="Bị khóa"
+        beforeStatus="Tạm khóa"
         afterStatus="Đang hoạt động"
         requireReason
         reasonLabel="Lý do mở khóa"
@@ -529,7 +529,7 @@ export default function UserListPage() {
           >
             <option value="">Tất cả trạng thái</option>
             <option value="Dang hoat dong">Đang hoạt động</option>
-            <option value="Bi khoa">Bị khóa</option>
+            <option value="Tam khoa">Tạm khóa</option>
           </select>
         </div>
         {/* Thông tin + nút đặt lại */}

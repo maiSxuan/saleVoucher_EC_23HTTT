@@ -58,7 +58,7 @@ export default function Partners({ initialFilters, onNavigate }: PartnersProps) 
 
   const doLock = async (reason?: string) => {
     if (!selected) return;
-    const log = { timestamp: new Date().toLocaleString('vi-VN'), action: 'Khóa đối tác', executor: 'Admin Hệ thống', before: 'Hoạt động', after: 'Bị khóa', reason: reason || '' };
+    const log = { timestamp: new Date().toLocaleString('vi-VN'), action: 'Khóa đối tác', executor: 'Admin Hệ thống', before: 'Hoạt động', after: 'Tạm khóa', reason: reason || '' };
     setPartners(prev => prev.map(p => p.id === selected.id ? { ...p, profileStatus: 'locked' as PartnerProfileStatus, adminHistory: [...p.adminHistory, log] } : p));
     setSelected(prev => prev ? { ...prev, profileStatus: 'locked', adminHistory: [...prev.adminHistory, log] } : null);
     setLockModal(false);
@@ -67,7 +67,7 @@ export default function Partners({ initialFilters, onNavigate }: PartnersProps) 
 
   const doUnlock = async (reason?: string) => {
     if (!selected) return;
-    const log = { timestamp: new Date().toLocaleString('vi-VN'), action: 'Mở khóa đối tác', executor: 'Admin Hệ thống', before: 'Bị khóa', after: 'Hoạt động', reason: reason || '' };
+    const log = { timestamp: new Date().toLocaleString('vi-VN'), action: 'Mở khóa đối tác', executor: 'Admin Hệ thống', before: 'Tạm khóa', after: 'Hoạt động', reason: reason || '' };
     setPartners(prev => prev.map(p => p.id === selected.id ? { ...p, profileStatus: 'approved' as PartnerProfileStatus, adminHistory: [...p.adminHistory, log] } : p));
     setSelected(prev => prev ? { ...prev, profileStatus: 'approved', adminHistory: [...prev.adminHistory, log] } : null);
     setUnlockModal(false);
@@ -361,13 +361,13 @@ export default function Partners({ initialFilters, onNavigate }: PartnersProps) 
 
         <ConfirmModal open={lockModal} onClose={() => setLockModal(false)} onConfirm={doLock}
           title="Khóa đối tác" targetName={selected.businessName}
-          beforeStatus="Hoạt động" afterStatus="Bị khóa"
+          beforeStatus="Hoạt động" afterStatus="Tạm khóa"
           consequences={['Chi nhánh của đối tác không được dùng cho voucher mới.', 'Nhân viên đối tác bị ảnh hưởng quyền vận hành.']}
           requireReason reasonLabel="Lý do khóa" confirmLabel="Xác nhận khóa" confirmVariant="danger" />
 
         <ConfirmModal open={unlockModal} onClose={() => setUnlockModal(false)} onConfirm={doUnlock}
           title="Mở khóa đối tác" targetName={selected.businessName}
-          beforeStatus="Bị khóa" afterStatus="Hoạt động"
+          beforeStatus="Tạm khóa" afterStatus="Hoạt động"
           requireReason reasonLabel="Lý do mở khóa" confirmLabel="Xác nhận mở khóa" />
 
         {branchReqModal.open && currentBranchReq && (

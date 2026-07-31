@@ -547,7 +547,7 @@ export const partnerRoleLabels: Record<PartnerRole, string> = {
 
 export const staffStatusLabels: Record<StaffStatus, string> = {
   active: 'Hoạt động',
-  locked: 'Bị khóa',
+  locked: 'Tạm khóa',
   deleted: 'Đã vô hiệu hóa',
 };
 

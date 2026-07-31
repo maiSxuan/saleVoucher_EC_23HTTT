@@ -375,8 +375,8 @@ export default function PartnerAuth({ onLoginSuccess }: PartnerAuthProps) {
               <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
                 <AlertCircle size={28} className="text-gray-500" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Tài khoản bị khóa</h2>
-              <p className="text-gray-500 text-sm mb-4">Tài khoản doanh nghiệp của bạn đã bị khóa bởi Quản trị viên. Vui lòng liên hệ hỗ trợ để được giải quyết.</p>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Tài khoản Tạm khóa</h2>
+              <p className="text-gray-500 text-sm mb-4">Tài khoản doanh nghiệp của bạn đã Tạm khóa bởi Quản trị viên. Vui lòng liên hệ hỗ trợ để được giải quyết.</p>
               <p className="text-xs text-gray-400 mb-4">Liên hệ: support@ecvoucher.vn | 1900 xxxx</p>
               <button onClick={() => setView('login')} className="text-sm text-emerald-600 hover:underline">Quay lại đăng nhập</button>
             </div>

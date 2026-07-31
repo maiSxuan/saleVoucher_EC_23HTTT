@@ -725,11 +725,11 @@ Email hoặc mật khẩu không đúng
 ```js
 if (account.nguoidung.trang_thai !== 'Dang hoat dong') {
   ...
-  throw new ForbiddenError('Tài khoản đã bị khóa hoặc không hoạt động');
+  throw new ForbiddenError('Tài khoản đã Tạm khóa hoặc không hoạt động');
 }
 ```
 
-Tài khoản tồn tại nhưng bị khóa không được phép đăng nhập.
+Tài khoản tồn tại nhưng Tạm khóa không được phép đăng nhập.
 
 Đây là lỗi 403 vì:
 
@@ -852,7 +852,7 @@ if (!process.env.JWT_SECRET) {
 Mọi kết quả đăng nhập đều được ghi log:
 
 - Không tìm thấy tài khoản.
-- Tài khoản bị khóa.
+- Tài khoản Tạm khóa.
 - Sai mật khẩu.
 - Đăng nhập thành công.
 
@@ -2126,7 +2126,7 @@ Vì vậy phần enum đã được tạo tương đối đầy đủ, nhưng c�
 ## 13.2. Luồng đăng nhập thất bại
 
 ```text
-1. Service phát hiện tài khoản không tồn tại, bị khóa hoặc sai mật khẩu.
+1. Service phát hiện tài khoản không tồn tại, Tạm khóa hoặc sai mật khẩu.
 2. Service ghi audit log thất bại ở chế độ non-strict.
 3. Service throw UnauthorizedError hoặc ForbiddenError.
 4. Controller nên gọi next(error).

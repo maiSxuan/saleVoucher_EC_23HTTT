@@ -112,3 +112,5 @@ các file (có truong src_UI_mau) mã nguồn thực tế liên quan đến ch�
 hiện tại nó đang là mockdata, tôi cần bạn thực hiện lấy data thật từ supabase.
 kết nối từ đăng nhập tài khoản admin sau đó từ authenticate --> authorize để xác nhận tài khoản là admin mới cho vào.
 Lưu ý: thực thiện code từng file một + ghi lại giải thích code từng dòng của từng file đó và ghi lại ý nghĩa tại sao phải làm như vậy, sau đó ghi lại vào codeX_done.md 
+
+BƯỚC 4: THỰC HIỆN TASK thêm chức năng quên mật khẩu, và trả otp để đăng nhập qua email

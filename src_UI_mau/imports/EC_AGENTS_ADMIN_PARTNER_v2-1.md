@@ -115,7 +115,7 @@ Quản trị viên **không được tùy ý sửa dữ liệu nghiệp vụ vư
 
 Ảnh hưởng từ Admin:
 
-- Tài khoản bị khóa → không thể tiếp tục sử dụng chức năng yêu cầu đăng nhập; lịch sử mua vẫn được giữ.
+- Tài khoản Tạm khóa → không thể tiếp tục sử dụng chức năng yêu cầu đăng nhập; lịch sử mua vẫn được giữ.
 - Đơn hàng được hủy hoặc hoàn tiền → trạng thái đơn và voucher code trong ví thay đổi.
 - Voucher code bị vô hiệu hóa hoặc cấp lại → mã cũ không còn hợp lệ; mã mới xuất hiện.
 - Voucher bị tạm ẩn hoặc ngừng bán → không còn hiển thị để mua.
@@ -127,7 +127,7 @@ Quản trị viên **không được tùy ý sửa dữ liệu nghiệp vụ vư
 
 - Hồ sơ được duyệt → được phép vận hành theo phạm vi đã duyệt.
 - Hồ sơ bị từ chối → không được tạo hoặc bán voucher.
-- Đối tác bị khóa → không được vận hành bình thường; chi nhánh không được dùng cho voucher mới.
+- Đối tác Tạm khóa → không được vận hành bình thường; chi nhánh không được dùng cho voucher mới.
 - Yêu cầu chi nhánh được duyệt → danh sách chi nhánh chính thức thay đổi.
 - Voucher được duyệt/từ chối → portal đối tác nhận kết quả và lý do.
 - Voucher được lên lịch, đang bán hoặc tạm ẩn → portal đối tác phải phản ánh đúng trạng thái công bố.
@@ -136,7 +136,7 @@ Quản trị viên **không được tùy ý sửa dữ liệu nghiệp vụ vư
 
 Ảnh hưởng từ Admin:
 
-- Đối tác bị khóa → nhân viên không được xác thực voucher trong phạm vi đối tác đó.
+- Đối tác Tạm khóa → nhân viên không được xác thực voucher trong phạm vi đối tác đó.
 - Chi nhánh bị tạm ngưng hoặc bị từ chối → nhân viên tại chi nhánh đó không được xác thực voucher mới thuộc phạm vi không còn hợp lệ.
 - Voucher bị tạm ẩn không đồng nghĩa voucher code đã bán bị vô hiệu hóa; việc xác thực mã phải dựa vào trạng thái voucher code và điều kiện sử dụng.
 - Nhân viên chỉ được xem và xác thực voucher thuộc đối tác/chi nhánh của mình.
@@ -420,7 +420,7 @@ Tổ chức theo các khu vực hoặc tab:
 | Trạng thái hiện tại | Hành động được phép |
 |---|---|
 | Đang hoạt động | Cập nhật vai trò, Khóa tài khoản |
-| Bị khóa | Cập nhật vai trò nếu được phép, Mở khóa tài khoản |
+| Tạm khóa | Cập nhật vai trò nếu được phép, Mở khóa tài khoản |
 
 Không hiển thị đồng thời nút `Khóa` và `Mở khóa`.
 
@@ -456,7 +456,7 @@ Modal cần:
 
 Sau thành công:
 
-- Badge chuyển thành `Bị khóa`.
+- Badge chuyển thành `Tạm khóa`.
 - Nút `Khóa` biến mất.
 - Nút `Mở khóa` xuất hiện.
 - Có liên kết xem nhật ký.
@@ -611,7 +611,7 @@ Không cho phép từ chối mà không có lý do.
 
 Khi khóa:
 
-- Trạng thái đối tác chuyển `Bị khóa`.
+- Trạng thái đối tác chuyển `Tạm khóa`.
 - Chi nhánh của đối tác không được dùng cho voucher mới.
 - Nhân viên đối tác bị ảnh hưởng quyền vận hành.
 - Lý do khóa bắt buộc.
@@ -1102,7 +1102,7 @@ Hậu quả:
 ### 13.1. KPI cards
 
 - Tổng người dùng
-- Tài khoản bị khóa
+- Tài khoản Tạm khóa
 - Đối tác chờ duyệt
 - Yêu cầu chi nhánh chờ xử lý
 - Voucher chờ duyệt
@@ -1217,7 +1217,7 @@ Drawer chi tiết gồm:
 5. Voucher code chỉ phát hành sau khi thanh toán thành công.
 6. Mỗi voucher code phải duy nhất và khó đoán.
 7. Voucher đã sử dụng không được dùng lại, trừ trường hợp thiết kế nhiều lượt.
-8. Voucher code hết hạn, bị hủy hoặc bị khóa không được sử dụng.
+8. Voucher code hết hạn, bị hủy hoặc Tạm khóa không được sử dụng.
 9. Đối tác chỉ xác thực voucher thuộc phạm vi của mình.
 10. Số lượng bán không vượt quá số lượng phát hành.
 11. Các thao tác quản trị quan trọng phải được lưu vết.
@@ -1282,7 +1282,7 @@ Dữ liệu dưới đây chỉ để Figma Make thể hiện trạng thái, kh�
 ### Người dùng
 
 - Một tài khoản đang hoạt động.
-- Một tài khoản bị khóa.
+- Một tài khoản Tạm khóa.
 - Một tài khoản khách hàng có lịch sử mua.
 - Một tài khoản đối tác.
 - Một tài khoản nhân viên đối tác.
@@ -1292,7 +1292,7 @@ Dữ liệu dưới đây chỉ để Figma Make thể hiện trạng thái, kh�
 - Một hồ sơ chờ duyệt.
 - Một hồ sơ đã duyệt.
 - Một hồ sơ bị từ chối.
-- Một hồ sơ bị khóa.
+- Một hồ sơ Tạm khóa.
 - Một đối tác có yêu cầu thêm chi nhánh.
 - Một đối tác có yêu cầu sửa chi nhánh.
 - Một chi nhánh tạm ngưng.
@@ -1631,7 +1631,7 @@ Nhân viên chi nhánh là actor nghiệp vụ chính của `BR_PAR_06` — Xác
 - Nếu doanh nghiệp ở trạng thái `Chờ duyệt`, không tạo phiên Partner Portal.
 - Nếu hồ sơ bị `Từ chối`, hiển thị lý do và không tạo phiên.
 - Nếu doanh nghiệp bị `Khóa`, Owner và toàn bộ nhân viên không được đăng nhập.
-- Khi tài khoản nhân viên bị khóa, phiên hiện tại phải bị hủy ngay.
+- Khi tài khoản nhân viên Tạm khóa, phiên hiện tại phải bị hủy ngay.
 - Quyền ở giao diện không thay thế kiểm tra quyền tại backend.
 
 ### 23.5. Ma trận phạm vi tối thiểu
@@ -1746,7 +1746,7 @@ Không tạo hai trạng thái dữ liệu khác nhau chỉ vì nhãn hiển th�
 - `Đã sử dụng`
 - `Hết hạn`
 - `Bị hủy`
-- `Bị khóa`
+- `Tạm khóa`
 - `Vô hiệu hóa`
 - `Lỗi sinh mã`
 
@@ -2066,7 +2066,7 @@ Không tách lỗi sai email và sai mật khẩu.
 
 - `Chờ duyệt`: hiển thị hồ sơ đang được duyệt; không tạo phiên.
 - `Từ chối`: hiển thị lý do từ chối; không tạo phiên.
-- `Khóa`: hiển thị tài khoản bị khóa; không tạo phiên.
+- `Khóa`: hiển thị tài khoản Tạm khóa; không tạo phiên.
 - `Hoạt động`: tạo phiên và điều hướng theo role.
 
 Nếu đăng nhập sai quá số lần:
@@ -2261,7 +2261,7 @@ Nếu không có ràng buộc:
 - Thông tin pháp lý chỉ có hiệu lực sau khi Admin duyệt.
 - Yêu cầu phải lưu riêng, không ghi đè.
 - Mỗi doanh nghiệp tối đa một yêu cầu pháp lý đang chờ.
-- Doanh nghiệp không tự bị khóa chỉ vì có yêu cầu cập nhật chờ duyệt.
+- Doanh nghiệp không tự Tạm khóa chỉ vì có yêu cầu cập nhật chờ duyệt.
 - Nhật ký phải lưu diff trước/sau và kết quả duyệt.
 
 ---
@@ -3012,7 +3012,7 @@ Không dùng các KPI dashboard để thay thế báo cáo chi tiết hoặc b�
 - Yêu cầu hồ sơ/chi nhánh cần bổ sung.
 - Kết quả duyệt mới.
 - Lỗi gửi thông báo mô phỏng.
-- Nhân viên bị khóa.
+- Nhân viên Tạm khóa.
 
 ### 36.3. Quick actions
 
@@ -3156,11 +3156,11 @@ Log mutation gồm:
 - Hồ sơ chờ duyệt.
 - Hồ sơ hoạt động.
 - Hồ sơ bị từ chối có lý do.
-- Doanh nghiệp bị khóa.
+- Doanh nghiệp Tạm khóa.
 - Owner hoạt động.
 - Quản lý vận hành.
 - Nhân viên chi nhánh hoạt động.
-- Nhân viên bị khóa.
+- Nhân viên Tạm khóa.
 
 ### 39.2. Chi nhánh
 

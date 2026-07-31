@@ -60,7 +60,7 @@ class UserController {
       const updated = await this.userService.lockUser({
         actorId,      // Ai đang thực hiện (từ token)
         actorRole,    // Role của người thực hiện (từ token)
-        targetUserId: userId,  // Ai bị khóa (từ URL)
+        targetUserId: userId,  // Ai Tạm khóa (từ URL)
         reason,
       });
 

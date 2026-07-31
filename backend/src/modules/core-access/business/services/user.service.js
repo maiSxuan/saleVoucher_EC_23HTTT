@@ -42,7 +42,7 @@ class UserService {
           sdt: u.sdt,
           vai_tro: u.vai_tro,
           trang_thai: u.trang_thai,
-          ngay_tao: u.ngay_tao,
+          created_at: u.created_at,
           ma_chi_nhanh: u.ma_chi_nhanh,
           ma_tk: null, // findAll không join TAIKHOAN (tránh dư data không cần thiết)
         })
@@ -83,7 +83,7 @@ class UserService {
         sdt: user.sdt,
         vai_tro: user.vai_tro,
         trang_thai: user.trang_thai,
-        ngay_tao: user.ngay_tao,
+        created_at: user.created_at,
         ma_chi_nhanh: user.ma_chi_nhanh,
         ma_tk: null,
       }),
@@ -113,7 +113,7 @@ class UserService {
 
     // Business rule 2: Chỉ khóa được tài khoản đang hoạt động
     if (targetUser.trang_thai === STATUS.LOCKED) {
-      throw new AppError('Tài khoản đã bị khóa rồi', 400, 'ALREADY_LOCKED');
+      throw new AppError('Tài khoản đã Tạm khóa rồi', 400, 'ALREADY_LOCKED');
     }
 
     // Ghi audit log TRƯỚC khi update (strict=true → nếu log thất bại thì không update)
@@ -141,7 +141,7 @@ class UserService {
   // -----------------------------------------------------------------------
   // 4. MỞ KHÓA TÀI KHOẢN NGƯỜI DÙNG (BR-ADM-01: Admin mở khóa user)
   //    Business Rules:
-  //      - Chỉ có thể mở khóa tài khoản đang bị khóa.
+  //      - Chỉ có thể mở khóa tài khoản đang Tạm khóa.
   //      - Phải ghi audit log (strict=true).
   // -----------------------------------------------------------------------
   async unlockUser({ actorId, actorRole, targetUserId, reason }) {
@@ -150,7 +150,7 @@ class UserService {
       throw new AppError('Không tìm thấy người dùng cần mở khóa', 404, 'USER_NOT_FOUND');
     }
 
-    // Business rule: Chỉ mở khóa được tài khoản đang bị khóa
+    // Business rule: Chỉ mở khóa được tài khoản đang Tạm khóa
     if (targetUser.trang_thai === STATUS.ACTIVE) {
       throw new AppError('Tài khoản đang hoạt động bình thường, không cần mở khóa', 400, 'ALREADY_ACTIVE');
     }
@@ -243,7 +243,7 @@ class UserService {
       sdt: user.sdt,
       vai_tro: user.vai_tro,
       trang_thai: user.trang_thai,
-      ngay_tao: user.ngay_tao,
+      created_at: user.created_at,
       ma_chi_nhanh: user.ma_chi_nhanh,
       ma_tk: null,
     });

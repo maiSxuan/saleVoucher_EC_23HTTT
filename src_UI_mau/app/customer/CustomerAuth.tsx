@@ -161,7 +161,7 @@ export default function CustomerAuth({ onLoginSuccess }: CustomerAuthProps) {
         <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-3">
           <AlertCircle size={24} className="text-red-600" />
         </div>
-        <h2 className="font-bold text-gray-900 mb-1">Tài khoản bị khóa</h2>
+        <h2 className="font-bold text-gray-900 mb-1">Tài khoản Tạm khóa</h2>
         <p className="text-sm text-gray-500 mb-4">Tài khoản của bạn đã bị Quản trị viên khóa. Vui lòng liên hệ bộ phận hỗ trợ để được giải quyết.</p>
         <button onClick={() => { setView('login'); reset(); setEmail(''); }} className="text-sm text-orange-600 hover:underline">Thử tài khoản khác</button>
       </div>

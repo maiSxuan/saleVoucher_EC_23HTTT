@@ -201,7 +201,7 @@ export const mockUsers: User[] = [
       { voucherId: 'V001', voucherName: 'Spa Thư Giãn', amount: 450000, date: '2024-12-15', codeStatus: 'disabled' },
     ],
     adminHistory: [
-      { timestamp: '2025-02-10 14:30', action: 'Khóa tài khoản', executor: 'Admin Hệ thống', before: 'Đang hoạt động', after: 'Bị khóa', reason: 'Vi phạm điều khoản sử dụng: yêu cầu hoàn tiền gian lận.' },
+      { timestamp: '2025-02-10 14:30', action: 'Khóa tài khoản', executor: 'Admin Hệ thống', before: 'Đang hoạt động', after: 'Tạm khóa', reason: 'Vi phạm điều khoản sử dụng: yêu cầu hoàn tiền gian lận.' },
     ],
   },
   {
@@ -326,7 +326,7 @@ export const mockPartners: Partner[] = [
     createdAt: '2024-06-01',
     adminHistory: [
       { timestamp: '2024-07-01 08:00', action: 'Duyệt hồ sơ đối tác', executor: 'Admin Hệ thống', before: 'Chờ duyệt', after: 'Đã duyệt', reason: '' },
-      { timestamp: '2025-07-01 16:00', action: 'Khóa đối tác', executor: 'Admin Hệ thống', before: 'Hoạt động', after: 'Bị khóa', reason: 'Nhận nhiều khiếu nại về chất lượng dịch vụ không đúng voucher.' },
+      { timestamp: '2025-07-01 16:00', action: 'Khóa đối tác', executor: 'Admin Hệ thống', before: 'Hoạt động', after: 'Tạm khóa', reason: 'Nhận nhiều khiếu nại về chất lượng dịch vụ không đúng voucher.' },
     ],
   },
 ];
@@ -610,12 +610,12 @@ export const mockContent: ContentItem[] = [
 ];
 
 export const mockLogs: SystemLog[] = [
-  { id: 'LOG001', timestamp: '2025-07-14 16:05', executor: 'Admin Hệ thống', module: 'users', action: 'Khóa tài khoản', target: 'Trần Thị Bích', targetId: 'U002', beforeStatus: 'Đang hoạt động', afterStatus: 'Bị khóa', result: 'success', reason: 'Vi phạm điều khoản sử dụng: yêu cầu hoàn tiền gian lận.' },
+  { id: 'LOG001', timestamp: '2025-07-14 16:05', executor: 'Admin Hệ thống', module: 'users', action: 'Khóa tài khoản', target: 'Trần Thị Bích', targetId: 'U002', beforeStatus: 'Đang hoạt động', afterStatus: 'Tạm khóa', result: 'success', reason: 'Vi phạm điều khoản sử dụng: yêu cầu hoàn tiền gian lận.' },
   { id: 'LOG002', timestamp: '2025-07-14 14:30', executor: 'Admin Hệ thống', module: 'vouchers', action: 'Phê duyệt voucher', target: 'Set Sushi cao cấp 2 người', targetId: 'V002', beforeStatus: 'reviewStatus: Chờ duyệt | publicationStatus: Chưa công bố', afterStatus: 'reviewStatus: Đã duyệt | publicationStatus: Đang bán', result: 'success', reason: 'Voucher hợp lệ đầy đủ.' },
   { id: 'LOG003', timestamp: '2025-07-13 11:20', executor: 'Admin Hệ thống', module: 'orders', action: 'Hoàn tiền mô phỏng', target: 'ORD004', targetId: 'ORD004', beforeStatus: 'Chờ hoàn tiền', afterStatus: 'Đã hoàn tiền', result: 'success', reason: 'Khách hàng không thể sử dụng do bệnh. Đủ điều kiện theo chính sách.' },
   { id: 'LOG004', timestamp: '2025-07-12 10:02', executor: 'Hệ thống', module: 'orders', action: 'Phát hành voucher code', target: 'ORD002', targetId: 'ORD002', beforeStatus: 'Chưa phát hành', afterStatus: 'Lỗi sinh mã', result: 'failed', errorMessage: 'Timeout kết nối đến dịch vụ sinh mã sau 30 giây.' },
   { id: 'LOG005', timestamp: '2025-07-10 09:30', executor: 'Admin Hệ thống', module: 'partners', action: 'Từ chối hồ sơ đối tác', target: 'Barber King', targetId: 'P003', beforeStatus: 'Chờ duyệt', afterStatus: 'Bị từ chối', result: 'success', reason: 'Mã số thuế không hợp lệ theo xác minh cơ quan thuế.' },
-  { id: 'LOG006', timestamp: '2025-07-09 15:00', executor: 'Admin Hệ thống', module: 'partners', action: 'Khóa đối tác', target: 'Café Highlands', targetId: 'P004', beforeStatus: 'Hoạt động', afterStatus: 'Bị khóa', result: 'success', reason: 'Nhận nhiều khiếu nại về chất lượng dịch vụ không đúng voucher.' },
+  { id: 'LOG006', timestamp: '2025-07-09 15:00', executor: 'Admin Hệ thống', module: 'partners', action: 'Khóa đối tác', target: 'Café Highlands', targetId: 'P004', beforeStatus: 'Hoạt động', afterStatus: 'Tạm khóa', result: 'success', reason: 'Nhận nhiều khiếu nại về chất lượng dịch vụ không đúng voucher.' },
   { id: 'LOG007', timestamp: '2025-07-08 14:10', executor: 'Admin Hệ thống', module: 'content', action: 'Tạm ẩn nội dung', target: 'Banner Khai trương đối tác mới', targetId: 'CT006', beforeStatus: 'Đang hiển thị', afterStatus: 'Tạm ẩn', result: 'success', reason: 'Đối tác yêu cầu tạm ẩn để cập nhật thông tin.' },
   { id: 'LOG008', timestamp: '2025-07-07 09:00', executor: 'Admin Hệ thống', module: 'users', action: 'Cập nhật vai trò', target: 'Phạm Thị Lan', targetId: 'U004', beforeStatus: 'Khách hàng', afterStatus: 'Nhân viên đối tác', result: 'success', reason: '' },
   { id: 'LOG009', timestamp: '2025-07-05 16:45', executor: 'Admin Hệ thống', module: 'vouchers', action: 'Từ chối voucher', target: 'Cắt tóc nam cao cấp (lần 1)', targetId: 'V003', beforeStatus: 'Chờ duyệt', afterStatus: 'Bị từ chối', result: 'success', reason: 'Giá bán (250.000đ) lớn hơn giá gốc (200.000đ). Thông tin giá không hợp lệ.' },
@@ -635,7 +635,7 @@ export const profileStatusLabels: Record<PartnerProfileStatus, string> = {
   pending: 'Chờ duyệt',
   approved: 'Đã duyệt',
   rejected: 'Bị từ chối',
-  locked: 'Bị khóa',
+  locked: 'Tạm khóa',
 };
 
 export const reviewStatusLabels: Record<ReviewStatus, string> = {

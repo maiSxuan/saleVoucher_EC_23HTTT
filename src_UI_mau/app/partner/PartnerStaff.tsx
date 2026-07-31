@@ -5,7 +5,7 @@ import { mockPartnerStaff, mockPartnerBranches, partnerRoleLabels, staffStatusLa
 
 const statusConfig: Record<string, { color: string; label: string }> = {
   active: { color: 'bg-green-100 text-green-700', label: 'Hoạt động' },
-  locked: { color: 'bg-red-100 text-red-700', label: 'Bị khóa' },
+  locked: { color: 'bg-red-100 text-red-700', label: 'Tạm khóa' },
   deleted: { color: 'bg-gray-100 text-gray-500', label: 'Đã vô hiệu hóa' },
 };
 
@@ -83,7 +83,7 @@ export default function PartnerStaff() {
     setTimeout(() => {
       if (confirmAction.type === 'lock') {
         setStaff(s => s.map(x => x.id === confirmAction.staffId ? { ...x, status: 'locked' } : x));
-        toast.success('Tài khoản nhân viên đã bị khóa. Phiên làm việc đã bị hủy.');
+        toast.success('Tài khoản nhân viên đã Tạm khóa. Phiên làm việc đã bị hủy.');
       } else if (confirmAction.type === 'unlock') {
         setStaff(s => s.map(x => x.id === confirmAction.staffId ? { ...x, status: 'active' } : x));
         toast.success('Đã mở khóa tài khoản nhân viên.');
@@ -169,7 +169,7 @@ export default function PartnerStaff() {
         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
           <option value="">Tất cả trạng thái</option>
           <option value="active">Hoạt động</option>
-          <option value="locked">Bị khóa</option>
+          <option value="locked">Tạm khóa</option>
           <option value="deleted">Đã vô hiệu hóa</option>
         </select>
         <span className="px-2 py-2 text-sm text-gray-400">{filtered.length} kết quả</span>
@@ -295,7 +295,7 @@ export default function PartnerStaff() {
               </h3>
             </div>
             <p className="text-sm text-gray-600 mb-3">
-              {confirmAction.type === 'lock' && `Tài khoản của ${confirmingStaff.name} sẽ bị khóa. Phiên làm việc hiện tại sẽ bị hủy ngay.`}
+              {confirmAction.type === 'lock' && `Tài khoản của ${confirmingStaff.name} sẽ Tạm khóa. Phiên làm việc hiện tại sẽ bị hủy ngay.`}
               {confirmAction.type === 'unlock' && `Tài khoản của ${confirmingStaff.name} sẽ được mở khóa và có thể đăng nhập bình thường.`}
               {confirmAction.type === 'delete' && `Tài khoản của ${confirmingStaff.name} sẽ bị vô hiệu hóa vĩnh viễn. Lịch sử xác nhận voucher được giữ lại.`}
             </p>

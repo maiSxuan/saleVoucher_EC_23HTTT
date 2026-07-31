@@ -47,7 +47,7 @@ export default function Users({ initialFilters, onNavigate }: UsersProps) {
 
   const handleLock = async (reason?: string) => {
     if (!selectedUser) return;
-    const log = { timestamp: new Date().toLocaleString('vi-VN'), action: 'Khóa tài khoản', executor: 'Admin Hệ thống', before: 'Đang hoạt động', after: 'Bị khóa', reason };
+    const log = { timestamp: new Date().toLocaleString('vi-VN'), action: 'Khóa tài khoản', executor: 'Admin Hệ thống', before: 'Đang hoạt động', after: 'Tạm khóa', reason };
     setUsers(prev => prev.map(u => u.id === selectedUser.id ? { ...u, status: 'locked' as UserStatus, adminHistory: [...u.adminHistory, log] } : u));
     setSelectedUser(prev => prev ? { ...prev, status: 'locked', adminHistory: [...prev.adminHistory, log] } : null);
     setLockModal(false);
@@ -56,7 +56,7 @@ export default function Users({ initialFilters, onNavigate }: UsersProps) {
 
   const handleUnlock = async (reason?: string) => {
     if (!selectedUser) return;
-    const log = { timestamp: new Date().toLocaleString('vi-VN'), action: 'Mở khóa tài khoản', executor: 'Admin Hệ thống', before: 'Bị khóa', after: 'Đang hoạt động', reason };
+    const log = { timestamp: new Date().toLocaleString('vi-VN'), action: 'Mở khóa tài khoản', executor: 'Admin Hệ thống', before: 'Tạm khóa', after: 'Đang hoạt động', reason };
     setUsers(prev => prev.map(u => u.id === selectedUser.id ? { ...u, status: 'active' as UserStatus, adminHistory: [...u.adminHistory, log] } : u));
     setSelectedUser(prev => prev ? { ...prev, status: 'active', adminHistory: [...prev.adminHistory, log] } : null);
     setUnlockModal(false);
@@ -144,7 +144,7 @@ export default function Users({ initialFilters, onNavigate }: UsersProps) {
                 { label: 'Email', value: selectedUser.email },
                 { label: 'Số điện thoại', value: selectedUser.phone },
                 { label: 'Vai trò', value: roleLabels[selectedUser.role] },
-                { label: 'Trạng thái', value: selectedUser.status === 'active' ? 'Đang hoạt động' : 'Bị khóa' },
+                { label: 'Trạng thái', value: selectedUser.status === 'active' ? 'Đang hoạt động' : 'Tạm khóa' },
                 { label: 'Ngày tham gia', value: selectedUser.createdAt },
               ].map(f => (
                 <div key={f.label}>
@@ -215,8 +215,8 @@ export default function Users({ initialFilters, onNavigate }: UsersProps) {
           title="Khóa tài khoản"
           targetName={selectedUser.name}
           beforeStatus="Đang hoạt động"
-          afterStatus="Bị khóa"
-          warning="Tài khoản bị khóa sẽ không thể đăng nhập. Lịch sử mua voucher vẫn được giữ nguyên."
+          afterStatus="Tạm khóa"
+          warning="Tài khoản Tạm khóa sẽ không thể đăng nhập. Lịch sử mua voucher vẫn được giữ nguyên."
           requireReason
           reasonLabel="Lý do khóa tài khoản"
           confirmLabel="Xác nhận khóa"
@@ -229,7 +229,7 @@ export default function Users({ initialFilters, onNavigate }: UsersProps) {
           onConfirm={handleUnlock}
           title="Mở khóa tài khoản"
           targetName={selectedUser.name}
-          beforeStatus="Bị khóa"
+          beforeStatus="Tạm khóa"
           afterStatus="Đang hoạt động"
           consequences={['Tài khoản sẽ có thể đăng nhập và sử dụng hệ thống.']}
           requireReason
@@ -316,7 +316,7 @@ export default function Users({ initialFilters, onNavigate }: UsersProps) {
           >
             <option value="">Tất cả trạng thái</option>
             <option value="active">Đang hoạt động</option>
-            <option value="locked">Bị khóa</option>
+            <option value="locked">Tạm khóa</option>
           </select>
         </div>
         <div className="flex items-center justify-between mt-3">

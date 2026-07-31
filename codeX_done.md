@@ -66,7 +66,7 @@ Tất cả các tính năng cơ sở hạ tầng ở Bước 2 đều đã đư�
 
 **3. Phòng Chuyên môn (Service)**
 - Đây là nơi làm việc thực sự! Các "Chuyên viên" (Service) như `auth.service.js` sẽ bắt đầu xử lý nghiệp vụ.
-- Chuyên viên sẽ gọi xuống kho để kiểm tra xem email này có tồn tại không, mật khẩu có đúng không, tài khoản có bị khóa không.
+- Chuyên viên sẽ gọi xuống kho để kiểm tra xem email này có tồn tại không, mật khẩu có đúng không, tài khoản có Tạm khóa không.
 - Nếu mọi thứ đúng chuẩn, Chuyên viên sẽ tự động lấy bút ghi vào "Sổ nhật ký công ty" (gọi `auditLogService.log`) rằng: "Vào lúc này, anh A đã đăng nhập thành công". 
 
 **4. Thủ kho (Repository) & Kho chứa (Database / Supabase)**
@@ -207,7 +207,7 @@ Toàn bộ chức năng xem danh sách, xem chi tiết, khóa/mở khóa, cập 
 | `listUsers()` | Hỗ trợ lọc + phân trang, map DB → UserModel | Không |
 | `getUserById()` | Trả 404 nếu không tìm thấy | Không |
 | `lockUser()` | Admin không tự khóa mình; chỉ khóa TK đang active | ✅ Có (RB-15) |
-| `unlockUser()` | Chỉ mở khóa TK đang bị khóa | ✅ Có (RB-15) |
+| `unlockUser()` | Chỉ mở khóa TK đang Tạm khóa | ✅ Có (RB-15) |
 | `updateUserRole()` | Admin không đổi role mình; role mới phải hợp lệ | ✅ Có (RB-15) |
 | `getProfile()` | Lấy thông tin người đang đăng nhập theo `userId` từ JWT | Không |
 
@@ -372,3 +372,33 @@ Admin truy cập /admin/users
  *   req.user.id       = ma_nguoi_dung của người đang đăng nhập
  *   req.user.accountId = ma_tk của người đang đăng nhập
  *   req.user.role     = JWT role ('ADMIN', 'CUSTOMER', ...)
+
+---
+
+# BƯỚC 4 Đã Hoàn Thành: Chức năng Quên mật khẩu & Đăng nhập bằng OTP qua Email
+
+## 1. Dịch vụ Gửi Email (`email.service.js`)
+- **Mục đích:** Gửi mã OTP xác thực qua email thực tế cho người dùng bằng `nodemailer`.
+- **Hoạt động:** Sử dụng cấu hình SMTP từ file `.env` (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`). Khi được gọi, nó tạo một email HTML có giao diện đẹp và mã OTP 6 số bên trong. Nếu chưa cấu hình SMTP, mã OTP sẽ chỉ được in ra console.
+
+## 2. Xử lý logic OTP (`auth.service.js`)
+- **Lưu trữ tạm thời:** Sử dụng cấu trúc `Map()` trong Node.js để lưu cặp `(email, { otp, expiresAt })`. Trong môi trường thực tế lớn hơn có thể thay bằng Redis.
+- **`generateOTP(email)`:**
+  - Kiểm tra xem email có tồn tại trong hệ thống (bảng `TAIKHOAN`).
+  - Tạo một mã OTP ngẫu nhiên 6 chữ số, lưu vào `Map()` với thời hạn là 5 phút.
+  - Gọi `auditLogService.log` lưu lịch sử "Yêu cầu mã OTP".
+  - Chuyển mã OTP sang cho `email.service.js` để gửi email thật.
+- **`loginWithOTP({ email, otp })`:**
+  - Kiểm tra OTP có đúng và còn hạn hay không.
+  - Xóa OTP ngay lập tức sau khi dùng để tránh bị tấn công Replay Attack.
+  - Các bước tiếp theo giống hệt hàm `login` bình thường: Tạo payload cho JWT, ký Token, ghi lại log Đăng nhập OTP và trả Token về.
+
+## 3. Controller & Routes (`auth.controller.js` & `auth.routes.js`)
+- Thêm hai endpoint `POST /auth/forgot-password` và `POST /auth/login-with-otp` để Frontend có thể giao tiếp.
+
+## 4. Giao diện Frontend (`LoginPage.jsx`)
+- Thay đổi cấu trúc trang đăng nhập từ dạng Form đơn giản thành State Machine với 3 trạng thái (`mode`):
+  1. `login`: Hiển thị form đăng nhập bằng mật khẩu như cũ, có thêm nút "Quên mật khẩu?".
+  2. `forgot-password`: Hiển thị form để người dùng nhập email cần khôi phục.
+  3. `enter-otp`: Hiển thị form yêu cầu người dùng nhập 6 chữ số OTP được gửi qua email.
+- **Logic chuyển đổi:** Khi người dùng nhập email và bấm gửi, hệ thống gọi API `/auth/forgot-password`. Nhận thành công, báo cho người dùng kiểm tra email, và UI tự động chuyển sang chế độ `enter-otp`. Khi nhập OTP thành công sẽ điều hướng vào hệ thống tương tự đăng nhập bằng mật khẩu.
