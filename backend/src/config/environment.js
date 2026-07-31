@@ -24,6 +24,7 @@ function loadDatabase() {
   };
 }
 
+// Cấu hình email cho đăng ký khách hàng
 function loadGmail() {
   return {
     host: process.env.SMTP_HOST,
@@ -35,8 +36,21 @@ function loadGmail() {
   };
 }
 
+// Cấu hình email cho OTP Quên mật khẩu
+function loadAuthGmail() {
+  return {
+    host: process.env.AUTH_SMTP_HOST,
+    port: process.env.AUTH_SMTP_PORT,
+    secure: process.env.AUTH_SMTP_SECURE,
+    user: process.env.AUTH_SMTP_USER,
+    pass: process.env.AUTH_SMTP_PASS,
+    from: process.env.AUTH_MAIL_FROM
+  };
+}
+
 module.exports = {
   loadEnvironment,
   loadDatabase,
   loadGmail,
+  loadAuthGmail,
 };

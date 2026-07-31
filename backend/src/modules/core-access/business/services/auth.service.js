@@ -13,7 +13,7 @@ const LOG_RESULT = require('../../../../common/constants/log-result');
 const AppError = require('../../../../common/errors/AppError');
 const UnauthorizedError = require('../../../../common/errors/UnauthorizedError');
 const ForbiddenError = require('../../../../common/errors/ForbiddenError');
-const emailService = require('./email.service');
+const { sendOtpEmail } = require('../../../../common/utils/mailer');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'saleVoucher_EC';
 
@@ -149,8 +149,8 @@ class AuthService {
       reason: 'Yêu cầu mã OTP quên mật khẩu',
     });
 
-    // Gửi OTP qua email thật bằng Nodemailer
-    await emailService.sendOTP(email, otp);
+    // Gửi OTP qua email thật bằng Nodemailer (sử dụng mailer chung)
+    await sendOtpEmail(email, otp, "forgot_password");
 
     return otp;
   }
