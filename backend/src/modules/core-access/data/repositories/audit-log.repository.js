@@ -2,7 +2,7 @@
  * Purpose: Repository cho bảng LOG_HT — ghi và đọc nhật ký hệ thống từ Supabase.
  * Chỉ thực hiện thao tác DB, không chứa business rule.
  */
-const supabase = require('../../../../config/supabase');
+const supabase = require("../../../../config/supabase");
 
 class AuditLogRepository {
   /**
@@ -20,7 +20,7 @@ class AuditLogRepository {
    */
   async create(logData) {
     const { data, error } = await supabase
-      .from('log_ht')
+      .from("log_ht")
       .insert([
         {
           vai_tro_thuc_hien: logData.vai_tro_thuc_hien ?? null,
@@ -38,7 +38,7 @@ class AuditLogRepository {
       .single();
 
     if (error) {
-      console.error('[AuditLogRepository] Ghi log thất bại:', error.message);
+      console.error("[AuditLogRepository] Ghi log thất bại:", error.message);
       throw new Error(`Ghi audit log thất bại: ${error.message}`);
     }
 
@@ -55,24 +55,31 @@ class AuditLogRepository {
    *  - hanhDong: string|null — lọc theo hành động
    *  - ketQua: string|null — lọc theo kết quả
    */
-  async list({ page = 1, limit = 20, maTkThucHien, doiTuong, hanhDong, ketQua } = {}) {
+  async list({
+    page = 1,
+    limit = 20,
+    maTkThucHien,
+    doiTuong,
+    hanhDong,
+    ketQua,
+  } = {}) {
     const offset = (page - 1) * limit;
 
     let query = supabase
-      .from('log_ht')
-      .select('*', { count: 'exact' })
-      .order('thoi_diem_thuc_hien', { ascending: false })
+      .from("log_ht")
+      .select("*", { count: "exact" })
+      .order("thoi_diem_thuc_hien", { ascending: false })
       .range(offset, offset + limit - 1);
 
-    if (maTkThucHien) query = query.eq('ma_tk_thuc_hien', maTkThucHien);
-    if (doiTuong) query = query.eq('doi_tuong', doiTuong);
-    if (hanhDong) query = query.ilike('hanh_dong', `%${hanhDong}%`);
-    if (ketQua) query = query.eq('ket_qua', ketQua);
+    if (maTkThucHien) query = query.eq("ma_tk_thuc_hien", maTkThucHien);
+    if (doiTuong) query = query.eq("doi_tuong", doiTuong);
+    if (hanhDong) query = query.ilike("hanh_dong", `%${hanhDong}%`);
+    if (ketQua) query = query.eq("ket_qua", ketQua);
 
     const { data, error, count } = await query;
 
     if (error) {
-      console.error('[AuditLogRepository] Đọc log thất bại:', error.message);
+      console.error("[AuditLogRepository] Đọc log thất bại:", error.message);
       throw new Error(`Đọc audit log thất bại: ${error.message}`);
     }
 

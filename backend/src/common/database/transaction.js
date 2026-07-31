@@ -15,7 +15,7 @@
  *    - Hàm SQL tự quản lý BEGIN/COMMIT/ROLLBACK.
  *    - Dùng cho thao tác phức tạp (phát hành mã, thanh toán...).
  */
-const supabase = require('../../config/supabase');
+const supabase = require("../../config/supabase");
 
 /**
  * Thực hiện nhiều thao tác Supabase theo kiểu atomic (rollback thủ công).
@@ -36,7 +36,10 @@ async function withSupabaseTransaction(operations) {
           try {
             await done.op.rollback(supabase, done.result);
           } catch (rollbackErr) {
-            console.error('[TRANSACTION] Rollback thất bại:', rollbackErr.message);
+            console.error(
+              "[TRANSACTION] Rollback thất bại:",
+              rollbackErr.message,
+            );
           }
         }
       }

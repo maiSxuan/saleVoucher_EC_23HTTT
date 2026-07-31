@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Shield, Eye, EyeOff, AlertCircle, ArrowLeft, Mail, KeyRound } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
   const [mode, setMode] = useState('login'); // 'login' | 'forgot-password' | 'enter-otp'
@@ -133,13 +133,13 @@ export default function LoginPage() {
         {mode === 'login' && (
           <div className="space-y-4 mb-5">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Email / Số điện thoại</label>
               <input
-                type="email"
+                type="text"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                placeholder="Nhập email của bạn"
+                placeholder="Nhập email hoặc SĐT của bạn"
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
               />
             </div>
@@ -171,6 +171,12 @@ export default function LoginPage() {
             >
               {loading ? 'Đang xác thực...' : 'Đăng nhập'}
             </button>
+
+            <div className="text-center mt-3">
+              <Link to="/customer/register" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+                Đăng kí khách hàng
+              </Link>
+            </div>
           </div>
         )}
 
