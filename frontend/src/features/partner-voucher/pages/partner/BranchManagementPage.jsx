@@ -1,21 +1,20 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import PartnerLayout from "../../../../layouts/PartnerLayout";
 import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
 import Badge from "../../../../shared/components/Badge";
 import Modal from "../../../../shared/components/Modal";
 import Toast from "../../../../shared/components/Toast";
+import { getBranchesByPartnerApi, getBranchRequestsApi, createBranchRequestApi } from "../../../../shared/api/partnerApi";
 import { mockStore } from "../../../../shared/store/mockDataStore";
 
 export function BranchManagementPage() {
   const activePartner = mockStore.getActivePartner();
-  const allRequests = mockStore.getBranchRequests();
+  const [activeBranches, setActiveBranches] = useState([]);
+  const [partnerRequests, setPartnerRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Filter requests for current partner
-  const partnerRequests = allRequests.filter((r) => r.ma_hs === activePartner?.ma_hs);
-  const activeBranches = activePartner?.branches || [];
-
-  const [activeTab, setActiveTab] = useState("official"); // official vs requests
+  const [activeTab, setActiveTab] = useState("official");
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
@@ -29,13 +28,29 @@ export function BranchManagementPage() {
     ly_do: "",
   });
 
-  const handleAddBranchSubmit = () => {
+  const loadBranchesAndRequests = async () => {
+    if (!activePartner?.ma_hs) return;
+    setLoading(true);
+    const [bData, rData] = await Promise.all([
+      getBranchesByPartnerApi(activePartner.ma_hs),
+      getBranchRequestsApi(activePartner.ma_hs),
+    ]);
+    setActiveBranches(bData || []);
+    setPartnerRequests(rData || []);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadBranchesAndRequests();
+  }, []);
+
+  const handleAddBranchSubmit = async () => {
     if (!newBranchForm.ten_chi_nhanh.trim() || !newBranchForm.dia_chi.trim()) {
       alert("Vui lòng điền tên chi nhánh và địa chỉ!");
       return;
     }
 
-    mockStore.createBranchRequest({
+    await createBranchRequestApi({
       ma_hs: activePartner.ma_hs,
       ten_dn: activePartner.ten_dn,
       loai_yeu_cau: "Them moi",
@@ -53,13 +68,13 @@ export function BranchManagementPage() {
     });
 
     setToastMessage("Yêu cầu thêm chi nhánh mới đã được gửi tới Quản trị viên!");
-    window.location.reload();
+    await loadBranchesAndRequests();
   };
 
   const filteredBranches = activeBranches.filter(
     (b) =>
-      b.ten_chi_nhanh.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.dia_chi.toLowerCase().includes(searchQuery.toLowerCase())
+      (b.ten_chi_nhanh || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (b.dia_chi || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -122,7 +137,9 @@ export function BranchManagementPage() {
         {/* Tab 1: Official Branches */}
         {activeTab === "official" && (
           <Card padding={false}>
-            {filteredBranches.length === 0 ? (
+            {loading ? (
+              <div className="p-12 text-center text-slate-400">Đang tải danh sách chi nhánh...</div>
+            ) : filteredBranches.length === 0 ? (
               <div className="p-12 text-center text-slate-400">Không tìm thấy chi nhánh nào.</div>
             ) : (
               <div className="divide-y divide-slate-100">
@@ -134,10 +151,6 @@ export function BranchManagementPage() {
                         <Badge status={branch.trang_thai} size="sm" />
                       </div>
                       <p className="text-xs text-slate-600">📍 {branch.dia_chi} ({branch.khu_vuc})</p>
-                      <div className="flex items-center gap-4 text-xs text-slate-400 pt-1">
-                        {/* <span>📞 {branch.sdt}</span>
-                        <span>⏰ Giờ mở cửa: {branch.gio_mo_cua}</span> */}
-                      </div>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -167,7 +180,9 @@ export function BranchManagementPage() {
         {/* Tab 2: Pending Branch Change Requests */}
         {activeTab === "requests" && (
           <Card padding={false}>
-            {partnerRequests.length === 0 ? (
+            {loading ? (
+              <div className="p-12 text-center text-slate-400">Đang tải danh sách yêu cầu...</div>
+            ) : partnerRequests.length === 0 ? (
               <div className="p-12 text-center text-slate-400">Chưa có yêu cầu thay đổi chi nhánh nào.</div>
             ) : (
               <div className="divide-y divide-slate-100">
@@ -238,17 +253,6 @@ export function BranchManagementPage() {
                   <option value="Đà Nẵng">Đà Nẵng</option>
                 </select>
               </div>
-
-              {/* <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">SĐT liên hệ</label>
-                <input
-                  type="text"
-                  placeholder="02838990011"
-                  value={newBranchForm.sdt}
-                  onChange={(e) => setNewBranchForm({ ...newBranchForm, sdt: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                />
-              </div> */}
             </div>
 
             <div>
@@ -263,17 +267,6 @@ export function BranchManagementPage() {
                 className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
-
-            {/* <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Giờ mở cửa</label>
-              <input
-                type="text"
-                placeholder="08:00 - 22:00"
-                value={newBranchForm.gio_mo_cua}
-                onChange={(e) => setNewBranchForm({ ...newBranchForm, gio_mo_cua: e.target.value })}
-                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              />
-            </div> */}
           </div>
         </Modal>
 

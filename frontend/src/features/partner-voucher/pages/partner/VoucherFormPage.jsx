@@ -4,6 +4,7 @@ import PartnerLayout from "../../../../layouts/PartnerLayout";
 import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
 import Toast from "../../../../shared/components/Toast";
+import { getVoucherByIdApi, saveVoucherApi, getBranchesByPartnerApi } from "../../../../shared/api/partnerApi";
 import { mockStore } from "../../../../shared/store/mockDataStore";
 
 export function VoucherFormPage() {
@@ -11,7 +12,7 @@ export function VoucherFormPage() {
   const navigate = useNavigate();
   const activePartner = mockStore.getActivePartner();
   const categories = mockStore.getCategories();
-  const activeBranches = activePartner?.branches?.filter((b) => b.trang_thai === "Dang hoat dong") || [];
+  const [activeBranches, setActiveBranches] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
@@ -30,31 +31,43 @@ export function VoucherFormPage() {
     dieu_kien_ap_dung: "Áp dụng cho 01 người lớn. Vui lòng xuất trình mã QR trước khi sử dụng.",
     chinh_sach_hoan_huy: "Không quy đổi thành tiền mặt. Hỗ trợ hoàn tiền nếu hủy trước 24h.",
     hinh_anh_url: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80",
-    ma_chi_nhanh: activeBranches.map((b) => b.ma_chi_nhanh),
+    ma_chi_nhanh: [],
   });
 
   useEffect(() => {
-    if (id) {
-      const existing = mockStore.getVoucherById(id);
-      if (existing) {
-        setFormData({
-          ma_voucher: existing.ma_voucher,
-          ten_voucher: existing.ten_voucher,
-          mo_ta: existing.mo_ta,
-          ma_danh_muc: existing.ma_danh_muc,
-          gia_goc: existing.gia_goc,
-          gia_ban: existing.gia_ban,
-          so_luong_phat_hanh: existing.so_luong_phat_hanh,
-          tg_bat_dau_ban: existing.tg_bat_dau_ban ? existing.tg_bat_dau_ban.slice(0, 16) : "",
-          tg_ket_thuc_ban: existing.tg_ket_thuc_ban ? existing.tg_ket_thuc_ban.slice(0, 16) : "",
-          dieu_kien_ap_dung: existing.dieu_kien_ap_dung,
-          chinh_sach_hoan_huy: existing.chinh_sach_hoan_huy,
-          hinh_anh_url: existing.hinh_anh_url,
-          ma_chi_nhanh: existing.ma_chi_nhanh || [],
-        });
+    async function loadInitial() {
+      if (activePartner?.ma_hs) {
+        const branches = await getBranchesByPartnerApi(activePartner.ma_hs);
+        const activeOnly = (branches || []).filter((b) => b.trang_thai === "Dang hoat dong");
+        setActiveBranches(activeOnly);
+        if (!id && activeOnly.length > 0) {
+          setFormData((prev) => ({ ...prev, ma_chi_nhanh: activeOnly.map((b) => b.ma_chi_nhanh) }));
+        }
+      }
+
+      if (id) {
+        const existing = await getVoucherByIdApi(id);
+        if (existing) {
+          setFormData({
+            ma_voucher: existing.ma_voucher,
+            ten_voucher: existing.ten_voucher,
+            mo_ta: existing.mo_ta || "",
+            ma_danh_muc: existing.ma_danh_muc || categories[0]?.id || "",
+            gia_goc: existing.gia_goc || "",
+            gia_ban: existing.gia_ban || "",
+            so_luong_phat_hanh: existing.so_luong_phat_hanh || "",
+            tg_bat_dau_ban: existing.tg_bat_dau_ban ? existing.tg_bat_dau_ban.slice(0, 16) : "",
+            tg_ket_thuc_ban: existing.tg_ket_thuc_ban ? existing.tg_ket_thuc_ban.slice(0, 16) : "",
+            dieu_kien_ap_dung: existing.dieu_kien_ap_dung || "",
+            chinh_sach_hoan_huy: existing.chinh_sach_hoan_huy || "",
+            hinh_anh_url: existing.hinh_anh_url || "",
+            ma_chi_nhanh: existing.ma_chi_nhanh || [],
+          });
+        }
       }
     }
-  }, [id]);
+    loadInitial();
+  }, [id, activePartner?.ma_hs]);
 
   const handleBranchToggle = (branchId) => {
     setFormData((prev) => {
@@ -73,29 +86,27 @@ export function VoucherFormPage() {
     if (Number(formData.gia_ban) >= Number(formData.gia_goc)) errs.gia_ban = "Giá bán phải nhỏ hơn Giá gốc";
     if (!formData.so_luong_phat_hanh || Number(formData.so_luong_phat_hanh) <= 0)
       errs.so_luong_phat_hanh = "Số lượng phát hành phải lớn hơn 0";
-    if (formData.ma_chi_nhanh.length === 0) errs.ma_chi_nhanh = "Vui lòng chọn ít nhất 01 chi nhánh áp dụng";
 
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
-  const handleSave = (isSubmitNow = false) => {
+  const handleSave = async (isSubmitNow = false) => {
     if (!validate()) return;
 
     setLoading(true);
-    setTimeout(() => {
-      const saved = mockStore.saveVoucher({
-        ...formData,
-        ma_hs: activePartner?.ma_hs,
-        isSubmit: isSubmitNow,
-      });
+    const saved = await saveVoucherApi({
+      ...formData,
+      ma_hs: activePartner?.ma_hs,
+      trang_thai: isSubmitNow ? "Cho duyet" : "Nhap",
+      trang_thai_kiem_duyet: isSubmitNow ? "Cho duyet" : "Nhap",
+    });
 
-      setLoading(false);
-      setToastMessage(isSubmitNow ? "Tạo và Gửi duyệt Voucher thành công!" : "Lưu bản nháp thành công!");
-      setTimeout(() => {
-        navigate(`/partner/vouchers/${saved.ma_voucher}`);
-      }, 1000);
-    }, 600);
+    setLoading(false);
+    setToastMessage(isSubmitNow ? "Tạo và Gửi duyệt Voucher thành công!" : "Lưu bản nháp thành công!");
+    setTimeout(() => {
+      navigate(`/partner/vouchers/${saved.ma_voucher || id}`);
+    }, 1000);
   };
 
   const discountPercent =

@@ -1,11 +1,12 @@
 /**
  * Purpose: Cấu hình CORS cho API.
- * Dùng khi frontend chạy trên localhost và backend chạy ở port khác.
+ * Cho phép kết nối linh hoạt từ frontend (localhost:5173, 5174, 127.0.0.1, v.v.)
  */
 const corsOptions = {
-  origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+  origin: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
 };
 
 module.exports = {

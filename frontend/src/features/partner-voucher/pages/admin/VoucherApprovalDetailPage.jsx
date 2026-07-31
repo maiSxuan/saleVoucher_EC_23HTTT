@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import AdminLayout from "../../../../layouts/AdminLayout";
 import Card from "../../../../shared/components/Card";
@@ -6,13 +6,13 @@ import Button from "../../../../shared/components/Button";
 import Badge from "../../../../shared/components/Badge";
 import Modal from "../../../../shared/components/Modal";
 import Toast from "../../../../shared/components/Toast";
-import { mockStore } from "../../../../shared/store/mockDataStore";
+import { getVoucherByIdApi, approveVoucherApi, rejectVoucherApi } from "../../../../shared/api/partnerApi";
 
 export function VoucherApprovalDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const voucher = mockStore.getVoucherById(id);
-  const partner = mockStore.getPartnerById(voucher?.ma_hs);
+  const [voucher, setVoucher] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const [toastMessage, setToastMessage] = useState("");
   const [showApproveModal, setShowApproveModal] = useState(false);
@@ -21,6 +21,25 @@ export function VoucherApprovalDetailPage() {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedPredefinedReason, setSelectedPredefinedReason] = useState("Lỗi niêm yết giá");
   const [customRejectReason, setCustomRejectReason] = useState("");
+
+  const loadVoucher = async () => {
+    setLoading(true);
+    const data = await getVoucherByIdApi(id);
+    setVoucher(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadVoucher();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="p-12 text-center text-slate-500">Đang tải thông tin Voucher...</div>
+      </AdminLayout>
+    );
+  }
 
   if (!voucher) {
     return (
@@ -35,22 +54,22 @@ export function VoucherApprovalDetailPage() {
       ? Math.round(((voucher.gia_goc - voucher.gia_ban) / voucher.gia_goc) * 100)
       : 0;
 
-  const handleApproveConfirm = () => {
-    mockStore.approveVoucher(voucher.ma_voucher, isHiddenCheck);
+  const handleApproveConfirm = async () => {
+    await approveVoucherApi(voucher.ma_voucher, isHiddenCheck);
     setShowApproveModal(false);
     setToastMessage("Phê duyệt Voucher thành công!");
-    window.location.reload();
+    await loadVoucher();
   };
 
-  const handleRejectConfirm = () => {
+  const handleRejectConfirm = async () => {
     const finalReason = customRejectReason.trim()
       ? `${selectedPredefinedReason}: ${customRejectReason}`
       : selectedPredefinedReason;
 
-    mockStore.rejectVoucher(voucher.ma_voucher, finalReason);
+    await rejectVoucherApi(voucher.ma_voucher, finalReason);
     setShowRejectModal(false);
     setToastMessage("Đã từ chối Voucher.");
-    window.location.reload();
+    await loadVoucher();
   };
 
   return (
@@ -88,7 +107,7 @@ export function VoucherApprovalDetailPage() {
                   <h2 className="text-xl font-bold text-slate-900">{voucher.ten_voucher}</h2>
                   <p className="text-xs text-slate-600 line-clamp-2">{voucher.mo_ta}</p>
                   <div className="pt-2 text-xs text-slate-500">
-                    Đối tác đăng ký: <strong className="text-slate-900">{voucher.ten_dn}</strong>
+                    Đối tác đăng ký: <strong className="text-slate-900">{voucher.ten_dn || "Công ty đối tác"}</strong>
                   </div>
                 </div>
               </div>
@@ -124,13 +143,13 @@ export function VoucherApprovalDetailPage() {
                 <div className="grid grid-cols-2 gap-4 border-b border-slate-100 pb-2">
                   <span className="text-slate-500">Thời gian bắt đầu bán:</span>
                   <span className="font-medium text-slate-900">
-                    {new Date(voucher.tg_bat_dau_ban).toLocaleString("vi-VN")}
+                    {voucher.tg_bat_dau_ban ? new Date(voucher.tg_bat_dau_ban).toLocaleString("vi-VN") : "-"}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-4 border-b border-slate-100 pb-2">
                   <span className="text-slate-500">Thời gian kết thúc bán:</span>
                   <span className="font-medium text-slate-900">
-                    {new Date(voucher.tg_ket_thuc_ban).toLocaleString("vi-VN")}
+                    {voucher.tg_ket_thuc_ban ? new Date(voucher.tg_ket_thuc_ban).toLocaleString("vi-VN") : "-"}
                   </span>
                 </div>
                 <div>
@@ -157,10 +176,6 @@ export function VoucherApprovalDetailPage() {
                 <div className="flex items-center gap-2 text-emerald-700 font-medium">
                   <span>✓</span>
                   <span>Đối tác ở trạng thái Đang hoạt động</span>
-                </div>
-                <div className="flex items-center gap-2 text-emerald-700 font-medium">
-                  <span>✓</span>
-                  <span>Có ít nhất 01 chi nhánh hoạt động hợp lệ</span>
                 </div>
               </div>
             </Card>
@@ -190,7 +205,7 @@ export function VoucherApprovalDetailPage() {
           </div>
         </div>
 
-        {/* Modal Approve Voucher (with option "Tạm ẩn") */}
+        {/* Modal Approve Voucher */}
         <Modal
           isOpen={showApproveModal}
           onClose={() => setShowApproveModal(false)}
@@ -219,7 +234,7 @@ export function VoucherApprovalDetailPage() {
           </div>
         </Modal>
 
-        {/* Modal Reject Voucher (Predefined + Custom Reason) */}
+        {/* Modal Reject Voucher */}
         <Modal
           isOpen={showRejectModal}
           onClose={() => setShowRejectModal(false)}

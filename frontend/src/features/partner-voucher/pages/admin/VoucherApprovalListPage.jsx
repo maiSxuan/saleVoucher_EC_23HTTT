@@ -1,25 +1,38 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import AdminLayout from "../../../../layouts/AdminLayout";
 import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
 import Badge from "../../../../shared/components/Badge";
+import { getVouchersApi, getPartnersApi } from "../../../../shared/api/partnerApi";
 import { mockStore } from "../../../../shared/store/mockDataStore";
 
 export function VoucherApprovalListPage() {
-  const vouchers = mockStore.getVouchers();
-  const partners = mockStore.getPartners();
+  const [vouchers, setVouchers] = useState([]);
+  const [partners, setPartners] = useState([]);
+  const [loading, setLoading] = useState(true);
   const categories = mockStore.getCategories();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPartner, setSelectedPartner] = useState("ALL");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
-  const [selectedStatusFilter, setSelectedStatusFilter] = useState("Cho duyet"); // Default filter on Pending Vouchers
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState("ALL");
+
+  useEffect(() => {
+    async function loadData() {
+      setLoading(true);
+      const [vData, pData] = await Promise.all([getVouchersApi(), getPartnersApi()]);
+      setVouchers(vData || []);
+      setPartners(pData || []);
+      setLoading(false);
+    }
+    loadData();
+  }, []);
 
   const filteredVouchers = vouchers.filter((v) => {
     const matchesSearch =
-      v.ten_voucher.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      v.ten_dn.toLowerCase().includes(searchQuery.toLowerCase());
+      (v.ten_voucher || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (v.ten_dn || "").toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesPartner = selectedPartner === "ALL" ? true : v.ma_hs === selectedPartner;
     const matchesCategory = selectedCategory === "ALL" ? true : v.ma_danh_muc === selectedCategory;
@@ -67,6 +80,7 @@ export function VoucherApprovalListPage() {
                 <option value="ALL">Tất cả trạng thái</option>
                 <option value="Cho duyet">Chờ duyệt</option>
                 <option value="Da duyet">Đã duyệt</option>
+                <option value="Dang ban">Đang bán</option>
                 <option value="Tu choi">Bị từ chối</option>
               </select>
 
@@ -101,7 +115,9 @@ export function VoucherApprovalListPage() {
 
         {/* Voucher Review Table */}
         <Card padding={false}>
-          {filteredVouchers.length === 0 ? (
+          {loading ? (
+            <div className="p-12 text-center text-slate-400">Đang tải danh sách voucher...</div>
+          ) : filteredVouchers.length === 0 ? (
             <div className="p-12 text-center text-slate-400">Không có Voucher nào trong danh sách thẩm định.</div>
           ) : (
             <div className="overflow-x-auto">
@@ -138,7 +154,7 @@ export function VoucherApprovalListPage() {
                         </div>
                       </td>
 
-                      <td className="py-4 px-4 font-semibold text-slate-800">{v.ten_dn}</td>
+                      <td className="py-4 px-4 font-semibold text-slate-800">{v.ten_dn || "Công ty đối tác"}</td>
 
                       <td className="py-4 px-4 whitespace-nowrap">
                         <div className="font-bold text-emerald-600">{v.gia_ban?.toLocaleString()}đ</div>
@@ -146,8 +162,8 @@ export function VoucherApprovalListPage() {
                       </td>
 
                       <td className="py-4 px-4 text-xs text-slate-600 whitespace-nowrap">
-                        {new Date(v.tg_bat_dau_ban).toLocaleDateString("vi-VN")} -{" "}
-                        {new Date(v.tg_ket_thuc_ban).toLocaleDateString("vi-VN")}
+                        {v.tg_bat_dau_ban ? new Date(v.tg_bat_dau_ban).toLocaleDateString("vi-VN") : "-"} -{" "}
+                        {v.tg_ket_thuc_ban ? new Date(v.tg_ket_thuc_ban).toLocaleDateString("vi-VN") : "-"}
                       </td>
 
                       <td className="py-4 px-4 whitespace-nowrap">

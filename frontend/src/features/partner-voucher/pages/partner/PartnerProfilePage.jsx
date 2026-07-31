@@ -1,32 +1,59 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import PartnerLayout from "../../../../layouts/PartnerLayout";
 import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
 import Badge from "../../../../shared/components/Badge";
 import Toast from "../../../../shared/components/Toast";
+import { getPartnerByIdApi, updatePartnerApi } from "../../../../shared/api/partnerApi";
 import { mockStore } from "../../../../shared/store/mockDataStore";
 
 export function PartnerProfilePage() {
-  const activePartner = mockStore.getActivePartner();
+  const activePartnerFromStore = mockStore.getActivePartner();
+  const [partner, setPartner] = useState(activePartnerFromStore);
+  const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
   const [formData, setFormData] = useState({
-    ten_dn: activePartner?.ten_dn || "",
-    ma_so_thue: activePartner?.ma_so_thue || "",
-    dia_chi: activePartner?.dia_chi || "",
-    ho_ten: activePartner?.nguoi_dai_dien?.ho_ten || "",
-    sdt: activePartner?.nguoi_dai_dien?.sdt || "",
-    email: activePartner?.nguoi_dai_dien?.email || "",
-    cccd: activePartner?.nguoi_dai_dien?.cccd || "",
+    ten_dn: "",
+    ma_so_thue: "",
+    dia_chi: "",
+    ho_ten: "",
+    sdt: "",
+    email: "",
+    cccd: "",
   });
 
-  const handleSave = () => {
-    mockStore.updatePartnerProfile(activePartner.ma_hs, {
+  const loadPartner = async () => {
+    if (!activePartnerFromStore?.ma_hs) return;
+    setLoading(true);
+    const data = await getPartnerByIdApi(activePartnerFromStore.ma_hs);
+    if (data) {
+      setPartner(data);
+      setFormData({
+        ten_dn: data.ten_dn || "",
+        ma_so_thue: data.ma_so_thue || "",
+        dia_chi: data.dia_chi || "",
+        ho_ten: data.nguoi_dai_dien?.ho_ten || "",
+        sdt: data.nguoi_dai_dien?.sdt || "",
+        email: data.nguoi_dai_dien?.email || "",
+        cccd: data.nguoi_dai_dien?.cccd || "",
+      });
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadPartner();
+  }, []);
+
+  const handleSave = async () => {
+    if (!partner?.ma_hs) return;
+    const updated = await updatePartnerApi(partner.ma_hs, {
       ten_dn: formData.ten_dn,
       ma_so_thue: formData.ma_so_thue,
       dia_chi: formData.dia_chi,
-      trang_thai: "Cho duyet", // Re-submitting sets status back to Cho duyet
+      trang_thai: "Cho duyet",
       ly_do_tu_choi: "",
       nguoi_dai_dien: {
         ho_ten: formData.ho_ten,
@@ -38,10 +65,18 @@ export function PartnerProfilePage() {
 
     setIsEditing(false);
     setToastMessage("Cập nhật hồ sơ và gửi yêu cầu xét duyệt thành công!");
-    window.location.reload();
+    await loadPartner();
   };
 
-  if (!activePartner) {
+  if (loading) {
+    return (
+      <PartnerLayout>
+        <div className="p-8 text-center text-slate-500">Đang tải hồ sơ doanh nghiệp...</div>
+      </PartnerLayout>
+    );
+  }
+
+  if (!partner) {
     return (
       <PartnerLayout>
         <div className="p-8 text-center text-slate-500">Không tìm thấy thông tin đối tác.</div>
@@ -49,8 +84,8 @@ export function PartnerProfilePage() {
     );
   }
 
-  const isRejected = activePartner.trang_thai === "Tu choi";
-  const isPending = activePartner.trang_thai === "Cho duyet";
+  const isRejected = partner.trang_thai === "Tu choi";
+  const isPending = partner.trang_thai === "Cho duyet";
 
   return (
     <PartnerLayout>
@@ -62,7 +97,7 @@ export function PartnerProfilePage() {
             <p className="text-sm text-slate-500 mt-1">Quản lý thông tin công ty, giấy phép đăng ký kinh doanh và người đại diện</p>
           </div>
           <div className="flex items-center gap-3">
-            <Badge status={activePartner.trang_thai} />
+            <Badge status={partner.trang_thai} />
             {!isEditing && (
               <Button variant="secondary" onClick={() => setIsEditing(true)}>
                 Chỉnh sửa hồ sơ
@@ -79,7 +114,7 @@ export function PartnerProfilePage() {
               <div className="space-y-1">
                 <h4 className="font-bold text-rose-900 text-sm">Hồ sơ đã bị Quản trị viên từ chối phê duyệt</h4>
                 <p className="text-xs text-rose-700 font-medium">
-                  Lý do từ chối: <span className="italic font-normal">{activePartner.ly_do_tu_choi || "Thông tin hồ sơ chưa đủ điều kiện pháp lý."}</span>
+                  Lý do từ chối: <span className="italic font-normal">{partner.ly_do_tu_choi || "Thông tin hồ sơ chưa đủ điều kiện pháp lý."}</span>
                 </p>
                 <div className="pt-2">
                   <Button variant="danger" size="sm" onClick={() => setIsEditing(true)}>
@@ -188,15 +223,15 @@ export function PartnerProfilePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <span className="text-xs text-slate-400 font-medium">Tên Doanh Nghiệp:</span>
-                  <div className="text-sm font-bold text-slate-900 mt-0.5">{activePartner.ten_dn}</div>
+                  <div className="text-sm font-bold text-slate-900 mt-0.5">{partner.ten_dn}</div>
                 </div>
                 <div>
                   <span className="text-xs text-slate-400 font-medium">Mã số thuế / MST:</span>
-                  <div className="text-sm font-bold text-slate-900 mt-0.5">{activePartner.ma_so_thue}</div>
+                  <div className="text-sm font-bold text-slate-900 mt-0.5">{partner.ma_so_thue}</div>
                 </div>
                 <div className="md:col-span-2">
                   <span className="text-xs text-slate-400 font-medium">Địa chỉ đăng ký kinh doanh:</span>
-                  <div className="text-sm font-medium text-slate-800 mt-0.5">{activePartner.dia_chi}</div>
+                  <div className="text-sm font-medium text-slate-800 mt-0.5">{partner.dia_chi}</div>
                 </div>
               </div>
 
@@ -205,19 +240,19 @@ export function PartnerProfilePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <span className="text-xs text-slate-400 font-medium">Họ và tên:</span>
-                    <div className="text-sm font-semibold text-slate-900 mt-0.5">{activePartner.nguoi_dai_dien?.ho_ten}</div>
+                    <div className="text-sm font-semibold text-slate-900 mt-0.5">{partner.nguoi_dai_dien?.ho_ten}</div>
                   </div>
                   <div>
                     <span className="text-xs text-slate-400 font-medium">Số điện thoại:</span>
-                    <div className="text-sm font-semibold text-slate-900 mt-0.5">{activePartner.nguoi_dai_dien?.sdt}</div>
+                    <div className="text-sm font-semibold text-slate-900 mt-0.5">{partner.nguoi_dai_dien?.sdt}</div>
                   </div>
                   <div>
                     <span className="text-xs text-slate-400 font-medium">Email:</span>
-                    <div className="text-sm font-semibold text-slate-900 mt-0.5">{activePartner.nguoi_dai_dien?.email}</div>
+                    <div className="text-sm font-semibold text-slate-900 mt-0.5">{partner.nguoi_dai_dien?.email}</div>
                   </div>
                   <div>
                     <span className="text-xs text-slate-400 font-medium">CCCD:</span>
-                    <div className="text-sm font-semibold text-slate-900 mt-0.5">{activePartner.nguoi_dai_dien?.cccd}</div>
+                    <div className="text-sm font-semibold text-slate-900 mt-0.5">{partner.nguoi_dai_dien?.cccd}</div>
                   </div>
                 </div>
               </div>
@@ -227,7 +262,7 @@ export function PartnerProfilePage() {
                 <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Giấy Phép Đăng Ký Kinh Doanh</h4>
                 <div className="flex items-center gap-4">
                   <img
-                    src={activePartner.giay_phep_kinh_doanh}
+                    src={partner.giay_phep_kinh_doanh}
                     alt="Giấy phép kinh doanh"
                     className="w-36 h-24 object-cover rounded-lg border border-slate-200 shadow-xs"
                   />
@@ -235,7 +270,7 @@ export function PartnerProfilePage() {
                     <div className="font-semibold text-slate-800">File_GiayPhepKinhDoanh_Certified.pdf</div>
                     <div className="text-slate-400">Định dạng: Đã xác thực</div>
                     <a
-                      href={activePartner.giay_phep_kinh_doanh}
+                      href={partner.giay_phep_kinh_doanh}
                       target="_blank"
                       rel="noreferrer"
                       className="inline-block text-blue-600 font-medium hover:underline pt-1"

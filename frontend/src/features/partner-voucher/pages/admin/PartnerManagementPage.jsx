@@ -1,20 +1,31 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import AdminLayout from "../../../../layouts/AdminLayout";
 import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
 import Badge from "../../../../shared/components/Badge";
-import { mockStore } from "../../../../shared/store/mockDataStore";
+import { getPartnersApi } from "../../../../shared/api/partnerApi";
 
 export function PartnerManagementPage() {
-  const partners = mockStore.getPartners();
+  const [partners, setPartners] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState("ALL");
 
+  useEffect(() => {
+    async function loadData() {
+      setLoading(true);
+      const data = await getPartnersApi();
+      setPartners(data || []);
+      setLoading(false);
+    }
+    loadData();
+  }, []);
+
   const filteredPartners = partners.filter((p) => {
     const matchesSearch =
-      p.ten_dn.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.ma_so_thue.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.ten_dn || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.ma_so_thue || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       (p.nguoi_dai_dien?.ho_ten || "").toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesStatus = selectedStatusFilter === "ALL" ? true : p.trang_thai === selectedStatusFilter;
@@ -67,7 +78,9 @@ export function PartnerManagementPage() {
 
         {/* Partner Table */}
         <Card padding={false}>
-          {filteredPartners.length === 0 ? (
+          {loading ? (
+            <div className="p-12 text-center text-slate-400">Đang tải danh sách đối tác...</div>
+          ) : filteredPartners.length === 0 ? (
             <div className="p-12 text-center text-slate-400">Không tìm thấy đối tác nào phù hợp.</div>
           ) : (
             <div className="overflow-x-auto">

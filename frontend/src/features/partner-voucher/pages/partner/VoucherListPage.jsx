@@ -1,16 +1,18 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import PartnerLayout from "../../../../layouts/PartnerLayout";
 import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
 import Badge from "../../../../shared/components/Badge";
 import Toast from "../../../../shared/components/Toast";
+import { getVouchersByPartnerApi, saveVoucherApi } from "../../../../shared/api/partnerApi";
 import { mockStore } from "../../../../shared/store/mockDataStore";
 
 export function VoucherListPage() {
   const navigate = useNavigate();
   const activePartner = mockStore.getActivePartner();
-  const vouchers = mockStore.getVouchersByPartner(activePartner?.ma_hs);
+  const [vouchers, setVouchers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const categories = mockStore.getCategories();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -27,10 +29,22 @@ export function VoucherListPage() {
     { key: "Tu choi", label: "Bị từ chối" },
   ];
 
+  const loadVouchers = async () => {
+    if (!activePartner?.ma_hs) return;
+    setLoading(true);
+    const data = await getVouchersByPartnerApi(activePartner.ma_hs);
+    setVouchers(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadVouchers();
+  }, []);
+
   const filteredVouchers = vouchers.filter((v) => {
     const matchesSearch =
-      v.ten_voucher.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      v.ten_danh_muc.toLowerCase().includes(searchQuery.toLowerCase());
+      (v.ten_voucher || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (v.ten_danh_muc || "").toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesStatus =
       selectedStatusTab === "ALL"
@@ -42,22 +56,22 @@ export function VoucherListPage() {
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
-  const handleStatusChange = (voucherId, newStatus) => {
-    mockStore.updateVoucherStatus(voucherId, newStatus);
+  const handleStatusChange = async (voucherId, newStatus) => {
+    await saveVoucherApi({ ma_voucher: voucherId, trang_thai: newStatus });
     setToastMessage("Cập nhật trạng thái Voucher thành công!");
-    window.location.reload();
+    await loadVouchers();
   };
 
-  const handleDuplicate = (voucher) => {
+  const handleDuplicate = async (voucher) => {
     const newForm = {
       ...voucher,
       ma_voucher: "",
       ten_voucher: `${voucher.ten_voucher} (Bản sao)`,
       isSubmit: false,
     };
-    mockStore.saveVoucher(newForm);
+    await saveVoucherApi(newForm);
     setToastMessage("Nhân bản Voucher thành công!");
-    window.location.reload();
+    await loadVouchers();
   };
 
   return (
@@ -131,7 +145,9 @@ export function VoucherListPage() {
 
         {/* Voucher Table */}
         <Card padding={false}>
-          {filteredVouchers.length === 0 ? (
+          {loading ? (
+            <div className="p-12 text-center text-slate-400">Đang tải danh sách voucher...</div>
+          ) : filteredVouchers.length === 0 ? (
             <div className="p-12 text-center text-slate-400">Không tìm thấy Voucher nào phù hợp với bộ lọc.</div>
           ) : (
             <div className="overflow-x-auto">
@@ -196,7 +212,7 @@ export function VoucherListPage() {
                             style={{
                               width: `${Math.min(
                                 100,
-                                Math.round((v.so_luong_da_ban / v.so_luong_phat_hanh) * 100)
+                                Math.round((v.so_luong_da_ban / (v.so_luong_phat_hanh || 1)) * 100)
                               )}%`,
                             }}
                           />

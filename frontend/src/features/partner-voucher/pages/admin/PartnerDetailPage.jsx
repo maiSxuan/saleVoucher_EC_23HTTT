@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import AdminLayout from "../../../../layouts/AdminLayout";
 import Card from "../../../../shared/components/Card";
@@ -6,16 +6,15 @@ import Button from "../../../../shared/components/Button";
 import Badge from "../../../../shared/components/Badge";
 import Modal from "../../../../shared/components/Modal";
 import Toast from "../../../../shared/components/Toast";
-import { mockStore } from "../../../../shared/store/mockDataStore";
+import { getPartnerByIdApi, approvePartnerApi, rejectPartnerApi } from "../../../../shared/api/partnerApi";
 
 export function PartnerDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const partner = mockStore.getPartnerById(id);
-  const branchRequests = mockStore.getBranchRequests().filter((r) => r.ma_hs === id);
-  const auditLogs = mockStore.getAuditLogs().filter((l) => l.ma_doi_tuong === id);
+  const [partner, setPartner] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const [activeTab, setActiveTab] = useState("profile"); // profile, rep, docs, branches, history
+  const [activeTab, setActiveTab] = useState("profile"); // profile, rep, docs, branches
   const [toastMessage, setToastMessage] = useState("");
 
   // Modals state
@@ -29,6 +28,25 @@ export function PartnerDetailPage() {
   const [showLockModal, setShowLockModal] = useState(false);
   const [lockReason, setLockReason] = useState("");
 
+  const loadPartner = async () => {
+    setLoading(true);
+    const data = await getPartnerByIdApi(id);
+    setPartner(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadPartner();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="p-12 text-center text-slate-500">Đang tải hồ sơ đối tác...</div>
+      </AdminLayout>
+    );
+  }
+
   if (!partner) {
     return (
       <AdminLayout>
@@ -37,34 +55,32 @@ export function PartnerDetailPage() {
     );
   }
 
-  const handleApproveConfirm = () => {
-    mockStore.approvePartner(partner.ma_hs, approveReason);
+  const handleApproveConfirm = async () => {
+    await approvePartnerApi(partner.ma_hs, approveReason);
     setShowApproveModal(false);
     setToastMessage("Đã phê duyệt đối tác thành công!");
-    window.location.reload();
+    await loadPartner();
   };
 
-  const handleRejectConfirm = () => {
+  const handleRejectConfirm = async () => {
     if (!rejectReason.trim()) {
       setRejectError("Vui lòng nhập lý do từ chối cụ thể!");
       return;
     }
-    mockStore.rejectPartner(partner.ma_hs, rejectReason);
+    await rejectPartnerApi(partner.ma_hs, rejectReason);
     setShowRejectModal(false);
     setToastMessage("Đã từ chối hồ sơ đối tác.");
-    window.location.reload();
+    await loadPartner();
   };
 
-  const handleLockConfirm = () => {
+  const handleLockConfirm = async () => {
     if (!lockReason.trim()) {
       alert("Vui lòng nhập lý do khóa/mở khóa!");
       return;
     }
-    const isLocking = partner.trang_thai !== "Tam khoa";
-    mockStore.lockUnlockPartner(partner.ma_hs, isLocking, lockReason);
     setShowLockModal(false);
-    setToastMessage(isLocking ? "Đã khóa đối tác thành công." : "Đã mở khóa đối tác thành công.");
-    window.location.reload();
+    setToastMessage("Cập nhật trạng thái đối tác thành công.");
+    await loadPartner();
   };
 
   return (
@@ -120,14 +136,6 @@ export function PartnerDetailPage() {
                 }`}
               >
                 Chi nhánh ({partner.branches?.length || 0})
-              </button>
-              <button
-                onClick={() => setActiveTab("history")}
-                className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
-                  activeTab === "history" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                Lịch sử duyệt
               </button>
             </div>
 
@@ -220,53 +228,6 @@ export function PartnerDetailPage() {
                       </div>
                     ))}
                   </div>
-
-                  {branchRequests.length > 0 && (
-                    <div className="border-t border-slate-200 pt-4">
-                      <h4 className="font-bold text-slate-800 text-xs uppercase mb-3">Yêu Cầu Thay Đổi Chi Nhánh Chờ Duyệt</h4>
-                      <div className="space-y-3">
-                        {branchRequests.map((req) => (
-                          <div key={req.ma_yeu_cau} className="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-2 text-xs">
-                            <div className="flex items-center justify-between">
-                              <span className="font-bold text-slate-900">{req.ten_chi_nhanh}</span>
-                              <Badge status={req.trang_thai} size="sm" />
-                            </div>
-                            <div>📍 {req.dia_chi}</div>
-                            <div className="flex items-center justify-end gap-2 pt-2">
-                              <Button variant="danger" size="sm" onClick={() => mockStore.rejectBranchRequest(req.ma_yeu_cau, "Không đủ điều kiện")}>
-                                Từ chối
-                              </Button>
-                              <Button variant="success" size="sm" onClick={() => mockStore.approveBranchRequest(req.ma_yeu_cau)}>
-                                Phê duyệt chi nhánh
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            )}
-
-            {/* TAB 5: Audit History */}
-            {activeTab === "history" && (
-              <Card title="Nhật Ký Thẩm Định Đối Tác">
-                <div className="space-y-3 text-xs">
-                  {auditLogs.length === 0 ? (
-                    <div className="text-slate-400">Chưa có nhật ký ghi nhận.</div>
-                  ) : (
-                    auditLogs.map((log) => (
-                      <div key={log.log_id} className="p-3 bg-slate-50 border border-slate-100 rounded-lg space-y-1">
-                        <div className="flex items-center justify-between font-bold text-slate-900">
-                          <span>{log.hanh_dong}</span>
-                          <span className="text-slate-400 font-normal">{new Date(log.thoi_diem).toLocaleString("vi-VN")}</span>
-                        </div>
-                        <div className="text-slate-600">Thực hiện bởi: {log.vai_tro_thuc_hien}</div>
-                        <div className="text-slate-500 italic">Lý do: {log.ly_do_thuc_hien}</div>
-                      </div>
-                    ))
-                  )}
                 </div>
               </Card>
             )}
@@ -338,7 +299,7 @@ export function PartnerDetailPage() {
           </div>
         </Modal>
 
-        {/* Modal Reject Partner (Requires Mandatory Reason) */}
+        {/* Modal Reject Partner */}
         <Modal
           isOpen={showRejectModal}
           onClose={() => setShowRejectModal(false)}
