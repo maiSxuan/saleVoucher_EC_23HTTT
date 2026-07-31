@@ -40,7 +40,7 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message || 'Đăng nhập thất bại');
-      
+
       handleLoginSuccess(data);
     } catch (err) {
       setError(err.message === 'Failed to fetch' ? 'Không thể kết nối đến máy chủ. Hãy kiểm tra Backend.' : err.message);
@@ -64,7 +64,7 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message || 'Yêu cầu thất bại');
-      
+
       // Hiển thị thông báo kiểm tra email
       setSuccessMsg(data.message || 'Mã OTP đã được gửi đến email của bạn.');
       setMode('enter-otp');
@@ -90,7 +90,7 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message || 'Đăng nhập thất bại');
-      
+
       handleLoginSuccess(data);
     } catch (err) {
       setError(err.message);
@@ -133,7 +133,7 @@ export default function LoginPage() {
         {mode === 'login' && (
           <div className="space-y-4 mb-5">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Email / Số điện thoại</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
               <input
                 type="text"
                 value={email}
