@@ -14,6 +14,15 @@ class CatalogController {
       next(error);
     }
   }
+
+  async categories(req, res, next) {
+    try {
+      const result = await this.catalogQueryService.listCategories();
+      res.json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = CatalogController;

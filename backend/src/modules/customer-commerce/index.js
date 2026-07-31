@@ -9,9 +9,11 @@ const orderService = require("./business/services/order.service");
 const paymentService = require("./business/services/payment.service");
 const adminOrderService = require("./business/services/admin-order.service");
 const customerRoutes = require("./presentation/routes/customer.routes");
+const catalogRoutes = require("./presentation/routes/catalog.routes");
 
 function registerModule(app) {
-  app.use("/customer", customerRoutes);
+  if (customerRoutes) app.use("/customer", customerRoutes);
+  if (catalogRoutes) app.use("/catalog", catalogRoutes);
 }
 
 module.exports = {

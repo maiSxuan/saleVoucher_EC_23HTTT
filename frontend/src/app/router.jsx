@@ -28,6 +28,11 @@ import AdminLayout from "../features/core-access/layouts/AdminLayout";
 // Trang admin
 import UserListPage from "../features/core-access/pages/admin/UserListPage";
 
+// Customer
+import CustomerLayout from "../features/customer-commerce/layouts/CustomerLayout";
+import CustomerHomePage from "../features/customer-commerce/pages/customer/HomePage";
+import { Home } from "lucide-react";
+
 // Placeholder trang chưa làm
 const AdminDashboardPage = () => (
   <div className="p-6">
@@ -47,10 +52,7 @@ const AuditLogPage = () => (
   </div>
 );
 
-// Placeholder cho customer/partner
-const CustomerScreen = () => (
-  <div className="p-6 text-gray-700">Customer Dashboard — Đang phát triển</div>
-);
+// Placeholder cho customer
 const PartnerScreen = () => (
   <div className="p-6 text-gray-700">Partner Dashboard — Đang phát triển</div>
 );
@@ -85,7 +87,17 @@ const router = createBrowserRouter([
       {
         path: "customer",
         element: <ProtectedRoute allowedRoles={["CUSTOMER"]} />,
-        children: [{ index: true, element: <CustomerScreen /> }],
+        children: [
+          {
+            element: <CustomerLayout />,
+            children: [
+              {
+                index: true,
+                element: <CustomerHomePage />,
+              },
+            ],
+          },
+        ],
       },
 
       // PARTNER ROUTES (cả 2 role đối tác)
