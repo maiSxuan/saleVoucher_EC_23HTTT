@@ -10,5 +10,5 @@ const controller = new CatalogController(catalogQueryService);
 
 router.get("/", controller.list.bind(controller));
 router.get("/categories", controller.categories.bind(controller));
-
+router.get("/:id", controller.detail.bind(controller));
 module.exports = router;

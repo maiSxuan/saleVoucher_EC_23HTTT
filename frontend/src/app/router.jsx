@@ -31,6 +31,8 @@ import UserListPage from "../features/core-access/pages/admin/UserListPage";
 // Customer
 import CustomerLayout from "../features/customer-commerce/layouts/CustomerLayout";
 import VoucherSearchPage from "../features/customer-commerce/pages/customer/VoucherSearchPage";
+import VoucherDetailPage from "../features/customer-commerce/pages/customer/VoucherDetailPage";
+
 import { Home } from "lucide-react";
 
 // Placeholder trang chưa làm
@@ -94,6 +96,10 @@ const router = createBrowserRouter([
               {
                 index: true,
                 element: <VoucherSearchPage />,
+              },
+              {
+                path: "vouchers/:id",
+                element: <VoucherDetailPage />,
               },
             ],
           },

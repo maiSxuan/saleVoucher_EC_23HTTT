@@ -18,3 +18,11 @@ export async function fetchCategories() {
   const json = await res.json();
   return json.data; // [{ id, name }]
 }
+
+export async function fetchVoucherDetail(id) {
+  const res = await fetch(`${BASE_URL}/catalog/${id}`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error("Không thể tải thông tin voucher");
+  const json = await res.json();
+  return json.data;
+}

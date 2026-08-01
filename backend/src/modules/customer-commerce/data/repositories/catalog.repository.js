@@ -2,6 +2,7 @@
  * Purpose: Repository truy vấn voucher đang bán cho khách hàng (catalog).
  */
 const supabase = require("../../../../config/supabase");
+const NotFoundError = require("../../../../common/errors/NotFoundError");
 
 class CatalogRepository {
   // Chỉ lấy voucher đang được phép bán
@@ -56,6 +57,45 @@ class CatalogRepository {
     }
 
     return data || [];
+  }
+
+  async findVoucherById(id) {
+    const { data, error } = await supabase
+      .from("voucher")
+      .select(
+        `
+        ma_voucher,
+        ten_voucher,
+        mo_ta,
+        gia_goc,
+        gia_tri_giam,
+        dieu_kien_ap_dung,
+        chinh_sach_hoan_huy,
+        so_luong_phat_hanh,
+        so_luong_da_ban,
+        tg_bat_dau_ban,
+        tg_ket_thuc_ban,
+        trang_thai,
+        hinh_anh_url,
+        danh_muc:danh_muc ( ten_danh_muc ),
+        voucher_cn (
+          chinhanh ( ten_chi_nhanh, hosodn ( ten_dn ) )
+        )
+        `,
+      )
+      .eq("ma_voucher", id)
+      .maybeSingle(); // trả null nếu không có
+
+    if (error) {
+      if (error.code === "22P02") return null;
+
+      throw new NotFoundError(
+        "Không thể truy xuất thông tin voucher",
+        500,
+        "DATABASE_ERROR",
+      );
+    }
+    return data;
   }
 }
 
