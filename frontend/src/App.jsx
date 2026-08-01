@@ -1,5 +1,6 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
+import { Toaster } from "sonner";
 
 function App() {
   return (
@@ -7,6 +8,7 @@ function App() {
       <main className="p-4">
         <Outlet />
       </main>
+      <Toaster position="top-right" richColors closeButton />
     </div>
   );
 }

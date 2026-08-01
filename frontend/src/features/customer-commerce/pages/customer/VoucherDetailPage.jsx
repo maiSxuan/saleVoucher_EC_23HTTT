@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { fetchVoucherDetail } from "../../api/catalogApi";
 import { addToCart } from "../../api/cartApi";
+import { toast } from "sonner";
 
 const unavailableMsg = {
   sold_out: "Voucher này đã hết số lượng.",
@@ -83,12 +84,16 @@ export default function VoucherDetailPage() {
     try {
       await addToCart(voucher.id, qty);
       setAddState("added"); // Bước 8: sẵn sàng chuyển sang UC-CUS-09
+      toast.success("Đã thêm voucher vào giỏ hàng!");
     } catch (err) {
       // A6/E2: voucher không còn khả dụng hoặc lỗi khi kiểm tra
       setAddState("unavailable");
       setAddErrorMsg(err.message);
+      toast.error("Lỗi không thể thêm voucher vào giỏ hàng.");
     }
   };
+
+  // const handleBuyNow = async () => {};
 
   return (
     <div>
@@ -253,27 +258,30 @@ export default function VoucherDetailPage() {
                     {(voucher.salePrice * qty).toLocaleString("vi-VN")}đ
                   </strong>
                 </p>
-
-                <button
-                  onClick={handleAddToCart}
-                  disabled={addState === "checking"}
-                  className="w-full flex items-center justify-center gap-2 bg-orange-500 text-white py-2.5 rounded-lg font-semibold text-sm hover:bg-orange-600 disabled:opacity-60 mb-2"
-                >
-                  <ShoppingCart size={16} />
-                  {addState === "checking"
-                    ? "Đang kiểm tra..."
-                    : "Thêm vào giỏ hàng"}
-                </button>
-
-                {addState === "added" && (
+                <div className="grid grid-cols-2 gap-3 mb-2">
+                  {/* Nút 1: Thêm vào giỏ hàng - Style Viền/Nền nhạt */}
                   <button
-                    onClick={() => navigate("/customer/cart")}
-                    className="w-full border border-orange-500 text-orange-600 py-2 rounded-lg font-semibold text-sm hover:bg-orange-50"
+                    onClick={handleAddToCart}
+                    disabled={addState === "checking"}
+                    className="flex items-center justify-center gap-2 border border-orange-500 bg-orange-50 text-orange-600 hover:bg-orange-100 active:bg-orange-200 py-2.5 px-3 rounded-xl font-semibold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Xem giỏ hàng
+                    <ShoppingCart size={18} />
+                    <span className="truncate">
+                      {addState === "checking"
+                        ? "Đang xử lý..."
+                        : "Thêm giỏ hàng"}
+                    </span>
                   </button>
-                )}
 
+                  {/* Nút 2: Mua ngay - Style Nổi bật (Call to Action) */}
+                  <button
+                    //   onClick={handleBuyNow}
+                    //   disabled={addState === "checking"}
+                    className="flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white py-2.5 px-3 rounded-xl font-bold text-sm shadow-md hover:shadow-lg active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  >
+                    <span>MUA NGAY</span>
+                  </button>
+                </div>
                 {addState === "unavailable" && (
                   <div className="mt-2 bg-red-50 border border-red-200 rounded p-2 text-xs text-red-600 flex items-center gap-1">
                     <AlertCircle size={12} />{" "}
