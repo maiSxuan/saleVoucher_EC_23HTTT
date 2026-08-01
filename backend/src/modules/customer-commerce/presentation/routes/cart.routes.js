@@ -11,9 +11,9 @@ const {
 const router = express.Router();
 const controller = new CartController(cartService);
 
-router.get("/cart", controller.getCart.bind(controller));
+router.get("/", controller.getCart.bind(controller));
 router.post(
-  "/cart/items",
+  "/items",
   authenticateMiddleware,
   controller.addItem.bind(controller),
 );

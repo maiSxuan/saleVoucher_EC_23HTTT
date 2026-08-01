@@ -4,8 +4,8 @@
  * - Log lỗi 500 ra console để debug.
  * - Format response thống nhất: { success, message, errorCode, details }.
  */
-const AppError = require('../errors/AppError');
-const { loadEnvironment } = require('../../config/environment');
+const AppError = require("../errors/AppError");
+const { loadEnvironment } = require("../../config/environment");
 
 const config = loadEnvironment();
 
@@ -20,14 +20,23 @@ function errorMiddleware(err, req, res, next) {
     });
   }
 
+  // Lỗi nghiệp vụ dạng plain Error có gắn .status
+  if (err.status) {
+    return res.status(err.status).json({
+      success: false,
+      message: err.message,
+      errorCode: err.errorCode || "ERROR",
+    });
+  }
+
   // Lỗi không mong đợi (500)
-  const isDev = config.nodeEnv === 'development';
-  console.error('[UNHANDLED ERROR]', err);
+  const isDev = config.nodeEnv === "development";
+  console.error("[UNHANDLED ERROR]", err);
 
   return res.status(500).json({
     success: false,
-    message: 'Lỗi hệ thống. Vui lòng thử lại sau.',
-    errorCode: 'INTERNAL_ERROR',
+    message: "Lỗi hệ thống. Vui lòng thử lại sau.",
+    errorCode: "INTERNAL_ERROR",
     ...(isDev ? { stack: err.stack } : {}),
   });
 }

@@ -10,10 +10,12 @@ const paymentService = require("./business/services/payment.service");
 const adminOrderService = require("./business/services/admin-order.service");
 const customerRoutes = require("./presentation/routes/customer.routes");
 const catalogRoutes = require("./presentation/routes/catalog.routes");
+const cartRoutes = require("./presentation/routes/cart.routes");
 
 function registerModule(app) {
   if (customerRoutes) app.use("/customer", customerRoutes);
   if (catalogRoutes) app.use("/catalog", catalogRoutes);
+  if (cartRoutes) app.use("/cart", cartRoutes);
 }
 
 module.exports = {
