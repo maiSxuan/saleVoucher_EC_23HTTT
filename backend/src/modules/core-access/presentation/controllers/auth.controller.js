@@ -9,9 +9,13 @@ class AuthController {
   async login(req, res, next) {
     try {
       const result = await this.authService.login(req.body);
-      res.status(200).json({ success: true, ...result });
+      res.status(200).json({
+        success: true,
+        data: result,
+        ...result,
+      });
     } catch (error) {
-      res.status(error.statusCode || 400).json({
+      res.status(error.statusCode || error.status || 400).json({
         success: false,
         message: error.message || "Đăng nhập thất bại!",
       });

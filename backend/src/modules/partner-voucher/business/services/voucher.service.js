@@ -46,6 +46,10 @@ class VoucherService {
   async updateVoucherStatus(id, status) {
     return await voucherRepository.update(id, { trang_thai: status });
   }
+
+  async getCategories() {
+    return await voucherRepository.getVoucherCategories();
+  }
 }
 
 module.exports = new VoucherService();

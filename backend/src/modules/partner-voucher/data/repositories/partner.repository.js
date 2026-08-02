@@ -1,61 +1,9 @@
 const supabase = require("../../../../config/supabase");
 const PartnerModel = require("../models/partner.model");
 
-// In-memory fallback dataset for seamless demo operation
-const SEED_PARTNERS = [
-  {
-    ma_hs: "20000000-0000-0000-0000-000000000001",
-    ten_dn: "Cong ty TNHH Am Thuc Sai Gon",
-    ma_so_thue: "0310000001",
-    dia_chi: "12 Nguyen Hue, TP. Ho Chi Minh",
-    giay_phep_kinh_doanh: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80",
-    ngay_tao: "2025-10-21T09:34:18.181Z",
-    trang_thai: "Dang hoat dong",
-    ly_do_tu_choi: "",
-    nguoi_dai_dien: {
-      ho_ten: "Pham Hoang Nam",
-      sdt: "0900000011",
-      email: "owner.amthuc@ec.local",
-      cccd: "079088000011",
-    },
-  },
-  {
-    ma_hs: "20000000-0000-0000-0000-000000000002",
-    ten_dn: "Cong ty TNHH Spa An Nhien",
-    ma_so_thue: "0310000002",
-    dia_chi: "25 Thanh Thai, TP. Ho Chi Minh",
-    giay_phep_kinh_doanh: "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=600&q=80",
-    ngay_tao: "2026-07-13T09:34:18.181Z",
-    trang_thai: "Cho duyet",
-    ly_do_tu_choi: "",
-    nguoi_dai_dien: {
-      ho_ten: "Nguyen Thi An",
-      sdt: "0900000021",
-      email: "owner.spa@ec.local",
-      cccd: "079087000021",
-    },
-  },
-  {
-    ma_hs: "20000000-0000-0000-0000-000000000003",
-    ten_dn: "Cong ty Co phan Giao Duc Tuong Lai",
-    ma_so_thue: "0310000003",
-    dia_chi: "80 Vo Van Tan, TP. Ho Chi Minh",
-    giay_phep_kinh_doanh: "https://images.unsplash.com/photo-1568992687947-868a62a9f521?auto=format&fit=crop&w=600&q=80",
-    ngay_tao: "2026-06-23T09:34:18.181Z",
-    trang_thai: "Tu choi",
-    ly_do_tu_choi: "Giấy phép kinh doanh chưa hợp lệ.",
-    nguoi_dai_dien: {
-      ho_ten: "Truong Van Hung",
-      sdt: "0900000031",
-      email: "owner.edu@ec.local",
-      cccd: "079085000031",
-    },
-  },
-];
-
 class PartnerRepository {
   /**
-   * Find all partner records (HOSODN)
+   * Find all partner records (HOSODN) directly from Supabase DB
    */
   async findAll(query = {}) {
     try {
@@ -69,9 +17,12 @@ class PartnerRepository {
 
       const { data, error } = await dbQuery;
 
-      if (error || !data || data.length === 0) {
-        return SEED_PARTNERS.map((p) => new PartnerModel(p));
+      if (error) {
+        console.error("[PartnerRepository] findAll error:", error.message);
+        return [];
       }
+
+      if (!data || data.length === 0) return [];
 
       return data.map((item) => {
         const rep = item.nguoidung || {};
@@ -93,25 +44,34 @@ class PartnerRepository {
         });
       });
     } catch (e) {
-      return SEED_PARTNERS.map((p) => new PartnerModel(p));
+      console.error("[PartnerRepository] findAll exception:", e.message);
+      return [];
     }
   }
 
   /**
-   * Find partner by ID (ma_hs)
+   * Find partner by ID (ma_hs) or user ID (id_nguoi_dai_dien) directly from Supabase DB
    */
   async findById(id) {
     try {
-      const { data, error } = await supabase
+      // 1. Try finding by ma_hs
+      let { data, error } = await supabase
         .from("hosodn")
         .select("*, nguoidung!id_nguoi_dai_dien(*)")
         .eq("ma_hs", id)
-        .single();
+        .maybeSingle();
 
-      if (error || !data) {
-        const seed = SEED_PARTNERS.find((p) => p.ma_hs === id);
-        return seed ? new PartnerModel(seed) : null;
+      // 2. If not found, try finding by id_nguoi_dai_dien
+      if (!data) {
+        const { data: byRep } = await supabase
+          .from("hosodn")
+          .select("*, nguoidung!id_nguoi_dai_dien(*)")
+          .eq("id_nguoi_dai_dien", id)
+          .maybeSingle();
+        data = byRep;
       }
+
+      if (error || !data) return null;
 
       const rep = data.nguoidung || {};
       return new PartnerModel({
@@ -131,8 +91,8 @@ class PartnerRepository {
         },
       });
     } catch (e) {
-      const seed = SEED_PARTNERS.find((p) => p.ma_hs === id);
-      return seed ? new PartnerModel(seed) : null;
+      console.error("[PartnerRepository] findById exception:", e.message);
+      return null;
     }
   }
 
@@ -140,53 +100,76 @@ class PartnerRepository {
    * Create new partner registration record
    */
   async create(payload) {
-    try {
-      const newPartner = {
-        ten_dn: payload.ten_dn,
-        ma_so_thue: payload.ma_so_thue,
-        dia_chi: payload.dia_chi,
-        giay_phep_kinh_doanh: payload.giay_phep_kinh_doanh,
-        trang_thai: "Cho duyet",
-        id_nguoi_dai_dien: payload.id_nguoi_dai_dien,
-        id_nvql_voucher: payload.id_nvql_voucher,
-      };
+    const newPartner = {
+      ten_dn: payload.ten_dn,
+      ma_so_thue: payload.ma_so_thue,
+      dia_chi: payload.dia_chi,
+      giay_phep_kinh_doanh: payload.giay_phep_kinh_doanh,
+      trang_thai: "Cho duyet",
+      id_nguoi_dai_dien: payload.id_nguoi_dai_dien,
+      id_nvql_voucher: payload.id_nvql_voucher,
+    };
 
-      const { data, error } = await supabase.from("hosodn").insert(newPartner).select().single();
-      if (error || !data) {
-        return new PartnerModel({ ...payload, ma_hs: `20000000-0000-0000-0000-${Date.now()}` });
-      }
-      return new PartnerModel(data);
-    } catch (e) {
-      return new PartnerModel({ ...payload, ma_hs: `20000000-0000-0000-0000-${Date.now()}` });
+    const { data, error } = await supabase.from("hosodn").insert(newPartner).select().single();
+    if (error) {
+      console.error("[PartnerRepository] create error:", error.message);
+      throw new Error(`Tạo hồ sơ doanh nghiệp thất bại: ${error.message}`);
     }
+    return new PartnerModel(data);
   }
 
   /**
-   * Update partner details or status
+   * Update partner details and representative details in Supabase DB
    */
   async update(id, payload) {
-    try {
-      const { data, error } = await supabase
-        .from("hosodn")
-        .update(payload)
-        .eq("ma_hs", id)
-        .select()
-        .single();
+    const hosodnUpdate = {};
+    if (payload.ten_dn !== undefined) hosodnUpdate.ten_dn = payload.ten_dn;
+    if (payload.ma_so_thue !== undefined) hosodnUpdate.ma_so_thue = payload.ma_so_thue;
+    if (payload.dia_chi !== undefined) hosodnUpdate.dia_chi = payload.dia_chi;
+    if (payload.giay_phep_kinh_doanh !== undefined) hosodnUpdate.giay_phep_kinh_doanh = payload.giay_phep_kinh_doanh;
+    if (payload.trang_thai !== undefined) hosodnUpdate.trang_thai = payload.trang_thai;
+    if (payload.ly_do_tu_choi !== undefined) hosodnUpdate.ly_do_tu_choi = payload.ly_do_tu_choi;
 
-      if (error || !data) {
-        return new PartnerModel({ ma_hs: id, ...payload });
-      }
-      return new PartnerModel(data);
-    } catch (e) {
-      return new PartnerModel({ ma_hs: id, ...payload });
+    // Update hosodn table
+    const { error: hosodnError } = await supabase
+      .from("hosodn")
+      .update(hosodnUpdate)
+      .eq("ma_hs", id);
+
+    if (hosodnError) {
+      console.warn("[PartnerRepository.update] Supabase hosodn update warning:", hosodnError.message);
     }
+
+    // Update representative info in nguoidung table
+    if (payload.nguoi_dai_dien) {
+      const currentPartner = await this.findById(id);
+      if (currentPartner?.id_nguoi_dai_dien) {
+        const repData = payload.nguoi_dai_dien;
+        const nguoidungUpdate = {};
+        if (repData.ho_ten !== undefined) nguoidungUpdate.ho_ten = repData.ho_ten;
+        if (repData.sdt !== undefined) nguoidungUpdate.sdt = repData.sdt;
+        if (repData.email !== undefined) nguoidungUpdate.email = repData.email;
+        if (repData.cccd !== undefined) nguoidungUpdate.cccd = repData.cccd;
+
+        const { error: repError } = await supabase
+          .from("nguoidung")
+          .update(nguoidungUpdate)
+          .eq("ma_nguoi_dung", currentPartner.id_nguoi_dai_dien);
+
+        if (repError) {
+          console.error("[PartnerRepository.update] Supabase nguoidung update error:", repError.message);
+        }
+      }
+    }
+
+    return await this.findById(id);
   }
 
   /**
    * Update partner approval / rejection / lock status
    */
   async updateStatus(id, trang_thai, ly_do_tu_choi = "") {
-    return this.update(id, { trang_thai });
+    return this.update(id, { trang_thai, ly_do_tu_choi });
   }
 }
 

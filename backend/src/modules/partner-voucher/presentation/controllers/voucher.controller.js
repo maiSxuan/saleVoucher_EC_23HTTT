@@ -86,6 +86,15 @@ class VoucherController {
       next(error);
     }
   }
+
+  async getCate(req, res, next) {
+    try {
+      const data = await this.voucherService.getCategories();
+      res.json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = VoucherController;

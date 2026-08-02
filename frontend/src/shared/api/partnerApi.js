@@ -3,6 +3,22 @@ import { mockStore } from "../store/mockDataStore";
 const BACKEND_BASE_URL = "http://localhost:3001/api";
 
 /**
+ * Fetch voucher categories from backend API
+ */
+export async function getCategoriesApi() {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/vouchers/categories`);
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) return json.data;
+    }
+  } catch (e) {
+    console.warn("Backend API unavailable, using mockStore fallback:", e.message);
+  }
+  return mockStore.getCategories();
+}
+
+/**
  * Fetch list of partners from backend API, with mockStore fallback
  */
 export async function getPartnersApi(query = {}) {
@@ -20,7 +36,7 @@ export async function getPartnersApi(query = {}) {
 }
 
 /**
- * Fetch partner detail by ID from backend API
+ * Fetch partner detail by ID
  */
 export async function getPartnerByIdApi(partnerId) {
   try {
@@ -36,14 +52,14 @@ export async function getPartnerByIdApi(partnerId) {
 }
 
 /**
- * Update partner profile
+ * Update partner info
  */
-export async function updatePartnerApi(partnerId, updatedFields) {
+export async function updatePartnerApi(partnerId, payload) {
   try {
     const res = await fetch(`${BACKEND_BASE_URL}/partners/${partnerId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updatedFields),
+      body: JSON.stringify(payload),
     });
     if (res.ok) {
       const json = await res.json();
@@ -52,18 +68,16 @@ export async function updatePartnerApi(partnerId, updatedFields) {
   } catch (e) {
     console.warn("Backend API unavailable, using mockStore fallback:", e.message);
   }
-  return mockStore.updatePartnerProfile(partnerId, updatedFields);
+  return mockStore.updatePartner(partnerId, payload);
 }
 
 /**
  * Approve partner (Admin action)
  */
-export async function approvePartnerApi(partnerId, reason = "") {
+export async function approvePartnerApi(partnerId) {
   try {
     const res = await fetch(`${BACKEND_BASE_URL}/partners/${partnerId}/approve`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reason }),
     });
     if (res.ok) {
       const json = await res.json();
@@ -72,7 +86,7 @@ export async function approvePartnerApi(partnerId, reason = "") {
   } catch (e) {
     console.warn("Backend API unavailable, using mockStore fallback:", e.message);
   }
-  return mockStore.approvePartner(partnerId, reason);
+  return mockStore.approvePartner(partnerId);
 }
 
 /**
@@ -96,7 +110,27 @@ export async function rejectPartnerApi(partnerId, reason = "") {
 }
 
 /**
- * Fetch branches by partner ID
+ * Lock/Unlock partner
+ */
+export async function lockPartnerApi(partnerId, isLocked = true) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/partners/${partnerId}/lock`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isLocked }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) return json.data;
+    }
+  } catch (e) {
+    console.warn("Backend API unavailable, using mockStore fallback:", e.message);
+  }
+  return mockStore.lockPartner(partnerId, isLocked);
+}
+
+/**
+ * Fetch branches for partner
  */
 export async function getBranchesByPartnerApi(partnerId) {
   try {
@@ -258,11 +292,11 @@ export async function rejectVoucherApi(voucherId, reason = "") {
   } catch (e) {
     console.warn("Backend API unavailable, using mockStore fallback:", e.message);
   }
-  return mockStore.rejectVoucher(voucherId, reason);
+  return mockStore.rejectPartner(voucherId, reason);
 }
 
 /**
- * Fetch staff members for a partner
+ * Staff management APIs
  */
 export async function getStaffsByPartnerApi(partnerId) {
   try {
@@ -277,9 +311,6 @@ export async function getStaffsByPartnerApi(partnerId) {
   return mockStore.getStaffsByPartner(partnerId);
 }
 
-/**
- * Create new staff member
- */
 export async function createStaffApi(staffData) {
   try {
     const res = await fetch(`${BACKEND_BASE_URL}/staffs`, {
@@ -294,20 +325,9 @@ export async function createStaffApi(staffData) {
   } catch (e) {
     console.warn("Backend API unavailable, using mockStore fallback:", e.message);
   }
-  let data = mockStore.getData();
-  const newStaff = {
-    ...staffData,
-    ma_nv: `nv-${Date.now()}`,
-    ngay_tao: new Date().toISOString().slice(0, 10),
-  };
-  data.staffs.unshift(newStaff);
-  mockStore.saveData(data);
-  return newStaff;
+  return mockStore.createStaff(staffData);
 }
 
-/**
- * Update staff member
- */
 export async function updateStaffApi(staffId, staffData) {
   try {
     const res = await fetch(`${BACKEND_BASE_URL}/staffs/${staffId}`, {
@@ -322,18 +342,14 @@ export async function updateStaffApi(staffId, staffData) {
   } catch (e) {
     console.warn("Backend API unavailable, using mockStore fallback:", e.message);
   }
-  let data = mockStore.getData();
-  data.staffs = data.staffs.map((s) => (s.ma_nv === staffId ? { ...s, ...staffData } : s));
-  mockStore.saveData(data);
-  return staffData;
+  return mockStore.updateStaff(staffId, staffData);
 }
 
-/**
- * Delete staff member
- */
 export async function deleteStaffApi(staffId) {
   try {
-    const res = await fetch(`${BACKEND_BASE_URL}/staffs/${staffId}`, { method: "DELETE" });
+    const res = await fetch(`${BACKEND_BASE_URL}/staffs/${staffId}`, {
+      method: "DELETE",
+    });
     if (res.ok) {
       const json = await res.json();
       if (json.success) return json.data;
@@ -341,8 +357,9 @@ export async function deleteStaffApi(staffId) {
   } catch (e) {
     console.warn("Backend API unavailable, using mockStore fallback:", e.message);
   }
-  let data = mockStore.getData();
-  data.staffs = data.staffs.filter((s) => s.ma_nv !== staffId);
-  mockStore.saveData(data);
-  return { success: true };
+  return mockStore.deleteStaff(staffId);
+}
+
+export async function getAuditLogsApi() {
+  return mockStore.getAuditLogs();
 }

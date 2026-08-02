@@ -1,19 +1,47 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import PartnerLayout from "../../../../layouts/PartnerLayout";
 import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
 import Badge from "../../../../shared/components/Badge";
 import Toast from "../../../../shared/components/Toast";
+import { getVoucherByIdApi, getBranchesByPartnerApi, saveVoucherApi } from "../../../../shared/api/partnerApi";
 import { mockStore } from "../../../../shared/store/mockDataStore";
 
 export function VoucherDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const activePartner = mockStore.getActivePartner();
-  const voucher = mockStore.getVoucherById(id);
+  const [voucher, setVoucher] = useState(null);
+  const [branches, setBranches] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [toastMessage, setToastMessage] = useState("");
+
+  const loadData = async () => {
+    setLoading(true);
+    const data = await getVoucherByIdApi(id);
+    setVoucher(data);
+
+    const partnerId = data?.ma_hs || activePartner?.ma_hs;
+    if (partnerId) {
+      const bList = await getBranchesByPartnerApi(partnerId);
+      setBranches(bList || []);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <PartnerLayout>
+        <div className="p-12 text-center text-slate-500">Đang tải thông tin chi tiết Voucher...</div>
+      </PartnerLayout>
+    );
+  }
 
   if (!voucher) {
     return (
@@ -23,12 +51,12 @@ export function VoucherDetailPage() {
     );
   }
 
-  const activeBranches = activePartner?.branches?.filter((b) => voucher.ma_chi_nhanh?.includes(b.ma_chi_nhanh)) || [];
+  const activeBranches = branches.filter((b) => (voucher.ma_chi_nhanh || []).includes(b.ma_chi_nhanh));
 
-  const handleSubmitForReview = () => {
-    mockStore.submitVoucherForReview(voucher.ma_voucher);
+  const handleSubmitForReview = async () => {
+    await saveVoucherApi({ ma_voucher: voucher.ma_voucher, trang_thai: "Cho duyet" });
     setToastMessage("Gửi yêu cầu xét duyệt Voucher thành công!");
-    window.location.reload();
+    await loadData();
   };
 
   const isRejected = voucher.trang_thai === "Tu choi" || voucher.trang_thai_kiem_duyet === "Tu choi";
@@ -94,7 +122,7 @@ export function VoucherDetailPage() {
             />
             <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-slate-950/80 to-transparent text-white">
               <span className="px-2.5 py-1 bg-blue-600 text-xs font-bold rounded-full mb-2 inline-block">
-                {voucher.ten_danh_muc}
+                {voucher.ten_danh_muc || "Danh mục Voucher"}
               </span>
               <h1 className="text-2xl font-bold">{voucher.ten_voucher}</h1>
               <p className="text-xs text-slate-300 mt-1">Mã hệ thống: {voucher.ma_voucher}</p>
@@ -111,7 +139,7 @@ export function VoucherDetailPage() {
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-1">
               <span className="text-xs text-slate-400 font-medium">Tình hình tồn kho:</span>
               <div className="text-2xl font-bold text-slate-900">
-                {voucher.so_luong_da_ban} / {voucher.so_luong_phat_hanh}
+                {voucher.so_luong_da_ban || 0} / {voucher.so_luong_phat_hanh}
               </div>
               <div className="text-xs text-slate-500">Voucher đã được phát hành</div>
             </div>
@@ -119,27 +147,10 @@ export function VoucherDetailPage() {
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-1">
               <span className="text-xs text-slate-400 font-medium">Thời gian mở bán:</span>
               <div className="text-xs font-bold text-slate-900 mt-1">
-                {new Date(voucher.tg_bat_dau_ban).toLocaleDateString("vi-VN")} -{" "}
-                {new Date(voucher.tg_ket_thuc_ban).toLocaleDateString("vi-VN")}
+                {voucher.tg_bat_dau_ban ? new Date(voucher.tg_bat_dau_ban).toLocaleDateString("vi-VN") : "-"} -{" "}
+                {voucher.tg_ket_thuc_ban ? new Date(voucher.tg_ket_thuc_ban).toLocaleDateString("vi-VN") : "-"}
               </div>
               <div className="text-xs text-slate-500">Áp dụng trong khung giờ mở cửa</div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Approval Timeline Component */}
-        <Card title="Tiến Trình Kiểm Duyệt & Công Bố">
-          <div className="space-y-4">
-            <div className="relative border-l-2 border-slate-200 ml-4 space-y-6 pl-6">
-              {(voucher.lich_su_duyet || []).map((step, idx) => (
-                <div key={idx} className="relative">
-                  <span className="absolute -left-[31px] top-0.5 w-4 h-4 rounded-full bg-blue-600 ring-4 ring-white" />
-                  <div className="text-sm font-bold text-slate-900">{step.hanh_dong}</div>
-                  <div className="text-xs text-slate-500">
-                    {step.nguoi_thuc_hien} • {step.ngay}
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         </Card>
@@ -150,22 +161,22 @@ export function VoucherDetailPage() {
             <div className="space-y-3 text-xs text-slate-700">
               <div>
                 <strong className="block text-slate-900 mb-1">Mô tả:</strong>
-                <p>{voucher.mo_ta}</p>
+                <p>{voucher.mo_ta || "Chưa có mô tả chi tiết."}</p>
               </div>
               <div>
                 <strong className="block text-slate-900 mb-1">Điều kiện sử dụng:</strong>
-                <p>{voucher.dieu_kien_ap_dung}</p>
+                <p>{voucher.dieu_kien_ap_dung || "Theo quy định của hệ thống."}</p>
               </div>
               <div>
                 <strong className="block text-slate-900 mb-1">Chính sách hoàn hủy:</strong>
-                <p>{voucher.chinh_sach_hoan_huy}</p>
+                <p>{voucher.chinh_sach_hoan_huy || "Theo chính sách của đối tác."}</p>
               </div>
             </div>
           </Card>
 
           <Card title="Chi Nhánh Áp Dụng">
             {activeBranches.length === 0 ? (
-              <p className="text-xs text-slate-400">Không có thông tin chi nhánh áp dụng.</p>
+              <p className="text-xs text-slate-400">Áp dụng trên toàn bộ chi nhánh đang hoạt động.</p>
             ) : (
               <div className="space-y-2">
                 {activeBranches.map((b) => (

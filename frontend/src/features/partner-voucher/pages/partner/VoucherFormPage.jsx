@@ -4,14 +4,20 @@ import PartnerLayout from "../../../../layouts/PartnerLayout";
 import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
 import Toast from "../../../../shared/components/Toast";
-import { getVoucherByIdApi, saveVoucherApi, getBranchesByPartnerApi } from "../../../../shared/api/partnerApi";
+import {
+  getVoucherByIdApi,
+  saveVoucherApi,
+  getBranchesByPartnerApi,
+  getCategoriesApi,
+} from "../../../../shared/api/partnerApi";
 import { mockStore } from "../../../../shared/store/mockDataStore";
 
 export function VoucherFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const activePartner = mockStore.getActivePartner();
-  const categories = mockStore.getCategories();
+
+  const [categoriesList, setCategoriesList] = useState([]);
   const [activeBranches, setActiveBranches] = useState([]);
 
   const [loading, setLoading] = useState(false);
@@ -22,7 +28,7 @@ export function VoucherFormPage() {
     ma_voucher: "",
     ten_voucher: "",
     mo_ta: "",
-    ma_danh_muc: categories[0]?.id || "cat-1",
+    ma_danh_muc: "40000000-0000-0000-0000-000000000001",
     gia_goc: "",
     gia_ban: "",
     so_luong_phat_hanh: "",
@@ -36,23 +42,31 @@ export function VoucherFormPage() {
 
   useEffect(() => {
     async function loadInitial() {
+      // 1. Fetch categories
+      const cates = await getCategoriesApi();
+      if (cates && cates.length > 0) {
+        setCategoriesList(cates);
+      }
+
+      // 2. Fetch partner branches
       if (activePartner?.ma_hs) {
         const branches = await getBranchesByPartnerApi(activePartner.ma_hs);
-        const activeOnly = (branches || []).filter((b) => b.trang_thai === "Dang hoat dong");
+        const activeOnly = (branches || []).filter((b) => b.trang_thai === "Dang hoat dong" || !b.trang_thai);
         setActiveBranches(activeOnly);
         if (!id && activeOnly.length > 0) {
           setFormData((prev) => ({ ...prev, ma_chi_nhanh: activeOnly.map((b) => b.ma_chi_nhanh) }));
         }
       }
 
+      // 3. If editing, fetch voucher details
       if (id) {
         const existing = await getVoucherByIdApi(id);
         if (existing) {
           setFormData({
             ma_voucher: existing.ma_voucher,
-            ten_voucher: existing.ten_voucher,
+            ten_voucher: existing.ten_voucher || "",
             mo_ta: existing.mo_ta || "",
-            ma_danh_muc: existing.ma_danh_muc || categories[0]?.id || "",
+            ma_danh_muc: existing.ma_danh_muc || "40000000-0000-0000-0000-000000000001",
             gia_goc: existing.gia_goc || "",
             gia_ban: existing.gia_ban || "",
             so_luong_phat_hanh: existing.so_luong_phat_hanh || "",
@@ -103,9 +117,9 @@ export function VoucherFormPage() {
     });
 
     setLoading(false);
-    setToastMessage(isSubmitNow ? "Tạo và Gửi duyệt Voucher thành công!" : "Lưu bản nháp thành công!");
+    setToastMessage(id ? "Cập nhật Voucher thành công!" : isSubmitNow ? "Tạo và Gửi duyệt Voucher thành công!" : "Lưu bản nháp thành công!");
     setTimeout(() => {
-      navigate(`/partner/vouchers/${saved.ma_voucher || id}`);
+      navigate(`/partner/vouchers/${saved?.ma_voucher || id}`);
     }, 1000);
   };
 
@@ -154,11 +168,14 @@ export function VoucherFormPage() {
                   onChange={(e) => setFormData({ ...formData, ma_danh_muc: e.target.value })}
                   className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 >
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.ten_danh_muc}
-                    </option>
-                  ))}
+                  {categoriesList.map((c) => {
+                    const cateId = c.ma_danh_muc || c.id;
+                    return (
+                      <option key={cateId} value={cateId}>
+                        {c.ten_danh_muc}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 
@@ -219,7 +236,9 @@ export function VoucherFormPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Số lượng phát hành <span className="text-rose-500">*</span></label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Số lượng phát hành <span className="text-rose-500">*</span>
+                </label>
                 <input
                   type="number"
                   placeholder="500"
@@ -268,8 +287,8 @@ export function VoucherFormPage() {
         <Card title="3. Chi Nhánh Áp Dụng (Chỉ Chọn Chi Nhánh Đang Hoạt Động)">
           <div className="space-y-2">
             {activeBranches.length === 0 ? (
-              <p className="text-xs text-amber-700 bg-amber-50 p-3 rounded-lg">
-                ⚠️ Doanh nghiệp chưa có chi nhánh nào ở trạng thái "Đang hoạt động". Vui lòng chờ Admin duyệt chi nhánh trước khi phát hành Voucher.
+              <p className="text-xs text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                Áp dụng cho toàn bộ các chi nhánh thuộc doanh nghiệp.
               </p>
             ) : (
               activeBranches.map((branch) => (
@@ -324,10 +343,10 @@ export function VoucherFormPage() {
             Hủy bỏ
           </Button>
           <Button variant="outline" onClick={() => handleSave(false)} loading={loading}>
-            💾 Lưu bản nháp
+            💾 {id ? "Lưu thay đổi" : "Lưu bản nháp"}
           </Button>
           <Button variant="primary" onClick={() => handleSave(true)} loading={loading}>
-            🚀 Gửi Admin duyệt ngay
+            🚀 {id ? "Cập nhật & Gửi duyệt" : "Gửi Admin duyệt ngay"}
           </Button>
         </div>
 

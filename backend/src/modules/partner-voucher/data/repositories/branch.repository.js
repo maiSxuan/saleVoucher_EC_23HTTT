@@ -1,19 +1,6 @@
 const supabase = require("../../../../config/supabase");
 const BranchModel = require("../models/branch.model");
 
-const SEED_BRANCHES = [
-  {
-    ma_chi_nhanh: "30000000-0000-0000-0000-000000000001",
-    ten_chi_nhanh: "Am Thuc Sai Gon - Nguyen Hue",
-    khu_vuc: "TP. Hồ Chí Minh",
-    dia_chi: "12 Nguyen Hue, TP. Ho Chi Minh",
-    trang_thai: "Dang hoat dong",
-    ma_hs: "20000000-0000-0000-0000-000000000001",
-    sdt: "02838221122",
-    gio_mo_cua: "08:00 - 22:00",
-  },
-];
-
 const PARTNER_UUID_MAP = {
   "hs-001": "20000000-0000-0000-0000-000000000001",
   "hs-002": "20000000-0000-0000-0000-000000000002",
@@ -30,7 +17,7 @@ function normalizePartnerUuid(partnerId) {
 
 class BranchRepository {
   /**
-   * Find branches by partner ID (ma_hs)
+   * Find branches by partner ID (ma_hs) directly from Supabase DB
    */
   async findByPartnerId(partnerId) {
     const validPartnerId = normalizePartnerUuid(partnerId);
@@ -40,18 +27,21 @@ class BranchRepository {
         .select("*")
         .eq("ma_hs", validPartnerId);
 
-      if (error || !data || data.length === 0) {
-        return SEED_BRANCHES.filter((b) => b.ma_hs === validPartnerId).map((b) => new BranchModel(b));
+      if (error) {
+        console.error("[BranchRepository] findByPartnerId error:", error.message);
+        return [];
       }
 
+      if (!data || data.length === 0) return [];
       return data.map((b) => new BranchModel(b));
     } catch (e) {
-      return SEED_BRANCHES.filter((b) => b.ma_hs === validPartnerId).map((b) => new BranchModel(b));
+      console.error("[BranchRepository] findByPartnerId exception:", e.message);
+      return [];
     }
   }
 
   /**
-   * Find branch by ID (ma_chi_nhanh)
+   * Find branch by ID (ma_chi_nhanh) directly from Supabase DB
    */
   async findById(id) {
     try {
@@ -61,30 +51,25 @@ class BranchRepository {
         .eq("ma_chi_nhanh", id)
         .single();
 
-      if (error || !data) {
-        const seed = SEED_BRANCHES.find((b) => b.ma_chi_nhanh === id);
-        return seed ? new BranchModel(seed) : null;
-      }
-
+      if (error || !data) return null;
       return new BranchModel(data);
     } catch (e) {
-      const seed = SEED_BRANCHES.find((b) => b.ma_chi_nhanh === id);
-      return seed ? new BranchModel(seed) : null;
+      console.error("[BranchRepository] findById exception:", e.message);
+      return null;
     }
   }
 
   /**
-   * List all branches across partners
+   * List all branches across partners directly from Supabase DB
    */
   async findAll(query = {}) {
     try {
       const { data, error } = await supabase.from("chinhanh").select("*");
-      if (error || !data || data.length === 0) {
-        return SEED_BRANCHES.map((b) => new BranchModel(b));
-      }
+      if (error || !data || data.length === 0) return [];
       return data.map((b) => new BranchModel(b));
     } catch (e) {
-      return SEED_BRANCHES.map((b) => new BranchModel(b));
+      console.error("[BranchRepository] findAll exception:", e.message);
+      return [];
     }
   }
 
@@ -102,47 +87,35 @@ class BranchRepository {
       ma_hs: validPartnerId,
     };
 
-    try {
-      const { data, error } = await supabase
-        .from("chinhanh")
-        .insert(dbPayload)
-        .select()
-        .single();
+    const { data, error } = await supabase
+      .from("chinhanh")
+      .insert(dbPayload)
+      .select()
+      .single();
 
-      if (error || !data) {
-        console.error("Supabase chinhanh insert error:", error);
-        const fallback = new BranchModel({ ...dbPayload, ma_chi_nhanh: `30000000-0000-0000-0000-${Date.now()}` });
-        SEED_BRANCHES.unshift(fallback);
-        return fallback;
-      }
-      return new BranchModel(data);
-    } catch (e) {
-      console.error("Supabase chinhanh insert exception:", e.message);
-      const fallback = new BranchModel({ ...dbPayload, ma_chi_nhanh: `30000000-0000-0000-0000-${Date.now()}` });
-      SEED_BRANCHES.unshift(fallback);
-      return fallback;
+    if (error) {
+      console.error("[BranchRepository] create error:", error.message);
+      throw new Error(`Thêm chi nhánh thất bại: ${error.message}`);
     }
+    return new BranchModel(data);
   }
 
   /**
    * Update branch record
    */
   async update(id, payload) {
-    try {
-      const { data, error } = await supabase
-        .from("chinhanh")
-        .update(payload)
-        .eq("ma_chi_nhanh", id)
-        .select()
-        .single();
+    const { data, error } = await supabase
+      .from("chinhanh")
+      .update(payload)
+      .eq("ma_chi_nhanh", id)
+      .select()
+      .single();
 
-      if (error || !data) {
-        return new BranchModel({ ma_chi_nhanh: id, ...payload });
-      }
-      return new BranchModel(data);
-    } catch (e) {
-      return new BranchModel({ ma_chi_nhanh: id, ...payload });
+    if (error) {
+      console.error("[BranchRepository] update error:", error.message);
+      throw new Error(`Cập nhật chi nhánh thất bại: ${error.message}`);
     }
+    return new BranchModel(data);
   }
 
   /**

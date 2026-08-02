@@ -9,8 +9,9 @@ import { mockStore } from "../../../../shared/store/mockDataStore";
 
 export function PartnerProfilePage() {
   const activePartnerFromStore = mockStore.getActivePartner();
-  const [partner, setPartner] = useState(activePartnerFromStore);
-  const [loading, setLoading] = useState(false);
+  const [partner, setPartner] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
@@ -24,10 +25,21 @@ export function PartnerProfilePage() {
     cccd: "",
   });
 
+  const getActiveUser = () => {
+    try {
+      const userStr = localStorage.getItem("user") || localStorage.getItem("ec_auth_user");
+      return userStr ? JSON.parse(userStr) : null;
+    } catch (e) {
+      return null;
+    }
+  };
+
   const loadPartner = async () => {
-    if (!activePartnerFromStore?.ma_hs) return;
     setLoading(true);
-    const data = await getPartnerByIdApi(activePartnerFromStore.ma_hs);
+    const activeUser = getActiveUser();
+    const targetId = activeUser?.id || activeUser?.accountId || activePartnerFromStore?.ma_hs || "20000000-0000-0000-0000-000000000001";
+
+    const data = await getPartnerByIdApi(targetId);
     if (data) {
       setPartner(data);
       setFormData({
@@ -49,6 +61,8 @@ export function PartnerProfilePage() {
 
   const handleSave = async () => {
     if (!partner?.ma_hs) return;
+    setSaving(true);
+
     const updated = await updatePartnerApi(partner.ma_hs, {
       ten_dn: formData.ten_dn,
       ma_so_thue: formData.ma_so_thue,
@@ -63,8 +77,9 @@ export function PartnerProfilePage() {
       },
     });
 
+    setSaving(false);
     setIsEditing(false);
-    setToastMessage("Cập nhật hồ sơ và gửi yêu cầu xét duyệt thành công!");
+    setToastMessage("Cập nhật hồ sơ thành công! Đã chuyển trạng thái sang Chờ duyệt.");
     await loadPartner();
   };
 
@@ -214,7 +229,7 @@ export function PartnerProfilePage() {
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
                 <Button variant="secondary" onClick={() => setIsEditing(false)}>Hủy bỏ</Button>
-                <Button variant="primary" onClick={handleSave}>Lưu & Gửi lại yêu cầu xét duyệt</Button>
+                <Button variant="primary" onClick={handleSave} loading={saving}>Lưu & Gửi lại yêu cầu xét duyệt</Button>
               </div>
             </div>
           ) : (
@@ -262,13 +277,13 @@ export function PartnerProfilePage() {
                 <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Giấy Phép Đăng Ký Kinh Doanh</h4>
                 <div className="flex items-center gap-4">
                   <img
-                    src={partner.giay_phep_kinh_doanh}
+                    src={partner.giay_phep_kinh_doanh || "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80"}
                     alt="Giấy phép kinh doanh"
                     className="w-36 h-24 object-cover rounded-lg border border-slate-200 shadow-xs"
                   />
                   <div className="text-xs space-y-1">
                     <div className="font-semibold text-slate-800">File_GiayPhepKinhDoanh_Certified.pdf</div>
-                    <div className="text-slate-400">Định dạng: Đã xác thực</div>
+                    <div className="text-slate-400">Định dạng: Đã xác thực trên hệ thống</div>
                     <a
                       href={partner.giay_phep_kinh_doanh}
                       target="_blank"

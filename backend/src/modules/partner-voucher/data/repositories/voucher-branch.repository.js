@@ -56,6 +56,25 @@ class VoucherBranchRepository {
 
     return branchIds.map((bId) => new VoucherBranchModel({ ma_voucher: voucherId, ma_chi_nhanh: bId }));
   }
+
+  async getVoucherCategories() {
+    try {
+      const { data, error } = await supabase
+        .from("danh_muc")
+        .select("ma_danh_muc, ten_danh_muc");
+
+      if (error || !data) {
+        console.error("Lỗi lấy danh mục:", error);
+        return [];
+      }
+
+      return data; // Trả về danh sách [{ ma_danh_muc, ten_danh_muc }, ...]
+    } catch (e) {
+      console.error("Exception:", e);
+      return [];
+    }
+  }
 }
+
 
 module.exports = new VoucherBranchRepository();

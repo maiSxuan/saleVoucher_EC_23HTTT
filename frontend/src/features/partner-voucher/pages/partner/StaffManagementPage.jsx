@@ -4,13 +4,22 @@ import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
 import Badge from "../../../../shared/components/Badge";
 import Toast from "../../../../shared/components/Toast";
-import { getStaffsByPartnerApi, createStaffApi, updateStaffApi, deleteStaffApi } from "../../../../shared/api/partnerApi";
+import {
+  getStaffsByPartnerApi,
+  createStaffApi,
+  updateStaffApi,
+  deleteStaffApi,
+  getPartnerByIdApi,
+  getBranchesByPartnerApi,
+} from "../../../../shared/api/partnerApi";
 import { mockStore } from "../../../../shared/store/mockDataStore";
 
 export function StaffManagementPage() {
-  const activePartner = mockStore.getActivePartner();
+  const activePartnerFromStore = mockStore.getActivePartner();
   const [staffs, setStaffs] = useState([]);
+  const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [partnerId, setPartnerId] = useState("");
 
   const [toastMessage, setToastMessage] = useState("");
 
@@ -23,8 +32,11 @@ export function StaffManagementPage() {
     ho_ten: "",
     email: "",
     sdt: "",
+    ngay_sinh: "",
+    gioi_tinh: "Nam",
+    cccd: "",
     vai_tro: "Nhân viên chi nhánh",
-    chi_nhanh_phu_trach: "",
+    ma_chi_nhanh: "",
     trang_thai: "Dang hoat dong",
   };
 
@@ -32,11 +44,31 @@ export function StaffManagementPage() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState(emptyForm);
 
+  const getActiveUser = () => {
+    try {
+      const userStr = localStorage.getItem("user") || localStorage.getItem("ec_auth_user");
+      return userStr ? JSON.parse(userStr) : null;
+    } catch (e) {
+      return null;
+    }
+  };
+
   const reload = async () => {
-    if (!activePartner?.ma_hs) return;
     setLoading(true);
-    const data = await getStaffsByPartnerApi(activePartner.ma_hs);
-    setStaffs(data || []);
+    const activeUser = getActiveUser();
+    const targetId = activeUser?.id || activeUser?.accountId || activePartnerFromStore?.ma_hs || "20000000-0000-0000-0000-000000000001";
+
+    const partner = await getPartnerByIdApi(targetId);
+    const realMaHs = partner?.ma_hs || targetId;
+    setPartnerId(realMaHs);
+
+    const [staffData, branchData] = await Promise.all([
+      getStaffsByPartnerApi(realMaHs),
+      getBranchesByPartnerApi(realMaHs),
+    ]);
+
+    setStaffs(staffData || []);
+    setBranches(branchData || []);
     setLoading(false);
   };
 
@@ -52,6 +84,7 @@ export function StaffManagementPage() {
       const matchSearch =
         (s.ho_ten || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
         (s.email || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (s.cccd || "").includes(searchQuery) ||
         (s.sdt || "").includes(searchQuery);
 
       const matchRole = roleFilter === "All" || s.vai_tro === roleFilter;
@@ -63,7 +96,10 @@ export function StaffManagementPage() {
 
   const handleAdd = () => {
     setEditing(false);
-    setForm(emptyForm);
+    setForm({
+      ...emptyForm,
+      ma_chi_nhanh: branches[0]?.ma_chi_nhanh || "",
+    });
     setShowModal(true);
   };
 
@@ -71,30 +107,45 @@ export function StaffManagementPage() {
     setEditing(true);
     setForm({
       ...staff,
-      chi_nhanh_phu_trach: Array.isArray(staff.chi_nhanh_phu_trach) ? staff.chi_nhanh_phu_trach.join(", ") : "",
+      ngay_sinh: staff.ngay_sinh ? staff.ngay_sinh.slice(0, 10) : "",
+      gioi_tinh: staff.gioi_tinh || "Nam",
+      cccd: staff.cccd || "",
+      ma_chi_nhanh: staff.ma_chi_nhanh || branches[0]?.ma_chi_nhanh || "",
     });
     setShowModal(true);
   };
 
-  const handleSave = async () => {
-    const branches = form.chi_nhanh_phu_trach
-      ? form.chi_nhanh_phu_trach.split(",").map((x) => x.trim()).filter(Boolean)
-      : [];
+  const handleRoleChange = (newRole) => {
+    if (newRole === "Nhân viên chi nhánh") {
+      setForm((prev) => ({
+        ...prev,
+        vai_tro: newRole,
+        ma_chi_nhanh: prev.ma_chi_nhanh || branches[0]?.ma_chi_nhanh || "",
+      }));
+    } else {
+      setForm((prev) => ({
+        ...prev,
+        vai_tro: newRole,
+        ma_chi_nhanh: "",
+      }));
+    }
+  };
 
+  const handleSave = async () => {
     if (editing) {
       await updateStaffApi(form.ma_nv, {
         ...form,
-        ma_hs: activePartner.ma_hs,
-        chi_nhanh_phu_trach: branches,
+        ma_hs: partnerId,
+        ma_chi_nhanh: form.vai_tro === "Nhân viên chi nhánh" ? form.ma_chi_nhanh : null,
       });
-      setToastMessage("Cập nhật nhân viên thành công.");
+      setToastMessage("Cập nhật thông tin nhân viên thành công.");
     } else {
       await createStaffApi({
         ...form,
-        ma_hs: activePartner.ma_hs,
-        chi_nhanh_phu_trach: branches,
+        ma_hs: partnerId,
+        ma_chi_nhanh: form.vai_tro === "Nhân viên chi nhánh" ? form.ma_chi_nhanh : null,
       });
-      setToastMessage("Thêm nhân viên thành công.");
+      setToastMessage("Thêm nhân viên mới thành công.");
     }
 
     await reload();
@@ -132,7 +183,7 @@ export function StaffManagementPage() {
           <div className="flex gap-4 flex-wrap">
             <input
               className="flex-1 border rounded-lg px-4 py-2 text-sm"
-              placeholder="Tìm tên, email..."
+              placeholder="Tìm tên, email, SĐT, CCCD..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -170,10 +221,10 @@ export function StaffManagementPage() {
                 <thead>
                   <tr className="bg-slate-50 text-xs uppercase text-slate-500 border-b">
                     <th className="px-4 py-3 text-left">Nhân viên</th>
+                    <th className="px-4 py-3 text-left">Thông tin cá nhân</th>
                     <th className="px-4 py-3 text-left">Vai trò</th>
-                    <th className="px-4 py-3 text-left">Chi nhánh</th>
+                    <th className="px-4 py-3 text-left">Chi nhánh phụ trách</th>
                     <th className="px-4 py-3 text-left">Trạng thái</th>
-                    <th className="px-4 py-3 text-left">Ngày tạo</th>
                     <th className="px-4 py-3 text-right">Thao tác</th>
                   </tr>
                 </thead>
@@ -188,25 +239,35 @@ export function StaffManagementPage() {
                           </div>
                           <div>
                             <div className="font-semibold text-slate-900">{staff.ho_ten}</div>
-                            <div className="text-xs text-slate-500">{staff.email}</div>
-                            <div className="text-xs text-slate-400">{staff.sdt}</div>
+                            <div className="text-xs text-slate-500">{staff.email || "Chưa có email"}</div>
+                            <div className="text-xs text-slate-400">{staff.sdt || "Chưa có SĐT"}</div>
                           </div>
                         </div>
                       </td>
 
-                      <td className="px-4 py-4">{staff.vai_tro}</td>
+                      <td className="px-4 py-4 text-xs space-y-0.5 text-slate-600">
+                        <div><span className="font-medium text-slate-700">Giới tính:</span> {staff.gioi_tinh === "Nu" ? "Nữ" : staff.gioi_tinh === "Nam" ? "Nam" : "Khác"}</div>
+                        <div><span className="font-medium text-slate-700">Ngày sinh:</span> {staff.ngay_sinh ? staff.ngay_sinh.slice(0, 10) : "Chưa cập nhật"}</div>
+                        <div><span className="font-medium text-slate-700">CCCD:</span> {staff.cccd || "Chưa cập nhật"}</div>
+                      </td>
+
+                      <td className="px-4 py-4 font-medium text-slate-800">{staff.vai_tro}</td>
 
                       <td className="px-4 py-4">
-                        {!staff.chi_nhanh_phu_trach || staff.chi_nhanh_phu_trach.length === 0
-                          ? "-"
-                          : staff.chi_nhanh_phu_trach.join(", ")}
+                        {staff.vai_tro === "Nhân viên chi nhánh" ? (
+                          !staff.chi_nhanh_phu_trach || staff.chi_nhanh_phu_trach.length === 0 ? (
+                            <span className="text-slate-400 font-italic">Chưa phân công</span>
+                          ) : (
+                            <span className="font-medium text-slate-800">{staff.chi_nhanh_phu_trach.join(", ")}</span>
+                          )
+                        ) : (
+                          <span className="text-slate-400 italic">Tất cả chi nhánh (Quản lý)</span>
+                        )}
                       </td>
 
                       <td className="px-4 py-4">
                         <Badge status={staff.trang_thai} size="sm" />
                       </td>
-
-                      <td className="px-4 py-4 text-xs text-slate-600">{staff.ngay_tao}</td>
 
                       <td className="px-4 py-4">
                         <div className="flex justify-end gap-2">
@@ -230,50 +291,113 @@ export function StaffManagementPage() {
         </Card>
 
         {showModal && (
-          <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
-            <div className="bg-white rounded-xl w-full max-w-xl p-6">
-              <h3 className="text-xl font-bold mb-5">{editing ? "Chỉnh sửa nhân viên" : "Thêm nhân viên"}</h3>
+          <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white rounded-xl w-full max-w-xl p-6 shadow-xl space-y-4">
+              <h3 className="text-xl font-bold">{editing ? "Chỉnh sửa nhân viên" : "Thêm nhân viên mới"}</h3>
 
-              <div className="space-y-4 text-sm">
-                <input
-                  className="w-full border rounded-lg px-4 py-2"
-                  placeholder="Họ tên"
-                  value={form.ho_ten}
-                  onChange={(e) => setForm({ ...form, ho_ten: e.target.value })}
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Họ và tên *</label>
+                  <input
+                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    placeholder="Nguyễn Văn A"
+                    value={form.ho_ten}
+                    onChange={(e) => setForm({ ...form, ho_ten: e.target.value })}
+                  />
+                </div>
 
-                <input
-                  className="w-full border rounded-lg px-4 py-2"
-                  placeholder="Email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                />
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Email *</label>
+                  <input
+                    type="email"
+                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    placeholder="email@domain.com"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  />
+                </div>
 
-                <input
-                  className="w-full border rounded-lg px-4 py-2"
-                  placeholder="Số điện thoại"
-                  value={form.sdt}
-                  onChange={(e) => setForm({ ...form, sdt: e.target.value })}
-                />
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Số điện thoại *</label>
+                  <input
+                    type="text"
+                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    placeholder="0901234567"
+                    value={form.sdt}
+                    onChange={(e) => setForm({ ...form, sdt: e.target.value })}
+                  />
+                </div>
 
-                <select
-                  className="w-full border rounded-lg px-4 py-2"
-                  value={form.vai_tro}
-                  onChange={(e) => setForm({ ...form, vai_tro: e.target.value })}
-                >
-                  <option>Nhân viên chi nhánh</option>
-                  <option>Quản lý vận hành</option>
-                </select>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Ngày sinh</label>
+                  <input
+                    type="date"
+                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    value={form.ngay_sinh}
+                    onChange={(e) => setForm({ ...form, ngay_sinh: e.target.value })}
+                  />
+                </div>
 
-                <input
-                  className="w-full border rounded-lg px-4 py-2"
-                  placeholder="Chi nhánh (phân cách dấu phẩy)"
-                  value={form.chi_nhanh_phu_trach}
-                  onChange={(e) => setForm({ ...form, chi_nhanh_phu_trach: e.target.value })}
-                />
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Giới tính</label>
+                  <select
+                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                    value={form.gioi_tinh}
+                    onChange={(e) => setForm({ ...form, gioi_tinh: e.target.value })}
+                  >
+                    <option value="Nam">Nam</option>
+                    <option value="Nu">Nữ</option>
+                    <option value="Khac">Khác</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Số CCCD / CMND</label>
+                  <input
+                    type="text"
+                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    placeholder="079098000000"
+                    value={form.cccd}
+                    onChange={(e) => setForm({ ...form, cccd: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Vai trò *</label>
+                  <select
+                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                    value={form.vai_tro}
+                    onChange={(e) => handleRoleChange(e.target.value)}
+                  >
+                    <option value="Nhân viên chi nhánh">Nhân viên chi nhánh</option>
+                    <option value="Quản lý vận hành">Quản lý vận hành</option>
+                  </select>
+                </div>
+
+                {/* Single Branch Select - ONLY visible when role is 'Nhân viên chi nhánh' */}
+                {form.vai_tro === "Nhân viên chi nhánh" && (
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Chi nhánh phụ trách *</label>
+                    <select
+                      className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                      value={form.ma_chi_nhanh}
+                      onChange={(e) => setForm({ ...form, ma_chi_nhanh: e.target.value })}
+                    >
+                      {branches.length === 0 ? (
+                        <option value="">Chưa có chi nhánh nào trong hệ thống</option>
+                      ) : (
+                        branches.map((b) => (
+                          <option key={b.ma_chi_nhanh} value={b.ma_chi_nhanh}>
+                            {b.ten_chi_nhanh} ({b.dia_chi || b.khu_vuc})
+                          </option>
+                        ))
+                      )}
+                    </select>
+                  </div>
+                )}
               </div>
 
-              <div className="flex justify-end gap-3 mt-6">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                 <Button
                   variant="secondary"
                   onClick={() => {
@@ -284,7 +408,7 @@ export function StaffManagementPage() {
                   Hủy
                 </Button>
                 <Button variant="primary" onClick={handleSave}>
-                  {editing ? "Cập nhật" : "Thêm"}
+                  {editing ? "💾 Cập nhật" : "➕ Thêm nhân viên"}
                 </Button>
               </div>
             </div>

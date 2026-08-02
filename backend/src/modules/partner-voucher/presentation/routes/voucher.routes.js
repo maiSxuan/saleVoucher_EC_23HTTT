@@ -5,6 +5,7 @@ const voucherService = require("../../business/services/voucher.service");
 const router = express.Router();
 const controller = new VoucherController(voucherService);
 
+router.get("/categories", controller.getCate.bind(controller));
 router.get("/", controller.list.bind(controller));
 router.get("/partner/:partnerId", controller.listByPartner.bind(controller));
 router.get("/:id", controller.getById.bind(controller));
