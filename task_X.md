@@ -132,37 +132,3 @@ lưu ý cần phân ra theo tab: tab thông tin cá nhân (đối với các nh�
 b. bổ sung them logic phân quyền: chỉ cập nhật vai trò khi nhân viên quản lí voucher sang nhân viên bán hàng có kèm hiển thị mã chi nhánh ở dạng combobox để chọn,  ngược lại khi chuyển từ nhân viên bán hàng thành nhân viên quản lý cần kèm hiển thị mã đối tác ở dạng combobox để chọn
 
 BƯỚC 6: THỰC HIỆN TASK Khung bảng voucher code và usage log (đọc trong folder docs để hiểu và làm)
-các UI liên quan nằm trong src_UI_mau \voucher-code (cần đọc kỹ task để hiểu code)
-Optimized tool selectionTôi sẽ rà soát các thành phần liên quan đến voucher và luồng xác nhận sử dụng để chỉ ra các file UI phù hợp.
-
-Searched for regex `voucher code|voucherCode|VoucherCode|confirm.*voucher|use voucher|Xác nhận|lookup` (`**/src/**`), 717 results
-
-Tôi đang mở các màn hình chính để xác định đúng file nào thực hiện luồng tra cứu và xác nhận.
-
-Read [](file:///d%3A/Make_EC/src/app/partner/PartnerVoucherCodeLookup.tsx#1-1), lines 1 to 220
-
-Read [](file:///d%3A/Make_EC/src/app/partner/PartnerDashboard.tsx#1-1), lines 1 to 140
-
-Read [](file:///d%3A/Make_EC/src/app/partner/PartnerLayout.tsx#1-1), lines 1 to 140
-
-Read [](file:///d%3A/Make_EC/src/app/App.tsx#1-1), lines 1 to 140
-
-## File UI liên quan
-
-Các file UI chính cho use case “Tra cứu voucher code” và “Xác nhận sử dụng voucher” là:
-
-- PartnerVoucherCodeLookup.tsx — đây là màn hình chính. Nó chứa:
-  - ô nhập mã voucher,
-  - trạng thái tra cứu (hợp lệ, đã sử dụng, hết hạn, không hợp lệ),
-  - nút xác nhận sử dụng voucher,
-  - các trạng thái thành công/lỗi khi xác nhận.
-
-- PartnerDashboard.tsx — có nút thao tác nhanh “Tra cứu Voucher Code” từ dashboard partner.
-
-- PartnerLayout.tsx — menu điều hướng trong portal partner, có mục “Tra cứu mã”.
-
-- App.tsx — nơi kết nối route page “code-lookup” sang component trên.
-
-## File dữ liệu hỗ trợ
-
-- partnerMockData.ts — chứa mock dữ liệu voucher code, trạng thái sử dụng và chi nhánh liên quan.

@@ -90,19 +90,6 @@ class AuthService {
     const dbVaiTro = account.nguoidung.vai_tro;
     const mappedRole = DB_TO_JWT[dbVaiTro] || 'CUSTOMER';
 
-    // Lấy thông tin chi nhánh của nhân viên nếu có
-    let branchInfo = null;
-    if (account.nguoidung.ma_chi_nhanh) {
-      const { data: bData } = await supabase
-        .from('chinhanh')
-        .select('ma_chi_nhanh, ten_chi_nhanh, dia_chi, khu_vuc')
-        .eq('ma_chi_nhanh', account.nguoidung.ma_chi_nhanh)
-        .maybeSingle();
-      if (bData) {
-        branchInfo = bData;
-      }
-    }
-
     const userPayload = {
       id: account.nguoidung.ma_nguoi_dung,
       accountId: account.ma_tk,
@@ -111,9 +98,6 @@ class AuthService {
       name: account.nguoidung.ho_ten,
       vai_tro_he_thong: dbVaiTro,
       ma_chi_nhanh: account.nguoidung.ma_chi_nhanh ?? null,
-      ten_chi_nhanh: branchInfo?.ten_chi_nhanh ?? null,
-      dia_chi_chi_nhanh: branchInfo?.dia_chi ?? null,
-      khu_vuc_chi_nhanh: branchInfo?.khu_vuc ?? null,
     };
 
     const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: '1d' });

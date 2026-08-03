@@ -142,7 +142,8 @@ class UserController {
   // -----------------------------------------------------------------------
   async listBranches(req, res, next) {
     try {
-      const branches = await this.userService.listBranches();
+      const userRepository = require('../../data/repositories/user.repository');
+      const branches = await userRepository.findAllBranches();
       res.status(200).json({ success: true, data: branches, message: 'Lấy danh sách chi nhánh thành công' });
     } catch (error) {
       next(error);
@@ -151,7 +152,8 @@ class UserController {
 
   async listPartners(req, res, next) {
     try {
-      const partners = await this.userService.listPartners();
+      const userRepository = require('../../data/repositories/user.repository');
+      const partners = await userRepository.findAllPartners();
       res.status(200).json({ success: true, data: partners, message: 'Lấy danh sách đối tác thành công' });
     } catch (error) {
       next(error);

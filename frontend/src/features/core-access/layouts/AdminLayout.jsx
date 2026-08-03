@@ -10,7 +10,6 @@ import {
   Menu,             // Icon mở sidebar mobile
   X,                // Icon đóng sidebar mobile
   Bell,             // Icon thông báo
-  QrCode,           // Icon mã QR voucher
 } from 'lucide-react';
 
 // Danh sách menu sidebar — mỗi item là 1 link
@@ -21,7 +20,6 @@ const NAV_ITEMS = [
   { path: '/admin', label: 'Tổng quan', icon: LayoutDashboard },
   { path: '/admin/users', label: 'Người dùng', icon: Users },
   { path: '/admin/logs', label: 'Nhật ký hệ thống', icon: ScrollText },
-  { path: '/admin/voucher-lookup', label: 'Đối soát Voucher (QR)', icon: QrCode },
 ];
 
 export default function AdminLayout() {

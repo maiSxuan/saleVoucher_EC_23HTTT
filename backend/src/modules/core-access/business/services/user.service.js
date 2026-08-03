@@ -290,17 +290,6 @@ class UserService {
       ma_tk: null,
     });
   }
-
-  // -----------------------------------------------------------------------
-  // 7. LẤY DANH SÁCH CHI NHÁNH VÀ ĐỐI TÁC CHO COMBOBOX / LOOKUP
-  // -----------------------------------------------------------------------
-  async listBranches() {
-    return await userRepository.findAllBranches();
-  }
-
-  async listPartners() {
-    return await userRepository.findAllPartners();
-  }
 }
 
 module.exports = new UserService();
