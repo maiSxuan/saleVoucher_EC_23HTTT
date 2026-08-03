@@ -8,6 +8,7 @@ const catalogQueryService = require("../../business/services/catalog-query.servi
 const router = express.Router();
 const controller = new CatalogController(catalogQueryService);
 
-router.get("/catalog", controller.list.bind(controller));
-
+router.get("/", controller.list.bind(controller));
+router.get("/categories", controller.categories.bind(controller));
+router.get("/:id", controller.detail.bind(controller));
 module.exports = router;

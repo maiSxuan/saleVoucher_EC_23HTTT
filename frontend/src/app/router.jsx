@@ -20,7 +20,13 @@ import AdminLayout from "../features/core-access/layouts/AdminLayout";
 
 // Trang Admin & Partner
 import UserListPage from "../features/core-access/pages/admin/UserListPage";
-import PartnerVoucherLookupPage from "../features/core-access/pages/partner/PartnerVoucherLookupPage";
+
+// Customer
+import CustomerLayout from "../features/customer-commerce/layouts/CustomerLayout";
+import VoucherSearchPage from "../features/customer-commerce/pages/customer/VoucherSearchPage";
+import VoucherDetailPage from "../features/customer-commerce/pages/customer/VoucherDetailPage";
+
+import { Home } from "lucide-react";
 
 // Placeholder trang chưa làm
 const AdminDashboardPage = () => (
@@ -42,8 +48,8 @@ const AuditLogPage = () => (
 );
 
 // Placeholder cho customer
-const CustomerScreen = () => (
-  <div className="p-6 text-gray-700">Customer Dashboard — Đang phát triển</div>
+const PartnerScreen = () => (
+  <div className="p-6 text-gray-700">Partner Dashboard — Đang phát triển</div>
 );
 
 const router = createBrowserRouter([
@@ -76,7 +82,21 @@ const router = createBrowserRouter([
       {
         path: "customer",
         element: <ProtectedRoute allowedRoles={["CUSTOMER"]} />,
-        children: [{ index: true, element: <CustomerScreen /> }],
+        children: [
+          {
+            element: <CustomerLayout />,
+            children: [
+              {
+                index: true,
+                element: <VoucherSearchPage />,
+              },
+              {
+                path: "vouchers/:id",
+                element: <VoucherDetailPage />,
+              },
+            ],
+          },
+        ],
       },
 
       // PARTNER ROUTES (BR-PAR-05, BR-PAR-06: Tra cứu & Xác nhận sử dụng voucher)
