@@ -19,22 +19,46 @@ export default function CartPage() {
 
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [updatingId, setUpdatingId] = useState(null);
   const [checkingOut, setCheckingOut] = useState(false);
-
-  // 💡 STATE MỚI: Quản lý danh sách voucherId được chọn & Modal xóa
+  const [errorMsg, setErrorMsg] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [removingIds, setRemovingIds] = useState([]);
+
+  const validItems =
+    cart?.items?.filter((i) => i && i.status !== "unavailable") || [];
+  const validIds = validItems.map((i) => i.voucherId);
+
+  // Xóa 1 item không hợp lệ — cập nhật local, không gọi lại loadCart toàn trang
+  const handleRemoveInvalidItem = async (voucherId) => {
+    setRemovingIds((prev) => [...prev, voucherId]);
+    try {
+      const updated = await removeCartItems([voucherId]);
+      setCart(updated); // dùng luôn response từ server để đồng bộ, khỏi phải loadCart lại
+      setSelectedIds((prev) => prev.filter((id) => id !== voucherId));
+      toast.success("Đã xóa voucher không khả dụng khỏi giỏ hàng.");
+    } catch (err) {
+      console.error("Lỗi handleRemoveInvalidItem:", err);
+      toast.error("Không thể xóa voucher. Vui lòng thử lại.");
+    } finally {
+      setRemovingIds((prev) => prev.filter((id) => id !== voucherId));
+    }
+  };
 
   function loadCart() {
     setLoading(true);
-
+    setErrorMsg("");
     fetchCart()
       .then((cartData) => {
+        // 1. Kiểm tra nếu cartData bị null/undefined thì gán fallback
+        const currentCart = cartData || { items: [] };
         setCart(currentCart);
 
-        const validIds = currentCart.items
+        // 2. Ép kiểm tra items là mảng an toàn trước khi gọi .filter() / .map()
+        const items = Array.isArray(currentCart.items) ? currentCart.items : [];
+
+        const validIds = items
           .filter((i) => i && i.status !== "unavailable")
           .map((i) => i.voucherId);
 
@@ -42,7 +66,7 @@ export default function CartPage() {
       })
       .catch((err) => {
         console.error("Lỗi loadCart:", err);
-        toast.error("Không thể tải giỏ hàng. Vui lòng thử lại");
+        setErrorMsg("Không thể tải giỏ hàng. Vui lòng thử lại sau.");
       })
       .finally(() => setLoading(false));
   }
@@ -50,17 +74,20 @@ export default function CartPage() {
 
   // --- LOGIC XỬ LÝ CHECKBOX ---
   const isAllSelected =
-    cart?.items?.length > 0 && selectedIds.length === cart.items.length;
+    validItems.length > 0 &&
+    selectedIds.length === validItems.length &&
+    validIds.every((id) => selectedIds.includes(id));
 
   const handleToggleSelectAll = () => {
     if (isAllSelected) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(cart.items.map((i) => i.voucherId));
+      setSelectedIds(validIds);
     }
   };
 
-  const handleToggleItem = (voucherId) => {
+  const handleToggleItem = (voucherId, status) => {
+    if (status === "unavailable") return; // chặn toggle item không hợp lệ
     setSelectedIds((prev) =>
       prev.includes(voucherId)
         ? prev.filter((id) => id !== voucherId)
@@ -71,15 +98,27 @@ export default function CartPage() {
   // --- LOGIC ĐỔI SỐ LƯỢNG ---
   const handleQtyChange = async (voucherId, newQty) => {
     if (newQty < 1) return;
-    setUpdatingId(voucherId);
+
+    //state cũ
+    const previousCart = structuredClone(cart);
+
+    // cập nhật UI ngay lập tức
+    setCart((prevCart) => {
+      if (!prevCart) return prevCart;
+      return {
+        ...prevCart,
+        items: prevCart.items.map((item) =>
+          item.voucherId === voucherId ? { ...item, quantity: newQty } : item,
+        ),
+      };
+    });
+
     try {
-      const updated = await updateCartItemQuantity(voucherId, newQty);
-      setCart(updated);
+      await updateCartItemQuantity(voucherId, newQty);
     } catch (err) {
+      setCart(previousCart);
       console.error("Lỗi handleQtyChange:", err);
-      toast.error("Không thể cập nhật số lượng");
-    } finally {
-      setUpdatingId(null);
+      setErrorMsg("Không thể cập nhật số lượng");
     }
   };
 
@@ -94,8 +133,8 @@ export default function CartPage() {
       setSelectedIds([]);
       setShowDeleteModal(false);
     } catch (err) {
-      console.error("Lỗi handleQtyChange:", err);
-      toast.error("Có lỗi xảy ra khi xóa sản phẩm.");
+      console.error("Lỗi handleConfirmDeleteSelected:", err);
+      setErrorMsg("Có lỗi xảy ra khi xóa sản phẩm.");
     } finally {
       setDeleting(false);
     }
@@ -179,7 +218,8 @@ export default function CartPage() {
             className="w-4 h-4 accent-orange-500 rounded cursor-pointer"
           />
           <h1 className="text-base font-bold text-gray-900 flex items-center gap-2">
-            <ShoppingCart size={18} /> Chọn tất cả ({cart.items.length} voucher)
+            <ShoppingCart size={18} /> Chọn tất cả ({selectedIds.length}/
+            {validItems.length} voucher)
           </h1>
         </div>
 
@@ -208,14 +248,14 @@ export default function CartPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* DANH SÁCH SẢN PHẨM */}
         <div className="lg:col-span-2 space-y-3">
-          {cart.items.map((item) => {
+          {cart.items?.map((item) => {
             const isChecked = selectedIds.includes(item.voucherId);
             return (
               <div
                 key={item.voucherId}
                 className={`bg-white rounded-xl border p-3 flex items-center gap-3 transition-all ${
                   item.status === "unavailable"
-                    ? "border-red-200 opacity-70 bg-gray-50"
+                    ? "border-red-200 bg-gray-50 opacity-70"
                     : item.status === "qty_exceeded"
                       ? "border-amber-200"
                       : isChecked
@@ -227,8 +267,12 @@ export default function CartPage() {
                 <input
                   type="checkbox"
                   checked={isChecked}
-                  onChange={() => handleToggleItem(item.voucherId)}
-                  className="w-4 h-4 accent-orange-500 rounded cursor-pointer flex-shrink-0"
+                  onChange={() => handleToggleItem(item.voucherId, item.status)}
+                  className={`w-4 h-4 rounded flex-shrink-0 ${
+                    item.status === "unavailable"
+                      ? "accent-gray-300 cursor-not-allowed"
+                      : "accent-orange-500 cursor-pointer"
+                  }`}
                 />
 
                 <img
@@ -251,10 +295,21 @@ export default function CartPage() {
                     {item.salePrice.toLocaleString("vi-VN")}đ
                   </p>
                   {item.status === "unavailable" && (
-                    <span className="text-xs text-red-500 flex items-center gap-1 mt-0.5">
-                      <AlertCircle size={11} />
-                      Không khả dụng
-                    </span>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <span className="text-xs text-red-500 flex items-center gap-1">
+                        <AlertCircle size={11} />
+                        Không khả dụng
+                      </span>
+                      <button
+                        onClick={() => handleRemoveInvalidItem(item.voucherId)}
+                        disabled={removingIds.includes(item.voucherId)}
+                        className="text-xs font-medium text-white bg-red-500 hover:bg-red-600 active:bg-red-700 px-2.5 py-1 rounded-md transition-colors disabled:bg-red-300 disabled:cursor-wait"
+                      >
+                        {removingIds.includes(item.voucherId)
+                          ? "Đang xóa..."
+                          : "Xóa khỏi giỏ"}
+                      </button>
+                    </div>
                   )}
                   {item.status === "qty_exceeded" && (
                     <span className="text-xs text-amber-600 flex items-center gap-1 mt-0.5">
@@ -267,23 +322,24 @@ export default function CartPage() {
                 <div className="flex flex-col items-end gap-2">
                   <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white">
                     <button
+                      disabled={item.status === "unavailable"}
                       onClick={() =>
                         handleQtyChange(item.voucherId, item.quantity - 1)
                       }
-                      disabled={!!updatingId}
-                      className="px-2 py-0.5 text-gray-600 hover:bg-gray-50 text-sm"
+                      className={`px-2 py-0.5 text-gray-600 hover:bg-gray-50 text-sm
+                       ${item.status === "unavailable" ? "cursor-not-allowed disabled" : "cursor-pointer"}`}
                     >
                       −
                     </button>
                     <span className="px-2 py-0.5 text-sm min-w-6 text-center">
-                      {updatingId === item.voucherId ? "..." : item.quantity}
+                      {item.quantity}
                     </span>
                     <button
+                      disabled={item.status === "unavailable"}
                       onClick={() =>
                         handleQtyChange(item.voucherId, item.quantity + 1)
                       }
-                      disabled={!!updatingId}
-                      className="px-2 py-0.5 text-gray-600 hover:bg-gray-50 text-sm"
+                      className={`px-2 py-0.5 text-gray-600 hover:bg-gray-50 text-sm ${item.status === "unavailable" ? "cursor-not-allowed disabled" : "cursor-pointer"}`}
                     >
                       +
                     </button>
@@ -353,7 +409,7 @@ export default function CartPage() {
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-xs"
+            className="absolute inset-0 bg-black/40 "
             onClick={() => !deleting && setShowDeleteModal(false)}
           />
           <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5 text-center transform transition-all">
