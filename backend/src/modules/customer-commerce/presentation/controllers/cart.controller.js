@@ -15,6 +15,20 @@ class CartController {
       next(error);
     }
   }
+
+  async addItem(req, res, next) {
+    try {
+      const { voucherId, quantity } = req.body;
+      const result = await this.cartService.addToCart({
+        accountId: req.user?.accountId,
+        voucherId,
+        quantity: Number(quantity) || 1,
+      });
+      res.json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = CartController;
