@@ -2,18 +2,11 @@
  * FILE: router.jsx
  * PURPOSE: Khai báo toàn bộ routes của ứng dụng frontend.
  *
- * Tại sao cần file này?
- * - Một điểm duy nhất quản lý tất cả URL → component mapping.
- * - Route admin được bảo vệ kép: ProtectedRoute (kiểm tra token + role) + AdminLayout (sidebar/topbar).
- *
- * Luồng bảo vệ route admin:
- *   Truy cập /admin/* → ProtectedRoute kiểm tra localStorage → nếu không phải ADMIN → /forbidden
- *   Nếu hợp lệ → AdminLayout (render sidebar + topbar) → Outlet render trang cụ thể
- *
- * Cấu trúc route admin (BR-ADM-01):
- *   /admin           → AdminDashboardPage (tổng quan)
- *   /admin/users     → UserListPage (danh sách người dùng)
- *   /admin/logs      → AuditLogPage (nhật ký hệ thống)
+ * Cấu trúc routes:
+ * - Public: /login, /forbidden, /customer/register
+ * - Customer: /customer
+ * - Partner: /partner, /partner/vouchers/lookup (BR-PAR-05, BR-PAR-06)
+ * - Admin: /admin, /admin/users, /admin/logs, /admin/voucher-lookup
  */
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import App from "../App";
@@ -25,8 +18,9 @@ import RegisterPage from "../features/customer-commerce/pages/customer/RegisterP
 // Layout admin — sidebar + topbar, wrap tất cả trang admin
 import AdminLayout from "../features/core-access/layouts/AdminLayout";
 
-// Trang admin
+// Trang Admin & Partner
 import UserListPage from "../features/core-access/pages/admin/UserListPage";
+import PartnerVoucherLookupPage from "../features/core-access/pages/partner/PartnerVoucherLookupPage";
 
 // Placeholder trang chưa làm
 const AdminDashboardPage = () => (
@@ -47,12 +41,9 @@ const AuditLogPage = () => (
   </div>
 );
 
-// Placeholder cho customer/partner
+// Placeholder cho customer
 const CustomerScreen = () => (
   <div className="p-6 text-gray-700">Customer Dashboard — Đang phát triển</div>
-);
-const PartnerScreen = () => (
-  <div className="p-6 text-gray-700">Partner Dashboard — Đang phát triển</div>
 );
 
 const router = createBrowserRouter([
@@ -88,23 +79,22 @@ const router = createBrowserRouter([
         children: [{ index: true, element: <CustomerScreen /> }],
       },
 
-      // PARTNER ROUTES (cả 2 role đối tác)
+      // PARTNER ROUTES (BR-PAR-05, BR-PAR-06: Tra cứu & Xác nhận sử dụng voucher)
       {
         path: "partner",
         element: (
           <ProtectedRoute allowedRoles={["PARTNER_OWNER", "PARTNER_STAFF"]} />
         ),
-        children: [{ index: true, element: <PartnerScreen /> }],
+        children: [
+          { index: true, element: <PartnerVoucherLookupPage /> },
+          { path: "vouchers/lookup", element: <PartnerVoucherLookupPage /> },
+        ],
       },
     ],
   },
 
   // -----------------------------------------------------------------------
   // ADMIN ROUTES — Bảo vệ bởi ProtectedRoute(ADMIN) + AdminLayout
-  //
-  // Tại sao đặt admin ra ngoài "/" ?
-  // - Admin dùng layout riêng (AdminLayout có sidebar) thay vì App (Header chung).
-  // - Tách rõ UX cho admin vs user thông thường.
   // -----------------------------------------------------------------------
   {
     path: "/admin",
@@ -119,10 +109,12 @@ const router = createBrowserRouter([
         children: [
           // /admin → Dashboard
           { index: true, element: <AdminDashboardPage /> },
-          // /admin/users → Quản lý người dùng (BR-ADM-01) — dùng data thật Supabase
+          // /admin/users → Quản lý người dùng (BR-ADM-01)
           { path: "users", element: <UserListPage /> },
-          // /admin/logs → Nhật ký hệ thống (BR-ADM-07) — placeholder
+          // /admin/logs → Nhật ký hệ thống (BR-ADM-07)
           { path: "logs", element: <AuditLogPage /> },
+          // /admin/voucher-lookup → Tra cứu & đối soát voucher (BR-PAR-05, BR-PAR-06)
+          { path: "voucher-lookup", element: <PartnerVoucherLookupPage /> },
         ],
       },
     ],

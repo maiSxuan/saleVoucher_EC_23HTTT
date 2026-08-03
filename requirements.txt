@@ -1,0 +1,53 @@
+# ==============================================================================
+# HỆ THỐNG QUẢN LÝ VÀ PHÂN PHỐI E-VOUCHER (SALE VOUCHER EC 23HTTT)
+# Danh sách thư viện và gói phụ thuộc cho toàn bộ hệ thống
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. PYTHON PACKAGES (Nếu chạy môi trường Python / Backend Scripts / AI Services)
+# Cài đặt: pip install -r requirements.txt
+# ------------------------------------------------------------------------------
+supabase>=2.4.0
+bcrypt>=4.1.2
+pyjwt>=2.8.0
+qrcode>=7.4.2
+pillow>=10.2.0
+python-dotenv>=1.0.1
+requests>=2.31.0
+fastapi>=0.110.0
+uvicorn>=0.28.0
+pydantic>=2.6.4
+
+# ------------------------------------------------------------------------------
+# 2. HƯỚNG DẪN CÀI ĐẶT NODE.JS / NPM (Dành cho Backend & Frontend chính)
+# ------------------------------------------------------------------------------
+
+# [BACKEND - Node.js Express & Supabase]
+# Di chuyển vào thư mục backend và chạy:
+#   cd backend
+#   npm install
+#
+# Danh sách các gói backend chính (package.json):
+#   - @supabase/supabase-js : Kết nối và truy vấn Supabase Database thật
+#   - express               : Web framework cho REST API
+#   - bcryptjs              : Mã hóa mật khẩu
+#   - jsonwebtoken          : Xác thực JWT Access Token
+#   - nodemailer            : Gửi email OTP thực tế
+#   - qrcode                : Sinh mã QR Code thật dưới dạng Data URL (ISO/IEC 18004)
+#   - cors                  : Xử lý CORS kết nối an toàn với frontend
+#   - dotenv                : Đọc biến môi trường từ file .env
+#   - nodemon (dev)         : Tự động reload server khi sửa code
+
+# [FRONTEND - React 18 + Vite + TailwindCSS]
+# Di chuyển vào thư mục frontend và chạy:
+#   cd frontend
+#   npm install
+#
+# Danh sách các gói frontend chính (package.json):
+#   - react & react-dom     : Thư viện React 18
+#   - react-router-dom      : Định tuyến SPA với ProtectedRoute
+#   - html5-qrcode          : Quét mã QR thật bằng Camera thiết bị / Upload ảnh
+#   - qrcode                : Render mã QR Canvas chất lượng cao
+#   - lucide-react          : Bộ icon trực quan UI
+#   - tailwindcss           : Styling CSS giao diện chuẩn hiện đại
+#   - vite                  : Trình build và máy chủ phát triển siêu tốc

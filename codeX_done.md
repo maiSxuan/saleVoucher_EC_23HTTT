@@ -460,3 +460,99 @@ Dựa trên yêu cầu của bạn, chức năng **Cập nhật vai trò** đã 
 - Cập nhật giao diện `UserDetailPanel` hiển thị 3 Tab: **Thông tin cá nhân**, **Lịch sử mua voucher**, và **Lịch sử quản trị**.
 - Nút "Cập nhật vai trò" giờ đây chỉ xuất hiện khi xem chi tiết các tài khoản thuộc vai trò `Nhan vien ban hang` hoặc `Nhan vien quan ly voucher`.
 - Modal Cập nhật Vai trò tự động giới hạn tuỳ chọn (chỉ cho phép đổi sang vai trò còn lại trong 2 vai trò trên) và yêu cầu chọn Chi nhánh/Đối tác từ Combobox tương ứng.
+
+---
+
+# BƯỚC 6 Đã Hoàn Thành: Triển khai Hoàn chỉnh Nghiệp vụ Đối tác (BR-PAR-05, BR-PAR-06, Quét QR Camera Thật & Sinh Mã QR Thật)
+
+Dựa trên yêu cầu từ file đặc tả `đặc tả hệ thống cho đối tác (2).pdf` và chỉ đạo trực tiếp từ bạn, toàn bộ nghiệp vụ **Tra cứu/Xác thực Voucher (BR-PAR-05)**, **Xác nhận Sử dụng Voucher tại Quầy (BR-PAR-06)**, cùng cơ chế **Sinh mã QR Code thật** và **Quét mã bằng Camera thiết bị / Upload ảnh thật** đã được triển khai hoàn chỉnh, kết nối cơ sở dữ liệu Supabase thật và vượt qua 100% các kịch bản kiểm thử tự động.
+
+---
+
+## 1. Kiến trúc & Logic Nghiệp vụ Backend (`core-access`)
+
+### 1.1. Data Model & Repository (`issued-voucher.model.js` & `issued-voucher.repository.js`)
+- **Truy vấn đa bảng ổn định**: Khắc phục triệt để lỗi Schema Cache của PostgREST bằng cách truy vấn tách biệt và liên kết dữ liệu giữa `voucher_mua`, `voucher`, `donhang`, `taikhoan`, `nguoidung`, và `chinhanh`.
+- **Ẩn danh thông tin khách hàng (NFR-02)**: Tên khách hàng và số điện thoại được làm mờ tự động (Ví dụ: `Nguyễn Minh Anh` ➔ `N***** M** A**`, `0901234567` ➔ `090****567`) để bảo vệ dữ liệu cá nhân khi nhân viên quầy tra cứu.
+- **Atomic Update chống Race Condition (RB-07)**:
+  - Khi thực hiện xác nhận sử dụng, câu lệnh `.update({ trang_thai: 'Da su dung', ... }).eq('voucher_code', code).eq('trang_thai', 'Chua su dung')` chỉ cập nhật thành công nếu trạng thái lúc đó thực sự là `Chua su dung`.
+  - Nếu có 2 nhân viên quầy quét cùng 1 mã cùng 1 lúc, chỉ đúng 1 người cập nhật thành công, người thứ hai sẽ nhận thông báo lỗi mã đã được sử dụng ngay lập tức.
+- **Rollback khi gặp lỗi ngoại lệ E3**: Nếu quá trình ghi log kiểm toán bắt buộc (Audit Log) bị lỗi, hệ thống tự động hoàn tác `revertRedemption` trả lại trạng thái `Chua su dung` để bảo đảm tính toàn vẹn dữ liệu.
+- **Lấy danh sách mã mẫu demo (`findSampleCodes`)**: Cung cấp API để Frontend có thể hiển thị danh sách các mã voucher có sẵn trong Database, giúp người kiểm thử bấm tra cứu nhanh bằng 1 click chuột.
+
+### 1.2. Dịch vụ Nghiệp vụ Service (`voucher-verification.service.js` & `voucher-redemption.service.js`)
+- **Xác thực toàn diện các ràng buộc (BR-PAR-05)**:
+  1. `E1` - Mã voucher không tồn tại trong hệ thống.
+  2. `E2` - Mã voucher đã sử dụng (`RB-07`).
+  3. `E4` - Mã voucher đã hết hạn sử dụng (`RB-08`).
+  4. `E5` - Mã voucher bị vô hiệu hóa / tạm dừng do đơn hàng bị hủy hoặc gian lận.
+  5. `RB-09` - Ràng buộc chi nhánh: Kiểm tra chi nhánh mà nhân viên đang đăng nhập có nằm trong danh sách chi nhánh được áp dụng voucher hay không.
+- **Sinh mã QR Code thật theo chuẩn ISO/IEC 18004**:
+  - Tích hợp thư viện `qrcode` để sinh ra chuỗi Base64 Data URL (`image/png`) từ định dạng chuẩn `ECQR:<voucher_code>`.
+  - Mã QR này có thể render trực tiếp lên thẻ `<img>` hoặc vẽ lên `<canvas>` với độ nét cao và khả năng sửa lỗi (Error Correction Level M).
+- **Ghi nhật ký kiểm toán nghiêm ngặt (Audit Log - RB-12, RB-15, NFR-06)**:
+  - Mọi thao tác xác nhận sử dụng thành công đều được ghi lại vào bảng `LOG_HT` với `doi_tuong = 'VOUCHER_MUA'`, `hanh_dong = 'su_dung_voucher'`, lưu vết `ma_chi_nhanh_su_dung`, `ma_nhan_vien_xac_nhan`, và thời điểm thực hiện.
+
+### 1.3. Controller & Định tuyến Routes (`redemption.controller.js` & `redemption.routes.js`)
+- `POST /api/vouchers/verify`: Tra cứu thông tin, kiểm tra tính hợp lệ và trả về thông tin chi tiết kèm mã QR DataURL.
+- `POST /api/vouchers/redeem`: Xác nhận sử dụng voucher tại quầy chi nhánh (bảo vệ bởi `authenticateMiddleware`).
+- `GET /api/vouchers/usage-history`: Lấy lịch sử các giao dịch đã sử dụng voucher tại chi nhánh (có phân trang).
+- `GET /api/vouchers/sample-codes`: Lấy danh sách mã voucher có sẵn trong DB để test nhanh.
+
+---
+
+## 2. Giao diện Frontend & Tích hợp Camera Thật
+
+### 2.1. Component Quét QR Thật bằng Camera (`QrScannerModal.jsx`)
+- **Tích hợp `html5-qrcode`**:
+  - Yêu cầu quyền truy cập Camera thiết bị thông qua MediaDevices Web API.
+  - Tự động nhận diện Camera trước/sau, hiển thị khung nhắm mục tiêu (scan viewfinder) với hiệu ứng laser quét sống động.
+  - Hỗ trợ cả 2 chế độ: **Dùng Camera trực tiếp** hoặc **Tải file ảnh chứa mã QR** từ máy tính/điện thoại để quét.
+  - Tự động trích xuất chuỗi `ECQR:<voucher_code>` hoặc mã code thuần túy khi phát hiện mã thành công và tự động điền vào ô tìm kiếm.
+
+### 2.2. Component Hiển thị & Tải Mã QR Thật (`QrCodeDisplay.jsx`)
+- Render mã QR Code bằng thẻ `<canvas>` kết hợp thư viện `qrcode`.
+- Hỗ trợ tính năng: **Tải mã QR về máy** dưới định dạng ảnh PNG chất lượng cao, **Sao chép mã vào Clipboard** với hiệu ứng thông báo mượt mà.
+
+### 2.3. Trang Quản lý & Đối soát Voucher (`PartnerVoucherLookupPage.jsx`)
+- **Thanh tìm kiếm thông minh**: Nhập mã bằng bàn phím hoặc bấm nút "Quét Camera QR" để mở khung quét.
+- **Khu vực Demo Fast-Click**: Hiển thị sẵn các mã voucher thật trong DB (Mã hợp lệ, Mã đã dùng, Mã vô hiệu hóa) để kiểm thử viên thử nghiệm ngay lập tức mà không cần gõ phím.
+- **Thẻ kết quả trực quan (Status Badge)**:
+  - **Màu xanh lá (Hợp lệ)**: Hiển thị đầy đủ Tên voucher, Giá trị giảm, Giá sau giảm, Điều kiện áp dụng, Danh sách chi nhánh hợp lệ, Thông tin người mua ẩn danh, Mã QR thật, và Nút bấm **"Xác nhận sử dụng tại quầy"**.
+  - **Màu cam (Đã sử dụng)**: Báo rõ thời gian và chi nhánh đã sử dụng trước đó.
+  - **Màu đỏ (Không hợp lệ / Hết hạn / Vô hiệu hóa / Sai chi nhánh)**: Báo lỗi chi tiết theo đúng đặc tả.
+- **Tab Lịch sử giao dịch quầy**: Xem danh sách các voucher đã đổi thành công với đầy đủ mã đơn hàng, ngày giờ và nhân viên thực hiện.
+
+---
+
+## 3. Kết quả Kiểm thử Toàn diện
+
+Bộ test script tự động (`backend/src/scripts/test_voucher_redemption.js`) và quá trình build production frontend (`npm run build`) đã được thực thi thành công 100%:
+
+| STT | Kịch bản kiểm thử | Dữ liệu kiểm tra | Kết quả thực tế | Đánh giá |
+| :--- | :--- | :--- | :--- | :--- |
+| 1 | Nạp danh sách mã mẫu từ DB | `findSampleCodes()` | Lấy thành công 5 mã thực tế trong Supabase | **ĐẠT** |
+| 2 | Tra cứu mã CHƯA SỬ DỤNG | `EC26-FOOD-E5F6G7H8` | `valid: true, status: 'valid'`, Sinh QR DataURL thành công | **ĐẠT (BR-PAR-05)** |
+| 3 | Tra cứu mã ĐÃ SỬ DỤNG | `EC26-FOOD-A1B2C3D4` | `valid: false, status: 'used'`, Chặn đổi trùng (RB-07) | **ĐẠT (RB-07)** |
+| 4 | Tra cứu mã VÔ HIỆU HÓA | `EC26-MOVIE-N5P6Q7R8` | `valid: false, status: 'cancelled'`, Báo vô hiệu hóa | **ĐẠT (RB-08)** |
+| 5 | Tra cứu mã KHÔNG TỒN TẠI | `FAKE-9999-NOTFOUND` | `valid: false, status: 'invalid'`, Báo lỗi E1 | **ĐẠT (E1)** |
+| 6 | Ràng buộc chi nhánh làm việc | Branch UUID giả lập | `valid: false, status: 'invalid_branch'`, Áp dụng RB-09 | **ĐẠT (RB-09)** |
+| 7 | Xem lịch sử sử dụng tại quầy | `getUsageHistory()` | Lấy thành công danh sách bản ghi `voucher_mua` | **ĐẠT (BR-PAR-06)** |
+| 8 | Build production Frontend | `vite build` | 1850 modules compiled thành công trong 4.71s | **ĐẠT (Zero Errors)** |
+
+---
+
+## 4. File `requirement.txt` & `requirements.txt`
+- Đã khởi tạo 2 file `requirement.txt` và `requirements.txt` ở thư mục gốc chứa đầy đủ:
+  - Danh sách gói Python (`pip install -r requirement.txt`) nếu chạy môi trường Python / Backend Microservices / AI.
+  - Bảng chú giải và hướng dẫn lệnh `npm install` chi tiết cho cả Backend (Node.js/Express/Supabase/QRCode) và Frontend (React/Vite/TailwindCSS/HTML5-QRCode).
+
+---
+
+## 5. Tự động nhận diện & Gắn chặt Chi nhánh làm việc của Nhân viên (BR-PAR-05, BR-PAR-06)
+- **Tự động liên kết Chi nhánh khi Đăng nhập (`auth.service.js`)**:
+  - Khi nhân viên bán hàng đăng nhập, hệ thống tự động tra cứu bảng `chinhanh` trong Supabase để lấy thông tin chi tiết: `ten_chi_nhanh`, `dia_chi`, `khu_vuc`.
+  - Gắn trực tiếp thông tin chi nhánh vào `userPayload` và phiên làm việc (`localStorage`).
+- **Giao diện hiển thị chi nhánh trực quan (`PartnerVoucherLookupPage.jsx`)**:
+  - Với **Nhân viên bán hàng (Partner Staff)**: Giao diện tự động khóa và hiển thị nổi bật thẻ **Chi nhánh đang làm việc** (Ví dụ: `Am Thuc Sai Gon - Nguyen Hue`, `12 Nguyen Hue, TP. Ho Chi Minh (Q1)` 🟢 Đang hoạt động), ngăn chặn nhân viên chọn sai chi nhánh đối soát vi phạm quy tắc `RB-09`.
+  - Với **Quản lý / Quản trị viên (Admin / Partner Owner)**: Cho phép chuyển đổi linh hoạt qua Combobox giữa các quầy chi nhánh đang hoạt động để kiểm tra và đối soát linh hoạt.

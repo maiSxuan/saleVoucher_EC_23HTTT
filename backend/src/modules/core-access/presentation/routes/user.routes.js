@@ -59,11 +59,17 @@ router.patch(
   controller.updateUserRole.bind(controller)
 );
 
-// Lấy danh sách chi nhánh (để lấy danh sách combo box)
+// Lấy danh sách chi nhánh (phục vụ Combobox Admin và chọn Chi nhánh Đối tác)
 router.get(
   '/admin/branches',
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN),
+  authorizeMiddleware(JWT_ROLES.ADMIN, JWT_ROLES.PARTNER_OWNER, JWT_ROLES.PARTNER_STAFF),
+  controller.listBranches.bind(controller)
+);
+router.get(
+  '/branches',
+  authenticateMiddleware,
+  authorizeMiddleware(JWT_ROLES.ADMIN, JWT_ROLES.PARTNER_OWNER, JWT_ROLES.PARTNER_STAFF),
   controller.listBranches.bind(controller)
 );
 
@@ -71,7 +77,13 @@ router.get(
 router.get(
   '/admin/partners',
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN),
+  authorizeMiddleware(JWT_ROLES.ADMIN, JWT_ROLES.PARTNER_OWNER, JWT_ROLES.PARTNER_STAFF),
+  controller.listPartners.bind(controller)
+);
+router.get(
+  '/partners',
+  authenticateMiddleware,
+  authorizeMiddleware(JWT_ROLES.ADMIN, JWT_ROLES.PARTNER_OWNER, JWT_ROLES.PARTNER_STAFF),
   controller.listPartners.bind(controller)
 );
 
