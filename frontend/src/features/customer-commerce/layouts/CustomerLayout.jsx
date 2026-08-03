@@ -119,7 +119,7 @@ export default function CustomerLayout() {
                   <MenuLink
                     icon={Package}
                     label="Đơn hàng"
-                    onClick={() => navigate("/customer/orders")}
+                    onClick={() => navigate("/customer/cart")}
                   />
                   <MenuLink
                     icon={Tag}
