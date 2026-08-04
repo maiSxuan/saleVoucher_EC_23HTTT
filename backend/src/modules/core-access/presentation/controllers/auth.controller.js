@@ -1,7 +1,8 @@
 /**
- * Purpose: Controller xử lý các request liên quan đến authentication.
- * Ví dụ: login, register, refresh token, logout.
+ * Controller handling Authentication HTTP requests
  */
+const { successResponse } = require('../../../../common/utils/response');
+
 class AuthController {
   constructor(authService) {
     this.authService = authService;
@@ -10,12 +11,29 @@ class AuthController {
   async login(req, res, next) {
     try {
       const result = await this.authService.login(req.body);
-      res.json({ success: true, data: result });
+      return successResponse(res, result, 'Đăng nhập thành công');
     } catch (error) {
-      if (error.status) {
-        return res.status(error.status).json({ success: false, message: error.message });
-      }
-      res.status(400).json({ success: false, message: error.message });
+      next(error);
+    }
+  }
+
+  async logout(req, res, next) {
+    try {
+      const token = req.headers.authorization?.replace("Bearer ", "");
+      const result = await this.authService.logout(token);
+      return successResponse(res, result, result.message);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getMe(req, res, next) {
+    try {
+      const token = req.headers.authorization?.replace("Bearer ", "");
+      const user = await this.authService.getMe(token);
+      return successResponse(res, user, 'Lấy thông tin phiên đăng nhập thành công');
+    } catch (error) {
+      next(error);
     }
   }
 
@@ -23,27 +41,18 @@ class AuthController {
     try {
       const { email } = req.body;
       await this.authService.generateOTP(email);
-      res.json({ 
-        success: true, 
-        message: 'Mã OTP đã được gửi đến email của bạn'
-      });
+      return successResponse(res, null, 'Mã OTP đã được gửi đến email của bạn');
     } catch (error) {
-      if (error.status) {
-        return res.status(error.status).json({ success: false, message: error.message });
-      }
-      res.status(400).json({ success: false, message: error.message });
+      next(error);
     }
   }
 
   async loginWithOTP(req, res, next) {
     try {
       const result = await this.authService.loginWithOTP(req.body);
-      res.json({ success: true, data: result });
+      return successResponse(res, result, 'Đăng nhập bằng OTP thành công');
     } catch (error) {
-      if (error.status) {
-        return res.status(error.status).json({ success: false, message: error.message });
-      }
-      res.status(400).json({ success: false, message: error.message });
+      next(error);
     }
   }
 }

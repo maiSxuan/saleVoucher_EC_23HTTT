@@ -11,10 +11,22 @@ const {
 const router = express.Router();
 const controller = new CartController(cartService);
 
-router.get("/", controller.getCart.bind(controller));
+router.get("/", authenticateMiddleware, controller.getItems.bind(controller));
 router.post(
   "/items",
   authenticateMiddleware,
   controller.addItem.bind(controller),
 );
+router.patch(
+  "/items/:voucherId",
+  authenticateMiddleware,
+  controller.updateItem.bind(controller),
+);
+
+router.delete(
+  "/items",
+  authenticateMiddleware,
+  controller.removeItems.bind(controller),
+);
+
 module.exports = router;

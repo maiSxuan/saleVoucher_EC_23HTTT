@@ -46,7 +46,9 @@ export default function CustomerLayout() {
   function handleLogout() {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("user");
-    navigate("/login");
+    localStorage.removeItem("ec_auth_token");
+    localStorage.removeItem("ec_auth_user");
+    navigate("/login", { replace: true });
   }
 
   function selectCategory(name) {
@@ -119,7 +121,7 @@ export default function CustomerLayout() {
                   <MenuLink
                     icon={Package}
                     label="Đơn hàng"
-                    onClick={() => navigate("/customer/orders")}
+                    onClick={() => navigate("/customer/cart")}
                   />
                   <MenuLink
                     icon={Tag}

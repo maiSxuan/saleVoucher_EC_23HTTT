@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Shield, Eye, EyeOff, AlertCircle, ArrowLeft, Mail, KeyRound } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../../../app/auth-context";
 
 export default function LoginPage() {
   const [mode, setMode] = useState('login'); // 'login' | 'forgot-password' | 'enter-otp'
@@ -12,12 +13,12 @@ export default function LoginPage() {
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { persistSession } = useAuth();
 
   const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
   const handleLoginSuccess = (data) => {
-    localStorage.setItem('accessToken', data.data.token);
-    localStorage.setItem('user', JSON.stringify(data.data.user));
+    persistSession(data.data.accessToken || data.data.token, data.data.user);
 
     const userRole = data.data.user.role;
     if (userRole === 'ADMIN') navigate('/admin');

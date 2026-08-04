@@ -1,13 +1,26 @@
 /**
- * Purpose: Định nghĩa route cho màn hình công khai.
- * Dùng cho các trang không cần xác thực: login, register, home.
+ * Route tương thích cho các import cũ của portal Ngân.
+ * Router chạy thật được hợp nhất tập trung tại src/app/router.jsx.
  */
-import PublicLayout from "../../layouts/PublicLayout";
-import App from "../../App";
+import React from "react";
+import PublicLayout from "../layouts/PublicLayout";
+import App from "../App";
+import LoginPage from "../features/core-access/pages/auth/LoginPage";
+import LogoutPage from "../features/core-access/pages/auth/LogoutPage";
 
 export const publicRoutes = [
   {
     path: "/",
     element: <PublicLayout><App /></PublicLayout>,
   },
+  {
+    path: "/login",
+    element: <PublicLayout><LoginPage /></PublicLayout>,
+  },
+  {
+    path: "/logout",
+    element: <PublicLayout><LogoutPage /></PublicLayout>,
+  },
 ];
+
+export default publicRoutes;
