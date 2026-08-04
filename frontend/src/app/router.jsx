@@ -23,17 +23,20 @@ import PartnerProfilePage from "../features/partner-voucher/pages/partner/Partne
 import BranchManagementPage from "../features/partner-voucher/pages/partner/BranchManagementPage";
 import VoucherListPage from "../features/partner-voucher/pages/partner/VoucherListPage";
 import VoucherFormPage from "../features/partner-voucher/pages/partner/VoucherFormPage";
-import VoucherDetailPage from "../features/partner-voucher/pages/partner/VoucherDetailPage";
+import PartnerVoucherDetailPage from "../features/partner-voucher/pages/partner/VoucherDetailPage";
 import PartnerReportsPage from "../features/partner-voucher/pages/partner/PartnerReportsPage";
 import StaffManagementPage from "../features/partner-voucher/pages/partner/StaffManagementPage";
 
 // Audit log page
 import AuditLogPage from "../features/partner-voucher/pages/admin/AuditLogPage";
 
-// Placeholder customer screen
-const CustomerScreen = () => (
-  <div className="p-6 text-gray-700 font-semibold">Trang Khách Hàng (Customer Commerce) — Đang phát triển</div>
-);
+// Customer Portal Pages & Layout
+import CustomerLayout from "../features/customer-commerce/layouts/CustomerLayout";
+import VoucherSearchPage from "../features/customer-commerce/pages/customer/VoucherSearchPage";
+import VoucherDetailPage from "../features/customer-commerce/pages/customer/VoucherDetailPage";
+import CartPage from "../features/customer-commerce/pages/customer/CartPage";
+
+
 
 function PartnerHome() {
   try {
@@ -140,7 +143,7 @@ const router = createBrowserRouter([
           { path: "vouchers", element: <VoucherListPage /> },
           { path: "vouchers/new", element: <VoucherFormPage /> },
           { path: "vouchers/:id/edit", element: <VoucherFormPage /> },
-          { path: "vouchers/:id", element: <VoucherDetailPage /> },
+          { path: "vouchers/:id", element: <PartnerVoucherDetailPage /> },
         ],
       },
     ],
