@@ -1,13 +1,4 @@
 /**
- * Purpose: Định nghĩa route cho màn hình khách hàng.
- * Dùng cho các trang chỉ customer có thể truy cập.
+ * @deprecated Route của ứng dụng được quản lý tập trung tại src/app/router.jsx.
  */
-import CustomerLayout from "../../layouts/CustomerLayout";
-import CustomerScreen from "../../pages/customer";
-
-export const customerRoutes = [
-  {
-    path: "/customer",
-    element: <CustomerLayout><CustomerScreen /></CustomerLayout>,
-  },
-];
+export const customerRoutes = [];

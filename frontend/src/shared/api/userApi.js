@@ -105,8 +105,12 @@ export async function updateUserRole(userId, newRole, maChiNhanh, maHsdn, reason
 // -----------------------------------------------------------------------
 // 6. LẤY DANH SÁCH CHI NHÁNH VÀ ĐỐI TÁC (CHO COMBOBOX)
 // -----------------------------------------------------------------------
-export async function fetchBranches() {
-  const res = await fetch(`${BASE_URL}/admin/branches`, {
+export async function fetchBranches({ maHsdn } = {}) {
+  const params = new URLSearchParams();
+  if (maHsdn) params.set('maHsdn', maHsdn);
+  const query = params.toString();
+
+  const res = await fetch(`${BASE_URL}/admin/branches${query ? `?${query}` : ''}`, {
     method: 'GET',
     headers: getAuthHeaders(),
   });
@@ -120,4 +124,3 @@ export async function fetchPartners() {
   });
   return handleResponse(res);
 }
-

@@ -1,11 +1,12 @@
-// Entry point cho module content-feedback.
-// Module này chịu trách nhiệm xử lý phản hồi, đánh giá và nội dung do người dùng tạo.
-
 const express = require("express");
-const router = require("./presentation/routes/contentFeedbackRoutes");
+const contentRoutes = require("./presentation/routes/content.routes");
+const reviewRoutes = require("./presentation/routes/review.routes");
+const feedbackRoutes = require("./presentation/routes/feedback.routes");
 
 function registerModule(app) {
-  app.use("/content-feedback", router);
+  app.use("/content", contentRoutes);
+  app.use("/review", reviewRoutes);
+  app.use("/feedback", feedbackRoutes);
 }
 
 module.exports = {
