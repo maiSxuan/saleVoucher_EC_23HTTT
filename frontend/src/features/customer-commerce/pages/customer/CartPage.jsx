@@ -218,8 +218,8 @@ export default function CartPage() {
             className="w-4 h-4 accent-orange-500 rounded cursor-pointer"
           />
           <h1 className="text-base font-bold text-gray-900 flex items-center gap-2">
-            <ShoppingCart size={18} /> Chọn tất cả ({selectedIds.length}/
-            {validItems.length} voucher)
+            <ShoppingCart size={17} /> Chọn tất cả ({selectedIds.length}/
+            {validItems.length} voucher hợp lệ)
           </h1>
         </div>
 
@@ -390,7 +390,7 @@ export default function CartPage() {
                 "Đang kiểm tra..."
               ) : (
                 <>
-                  <span>Tiến hành đặt mua ({selectedIds.length})</span>
+                  <span>Tiến hành đặt mua</span>
                   <ArrowRight size={16} />
                 </>
               )}
