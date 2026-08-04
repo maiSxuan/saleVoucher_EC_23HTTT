@@ -1,13 +1,4 @@
 /**
- * Purpose: Định nghĩa route cho màn hình công khai.
- * Dùng cho các trang không cần xác thực: login, register, home.
+ * @deprecated Route của ứng dụng được quản lý tập trung tại src/app/router.jsx.
  */
-import PublicLayout from "../../layouts/PublicLayout";
-import App from "../../App";
-
-export const publicRoutes = [
-  {
-    path: "/",
-    element: <PublicLayout><App /></PublicLayout>,
-  },
-];
+export const publicRoutes = [];

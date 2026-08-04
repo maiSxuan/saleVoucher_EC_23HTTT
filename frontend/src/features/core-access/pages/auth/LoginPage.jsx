@@ -16,7 +16,7 @@ export default function LoginPage() {
   const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
   const handleLoginSuccess = (data) => {
-    localStorage.setItem('accessToken', data.data.token);
+    localStorage.setItem('accessToken', data.data.accessToken || data.data.token);
     localStorage.setItem('user', JSON.stringify(data.data.user));
 
     const userRole = data.data.user.role;

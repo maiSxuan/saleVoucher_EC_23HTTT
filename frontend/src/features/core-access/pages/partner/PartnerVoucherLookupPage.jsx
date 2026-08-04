@@ -27,19 +27,20 @@ import {
   fetchBranches,
 } from '../../api/voucherCodeApi';
 import QrScannerModal from '../../component/QrScannerModal';
-import QrCodeDisplay from '../../component/QrCodeDisplay';
+import QrCodeDisplay from '../../component/QRCodeDisplay';
 
 export default function PartnerVoucherLookupPage() {
   // Lấy thông tin user hiện tại
-  const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
   // Xác định chi nhánh của nhân viên:
   // Nếu là Nhân viên bán hàng hoặc tài khoản có ma_chi_nhanh thì cố định chi nhánh làm việc
   const staffBranchId = currentUser?.ma_chi_nhanh || null;
   const isBranchStaff = Boolean(
-    staffBranchId ||
-    currentUser?.role === 'PARTNER_STAFF' ||
-    currentUser?.vai_tro_he_thong === 'Nhan vien ban hang'
+    staffBranchId && (
+      currentUser?.role === 'PARTNER_STAFF' ||
+      currentUser?.vai_tro_he_thong === 'Nhan vien ban hang'
+    )
   );
 
   // State quản lý chi nhánh
@@ -627,7 +628,7 @@ export default function PartnerVoucherLookupPage() {
                   {voucherData && (
                     <div className="mt-4">
                       <QrCodeDisplay
-                        value={voucherData.code}
+                        value={voucherData.qrValue || `ECQR:${voucherData.code}`}
                         title="Mã QR Code Thật (Dùng để kiểm thử quét Camera)"
                         subtitle="Mã QR này được sinh theo chuẩn ISO/IEC, bạn có thể dùng điện thoại quét trực tiếp"
                       />

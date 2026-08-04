@@ -14,6 +14,8 @@ const issuedVoucherRepository = require('../../data/repositories/issued-voucher.
 const voucherVerificationService = require('./voucher-verification.service');
 const auditLogService = require('./audit-log.service');
 const LOG_RESULT = require('../../../../common/constants/log-result');
+const AppError = require('../../../../common/errors/AppError');
+const ValidationError = require('../../../../common/errors/ValidationError');
 
 class VoucherRedemptionService {
   /**
@@ -26,7 +28,7 @@ class VoucherRedemptionService {
    */
   async redeemVoucher({ code, branchId = null, actor, note = '' }) {
     if (!code || typeof code !== 'string' || !code.trim()) {
-      throw new Error('Vui lòng cung cấp mã voucher cần xác nhận.');
+      throw new ValidationError('Vui lòng cung cấp mã voucher cần xác nhận.');
     }
 
     const cleanCode = code.trim().toUpperCase();
@@ -39,14 +41,20 @@ class VoucherRedemptionService {
     });
 
     if (!verification.valid) {
-      throw new Error(verification.message || 'Voucher không hợp lệ để sử dụng.');
+      throw new AppError(
+        verification.message || 'Voucher không hợp lệ để sử dụng.',
+        400,
+        'VOUCHER_NOT_REDEEMABLE'
+      );
     }
 
     const voucherData = verification.data;
 
     // Bước 2: Xác định chi nhánh sử dụng
     // Nếu là nhân viên bán hàng thì lấy chi nhánh của họ, nếu là Quản lý/Admin lấy branchId gửi lên hoặc chi nhánh đầu tiên
-    let targetBranchId = (actor?.role === 'Nhan vien ban hang' && actor?.ma_chi_nhanh)
+    const isBranchStaff = actor?.role === 'PARTNER_STAFF'
+      || actor?.vai_tro_he_thong === 'Nhan vien ban hang';
+    const targetBranchId = (isBranchStaff && actor?.ma_chi_nhanh)
       ? actor.ma_chi_nhanh
       : (branchId || voucherData.applicableBranches[0]?.branchId || null);
 
@@ -60,7 +68,11 @@ class VoucherRedemptionService {
 
     if (!updatedRecord) {
       // Đã có quầy khác xác nhận mã này ngay trước đó
-      throw new Error('Mã voucher đã được sử dụng trước đó bởi một phiên khác (Race Condition).');
+      throw new AppError(
+        'Mã voucher đã được sử dụng trước đó bởi một phiên khác (Race Condition).',
+        409,
+        'VOUCHER_ALREADY_USED'
+      );
     }
 
     // Bước 4: Ghi Audit Log bắt buộc (RB-12, NFR-06 - Strict Mode)
@@ -91,8 +103,10 @@ class VoucherRedemptionService {
       // Bước 5 (Kịch bản E3): Log thất bại -> Tự động Rollback trạng thái voucher
       console.error('[VoucherRedemptionService] Lỗi ghi nhật ký kiểm toán, tiến hành rollback:', logError.message);
       await issuedVoucherRepository.revertRedemption(cleanCode);
-      throw new Error(
-        'Không thể hoàn tất thao tác do lỗi ghi nhận nhật ký hệ thống (E3). Trạng thái voucher đã được khôi phục nguyên vẹn.'
+      throw new AppError(
+        'Không thể hoàn tất thao tác do lỗi ghi nhận nhật ký hệ thống (E3). Trạng thái voucher đã được khôi phục nguyên vẹn.',
+        500,
+        'AUDIT_LOG_FAILED'
       );
     }
 

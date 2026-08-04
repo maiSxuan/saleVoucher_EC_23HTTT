@@ -6,9 +6,12 @@
  *  - POST /auth/login
  *  - GET  /admin/logs     (authenticate + ADMIN only)
  *  - GET  /admin/dashboard (authenticate + ADMIN only) — placeholder
- *  - GET  /users/profile  (authenticate) — placeholder
+ *  - GET  /users/profile  (authenticate)
  *  - POST /vouchers/issue (authenticate) — placeholder
- *  - POST /vouchers/verify (authenticate) — placeholder
+ *  - POST /vouchers/verify (authenticate + partner roles)
+ *  - POST /vouchers/redeem (authenticate + partner roles)
+ *  - GET  /vouchers/usage-history
+ *  - GET  /vouchers/sample-codes
  */
 const authRoutes = require('./presentation/routes/auth.routes');
 const auditLogRoutes = require('./presentation/routes/audit-log.routes');

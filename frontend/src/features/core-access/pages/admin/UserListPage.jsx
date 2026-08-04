@@ -15,14 +15,22 @@ const ROLE_CONFIG = {
   'Admin': { label: 'Quản trị viên', badgeClass: 'bg-purple-100 text-purple-700 border border-purple-200' },
   'Nguoi dai dien': { label: 'Đối tác (Đại diện)', badgeClass: 'bg-green-100 text-green-700 border border-green-200' },
   'Nhan vien ban hang': { label: 'Nhân viên bán hàng', badgeClass: 'bg-amber-100 text-amber-700 border border-amber-200' },
-  'Nhan vien quan ly voucher': { label: 'Nhân viên QL Voucher', badgeClass: 'bg-orange-100 text-orange-700 border border-orange-200' },
+  'Nhan vien quan ly voucher': { label: 'Nhân viên quản lý voucher', badgeClass: 'bg-orange-100 text-orange-700 border border-orange-200' },
   'Khach hang': { label: 'Khách hàng', badgeClass: 'bg-blue-100 text-blue-700 border border-blue-200' },
 };
 
 // Mapping trạng thái DB → label + màu
 const STATUS_CONFIG = {
   'Dang hoat dong': { label: 'Đang hoạt động', dotClass: 'bg-green-500', textClass: 'text-green-700 bg-green-50 border border-green-200' },
-  'Bi khoa': { label: 'Tạm khóa', dotClass: 'bg-red-500', textClass: 'text-red-700 bg-red-50 border border-red-200' },
+  'Tam khoa': { label: 'Tạm khóa', dotClass: 'bg-red-500', textClass: 'text-red-700 bg-red-50 border border-red-200' },
+};
+
+const COMBO_STATUS_LABELS = {
+  'Dang hoat dong': 'Đang hoạt động',
+  'Tam khoa': 'Tạm khóa',
+  'Tam ngung hoat dong': 'Tạm ngừng hoạt động',
+  'Cho duyet': 'Chờ duyệt',
+  'Tu choi': 'Từ chối',
 };
 
 // Danh sách vai trò hợp lệ cho select input (cập nhật role)
@@ -31,7 +39,7 @@ const VALID_ROLES = [
   { value: 'Khach hang', label: 'Khách hàng' },
   { value: 'Nguoi dai dien', label: 'Đối tác (Đại diện)' },
   { value: 'Nhan vien ban hang', label: 'Nhân viên bán hàng' },
-  { value: 'Nhan vien quan ly voucher', label: 'Nhân viên QL Voucher' },
+  { value: 'Nhan vien quan ly voucher', label: 'Nhân viên quản lý voucher' },
   { value: 'Admin', label: 'Quản trị viên' },
 ];
 
@@ -195,6 +203,8 @@ function UserDetailPanel({ user: initialUser, onLock, onUnlock, onRoleUpdate, on
             role: res.data.role || res.data.vai_tro,
             status: res.data.status || res.data.trang_thai,
             createdAt: res.data.createdAt || res.data.created_at,
+            branchId: res.data.branchId || res.data.ma_chi_nhanh || null,
+            maHsdn: res.data.ma_hsdn || res.data.maHsdn || null,
             extraInfo: res.data.extraInfo,
             orderHistory: res.data.orderHistory,
             auditLogs: res.data.auditLogs
@@ -212,29 +222,31 @@ function UserDetailPanel({ user: initialUser, onLock, onUnlock, onRoleUpdate, on
 
   // Load danh sách branch/partner khi mở roleModal và chọn vai trò tương ứng
   useEffect(() => {
-    if (roleModal) {
+    if (roleModal && !loadingDetails) {
       const loadCombos = async () => {
         try {
           setLoadingCombo(true);
           if (selectedNewRole === 'Nhan vien ban hang' && branches.length === 0) {
-            const res = await fetchBranches();
+            if (!user.maHsdn) {
+              throw new Error('Tài khoản chưa được gán doanh nghiệp để lấy danh sách chi nhánh.');
+            }
+            const res = await fetchBranches({ maHsdn: user.maHsdn });
             setBranches(res.data || []);
-            if (res.data && res.data.length > 0) setSelectedBranch(res.data[0].ma_chi_nhanh);
           }
           if ((selectedNewRole === 'Nhan vien quan ly voucher' || selectedNewRole === 'Nguoi dai dien') && partners.length === 0) {
             const res = await fetchPartners();
             setPartners(res.data || []);
-            if (res.data && res.data.length > 0) setSelectedPartner(res.data[0].ma_hs);
           }
         } catch (err) {
           console.error('Lỗi load combo:', err);
+          setRoleError(err.message || 'Không thể tải dữ liệu lựa chọn.');
         } finally {
           setLoadingCombo(false);
         }
       };
       loadCombos();
     }
-  }, [roleModal, selectedNewRole, branches.length, partners.length]);
+  }, [roleModal, selectedNewRole, branches.length, partners.length, loadingDetails, user.maHsdn]);
 
   const isActive = user.status === 'Dang hoat dong';
 
@@ -255,6 +267,24 @@ function UserDetailPanel({ user: initialUser, onLock, onUnlock, onRoleUpdate, on
     setRoleProcessing(true);
     try {
       await onRoleUpdate(user.id, selectedNewRole, selectedBranch, selectedPartner, roleReason.trim() || undefined);
+      setUser((current) => {
+        const selectedBranchInfo = branches.find((branch) => branch.ma_chi_nhanh === selectedBranch);
+        const selectedPartnerInfo = partners.find((partner) => partner.ma_hs === selectedPartner);
+        const nextExtraInfo = selectedNewRole === 'Nhan vien ban hang'
+          ? {
+              ...selectedBranchInfo,
+              hosodn: { ten_dn: current.extraInfo?.ten_dn || '—' },
+            }
+          : selectedPartnerInfo;
+
+        return {
+          ...current,
+          role: selectedNewRole,
+          branchId: selectedNewRole === 'Nhan vien ban hang' ? selectedBranch : null,
+          maHsdn: selectedNewRole === 'Nhan vien quan ly voucher' ? selectedPartner : null,
+          extraInfo: nextExtraInfo || null,
+        };
+      });
       setRoleModal(false);
     } catch (err) {
       setRoleError(err.message);
@@ -290,8 +320,22 @@ function UserDetailPanel({ user: initialUser, onLock, onUnlock, onRoleUpdate, on
           <div className="flex items-center gap-2 flex-wrap">
             {(user.role === 'Nhan vien ban hang' || user.role === 'Nhan vien quan ly voucher') && (
               <button
-                onClick={() => { setSelectedNewRole(user.role); setRoleReason(''); setRoleError(''); setRoleModal(true); }}
-                className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+                onClick={() => {
+                  setSelectedNewRole(
+                    user.role === 'Nhan vien ban hang'
+                      ? 'Nhan vien quan ly voucher'
+                      : 'Nhan vien ban hang'
+                  );
+                  setSelectedBranch('');
+                  setSelectedPartner('');
+                  setBranches([]);
+                  setPartners([]);
+                  setRoleReason('');
+                  setRoleError('');
+                  setRoleModal(true);
+                }}
+                disabled={loadingDetails}
+                className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
               >
                 Cập nhật vai trò
               </button>
@@ -440,7 +484,7 @@ function UserDetailPanel({ user: initialUser, onLock, onUnlock, onRoleUpdate, on
                           <tr key={l.log_id}>
                             <td className="py-2">{new Date(l.thoi_diem_thuc_hien).toLocaleString('vi-VN')}</td>
                             <td className="py-2 font-medium">{l.hanh_dong}</td>
-                            <td className="py-2"><StatusBadge status={l.ket_qua === 'Thanh cong' ? 'Dang hoat dong' : 'Bi khoa'} /></td>
+                            <td className="py-2"><StatusBadge status={l.ket_qua === 'Thanh cong' ? 'Dang hoat dong' : 'Tam khoa'} /></td>
                             <td className="py-2 text-gray-500">{l.ly_do_thuc_hien || '—'}</td>
                           </tr>
                         ))}
@@ -458,7 +502,11 @@ function UserDetailPanel({ user: initialUser, onLock, onUnlock, onRoleUpdate, on
       <ConfirmModal
         open={lockModal}
         onClose={() => setLockModal(false)}
-        onConfirm={async (reason) => { await onLock(user.id, reason); setLockModal(false); }}
+        onConfirm={async (reason) => {
+          await onLock(user.id, reason);
+          setUser((current) => ({ ...current, status: 'Tam khoa' }));
+          setLockModal(false);
+        }}
         title="Tạm khóa tài khoản"
         targetName={user.name}
         beforeStatus="Đang hoạt động"
@@ -474,7 +522,11 @@ function UserDetailPanel({ user: initialUser, onLock, onUnlock, onRoleUpdate, on
       <ConfirmModal
         open={unlockModal}
         onClose={() => setUnlockModal(false)}
-        onConfirm={async (reason) => { await onUnlock(user.id, reason); setUnlockModal(false); }}
+        onConfirm={async (reason) => {
+          await onUnlock(user.id, reason);
+          setUser((current) => ({ ...current, status: 'Dang hoat dong' }));
+          setUnlockModal(false);
+        }}
         title="Mở khóa tài khoản"
         targetName={user.name}
         beforeStatus="Tạm khóa"
@@ -494,21 +546,9 @@ function UserDetailPanel({ user: initialUser, onLock, onUnlock, onRoleUpdate, on
             <p className="text-sm text-gray-500 mb-4">Vai trò hiện tại: <strong>{ROLE_CONFIG[user.role]?.label || user.role}</strong></p>
 
             <label className="block text-sm font-medium text-gray-700 mb-1">Vai trò mới <span className="text-red-500">*</span></label>
-            <select
-              value={selectedNewRole}
-              onChange={e => { setSelectedNewRole(e.target.value); setRoleError(''); }}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
-            >
-              {(user.role === 'Nhan vien ban hang' ? [
-                { value: 'Nhan vien ban hang', label: 'Nhân viên bán hàng' },
-                { value: 'Nhan vien quan ly voucher', label: 'Nhân viên QL Voucher' }
-              ] : [
-                { value: 'Nhan vien quan ly voucher', label: 'Nhân viên QL Voucher' },
-                { value: 'Nhan vien ban hang', label: 'Nhân viên bán hàng' }
-              ]).map(r => (
-                <option key={r.value} value={r.value}>{r.label}</option>
-              ))}
-            </select>
+            <div className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-900 mb-3">
+              {ROLE_CONFIG[selectedNewRole]?.label || selectedNewRole}
+            </div>
 
             {selectedNewRole === 'Nhan vien ban hang' && (
               <div className="mb-3">
@@ -524,6 +564,9 @@ function UserDetailPanel({ user: initialUser, onLock, onUnlock, onRoleUpdate, on
                     <option key={b.ma_chi_nhanh} value={b.ma_chi_nhanh}>{b.ten_chi_nhanh}</option>
                   ))}
                 </select>
+                {!loadingCombo && branches.length === 0 && (
+                  <p className="text-xs text-amber-600 mt-1">Doanh nghiệp này chưa có chi nhánh.</p>
+                )}
               </div>
             )}
 
@@ -538,9 +581,14 @@ function UserDetailPanel({ user: initialUser, onLock, onUnlock, onRoleUpdate, on
                 >
                   <option value="">-- Chọn đối tác --</option>
                   {partners.map(p => (
-                    <option key={p.ma_hs} value={p.ma_hs}>{p.ten_dn}</option>
+                    <option key={p.ma_hs} value={p.ma_hs}>
+                      {p.ten_dn}{p.dia_chi ? ` - ${p.dia_chi}` : ''}{p.trang_thai ? ` (${COMBO_STATUS_LABELS[p.trang_thai] || p.trang_thai})` : ''}
+                    </option>
                   ))}
                 </select>
+                {!loadingCombo && partners.length === 0 && (
+                  <p className="text-xs text-amber-600 mt-1">Chưa có đối tác doanh nghiệp để lựa chọn.</p>
+                )}
               </div>
             )}
 
@@ -558,7 +606,13 @@ function UserDetailPanel({ user: initialUser, onLock, onUnlock, onRoleUpdate, on
               <button onClick={() => setRoleModal(false)} disabled={roleProcessing} className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">Hủy</button>
               <button
                 onClick={handleRoleUpdate}
-                disabled={roleProcessing || selectedNewRole === user.role}
+                disabled={
+                  roleProcessing
+                  || loadingCombo
+                  || selectedNewRole === user.role
+                  || (selectedNewRole === 'Nhan vien ban hang' && !selectedBranch)
+                  || (selectedNewRole === 'Nhan vien quan ly voucher' && !selectedPartner)
+                }
                 className="flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 {roleProcessing && <Loader2 size={14} className="animate-spin" />}
@@ -636,12 +690,12 @@ export default function UserListPage() {
     // Cập nhật state local để UI phản ánh ngay không cần reload lại trang
     setUsers(prev => prev.map(u =>
       u.ma_nguoi_dung === userId || u.id === userId
-        ? { ...u, trang_thai: 'Bi khoa', status: 'Bi khoa' }
+        ? { ...u, trang_thai: 'Tam khoa', status: 'Tam khoa' }
         : u
     ));
     // Nếu đang xem chi tiết user đó, cập nhật luôn
     if (selectedUser && (selectedUser.id === userId || selectedUser.ma_nguoi_dung === userId)) {
-      setSelectedUser(prev => ({ ...prev, status: 'Bi khoa', trang_thai: 'Bi khoa' }));
+      setSelectedUser(prev => ({ ...prev, status: 'Tam khoa', trang_thai: 'Tam khoa' }));
     }
   };
 
@@ -671,7 +725,13 @@ export default function UserListPage() {
         : u
     ));
     if (selectedUser && (selectedUser.id === userId || selectedUser.ma_nguoi_dung === userId)) {
-      setSelectedUser(prev => ({ ...prev, role: newRole, vai_tro: newRole }));
+      setSelectedUser(prev => ({
+        ...prev,
+        role: newRole,
+        vai_tro: newRole,
+        branchId: newRole === 'Nhan vien ban hang' ? maChiNhanh : null,
+        ma_hsdn: newRole === 'Nhan vien quan ly voucher' ? maHsdn : null,
+      }));
     }
   };
 
@@ -687,6 +747,8 @@ export default function UserListPage() {
     role: u.role || u.vai_tro,
     status: u.status || u.trang_thai,
     createdAt: u.createdAt || u.ngay_tao,
+    branchId: u.branchId || u.ma_chi_nhanh || null,
+    maHsdn: u.ma_hsdn || u.maHsdn || null,
   });
 
   // Nếu đang xem chi tiết user → hiển thị UserDetailPanel

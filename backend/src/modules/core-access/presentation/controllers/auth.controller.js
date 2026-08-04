@@ -2,6 +2,8 @@
  * Purpose: Controller xử lý các request liên quan đến authentication.
  * Ví dụ: login, register, refresh token, logout.
  */
+const { successResponse } = require('../../../../common/utils/response');
+
 class AuthController {
   constructor(authService) {
     this.authService = authService;
@@ -10,12 +12,9 @@ class AuthController {
   async login(req, res, next) {
     try {
       const result = await this.authService.login(req.body);
-      res.json({ success: true, data: result });
+      return successResponse(res, result, 'Đăng nhập thành công');
     } catch (error) {
-      if (error.status) {
-        return res.status(error.status).json({ success: false, message: error.message });
-      }
-      res.status(400).json({ success: false, message: error.message });
+      next(error);
     }
   }
 
@@ -23,27 +22,18 @@ class AuthController {
     try {
       const { email } = req.body;
       await this.authService.generateOTP(email);
-      res.json({ 
-        success: true, 
-        message: 'Mã OTP đã được gửi đến email của bạn'
-      });
+      return successResponse(res, null, 'Mã OTP đã được gửi đến email của bạn');
     } catch (error) {
-      if (error.status) {
-        return res.status(error.status).json({ success: false, message: error.message });
-      }
-      res.status(400).json({ success: false, message: error.message });
+      next(error);
     }
   }
 
   async loginWithOTP(req, res, next) {
     try {
       const result = await this.authService.loginWithOTP(req.body);
-      res.json({ success: true, data: result });
+      return successResponse(res, result, 'Đăng nhập bằng OTP thành công');
     } catch (error) {
-      if (error.status) {
-        return res.status(error.status).json({ success: false, message: error.message });
-      }
-      res.status(400).json({ success: false, message: error.message });
+      next(error);
     }
   }
 }

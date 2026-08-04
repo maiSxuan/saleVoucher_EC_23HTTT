@@ -9,7 +9,7 @@ Structure:
 - presentation/: nhận request HTTP, định nghĩa route, DTO và validator.
 - business/services/: chứa logic nghiệp vụ chính của module.
 - data/repositories/: xử lý truy vấn dữ liệu và thao tác persistence.
-- data/models/: định nghĩa entity/model mẫu cho module.
+- data/models/: định nghĩa entity/model và ánh xạ dữ liệu database.
 
 Main files:
 
@@ -30,8 +30,8 @@ Use case chính:
 
 Note:
 
-- Đây là scaffold mẫu, chưa nối với database thật.
-- Khi phát triển thật, các service sẽ gọi repository thay vì trả placeholder.
+- Các luồng đăng nhập, quản lý người dùng, audit log và đối soát voucher đã nối Supabase thật.
+- Dashboard admin và phát hành voucher vẫn là placeholder, chờ triển khai ở task tương ứng.
 
 model = cấu trúc dữ liệu / bảng
 repository = cách lấy/ghi dữ liệu

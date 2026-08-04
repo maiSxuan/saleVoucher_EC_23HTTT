@@ -51,8 +51,8 @@ class VoucherVerificationService {
 
     // 2. Sinh mã QR thật (DataURL) để hiển thị/xác thực
     try {
-      voucher.qrCodeDataUrl = await QRCode.toDataURL(cleanCode, {
-        errorCorrectionLevel: 'H',
+      voucher.qrCodeDataUrl = await QRCode.toDataURL(`ECQR:${cleanCode}`, {
+        errorCorrectionLevel: 'M',
         margin: 2,
         width: 250,
       });
@@ -61,13 +61,15 @@ class VoucherVerificationService {
     }
 
     // 3. Xác định chi nhánh thao tác (Branch Scope - RB-09)
-    // Nếu actor là 'Nhan vien ban hang', ưu tiên lấy ma_chi_nhanh từ tài khoản
-    const activeBranchId = (actor?.role === 'Nhan vien ban hang' && actor?.ma_chi_nhanh)
+    // Nếu actor là nhân viên bán hàng, luôn lấy chi nhánh từ JWT thay vì tin dữ liệu client.
+    const isBranchStaff = actor?.role === 'PARTNER_STAFF'
+      || actor?.vai_tro_he_thong === 'Nhan vien ban hang';
+    const activeBranchId = (isBranchStaff && actor?.ma_chi_nhanh)
       ? actor.ma_chi_nhanh
       : (branchId || null);
 
     // Kiểm tra phạm vi chi nhánh nếu có thông tin chi nhánh thao tác
-    if (activeBranchId && voucher.applicableBranches.length > 0) {
+    if (activeBranchId) {
       const isBranchApplicable = voucher.applicableBranches.some(
         b => b.branchId === activeBranchId
       );
@@ -89,6 +91,16 @@ class VoucherVerificationService {
         valid: false,
         status: 'used',
         message: 'Mã voucher này đã được sử dụng trước đó.',
+        code: cleanCode,
+        data: voucher,
+      };
+    }
+
+    if (voucher.status === 'Het han') {
+      return {
+        valid: false,
+        status: 'expired',
+        message: 'Mã voucher đã hết hạn sử dụng (Quy tắc RB-08).',
         code: cleanCode,
         data: voucher,
       };

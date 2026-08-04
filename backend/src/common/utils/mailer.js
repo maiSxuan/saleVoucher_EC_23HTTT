@@ -55,7 +55,15 @@ async function sendOtpEmail(toEmail, otp, type = "register") {
   const activeTransporter = isForgotPassword ? authTransporter : transporter;
   const activeConfig = isForgotPassword ? authConfig : config;
 
-  await activeTransporter.sendMail({
+  if (!activeConfig.host || !activeConfig.user || !activeConfig.pass) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Chưa cấu hình SMTP để gửi mã OTP');
+    }
+    console.info(`[Mailer] SMTP chưa được cấu hình. OTP cho ${toEmail}: ${otp}`);
+    return { mocked: true };
+  }
+
+  return activeTransporter.sendMail({
     from: activeConfig.from || `"EC Voucher" <${activeConfig.user}>`,
     to: toEmail,
     subject: subject,

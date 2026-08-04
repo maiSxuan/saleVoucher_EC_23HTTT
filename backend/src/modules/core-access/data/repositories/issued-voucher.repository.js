@@ -28,10 +28,10 @@ class IssuedVoucherRepository {
         .eq('voucher_code', cleanCode)
         .maybeSingle();
 
-      if (vmError || !vm) {
-        if (vmError) console.warn('[IssuedVoucherRepository] findByCode error:', vmError.message);
-        return null;
+      if (vmError) {
+        throw new Error(`Lỗi tra cứu voucher đã phát hành: ${vmError.message}`);
       }
+      if (!vm) return null;
 
       // 1.2 Lấy thông tin voucher gốc
       let voucherInfo = null;
@@ -70,11 +70,50 @@ class IssuedVoucherRepository {
         }
       }
 
-      // 1.4 Lấy danh sách chi nhánh áp dụng (từ bảng chinhanh)
-      const { data: branches } = await supabase
-        .from('chinhanh')
-        .select('ma_chi_nhanh, ten_chi_nhanh, dia_chi, trang_thai, khu_vuc')
-        .eq('trang_thai', 'Dang hoat dong');
+      // 1.4 Lấy đúng các chi nhánh áp dụng qua bảng liên kết VOUCHER_CN (RB-09)
+      let branches = [];
+      if (vm.ma_voucher) {
+        const { data: voucherBranches, error: voucherBranchesError } = await supabase
+          .from('voucher_cn')
+          .select('ma_chi_nhanh')
+          .eq('ma_voucher', vm.ma_voucher);
+
+        if (voucherBranchesError) {
+          throw new Error(`Lỗi lấy phạm vi chi nhánh voucher: ${voucherBranchesError.message}`);
+        }
+
+        const branchIds = (voucherBranches || []).map((row) => row.ma_chi_nhanh);
+        if (branchIds.length > 0) {
+          const { data: branchRows, error: branchError } = await supabase
+            .from('chinhanh')
+            .select('ma_chi_nhanh, ten_chi_nhanh, dia_chi, trang_thai, khu_vuc, ma_hs')
+            .in('ma_chi_nhanh', branchIds)
+            .eq('trang_thai', 'Dang hoat dong');
+
+          if (branchError) {
+            throw new Error(`Lỗi lấy thông tin chi nhánh voucher: ${branchError.message}`);
+          }
+
+          const partnerIds = [...new Set((branchRows || []).map((row) => row.ma_hs).filter(Boolean))];
+          let partnerById = new Map();
+          if (partnerIds.length > 0) {
+            const { data: partners, error: partnerError } = await supabase
+              .from('hosodn')
+              .select('ma_hs, ten_dn')
+              .in('ma_hs', partnerIds);
+
+            if (partnerError) {
+              throw new Error(`Lỗi lấy thông tin đối tác voucher: ${partnerError.message}`);
+            }
+            partnerById = new Map((partners || []).map((partner) => [partner.ma_hs, partner.ten_dn]));
+          }
+
+          branches = (branchRows || []).map((branch) => ({
+            ...branch,
+            ten_dn: partnerById.get(branch.ma_hs) || '',
+          }));
+        }
+      }
 
       // 1.5 Lấy thông tin chi nhánh đã sử dụng (nếu đã dùng)
       let usedBranchInfo = null;
@@ -100,7 +139,7 @@ class IssuedVoucherRepository {
       };
     } catch (err) {
       console.error('[IssuedVoucherRepository] findByCode exception:', err.message);
-      return null;
+      throw err;
     }
   }
 

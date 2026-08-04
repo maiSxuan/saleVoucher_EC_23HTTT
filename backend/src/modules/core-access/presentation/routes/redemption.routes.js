@@ -17,9 +17,8 @@ const controller = new RedemptionController(
   voucherRedemptionService
 );
 
-// Danh sách các vai trò được phép tra cứu & xác nhận voucher tại chi nhánh
+// Chức năng nghiệp vụ đối tác; Admin không tham gia tra cứu/xác nhận tại quầy.
 const ALLOWED_STAFF_ROLES = [
-  JWT_ROLES.ADMIN,
   JWT_ROLES.PARTNER_OWNER,
   JWT_ROLES.PARTNER_STAFF,
 ];

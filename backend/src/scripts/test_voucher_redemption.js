@@ -4,6 +4,7 @@
  */
 
 require('dotenv').config();
+const assert = require('node:assert/strict');
 const voucherVerificationService = require('../modules/core-access/business/services/voucher-verification.service');
 const voucherRedemptionService = require('../modules/core-access/business/services/voucher-redemption.service');
 const issuedVoucherRepository = require('../modules/core-access/data/repositories/issued-voucher.repository');
@@ -17,6 +18,7 @@ async function runTests() {
     // 1. Lấy danh sách mã mẫu từ DB
     console.log('--- TEST 1: Lấy danh sách mã voucher mẫu từ DB ---');
     const sampleCodes = await voucherVerificationService.getSampleCodes();
+    assert.ok(sampleCodes.length > 0, 'Database phải có ít nhất một mã voucher mẫu');
     console.log(`Tìm thấy ${sampleCodes.length} mã mẫu trong DB:`);
     sampleCodes.forEach(s => console.log(`  - ${s.code} [${s.status}] -> ${s.voucherName}`));
 
@@ -27,6 +29,10 @@ async function runTests() {
       code: validCode,
       actor: { role: 'ADMIN', name: 'Admin Test' },
     });
+    assert.equal(validRes.valid, true);
+    assert.equal(validRes.status, 'valid');
+    assert.match(validRes.data?.qrCodeDataUrl || '', /^data:image\/png;base64,/);
+    assert.match(validRes.data?.qrValue || '', /^ECQR:/);
     console.log('- Hợp lệ (valid):', validRes.valid);
     console.log('- Trạng thái (status):', validRes.status);
     console.log('- Thông điệp:', validRes.message);
@@ -42,6 +48,8 @@ async function runTests() {
     const usedRes = await voucherVerificationService.verifyVoucher({
       code: usedCode,
     });
+    assert.equal(usedRes.valid, false);
+    assert.equal(usedRes.status, 'used');
     console.log('- Hợp lệ:', usedRes.valid);
     console.log('- Trạng thái:', usedRes.status);
     console.log('- Thông điệp:', usedRes.message);
@@ -52,6 +60,8 @@ async function runTests() {
     const disabledRes = await voucherVerificationService.verifyVoucher({
       code: disabledCode,
     });
+    assert.equal(disabledRes.valid, false);
+    assert.equal(disabledRes.status, 'cancelled');
     console.log('- Hợp lệ:', disabledRes.valid);
     console.log('- Trạng thái:', disabledRes.status);
     console.log('- Thông điệp:', disabledRes.message);
@@ -61,6 +71,8 @@ async function runTests() {
     const fakeRes = await voucherVerificationService.verifyVoucher({
       code: 'FAKE-9999-NOTFOUND',
     });
+    assert.equal(fakeRes.valid, false);
+    assert.equal(fakeRes.status, 'invalid');
     console.log('- Hợp lệ:', fakeRes.valid);
     console.log('- Trạng thái:', fakeRes.status);
     console.log('- Thông điệp:', fakeRes.message);
@@ -70,14 +82,21 @@ async function runTests() {
     const branchRes = await voucherVerificationService.verifyVoucher({
       code: validCode,
       branchId: '00000000-0000-0000-0000-000000000000', // Branch không có trong danh sách
-      actor: { role: 'Nhan vien ban hang', ma_chi_nhanh: '00000000-0000-0000-0000-000000000000' },
+      actor: {
+        role: 'PARTNER_STAFF',
+        vai_tro_he_thong: 'Nhan vien ban hang',
+        ma_chi_nhanh: '00000000-0000-0000-0000-000000000000',
+      },
     });
+    assert.equal(branchRes.valid, false);
+    assert.equal(branchRes.status, 'invalid_branch');
     console.log('- Kết quả khi chi nhánh không khớp:', branchRes.status);
     console.log('- Thông điệp:', branchRes.message);
 
     // 7. Lịch sử sử dụng tại chi nhánh
     console.log('\n--- TEST 7: Lấy lịch sử sử dụng voucher tại quầy ---');
     const history = await voucherRedemptionService.getUsageHistory({ page: 1, limit: 5 });
+    assert.ok(Array.isArray(history.records));
     console.log(`- Lấy thành công ${history.records.length}/${history.total} giao dịch sử dụng.`);
 
     console.log('\n====================================================');
@@ -85,6 +104,7 @@ async function runTests() {
     console.log('====================================================');
   } catch (err) {
     console.error('LỖI KIỂM THỬ:', err);
+    process.exitCode = 1;
   }
 }
 

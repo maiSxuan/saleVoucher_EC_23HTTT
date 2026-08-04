@@ -119,11 +119,15 @@ class UserService {
   //      - Chỉ có thể khóa tài khoản đang hoạt động.
   //      - Phải ghi audit log với strict=true (RB-12 + RB-15).
   // -----------------------------------------------------------------------
-  async lockUser({ actorId, actorRole, targetUserId, reason }) {
+  async lockUser({ actorId, actorAccountId, actorRole, targetUserId, reason }) {
     // Business rule 1: Admin không tự khóa mình
     // Tại sao? → Tránh admin vô tình mất quyền truy cập
     if (actorId === targetUserId) {
       throw new AppError('Không thể khóa tài khoản của chính mình', 400, 'SELF_ACTION_FORBIDDEN');
+    }
+
+    if (!reason || !reason.trim()) {
+      throw new AppError('Lý do khóa tài khoản là bắt buộc', 400, 'REASON_REQUIRED');
     }
 
     // Lấy thông tin user cần khóa từ DB
@@ -141,7 +145,7 @@ class UserService {
     // Tại sao strict? → RB-15: Thao tác bắt buộc log mà log thất bại → không được báo thành công
     await auditLogService.log(
       {
-        actorId,
+        actorId: actorAccountId || actorId,
         actorRole,
         action: 'LOCK_USER',
         targetType: 'NGUOIDUNG',
@@ -149,7 +153,7 @@ class UserService {
         before: { trang_thai: targetUser.trang_thai },  // Trạng thái trước khi khóa
         after: { trang_thai: STATUS.LOCKED },            // Trạng thái sau khi khóa
         result: LOG_RESULT.THANH_CONG,
-        reason: reason || null,
+        reason: reason.trim(),
       },
       true // strict = true → throw nếu ghi log thất bại
     );
@@ -165,7 +169,11 @@ class UserService {
   //      - Chỉ có thể mở khóa tài khoản đang Tạm khóa.
   //      - Phải ghi audit log (strict=true).
   // -----------------------------------------------------------------------
-  async unlockUser({ actorId, actorRole, targetUserId, reason }) {
+  async unlockUser({ actorId, actorAccountId, actorRole, targetUserId, reason }) {
+    if (!reason || !reason.trim()) {
+      throw new AppError('Lý do mở khóa tài khoản là bắt buộc', 400, 'REASON_REQUIRED');
+    }
+
     const targetUser = await userRepository.findById(targetUserId);
     if (!targetUser) {
       throw new AppError('Không tìm thấy người dùng cần mở khóa', 404, 'USER_NOT_FOUND');
@@ -179,7 +187,7 @@ class UserService {
     // Ghi audit log bắt buộc (strict=true)
     await auditLogService.log(
       {
-        actorId,
+        actorId: actorAccountId || actorId,
         actorRole,
         action: 'UNLOCK_USER',
         targetType: 'NGUOIDUNG',
@@ -187,7 +195,7 @@ class UserService {
         before: { trang_thai: targetUser.trang_thai },  // Trạng thái trước khi mở khóa
         after: { trang_thai: STATUS.ACTIVE },            // Trạng thái sau khi mở khóa
         result: LOG_RESULT.THANH_CONG,
-        reason: reason || null,
+        reason: reason.trim(),
       },
       true // strict = true
     );
@@ -203,7 +211,7 @@ class UserService {
   //      - newRole phải là một trong các vai trò hợp lệ trong DB.
   //      - Phải ghi audit log (strict=true).
   // -----------------------------------------------------------------------
-  async updateUserRole({ actorId, actorRole, targetUserId, newRole, maChiNhanh, maHsdn, reason }) {
+  async updateUserRole({ actorId, actorAccountId, actorRole, targetUserId, newRole, maChiNhanh, maHsdn, reason }) {
     // Business rule 1: Admin không đổi role của chính mình
     if (actorId === targetUserId) {
       throw new AppError('Không thể cập nhật vai trò của chính mình', 400, 'SELF_ACTION_FORBIDDEN');
@@ -244,21 +252,73 @@ class UserService {
       throw new AppError('Bắt buộc phải chọn Chi nhánh cho Nhân viên bán hàng.', 400, 'MISSING_BRANCH');
     }
     
-    // Business rule 5: Nhân viên quản lý voucher yêu cầu mã đối tác.
+    // Business rule 5: Chi nhánh mới phải thuộc doanh nghiệp hiện tại của nhân viên.
+    if (newRole === DB_ROLES.PARTNER_STAFF_SALES) {
+      if (!targetUser.ma_hsdn) {
+        throw new AppError(
+          'Nhân viên quản lý voucher chưa được gán doanh nghiệp để chọn chi nhánh.',
+          400,
+          'MISSING_CURRENT_PARTNER'
+        );
+      }
+
+      const branch = await userRepository.findBranchById(maChiNhanh);
+      if (!branch) {
+        throw new AppError('Chi nhánh được chọn không tồn tại.', 404, 'BRANCH_NOT_FOUND');
+      }
+      if (branch.trang_thai !== STATUS.ACTIVE) {
+        throw new AppError(
+          'Chi nhánh được chọn không còn hoạt động.',
+          400,
+          'BRANCH_NOT_ACTIVE'
+        );
+      }
+      if (branch.ma_hs !== targetUser.ma_hsdn) {
+        throw new AppError(
+          'Chi nhánh được chọn không thuộc doanh nghiệp hiện tại của nhân viên.',
+          400,
+          'BRANCH_NOT_OWNED_BY_PARTNER'
+        );
+      }
+    }
+
+    // Business rule 6: Nhân viên quản lý voucher yêu cầu một doanh nghiệp có thật.
     if (newRole === 'Nhan vien quan ly voucher' && !maHsdn) {
       throw new AppError('Bắt buộc phải chọn Đối tác (Doanh nghiệp) cho vai trò này.', 400, 'MISSING_PARTNER');
+    }
+
+    if (newRole === DB_ROLES.PARTNER_STAFF_VOUCHER) {
+      const partner = await userRepository.findPartnerById(maHsdn);
+      if (!partner) {
+        throw new AppError('Đối tác (Doanh nghiệp) được chọn không tồn tại.', 404, 'PARTNER_NOT_FOUND');
+      }
+      if (partner.trang_thai !== STATUS.ACTIVE) {
+        throw new AppError(
+          'Đối tác (Doanh nghiệp) được chọn không còn hoạt động.',
+          400,
+          'PARTNER_NOT_ACTIVE'
+        );
+      }
     }
 
     // Ghi audit log bắt buộc (strict=true)
     await auditLogService.log(
       {
-        actorId,
+        actorId: actorAccountId || actorId,
         actorRole,
         action: 'UPDATE_USER_ROLE',
         targetType: 'NGUOIDUNG',
         targetId: targetUserId,
-        before: { vai_tro: targetUser.vai_tro },  // Vai trò cũ
-        after: { vai_tro: newRole },               // Vai trò mới
+        before: {
+          vai_tro: targetUser.vai_tro,
+          ma_chi_nhanh: targetUser.ma_chi_nhanh,
+          ma_hsdn: targetUser.ma_hsdn,
+        },
+        after: {
+          vai_tro: newRole,
+          ma_chi_nhanh: newRole === DB_ROLES.PARTNER_STAFF_SALES ? maChiNhanh : null,
+          ma_hsdn: newRole === DB_ROLES.PARTNER_STAFF_VOUCHER ? maHsdn : null,
+        },
         result: LOG_RESULT.THANH_CONG,
         reason: reason || null,
       },
@@ -294,12 +354,12 @@ class UserService {
   // -----------------------------------------------------------------------
   // 7. LẤY DANH SÁCH CHI NHÁNH VÀ ĐỐI TÁC CHO COMBOBOX / LOOKUP
   // -----------------------------------------------------------------------
-  async listBranches() {
-    return await userRepository.findAllBranches();
+  async listBranches(options = {}) {
+    return await userRepository.findAllBranches(options);
   }
 
-  async listPartners() {
-    return await userRepository.findAllPartners();
+  async listPartners(options = {}) {
+    return await userRepository.findAllPartners(options);
   }
 }
 

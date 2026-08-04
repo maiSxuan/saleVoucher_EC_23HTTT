@@ -6,6 +6,7 @@
 require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const supabase = require('../../../../config/supabase');
 const userRepository = require('../../data/repositories/user.repository');
 const auditLogService = require('./audit-log.service');
 const { DB_TO_JWT } = require('../../../../common/constants/roles');
@@ -13,7 +14,7 @@ const LOG_RESULT = require('../../../../common/constants/log-result');
 const AppError = require('../../../../common/errors/AppError');
 const UnauthorizedError = require('../../../../common/errors/UnauthorizedError');
 const ForbiddenError = require('../../../../common/errors/ForbiddenError');
-const { sendOtpEmail } = require('../../../../common/utils/mailer');
+const emailService = require('./email.service');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'saleVoucher_EC';
 
@@ -111,6 +112,7 @@ class AuthService {
       name: account.nguoidung.ho_ten,
       vai_tro_he_thong: dbVaiTro,
       ma_chi_nhanh: account.nguoidung.ma_chi_nhanh ?? null,
+      ma_hsdn: account.nguoidung.ma_hsdn ?? null,
       ten_chi_nhanh: branchInfo?.ten_chi_nhanh ?? null,
       dia_chi_chi_nhanh: branchInfo?.dia_chi ?? null,
       khu_vuc_chi_nhanh: branchInfo?.khu_vuc ?? null,
@@ -128,7 +130,7 @@ class AuthService {
       result: LOG_RESULT.THANH_CONG,
     });
 
-    return { token, user: userPayload };
+    return { token, accessToken: token, user: userPayload };
   }
 
   /**
@@ -166,7 +168,7 @@ class AuthService {
     });
 
     // Gửi OTP qua email thật bằng Nodemailer (sử dụng mailer chung)
-    await sendOtpEmail(email, otp, "forgot_password");
+    await emailService.sendOtpEmail(email, otp, 'forgot_password');
 
     return otp;
   }
@@ -212,6 +214,16 @@ class AuthService {
     const dbVaiTro = account.nguoidung.vai_tro;
     const mappedRole = DB_TO_JWT[dbVaiTro] || 'CUSTOMER';
 
+    let branchInfo = null;
+    if (account.nguoidung.ma_chi_nhanh) {
+      const { data: bData } = await supabase
+        .from('chinhanh')
+        .select('ma_chi_nhanh, ten_chi_nhanh, dia_chi, khu_vuc')
+        .eq('ma_chi_nhanh', account.nguoidung.ma_chi_nhanh)
+        .maybeSingle();
+      if (bData) branchInfo = bData;
+    }
+
     const userPayload = {
       id: account.nguoidung.ma_nguoi_dung,
       accountId: account.ma_tk,
@@ -220,6 +232,10 @@ class AuthService {
       name: account.nguoidung.ho_ten,
       vai_tro_he_thong: dbVaiTro,
       ma_chi_nhanh: account.nguoidung.ma_chi_nhanh ?? null,
+      ma_hsdn: account.nguoidung.ma_hsdn ?? null,
+      ten_chi_nhanh: branchInfo?.ten_chi_nhanh ?? null,
+      dia_chi_chi_nhanh: branchInfo?.dia_chi ?? null,
+      khu_vuc_chi_nhanh: branchInfo?.khu_vuc ?? null,
     };
 
     const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: '1d' });
@@ -234,7 +250,7 @@ class AuthService {
       result: LOG_RESULT.THANH_CONG,
     });
 
-    return { token, user: userPayload };
+    return { token, accessToken: token, user: userPayload };
   }
 }
 

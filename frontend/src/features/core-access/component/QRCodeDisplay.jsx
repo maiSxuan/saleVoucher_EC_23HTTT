@@ -37,7 +37,7 @@ export default function QrCodeDisplay({
           dark: '#0f172a', // Slate 900
           light: '#ffffff',
         },
-        errorCorrectionLevel: 'H',
+        errorCorrectionLevel: 'M',
       },
       (err) => {
         if (err) {

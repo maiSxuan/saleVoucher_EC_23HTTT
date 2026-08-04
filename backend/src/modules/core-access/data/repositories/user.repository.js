@@ -14,7 +14,7 @@ class UserRepository {
         thong_tin_dang_nhap,
         mat_khau,
         nguoidung:ma_nguoi_dung (
-          ma_nguoi_dung, ho_ten, email, sdt, vai_tro, trang_thai, created_at, ma_chi_nhanh
+          ma_nguoi_dung, ho_ten, email, sdt, vai_tro, trang_thai, created_at, ma_chi_nhanh, ma_hsdn
         )
       `)
       .eq('thong_tin_dang_nhap', loginInfo)
@@ -32,18 +32,29 @@ class UserRepository {
   // -----------------------------------------------------------------------
   // API TÌM CHI NHÁNH VÀ ĐỐI TÁC CHO COMBOBOX
   // -----------------------------------------------------------------------
-  async findAllBranches() {
-    const { data, error } = await supabase
+  async findAllBranches({ maHsdn, includeInactive = false } = {}) {
+    let query = supabase
       .from('chinhanh')
-      .select('ma_chi_nhanh, ten_chi_nhanh, trang_thai');
+      .select('ma_chi_nhanh, ten_chi_nhanh, dia_chi, khu_vuc, trang_thai, ma_hs')
+      .order('ten_chi_nhanh', { ascending: true });
+
+    if (maHsdn) query = query.eq('ma_hs', maHsdn);
+    if (!includeInactive) query = query.eq('trang_thai', 'Dang hoat dong');
+
+    const { data, error } = await query;
     if (error) throw new Error(`Lỗi lấy danh sách chi nhánh: ${error.message}`);
     return data;
   }
 
-  async findAllPartners() {
-    const { data, error } = await supabase
+  async findAllPartners({ includeInactive = false } = {}) {
+    let query = supabase
       .from('hosodn')
-      .select('ma_hs, ten_dn, trang_thai');
+      .select('ma_hs, ten_dn, dia_chi, trang_thai')
+      .order('ten_dn', { ascending: true });
+
+    if (!includeInactive) query = query.eq('trang_thai', 'Dang hoat dong');
+
+    const { data, error } = await query;
     if (error) throw new Error(`Lỗi lấy danh sách đối tác: ${error.message}`);
     return data;
   }
@@ -51,6 +62,26 @@ class UserRepository {
   // -----------------------------------------------------------------------
   // CÁC HÀM LẤY THÔNG TIN CHI TIẾT THEO YÊU CẦU 5.1
   // -----------------------------------------------------------------------
+  async findBranchById(branchId) {
+    const { data, error } = await supabase
+      .from('chinhanh')
+      .select('ma_chi_nhanh, ten_chi_nhanh, dia_chi, trang_thai, ma_hs')
+      .eq('ma_chi_nhanh', branchId)
+      .maybeSingle();
+    if (error) throw new Error(`Không thể kiểm tra chi nhánh: ${error.message}`);
+    return data;
+  }
+
+  async findPartnerById(partnerId) {
+    const { data, error } = await supabase
+      .from('hosodn')
+      .select('ma_hs, ten_dn, dia_chi, trang_thai')
+      .eq('ma_hs', partnerId)
+      .maybeSingle();
+    if (error) throw new Error(`Không thể kiểm tra đối tác: ${error.message}`);
+    return data;
+  }
+
   async getUserCompanyInfo(maHsdn) {
     if (!maHsdn) return null;
     const { data, error } = await supabase
@@ -58,6 +89,7 @@ class UserRepository {
       .select('ma_hs, ten_dn, dia_chi')
       .eq('ma_hs', maHsdn)
       .maybeSingle();
+    if (error) throw new Error(`Lỗi lấy thông tin đối tác: ${error.message}`);
     return data;
   }
 
@@ -68,6 +100,7 @@ class UserRepository {
       .select('ma_chi_nhanh, ten_chi_nhanh, dia_chi, ma_hs, hosodn:ma_hs(ten_dn)')
       .eq('ma_chi_nhanh', maChiNhanh)
       .maybeSingle();
+    if (error) throw new Error(`Lỗi lấy thông tin chi nhánh: ${error.message}`);
     return data;
   }
 
@@ -141,7 +174,7 @@ class UserRepository {
   async findById(userId) {
     const { data, error } = await supabase
       .from('nguoidung')
-      .select('ma_nguoi_dung, ho_ten, email, sdt, vai_tro, trang_thai, created_at, ma_chi_nhanh')
+      .select('ma_nguoi_dung, ho_ten, email, sdt, vai_tro, trang_thai, created_at, ma_chi_nhanh, ma_hsdn')
       .eq('ma_nguoi_dung', userId)
       .single();  // .single() → lỗi nếu không tìm thấy, trả null nếu null
 
@@ -186,13 +219,13 @@ class UserRepository {
     // Nếu đổi sang Khách hàng / Admin thì set null cả 2.
     if (newRole === 'Nhan vien ban hang') {
       updateData.ma_chi_nhanh = maChiNhanh;
-      updateData.ma_hs = maHsdn; // NHBH cũng thuộc về 1 HOSODN
+      updateData.ma_hsdn = null;
     } else if (newRole === 'Nhan vien quan ly voucher' || newRole === 'Nguoi dai dien') {
       updateData.ma_chi_nhanh = null;
-      updateData.ma_hs = maHsdn;
+      updateData.ma_hsdn = maHsdn;
     } else {
       updateData.ma_chi_nhanh = null;
-      updateData.ma_hs = null;
+      updateData.ma_hsdn = null;
     }
 
     const { data, error } = await supabase

@@ -1,17 +1,4 @@
 /**
- * Purpose: Định nghĩa route cho màn hình đối tác/người bán.
- * Dùng cho các trang chỉ seller/partner có thể truy cập.
+ * @deprecated Route của ứng dụng được quản lý tập trung tại src/app/router.jsx.
  */
-import PartnerLayout from "../../layouts/PartnerLayout";
-import SellerScreen from "../../pages/seller";
-
-export const partnerRoutes = [
-  {
-    path: "/partner",
-    element: <PartnerLayout><SellerScreen /></PartnerLayout>,
-  },
-  {
-    path: "/seller",
-    element: <PartnerLayout><SellerScreen /></PartnerLayout>,
-  },
-];
+export const partnerRoutes = [];

@@ -54,11 +54,13 @@ class UserController {
 
       // req.user.id = UUID của admin đang thực hiện (từ JWT token)
       // KHÔNG lấy actorId từ body vì không được tin client truyền vào (skills.md §8.2)
-      const actorId = req.user.accountId;
+      const actorId = req.user.id;
+      const actorAccountId = req.user.accountId;
       const actorRole = req.user.role;
 
       const updated = await this.userService.lockUser({
         actorId,      // Ai đang thực hiện (từ token)
+        actorAccountId,
         actorRole,    // Role của người thực hiện (từ token)
         targetUserId: userId,  // Ai Tạm khóa (từ URL)
         reason,
@@ -79,11 +81,13 @@ class UserController {
       const { userId } = req.params;
       const { reason } = req.body;
 
-      const actorId = req.user.accountId;
+      const actorId = req.user.id;
+      const actorAccountId = req.user.accountId;
       const actorRole = req.user.role;
 
       const updated = await this.userService.unlockUser({
         actorId,
+        actorAccountId,
         actorRole,
         targetUserId: userId,
         reason,
@@ -105,11 +109,13 @@ class UserController {
       const { userId } = req.params;
       const { newRole, maChiNhanh, maHsdn, reason } = req.body;
 
-      const actorId = req.user.accountId;
+      const actorId = req.user.id;
+      const actorAccountId = req.user.accountId;
       const actorRole = req.user.role;
 
       const updated = await this.userService.updateUserRole({
         actorId,
+        actorAccountId,
         actorRole,
         targetUserId: userId,
         newRole,
@@ -142,7 +148,10 @@ class UserController {
   // -----------------------------------------------------------------------
   async listBranches(req, res, next) {
     try {
-      const branches = await this.userService.listBranches();
+      const branches = await this.userService.listBranches({
+        maHsdn: req.query.maHsdn || undefined,
+        includeInactive: false,
+      });
       res.status(200).json({ success: true, data: branches, message: 'Lấy danh sách chi nhánh thành công' });
     } catch (error) {
       next(error);
@@ -151,7 +160,7 @@ class UserController {
 
   async listPartners(req, res, next) {
     try {
-      const partners = await this.userService.listPartners();
+      const partners = await this.userService.listPartners({ includeInactive: false });
       res.status(200).json({ success: true, data: partners, message: 'Lấy danh sách đối tác thành công' });
     } catch (error) {
       next(error);
