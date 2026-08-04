@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { fetchAuditLogsApi } from "../../../core-access/api/auditLogApi";
+import { fetchAuditLogsApi } from "../../../../shared/api/auditLogApi";
 import { Search, Filter, RefreshCw, ScrollText, CheckCircle2, XCircle } from "lucide-react";
 
 export function AuditLogPage() {

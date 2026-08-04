@@ -23,7 +23,6 @@ export async function loginApi({ username, password }) {
       user: payload.user,
     };
   } catch (error) {
-    // If backend server fails to respond, throw clear error
     if (error.name === "TypeError" && error.message.includes("fetch")) {
       throw new Error("Không thể kết nối đến Backend Server");
     }

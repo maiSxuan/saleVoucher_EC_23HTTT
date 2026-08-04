@@ -8,7 +8,7 @@ import {
   lockUser,       // PATCH /admin/users/:id/lock — khóa tài khoản
   unlockUser,     // PATCH /admin/users/:id/unlock — mở khóa
   updateUserRole, // PATCH /admin/users/:id/role — đổi vai trò
-} from '../../api/userApi';
+} from '../../../../shared/api/userApi';
 
 // Mapping vai trò DB (lưu trong NGUOIDUNG.vai_tro) sang label hiển thị + màu badge
 const ROLE_CONFIG = {
@@ -170,13 +170,13 @@ function UserDetailPanel({ user: initialUser, onLock, onUnlock, onRoleUpdate, on
   const [activeTab, setActiveTab] = useState('info');
   const [user, setUser] = useState(initialUser);
   const [loadingDetails, setLoadingDetails] = useState(true);
-  
+
   const [lockModal, setLockModal] = useState(false);
   const [unlockModal, setUnlockModal] = useState(false);
   const [roleModal, setRoleModal] = useState(false);
   const [selectedNewRole, setSelectedNewRole] = useState(initialUser.role);
   const [roleReason, setRoleReason] = useState('');
-  
+
   // State cho combo boxes
   const [branches, setBranches] = useState([]);
   const [partners, setPartners] = useState([]);
@@ -272,9 +272,9 @@ function UserDetailPanel({ user: initialUser, onLock, onUnlock, onRoleUpdate, on
         const selectedPartnerInfo = partners.find((partner) => partner.ma_hs === selectedPartner);
         const nextExtraInfo = selectedNewRole === 'Nhan vien ban hang'
           ? {
-              ...selectedBranchInfo,
-              hosodn: { ten_dn: current.extraInfo?.ten_dn || '—' },
-            }
+            ...selectedBranchInfo,
+            hosodn: { ten_dn: current.extraInfo?.ten_dn || '—' },
+          }
           : selectedPartnerInfo;
 
         return {

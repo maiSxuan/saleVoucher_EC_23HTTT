@@ -1,7 +1,7 @@
 /**
  * API client gọi backend `/api/admin/logs` hoặc `/admin/logs` (BR-ADM-07).
  */
-import { mockStore } from '../../../shared/store/mockDataStore';
+import { mockStore } from '../store/mockDataStore';
 
 const API_BASE = '/api';
 

@@ -37,7 +37,7 @@ import {
   fetchUsageHistory,
   fetchSampleCodes,
   fetchBranches,
-} from '../../api/voucherCodeApi';
+} from '../../../../shared/api/voucherCodeApi';
 import QrScannerModal from '../../component/QrScannerModal';
 import QrCodeDisplay from '../../component/QRCodeDisplay';
 
@@ -364,11 +364,10 @@ export default function PartnerVoucherLookupPage() {
             <button
               type="button"
               onClick={() => setActiveViewTab('lookup')}
-              className={`flex items-center gap-2 py-3 px-4 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer ${
-                activeViewTab === 'lookup'
+              className={`flex items-center gap-2 py-3 px-4 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer ${activeViewTab === 'lookup'
                   ? 'border-emerald-600 text-emerald-700 bg-emerald-50/40'
                   : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
-              }`}
+                }`}
             >
               <Search className="w-4 h-4" />
               <span>Tra cứu & Quét mã</span>
@@ -377,11 +376,10 @@ export default function PartnerVoucherLookupPage() {
             <button
               type="button"
               onClick={() => setActiveViewTab('history')}
-              className={`flex items-center gap-2 py-3 px-4 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer ${
-                activeViewTab === 'history'
+              className={`flex items-center gap-2 py-3 px-4 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer ${activeViewTab === 'history'
                   ? 'border-emerald-600 text-emerald-700 bg-emerald-50/40'
                   : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
-              }`}
+                }`}
             >
               <History className="w-4 h-4" />
               <span>Lịch sử đổi tại quầy</span>
@@ -430,13 +428,12 @@ export default function PartnerVoucherLookupPage() {
                   {s.code}
                 </span>
                 <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded font-sans font-bold ${
-                    s.status === 'Chua su dung'
+                  className={`text-[10px] px-1.5 py-0.2 rounded font-sans font-bold ${s.status === 'Chua su dung'
                       ? 'bg-emerald-100 text-emerald-800'
                       : s.status === 'Da su dung'
                         ? 'bg-slate-200 text-slate-600'
                         : 'bg-rose-100 text-rose-700'
-                  }`}
+                    }`}
                 >
                   {s.status === 'Chua su dung' ? 'Mới' : s.status === 'Da su dung' ? 'Đã dùng' : 'Hết hạn'}
                 </span>
@@ -603,27 +600,25 @@ export default function PartnerVoucherLookupPage() {
                 <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
                   {/* Digital Ticket Container */}
                   <div
-                    className={`bg-white rounded-2xl border shadow-md overflow-hidden transition-all ${
-                      verificationResult.status === 'valid'
+                    className={`bg-white rounded-2xl border shadow-md overflow-hidden transition-all ${verificationResult.status === 'valid'
                         ? 'border-emerald-300 ring-2 ring-emerald-500/20'
                         : verificationResult.status === 'used'
                           ? 'border-slate-300'
                           : verificationResult.status === 'expired'
                             ? 'border-amber-300'
                             : 'border-rose-300'
-                    }`}
+                      }`}
                   >
                     {/* 1. Status Banner Top */}
                     <div
-                      className={`px-6 py-4 flex items-center justify-between text-white ${
-                        verificationResult.status === 'valid'
+                      className={`px-6 py-4 flex items-center justify-between text-white ${verificationResult.status === 'valid'
                           ? 'bg-emerald-600'
                           : verificationResult.status === 'used'
                             ? 'bg-slate-700'
                             : verificationResult.status === 'expired'
                               ? 'bg-amber-600'
                               : 'bg-rose-600'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-2.5">
                         {verificationResult.status === 'valid' ? (
@@ -736,11 +731,10 @@ export default function PartnerVoucherLookupPage() {
                             {voucherData.applicableBranches.map((b) => (
                               <span
                                 key={b.branchId}
-                                className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                                  b.branchId === selectedBranchId
+                                className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${b.branchId === selectedBranchId
                                     ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
                                     : 'bg-slate-100 text-slate-600'
-                                }`}
+                                  }`}
                               >
                                 {b.branchName}
                               </span>
