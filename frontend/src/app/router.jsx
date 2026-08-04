@@ -91,8 +91,26 @@ const router = createBrowserRouter([
       // CUSTOMER ROUTES
       {
         path: "customer",
-        element: <ProtectedRoute allowedRoles={["CUSTOMER", "Khach hang"]} />,
-        children: [{ index: true, element: <CustomerScreen /> }],
+        element: <ProtectedRoute allowedRoles={["CUSTOMER"]} />,
+        children: [
+          {
+            element: <CustomerLayout />,
+            children: [
+              {
+                index: true,
+                element: <VoucherSearchPage />,
+              },
+              {
+                path: "vouchers/:id",
+                element: <VoucherDetailPage />,
+              },
+              {
+                path: "cart",
+                element: <CartPage />,
+              },
+            ],
+          },
+        ],
       },
     ],
   },
