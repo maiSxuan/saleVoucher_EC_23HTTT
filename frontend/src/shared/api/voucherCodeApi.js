@@ -73,23 +73,35 @@ export async function fetchSampleCodes() {
 }
 
 /**
- * 5. Lấy danh sách chi nhánh hoạt động
+ * 5. Lấy danh sách chi nhánh hoạt động theo doanh nghiệp / phạm vi người dùng
  */
-export async function fetchBranches() {
+export async function fetchBranches(maHsdn = null) {
   try {
-    const res = await fetch(`${BASE_URL}/branches`, {
+    const res = await fetch(`${BASE_URL}/vouchers/branches`, {
       method: 'GET',
       headers: getAuthHeaders(),
     });
-    if (res.ok) return await res.json();
+    if (res.ok) {
+      const json = await res.json();
+      if (json?.data && json.data.length > 0) return json;
+    }
   } catch (e) {
-    // fallback
+    console.warn('[fetchBranches] Lỗi gọi /vouchers/branches:', e);
   }
 
-  const resAdmin = await fetch(`${BASE_URL}/admin/branches`, {
-    method: 'GET',
-    headers: getAuthHeaders(),
-  });
-  return handleResponse(resAdmin);
+  try {
+    const params = new URLSearchParams();
+    if (maHsdn) params.set('maHsdn', maHsdn);
+    const query = params.toString();
+
+    const resAdmin = await fetch(`${BASE_URL}/admin/branches${query ? `?${query}` : ''}`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    return await handleResponse(resAdmin);
+  } catch (e) {
+    console.warn('[fetchBranches] Lỗi gọi /admin/branches:', e);
+    return { success: true, data: [] };
+  }
 }
 

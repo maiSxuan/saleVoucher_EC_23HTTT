@@ -114,6 +114,23 @@ class RedemptionController {
       next(error);
     }
   }
+
+  /**
+   * 5. GET /vouchers/branches
+   * Lấy danh sách chi nhánh tương ứng với doanh nghiệp/phạm vi của người dùng
+   */
+  async getBranches(req, res, next) {
+    try {
+      const actor = req.user;
+      const branches = await this.voucherVerificationService.getBranchesForActor(actor);
+      return res.json({
+        success: true,
+        data: branches,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = RedemptionController;

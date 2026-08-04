@@ -17,10 +17,11 @@ const controller = new RedemptionController(
   voucherRedemptionService
 );
 
-// Chức năng nghiệp vụ đối tác; Admin không tham gia tra cứu/xác nhận tại quầy.
+// Chức năng nghiệp vụ đối tác + Quản trị viên
 const ALLOWED_STAFF_ROLES = [
   JWT_ROLES.PARTNER_OWNER,
   JWT_ROLES.PARTNER_STAFF,
+  JWT_ROLES.ADMIN,
 ];
 
 // 1. Tra cứu / Xác minh tính hợp lệ voucher code (BR-PAR-05)
@@ -53,6 +54,14 @@ router.get(
   authenticateMiddleware,
   authorizeMiddleware(...ALLOWED_STAFF_ROLES),
   controller.getSampleCodes.bind(controller)
+);
+
+// 5. Lấy danh sách chi nhánh phù hợp với doanh nghiệp của tài khoản đang đăng nhập
+router.get(
+  '/vouchers/branches',
+  authenticateMiddleware,
+  authorizeMiddleware(...ALLOWED_STAFF_ROLES),
+  controller.getBranches.bind(controller)
 );
 
 module.exports = router;

@@ -1,6 +1,8 @@
 /**
  * Purpose: Repository cho thao tác phát hành voucher.
  */
+const supabase = require('../../../../config/supabase');
+
 class IssuedVoucherRepository {
   /**
    * 1. Tìm voucher đã mua theo mã code (BR-PAR-05)

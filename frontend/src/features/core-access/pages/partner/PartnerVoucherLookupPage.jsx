@@ -286,7 +286,7 @@ export default function PartnerVoucherLookupPage() {
                   Chi nhánh:
                 </span>
                 {isBranchStaff || staffBranchId ? (
-                  <span className="font-bold text-slate-800 truncate max-w-[150px] sm:max-w-[200px] block leading-tight">
+                  <span className="font-bold text-slate-800 truncate max-w-[150px] sm:max-w-[200px] block leading-tight" title={displayBranchAddress}>
                     {displayBranchName}
                   </span>
                 ) : (
@@ -296,7 +296,7 @@ export default function PartnerVoucherLookupPage() {
                       setSelectedBranchId(e.target.value);
                       if (verificationResult) setVerificationResult(null);
                     }}
-                    className="bg-transparent font-bold text-slate-800 text-xs focus:outline-none cursor-pointer pr-2 leading-tight"
+                    className="bg-transparent font-bold text-slate-800 text-xs focus:outline-none cursor-pointer pr-2 leading-tight max-w-[180px] sm:max-w-[220px]"
                   >
                     {isLoadingBranches ? (
                       <option value="">Đang tải...</option>
@@ -332,12 +332,12 @@ export default function PartnerVoucherLookupPage() {
               <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center shrink-0 border border-emerald-200">
                 {userName.charAt(0).toUpperCase()}
               </div>
-              <div className="text-left hidden lg:block">
-                <div className="text-xs font-bold text-slate-800 leading-tight">
+              <div className="text-left hidden lg:block max-w-[180px]">
+                <div className="text-xs font-bold text-slate-800 leading-tight truncate" title={userName}>
                   {userName}
                 </div>
-                <div className="text-[10px] text-emerald-700 font-medium leading-none mt-0.5">
-                  {userRole}
+                <div className="text-[10px] text-emerald-700 font-medium leading-none mt-0.5 truncate" title={currentUser?.ten_doanh_nghiep || userRole}>
+                  {currentUser?.ten_doanh_nghiep ? `${currentUser.ten_doanh_nghiep} • ` : ''}{userRole}
                 </div>
               </div>
             </div>
@@ -390,58 +390,8 @@ export default function PartnerVoucherLookupPage() {
               )}
             </button>
           </nav>
-
-          {/* Quick toggle sample codes (for testing) */}
-          <button
-            type="button"
-            onClick={() => setShowSampleCodes(!showSampleCodes)}
-            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-emerald-700 py-1.5 px-3 rounded-lg hover:bg-slate-50 font-medium transition-colors cursor-pointer border border-dashed border-slate-300 hover:border-emerald-300"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span className="hidden sm:inline">Mã kiểm thử mẫu:</span>
-            <span className="font-semibold text-slate-700">
-              {showSampleCodes ? 'Ẩn mã mẫu ▲' : 'Hiện mã mẫu ▼'}
-            </span>
-          </button>
         </div>
       </div>
-
-      {/* SAMPLE CODES DRAWER (Clean interactive chip bar when expanded) */}
-      {showSampleCodes && sampleCodes.length > 0 && (
-        <div className="bg-slate-50 border-b border-slate-200 py-3 px-4 sm:px-8 animate-in slide-in-from-top duration-150">
-          <div className="max-w-7xl mx-auto flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold text-slate-600 mr-2 flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Nhấp để kiểm thử nhanh:</span>
-            </span>
-            {sampleCodes.map((s) => (
-              <button
-                key={s.code}
-                type="button"
-                onClick={() => {
-                  setInputCode(s.code);
-                  handleVerify(s.code);
-                }}
-                className="flex items-center gap-1.5 px-2.5 py-1 bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 border border-slate-200 hover:border-emerald-300 rounded-lg text-xs font-mono font-medium transition-all shadow-2xs cursor-pointer group"
-              >
-                <span className="font-bold text-slate-900 group-hover:text-emerald-700">
-                  {s.code}
-                </span>
-                <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded font-sans font-bold ${s.status === 'Chua su dung'
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : s.status === 'Da su dung'
-                        ? 'bg-slate-200 text-slate-600'
-                        : 'bg-rose-100 text-rose-700'
-                    }`}
-                >
-                  {s.status === 'Chua su dung' ? 'Mới' : s.status === 'Da su dung' ? 'Đã dùng' : 'Hết hạn'}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* 3. MAIN WORKSPACE CONTAINER */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 w-full">
@@ -549,6 +499,62 @@ export default function PartnerVoucherLookupPage() {
                   </div>
                 )}
               </div>
+
+              {/* Box Gợi ý mã mẫu từ Database để test nhanh */}
+              {sampleCodes.length > 0 && (
+                <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+                      <Sparkles className="w-4 h-4 text-amber-500" />
+                      <span>Mã mẫu kiểm thử (Nhấp để thử nhanh)</span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-semibold">
+                      {sampleCodes.length} mã có sẵn
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Bấm trực tiếp vào mã bên dưới để tự động điền và tra cứu ngay lập tức:
+                  </p>
+
+                  <div className="space-y-2">
+                    {sampleCodes.map((s) => (
+                      <button
+                        key={s.code}
+                        type="button"
+                        onClick={() => {
+                          setInputCode(s.code);
+                          handleVerify(s.code);
+                        }}
+                        className="w-full flex items-center justify-between p-2.5 bg-slate-50 hover:bg-emerald-50/70 border border-slate-200 hover:border-emerald-300 rounded-xl text-left transition-all group cursor-pointer"
+                      >
+                        <div className="min-w-0 pr-2">
+                          <div className="font-mono font-bold text-xs text-slate-800 group-hover:text-emerald-700">
+                            {s.code}
+                          </div>
+                          <div className="text-[11px] text-slate-500 truncate">
+                            {s.voucherName}
+                          </div>
+                        </div>
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded-md font-bold shrink-0 ${
+                            s.status === 'Chua su dung'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : s.status === 'Da su dung'
+                              ? 'bg-slate-200 text-slate-600'
+                              : 'bg-rose-100 text-rose-700'
+                          }`}
+                        >
+                          {s.status === 'Chua su dung'
+                            ? 'Chưa dùng'
+                            : s.status === 'Da su dung'
+                            ? 'Đã dùng'
+                            : s.status}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Instructions / Quick Policy Card */}
               <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 space-y-3">
