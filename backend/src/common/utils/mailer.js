@@ -9,7 +9,7 @@ const authConfig = loadAuthGmail();
 
 // Transporter dành cho Đăng ký (dùng SMTP_USER)
 const transporter = nodemailer.createTransport({
-  host: config.host,
+  host: config.host || "smtp.gmail.com",
   port: Number(config.port) || 587,
   secure: Number(config.port) === 465 || config.secure === "true",
   auth: {
@@ -20,7 +20,7 @@ const transporter = nodemailer.createTransport({
 
 // Transporter dành cho Quên mật khẩu (dùng AUTH_SMTP_USER)
 const authTransporter = nodemailer.createTransport({
-  host: authConfig.host,
+  host: authConfig.host || "smtp.gmail.com",
   port: Number(authConfig.port) || 587,
   secure: Number(authConfig.port) === 465 || authConfig.secure === "true",
   auth: {
@@ -55,7 +55,7 @@ async function sendOtpEmail(toEmail, otp, type = "register") {
   const activeTransporter = isForgotPassword ? authTransporter : transporter;
   const activeConfig = isForgotPassword ? authConfig : config;
 
-  if (!activeConfig.host || !activeConfig.user || !activeConfig.pass) {
+  if (!activeConfig.user || !activeConfig.pass) {
     if (process.env.NODE_ENV === 'production') {
       throw new Error('Chưa cấu hình SMTP để gửi mã OTP');
     }
@@ -63,12 +63,20 @@ async function sendOtpEmail(toEmail, otp, type = "register") {
     return { mocked: true };
   }
 
-  return activeTransporter.sendMail({
-    from: activeConfig.from || `"EC Voucher" <${activeConfig.user}>`,
-    to: toEmail,
-    subject: subject,
-    html: content,
-  });
+  try {
+    const result = await activeTransporter.sendMail({
+      from: activeConfig.from || `"EC Voucher" <${activeConfig.user}>`,
+      to: toEmail,
+      subject: subject,
+      html: content,
+    });
+    console.info(`[Mailer] Đã gửi OTP đến ${toEmail}`);
+    return result;
+  } catch (err) {
+    if (process.env.NODE_ENV === 'production') throw err;
+    console.warn(`[Mailer] Không thể gửi SMTP (${err.message}). OTP cho ${toEmail}: ${otp}`);
+    return { mocked: true };
+  }
 }
 
 module.exports = { sendOtpEmail };

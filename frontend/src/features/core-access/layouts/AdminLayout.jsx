@@ -17,7 +17,7 @@ import {
 // icon: icon từ lucide-react
 // label: tên hiển thị
 const NAV_ITEMS = [
-  { path: '/admin', label: 'Tổng quan', icon: LayoutDashboard },
+  { path: '/admin/overview', label: 'Tổng quan', icon: LayoutDashboard },
   { path: '/admin/users', label: 'Người dùng', icon: Users },
   { path: '/admin/logs', label: 'Nhật ký hệ thống', icon: ScrollText },
 ];
@@ -122,10 +122,7 @@ export default function AdminLayout() {
           {NAV_ITEMS.map(item => {
             const Icon = item.icon;
             // Active: đường dẫn hiện tại match với item
-            // Riêng /admin: chỉ active khi đúng /admin (không phải /admin/users)
-            const isActive = item.path === '/admin'
-              ? location.pathname === '/admin'
-              : location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+            const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
 
             return (
               <Link

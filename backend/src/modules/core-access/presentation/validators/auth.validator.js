@@ -9,18 +9,20 @@ function validateLoginPayload(payload) {
   }
 
   const email = typeof payload.email === 'string' ? payload.email.trim() : '';
+  const username = typeof payload.username === 'string' ? payload.username.trim() : '';
+  const loginIdentifier = email || username;
   const password = typeof payload.password === 'string' ? payload.password : '';
 
-  if (!email || !password) {
+  if (!loginIdentifier || !password) {
     throw new ValidationError('Email/SĐT và mật khẩu là bắt buộc', {
       fields: {
-        email: !email ? 'Vui lòng nhập email hoặc số điện thoại' : undefined,
+        email: !loginIdentifier ? 'Vui lòng nhập email, số điện thoại hoặc tên đăng nhập' : undefined,
         password: !password ? 'Vui lòng nhập mật khẩu' : undefined,
       },
     });
   }
 
-  return { ...payload, email, password };
+  return { ...payload, email: loginIdentifier, username, password };
 }
 
 function validateLoginRequest(req, res, next) {

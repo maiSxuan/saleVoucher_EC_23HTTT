@@ -84,6 +84,7 @@ create table NGUOIDUNG (
 create table CHINHANH (
     ma_chi_nhanh uuid primary key default gen_random_uuid(),
     ten_chi_nhanh text not null,
+    khu_vuc text,
     dia_chi text,
     khu_vuc text,
     trang_thai text not null default 'Cho duyet' check (
@@ -113,6 +114,8 @@ alter table NGUOIDUNG
             AND ma_chi_nhanh IS NULL
         )
     );
+
+    foreign key of NGUOIDUNG.ma_hosodn -> HOSODN
 create index idx_nguoi_dung_ma_chi_nhanh on NGUOIDUNG(ma_chi_nhanh);
 -- =====================================================================
 -- 4. HO_SO_DN  (ho so doanh nghiep doi tac)
@@ -135,9 +138,7 @@ create table HOSODN (
         )
     ),
     id_nguoi_dai_dien uuid not null,
-    id_nvql_voucher uuid not null,
-    constraint fk_ho_so_dn_nguoi_dai_dien foreign key (id_nguoi_dai_dien) references NGUOIDUNG(ma_nguoi_dung),
-    constraint fk_ho_so_dn_nvql_voucher foreign key (id_nvql_voucher) references NGUOIDUNG(ma_nguoi_dung)
+    constraint fk_ho_so_dn_nguoi_dai_dien foreign key (id_nguoi_dai_dien) references NGUOIDUNG(ma_nguoi_dung)
     -- [FIX] Subquery ben trong CHECK constraint bi PostgreSQL tu choi.
     --       Rang buoc vai_tro duoc kiem tra qua trigger trg_hosodn_vai_tro ben duoi.
 );

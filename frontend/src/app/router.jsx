@@ -1,62 +1,71 @@
-/**
- * FILE: router.jsx
- * PURPOSE: Khai báo toàn bộ routes của ứng dụng frontend.
- *
- * Tại sao cần file này?
- * - Một điểm duy nhất quản lý tất cả URL → component mapping.
- * - Route admin được bảo vệ kép: ProtectedRoute (kiểm tra token + role) + AdminLayout (sidebar/topbar).
- *
- * Luồng bảo vệ route admin:
- *   Truy cập /admin/* → ProtectedRoute kiểm tra localStorage → nếu không phải ADMIN → /forbidden
- *   Nếu hợp lệ → AdminLayout (render sidebar + topbar) → Outlet render trang cụ thể
- *
- * Cấu trúc route admin (BR-ADM-01):
- *   /admin           → AdminDashboardPage (tổng quan)
- *   /admin/users     → UserListPage (danh sách người dùng)
- *   /admin/logs      → AuditLogPage (nhật ký hệ thống)
- */
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import React from "react";
+import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import App from "../App";
 import LoginPage from "../features/core-access/pages/auth/LoginPage";
 import ProtectedRoute from "../shared/components/ProtectedRoute";
 import Forbidden from "../shared/components/Forbidden";
 import RegisterPage from "../features/customer-commerce/pages/customer/RegisterPage";
+import LogoutPage from "../features/core-access/pages/auth/LogoutPage";
 
-// Layout admin — sidebar + topbar, wrap tất cả trang admin
+// Admin Portal Pages & Layout
 import AdminLayout from "../features/core-access/layouts/AdminLayout";
-
-// Trang Admin & Partner
+import PartnerManagementPage from "../features/partner-voucher/pages/admin/PartnerManagementPage";
+import PartnerDetailPage from "../features/partner-voucher/pages/admin/PartnerDetailPage";
+import VoucherApprovalListPage from "../features/partner-voucher/pages/admin/VoucherApprovalListPage";
+import VoucherApprovalDetailPage from "../features/partner-voucher/pages/admin/VoucherApprovalDetailPage";
 import UserListPage from "../features/core-access/pages/admin/UserListPage";
 import PartnerVoucherLookupPage from "../features/core-access/pages/partner/PartnerVoucherLookupPage";
 
-// Placeholder trang chưa làm
+// Partner Portal Pages
+import PartnerRegisterPage from "../features/partner-voucher/pages/partner/PartnerRegisterPage";
+import PartnerProfilePage from "../features/partner-voucher/pages/partner/PartnerProfilePage";
+import BranchManagementPage from "../features/partner-voucher/pages/partner/BranchManagementPage";
+import VoucherListPage from "../features/partner-voucher/pages/partner/VoucherListPage";
+import VoucherFormPage from "../features/partner-voucher/pages/partner/VoucherFormPage";
+import VoucherDetailPage from "../features/partner-voucher/pages/partner/VoucherDetailPage";
+import PartnerReportsPage from "../features/partner-voucher/pages/partner/PartnerReportsPage";
+import StaffManagementPage from "../features/partner-voucher/pages/partner/StaffManagementPage";
+
+// Audit log page
+import AuditLogPage from "../features/partner-voucher/pages/admin/AuditLogPage";
+
+// Placeholder customer screen
+const CustomerScreen = () => (
+  <div className="p-6 text-gray-700 font-semibold">Trang Khách Hàng (Customer Commerce) — Đang phát triển</div>
+);
+
 const AdminDashboardPage = () => (
   <div className="p-6">
-    <h1 className="text-2xl font-bold text-gray-900 mb-2">
-      Tổng quan hệ thống
-    </h1>
+    <h1 className="text-2xl font-bold text-gray-900 mb-2">Tổng quan hệ thống</h1>
     <p className="text-gray-500">Dashboard đang được phát triển...</p>
   </div>
 );
 
-const AuditLogPage = () => (
-  <div className="p-6">
-    <h1 className="text-2xl font-bold text-gray-900 mb-2">Nhật ký hệ thống</h1>
-    <p className="text-gray-500">
-      Trang nhật ký đang được phát triển (BR-ADM-07)...
-    </p>
-  </div>
-);
+function PartnerHome() {
+  try {
+    const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+    if (currentUser.vai_tro_he_thong === "Nhan vien ban hang") {
+      return <Navigate to="/partner/vouchers/lookup" replace />;
+    }
+  } catch {
+    return <Navigate to="/login" replace />;
+  }
+  return <Navigate to="/partner/reports" replace />;
+}
 
-// Placeholder cho customer
-const CustomerScreen = () => (
-  <div className="p-6 text-gray-700">Customer Dashboard — Đang phát triển</div>
-);
+function PartnerManagementAccess() {
+  try {
+    const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+    if (currentUser.vai_tro_he_thong === "Nhan vien ban hang") {
+      return <Navigate to="/partner/vouchers/lookup" replace />;
+    }
+  } catch {
+    return <Navigate to="/login" replace />;
+  }
+  return <Outlet />;
+}
 
 const router = createBrowserRouter([
-  // -----------------------------------------------------------------------
-  // Route công khai — Không cần đăng nhập
-  // -----------------------------------------------------------------------
   {
     path: "/login",
     element: <LoginPage />,
@@ -66,12 +75,18 @@ const router = createBrowserRouter([
     element: <Forbidden />,
   },
   {
+    path: "/logout",
+    element: <LogoutPage />,
+  },
+  {
     path: "/customer/register",
     element: <RegisterPage />,
   },
-  // -----------------------------------------------------------------------
-  // Route có layout App (Header chung) — dùng cho customer/partner
-  // -----------------------------------------------------------------------
+  {
+    path: "/partner/register",
+    element: <PartnerRegisterPage />,
+  },
+
   {
     path: "/",
     element: <App />,
@@ -82,51 +97,68 @@ const router = createBrowserRouter([
       // CUSTOMER ROUTES
       {
         path: "customer",
-        element: <ProtectedRoute allowedRoles={["CUSTOMER"]} />,
+        element: <ProtectedRoute allowedRoles={["CUSTOMER", "Khach hang"]} />,
         children: [{ index: true, element: <CustomerScreen /> }],
       },
+    ],
+  },
 
-      // PARTNER ROUTES (BR-PAR-05, BR-PAR-06: Tra cứu & Xác nhận sử dụng voucher)
+  {
+    path: "/partner",
+    element: (
+      <ProtectedRoute
+        allowedRoles={[
+          "PARTNER_OWNER",
+          "PARTNER_STAFF",
+          "Nguoi dai dien",
+          "Nhan vien quan ly voucher",
+        ]}
+      />
+    ),
+    children: [
+      { index: true, element: <PartnerHome /> },
+      { path: "vouchers/lookup", element: <PartnerVoucherLookupPage /> },
       {
-        path: "partner",
-        element: (
-          <ProtectedRoute allowedRoles={["PARTNER_OWNER", "PARTNER_STAFF"]} />
-        ),
+        element: <PartnerManagementAccess />,
         children: [
-          { index: true, element: <PartnerVoucherLookupPage /> },
-          { path: "vouchers/lookup", element: <PartnerVoucherLookupPage /> },
+          { path: "reports", element: <PartnerReportsPage /> },
+          { path: "profile", element: <PartnerProfilePage /> },
+          { path: "branches", element: <BranchManagementPage /> },
+          { path: "staffs", element: <StaffManagementPage /> },
+          { path: "vouchers", element: <VoucherListPage /> },
+          { path: "vouchers/new", element: <VoucherFormPage /> },
+          { path: "vouchers/:id/edit", element: <VoucherFormPage /> },
+          { path: "vouchers/:id", element: <VoucherDetailPage /> },
         ],
       },
     ],
   },
 
-  // -----------------------------------------------------------------------
-  // ADMIN ROUTES — Bảo vệ bởi ProtectedRoute(ADMIN) + AdminLayout
-  //
-  // Tại sao đặt admin ra ngoài "/" ?
-  // - Admin dùng layout riêng (AdminLayout có sidebar) thay vì App (Header chung).
-  // - Tách rõ UX cho admin vs user thông thường.
-  // -----------------------------------------------------------------------
   {
     path: "/admin",
-    element: (
-      // Bước 1: Kiểm tra token + role ADMIN
-      <ProtectedRoute allowedRoles={["ADMIN"]} />
-    ),
+    element: <ProtectedRoute allowedRoles={["ADMIN", "Admin"]} />,
     children: [
+      { index: true, element: <Navigate to="/admin/partners" replace /> },
+      { path: "partners", element: <PartnerManagementPage /> },
+      { path: "partners/:id", element: <PartnerDetailPage /> },
+      { path: "vouchers", element: <VoucherApprovalListPage /> },
+      { path: "vouchers/:id", element: <VoucherApprovalDetailPage /> },
+      { path: "logs", element: <AuditLogPage /> },
+      { path: "audit-logs", element: <AuditLogPage /> },
       {
-        // Bước 2: Render AdminLayout (sidebar + topbar)
         element: <AdminLayout />,
         children: [
-          // /admin → Dashboard
-          { index: true, element: <AdminDashboardPage /> },
-          // /admin/users → Quản lý người dùng (BR-ADM-01) — dùng data thật Supabase
+          { path: "overview", element: <AdminDashboardPage /> },
           { path: "users", element: <UserListPage /> },
-          // /admin/logs → Nhật ký hệ thống (BR-ADM-07) — placeholder
-          { path: "logs", element: <AuditLogPage /> },
         ],
       },
     ],
+  },
+
+  // Fallback -> /login
+  {
+    path: "*",
+    element: <Navigate to="/login" replace />,
   },
 ]);
 
