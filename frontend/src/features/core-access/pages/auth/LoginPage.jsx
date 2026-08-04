@@ -173,10 +173,17 @@ export default function LoginPage() {
               {loading ? 'Đang xác thực...' : 'Đăng nhập'}
             </button>
 
-            <div className="text-center mt-3">
+            <div className="text-center mt-3 space-y-2">
+              <div>
               <Link to="/customer/register" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
                 Đăng kí khách hàng
               </Link>
+                 </div>
+              <div>
+                <Link to="/partner/register" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+                  Đăng kí đối tác
+                </Link>
+              </div>
             </div>
           </div>
         )}
