@@ -57,6 +57,8 @@ export function AdminLayout({ children }) {
   const handleLogout = () => {
     localStorage.removeItem('accessToken'); // Xóa JWT token
     localStorage.removeItem('user');         // Xóa thông tin user
+    localStorage.removeItem('ec_auth_token');
+    localStorage.removeItem('ec_auth_user');
     navigate('/login', { replace: true });   // Chuyển về login
   };
 

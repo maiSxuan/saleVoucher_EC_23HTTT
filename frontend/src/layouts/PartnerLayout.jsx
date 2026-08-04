@@ -42,6 +42,14 @@ export function PartnerLayout({ children }) {
     window.location.reload();
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("user");
+    localStorage.removeItem("ec_auth_token");
+    localStorage.removeItem("ec_auth_user");
+    navigate("/login", { replace: true });
+  };
+
   const navItems = [
     { label: "Báo cáo", path: "/partner/reports", icon: "📊" },
     { label: "Tra cứu & Đổi Voucher", path: "/partner/vouchers/lookup", icon: "🔍" },
@@ -99,7 +107,7 @@ export function PartnerLayout({ children }) {
           <div className="h-6 w-px bg-slate-200" />
 
           <button
-            onClick={() => navigate("/logout")}
+            onClick={handleLogout}
             className="flex items-center gap-1.5 px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 border border-rose-200 text-xs font-semibold rounded-xl transition-colors shadow-xs cursor-pointer"
             title="Đăng xuất khỏi hệ thống"
           >

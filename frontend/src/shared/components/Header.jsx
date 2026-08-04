@@ -15,7 +15,9 @@ export default function Header() {
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('user');
-    navigate('/login');
+    localStorage.removeItem('ec_auth_token');
+    localStorage.removeItem('ec_auth_user');
+    navigate('/login', { replace: true });
   };
 
   const getRoleBadge = () => {

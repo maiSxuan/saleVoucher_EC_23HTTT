@@ -243,6 +243,14 @@ export default function PartnerVoucherLookupPage() {
     currentUser?.khu_vuc_chi_nhanh ||
     'Đang kết nối';
 
+  const handleLogout = () => {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
+    localStorage.removeItem('ec_auth_token');
+    localStorage.removeItem('ec_auth_user');
+    navigate('/login', { replace: true });
+  };
+
   return (
     <div className="min-h-screen bg-slate-100/70 font-sans text-slate-800 flex flex-col selection:bg-emerald-500 selection:text-white">
       {/* 1. TOP GLOBAL NAVBAR (Clean, HCI standard) */}
@@ -337,7 +345,7 @@ export default function PartnerVoucherLookupPage() {
             {/* Logout Button */}
             <button
               type="button"
-              onClick={() => navigate('/logout')}
+              onClick={handleLogout}
               className="flex items-center gap-1.5 px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 border border-rose-200 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs"
               title="Đăng xuất khỏi hệ thống"
             >
