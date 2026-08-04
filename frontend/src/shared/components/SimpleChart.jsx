@@ -20,7 +20,7 @@ export function SimpleChart({ title, data, type = "bar" }) {
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
                   <div
-                    className="bg-blue-600 h-3 rounded-full transition-all duration-500"
+                    className="bg-emerald-600 h-3 rounded-full transition-all duration-500"
                     style={{ width: `${percentage}%` }}
                   />
                 </div>
@@ -36,7 +36,7 @@ export function SimpleChart({ title, data, type = "bar" }) {
               <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
                 <span className="text-[10px] text-slate-500 font-semibold">{item.value}</span>
                 <div
-                  className="w-full bg-blue-500 hover:bg-blue-600 rounded-t transition-all"
+                  className="w-full bg-emerald-500 hover:bg-emerald-600 rounded-t transition-all"
                   style={{ height: `${height}%` }}
                 />
                 <span className="text-[10px] text-slate-400 truncate max-w-full">{item.label}</span>

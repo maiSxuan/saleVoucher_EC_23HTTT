@@ -8,7 +8,8 @@ import RegisterPage from "../features/customer-commerce/pages/customer/RegisterP
 import LogoutPage from "../features/core-access/pages/auth/LogoutPage";
 
 // Admin Portal Pages & Layout
-import AdminLayout from "../features/core-access/layouts/AdminLayout";
+import AdminLayout from "../layouts/AdminLayout";
+import AdminDashboardPage from "../features/core-access/pages/admin/AdminDashboardPage";
 import PartnerManagementPage from "../features/partner-voucher/pages/admin/PartnerManagementPage";
 import PartnerDetailPage from "../features/partner-voucher/pages/admin/PartnerDetailPage";
 import VoucherApprovalListPage from "../features/partner-voucher/pages/admin/VoucherApprovalListPage";
@@ -32,13 +33,6 @@ import AuditLogPage from "../features/partner-voucher/pages/admin/AuditLogPage";
 // Placeholder customer screen
 const CustomerScreen = () => (
   <div className="p-6 text-gray-700 font-semibold">Trang Khách Hàng (Customer Commerce) — Đang phát triển</div>
-);
-
-const AdminDashboardPage = () => (
-  <div className="p-6">
-    <h1 className="text-2xl font-bold text-gray-900 mb-2">Tổng quan hệ thống</h1>
-    <p className="text-gray-500">Dashboard đang được phát triển...</p>
-  </div>
 );
 
 function PartnerHome() {
@@ -138,18 +132,18 @@ const router = createBrowserRouter([
     path: "/admin",
     element: <ProtectedRoute allowedRoles={["ADMIN", "Admin"]} />,
     children: [
-      { index: true, element: <Navigate to="/admin/partners" replace /> },
-      { path: "partners", element: <PartnerManagementPage /> },
-      { path: "partners/:id", element: <PartnerDetailPage /> },
-      { path: "vouchers", element: <VoucherApprovalListPage /> },
-      { path: "vouchers/:id", element: <VoucherApprovalDetailPage /> },
-      { path: "logs", element: <AuditLogPage /> },
-      { path: "audit-logs", element: <AuditLogPage /> },
       {
         element: <AdminLayout />,
         children: [
+          { index: true, element: <Navigate to="/admin/overview" replace /> },
           { path: "overview", element: <AdminDashboardPage /> },
+          { path: "partners", element: <PartnerManagementPage /> },
+          { path: "partners/:id", element: <PartnerDetailPage /> },
+          { path: "vouchers", element: <VoucherApprovalListPage /> },
+          { path: "vouchers/:id", element: <VoucherApprovalDetailPage /> },
           { path: "users", element: <UserListPage /> },
+          { path: "logs", element: <AuditLogPage /> },
+          { path: "audit-logs", element: <Navigate to="/admin/logs" replace /> },
         ],
       },
     ],

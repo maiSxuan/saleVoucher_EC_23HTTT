@@ -1,95 +1,257 @@
-import React, { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useState } from 'react';
+import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
+import {
+  LayoutDashboard,  // Icon tổng quan
+  Building2,        // Icon quản lý đối tác
+  Ticket,           // Icon duyệt voucher
+  Users,            // Icon quản lý người dùng
+  ScrollText,       // Icon nhật ký hệ thống
+  Shield,           // Icon logo admin
+  LogOut,           // Icon đăng xuất
+  ChevronLeft,      // Icon thu gọn sidebar
+  Menu,             // Icon mở sidebar mobile
+  X,                // Icon đóng sidebar mobile
+  Bell,             // Icon thông báo
+} from 'lucide-react';
+
+// Danh sách menu sidebar hợp nhất cho Admin Portal — 5 tính năng cốt lõi
+const NAV_ITEMS = [
+  { path: '/admin/overview', label: 'Tổng quan', icon: LayoutDashboard },
+  { path: '/admin/partners', label: 'Quản lý đối tác', icon: Building2 },
+  { path: '/admin/vouchers', label: 'Duyệt voucher', icon: Ticket },
+  { path: '/admin/users', label: 'Quản lý người dùng', icon: Users },
+  { path: '/admin/logs', label: 'Nhật ký hệ thống', icon: ScrollText },
+];
 
 export function AdminLayout({ children }) {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [collapsed, setCollapsed] = useState(false);
+  // State thu gọn / mở rộng sidebar (desktop)
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // State hiển thị / ẩn sidebar (mobile — overlay)
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  const navItems = [
-    { label: "Quản lý đối tác", path: "/admin/partners", icon: "👥" },
-    { label: "Duyệt Voucher", path: "/admin/vouchers", icon: "📋" },
-    { label: "Nhật ký hệ thống", path: "/admin/audit-logs", icon: "📜" },
-  ];
+  const navigate = useNavigate();
+  const location = useLocation(); // Để highlight menu item đang active
+
+  // Lấy thông tin user từ localStorage (lưu khi login)
+  const userStr = localStorage.getItem('user');
+  let currentUser = { name: 'Admin', email: '' };
+  try {
+    currentUser = userStr ? JSON.parse(userStr) : currentUser;
+  } catch {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
+  }
+
+  // Helper kiểm tra active route linh hoạt
+  const isItemActive = (itemPath) => {
+    if (location.pathname === itemPath) return true;
+    if (itemPath === '/admin/overview') return false;
+    if (location.pathname.startsWith(itemPath + '/')) return true;
+    if (itemPath === '/admin/logs' && location.pathname.startsWith('/admin/audit-logs')) return true;
+    return false;
+  };
+
+  // -----------------------------------------------------------------------
+  // handleLogout — Xóa session và chuyển về trang login
+  // -----------------------------------------------------------------------
+  const handleLogout = () => {
+    localStorage.removeItem('accessToken'); // Xóa JWT token
+    localStorage.removeItem('user');         // Xóa thông tin user
+    navigate('/login', { replace: true });   // Chuyển về login
+  };
+
+  // Lấy tên trang hiện tại từ nav items (dùng cho breadcrumb topbar)
+  const currentNav = NAV_ITEMS.find(item => isItemActive(item.path));
+  const currentPageLabel = currentNav?.label || 'Quản trị hệ thống';
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
-      {/* Top Bar */}
-      <header className="h-16 bg-slate-900 text-white sticky top-0 z-30 flex items-center justify-between px-6 shadow-md">
-        <div className="flex items-center gap-4">
+    <div className="flex h-screen overflow-hidden bg-gray-50">
+      {/* ---------------------------------------------------------------- */}
+      {/* MOBILE OVERLAY — nền mờ khi sidebar mở trên mobile               */}
+      {/* ---------------------------------------------------------------- */}
+      {mobileSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
+
+      {/* ---------------------------------------------------------------- */}
+      {/* SIDEBAR                                                           */}
+      {/* ---------------------------------------------------------------- */}
+      <aside
+        className={`
+          fixed lg:static inset-y-0 left-0 z-30
+          flex flex-col bg-white border-r border-gray-200
+          transition-all duration-300 ease-in-out
+          ${sidebarOpen ? 'w-60' : 'w-16'}
+          ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}
+      >
+        {/* Logo + nút thu gọn */}
+        <div className="flex items-center px-4 py-4 border-b border-gray-200 min-h-[64px]">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            {/* Logo shield */}
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+              <Shield size={16} className="text-white" />
+            </div>
+            {/* Tên app — ẩn khi thu gọn sidebar */}
+            {sidebarOpen && (
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-gray-900 truncate">EC Voucher</div>
+                <div className="text-xs text-gray-500">Admin Portal</div>
+              </div>
+            )}
+          </div>
+          {/* Nút thu gọn (chỉ hiện trên desktop) */}
           <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="p-2 rounded-lg hover:bg-slate-800 text-slate-300 transition-colors cursor-pointer"
-            title="Đóng/Mở thanh điều hướng"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="hidden lg:flex p-1 rounded hover:bg-gray-100 text-gray-400 ml-auto flex-shrink-0"
+            title={sidebarOpen ? 'Thu gọn menu' : 'Mở rộng menu'}
           >
-            ☰
+            <ChevronLeft
+              size={16}
+              className={`transition-transform duration-300 ${sidebarOpen ? '' : 'rotate-180'}`}
+            />
           </button>
+          {/* Nút đóng (chỉ hiện trên mobile) */}
+          <button
+            onClick={() => setMobileSidebarOpen(false)}
+            className="lg:hidden p-1 rounded hover:bg-gray-100 text-gray-400"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Danh sách menu điều hướng */}
+        <nav className="flex-1 py-3 overflow-y-auto space-y-1 px-2">
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const active = isItemActive(item.path);
+
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={() => setMobileSidebarOpen(false)}
+                title={!sidebarOpen ? item.label : undefined}
+                className={`
+                  flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
+                  ${
+                    active
+                      ? 'bg-blue-50 text-blue-700 font-semibold shadow-xs'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  }
+                `}
+              >
+                <Icon size={18} className="flex-shrink-0" />
+                {sidebarOpen && <span className="truncate">{item.label}</span>}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Footer Sidebar: System Info + User */}
+        {sidebarOpen && (
+          <div className="p-3 border-t border-gray-100 bg-gray-50/70 text-xs text-gray-500">
+            <div>Phiên bản: v1.0.4-Enterprise</div>
+            <div className="text-[11px] text-gray-400 mt-0.5">RBAC: ADMIN_ROOT</div>
+          </div>
+        )}
+
+        {/* Thông tin user + nút logout (cuối sidebar) */}
+        <div className="border-t border-gray-200 p-3">
           <div className="flex items-center gap-2">
-            <span className="w-8 h-8 rounded-lg bg-blue-500 text-white font-bold flex items-center justify-center text-sm shadow-xs">
-              AD
-            </span>
-            <div>
-              <h1 className="font-bold text-white text-sm leading-tight">Admin Portal</h1>
-              <p className="text-[11px] text-slate-400">Hệ Thống Quản Trị Hệ Thống Voucher</p>
+            {/* Avatar chữ cái đầu */}
+            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <span className="text-xs text-blue-700 font-semibold">
+                {currentUser.name?.charAt(0)?.toUpperCase() || 'A'}
+              </span>
             </div>
+            {/* Tên + email (chỉ hiện khi sidebar mở) */}
+            {sidebarOpen && (
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-gray-900 truncate">
+                  {currentUser.name || 'Admin'}
+                </div>
+                <div className="text-xs text-gray-500 truncate">
+                  {currentUser.email || ''}
+                </div>
+              </div>
+            )}
+            {/* Nút logout (chỉ hiện khi sidebar mở) */}
+            {sidebarOpen && (
+              <button
+                onClick={handleLogout}
+                title="Đăng xuất"
+                className="p-1 hover:bg-red-50 hover:text-red-500 rounded text-gray-400 transition-colors"
+              >
+                <LogOut size={15} />
+              </button>
+            )}
           </div>
         </div>
+      </aside>
 
-        {/* Right Action Bar */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 text-xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-slate-200 font-medium">Vai trò:</span>
-            <span className="font-bold text-blue-400">Super Admin</span>
-          </div>
-
-          <div className="h-6 w-px bg-slate-700" />
-
+      {/* ---------------------------------------------------------------- */}
+      {/* MAIN AREA = TOPBAR + CONTENT                                      */}
+      {/* ---------------------------------------------------------------- */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Topbar */}
+        <header className="bg-white border-b border-gray-200 px-4 lg:px-6 py-3 flex items-center gap-3 min-h-[64px] shadow-xs">
+          {/* Nút mở sidebar (mobile) */}
           <button
-            onClick={() => navigate("/logout")}
-            className="px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-500 transition-colors shadow-xs"
+            onClick={() => setMobileSidebarOpen(true)}
+            className="lg:hidden p-1.5 rounded hover:bg-gray-100 text-gray-500"
           >
-            Đăng xuất
+            <Menu size={18} />
           </button>
-        </div>
-      </header>
 
-      {/* Main Container */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <aside
-          className={`${collapsed ? "w-16" : "w-64"
-            } bg-white border-r border-slate-200 transition-all duration-200 flex flex-col shrink-0`}
-        >
-          <div className="p-4 flex-1 space-y-1 overflow-y-auto">
-            {navItems.map((item) => {
-              const isActive = location.pathname.startsWith(item.path);
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition-colors ${isActive
-                      ? "bg-slate-900 text-white font-semibold shadow-xs"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                    }`}
-                >
-                  <span className="text-base">{item.icon}</span>
-                  {!collapsed && <span className="truncate">{item.label}</span>}
-                </Link>
-              );
-            })}
+          {/* Breadcrumb: Admin / Tên trang hiện tại */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <span className="text-gray-400 font-medium">Admin</span>
+              <span className="text-gray-300">/</span>
+              <span className="text-gray-900 font-semibold">{currentPageLabel}</span>
+            </div>
           </div>
 
-          {!collapsed && (
-            <div className="p-4 border-t border-slate-100 bg-slate-50/80 text-xs text-slate-500">
-              <div>Phiên bản: v1.0.4-Enterprise</div>
-              <div className="text-[11px] text-slate-400 mt-1">RBAC Active: ADMIN_ALL_PERMISSIONS</div>
-            </div>
-          )}
-        </aside>
+          {/* Phần bên phải: icon thông báo + thông tin user + logout */}
+          <div className="flex items-center gap-3">
+            {/* Icon chuông thông báo */}
+            <button className="relative p-2 rounded-lg hover:bg-gray-100 text-gray-500">
+              <Bell size={18} />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-600 rounded-full" />
+            </button>
 
-        {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-8 bg-slate-50">{children}</main>
+            {/* User info + logout (desktop) */}
+            <div className="hidden sm:flex items-center gap-2 text-sm text-gray-600 pl-3 border-l border-gray-200">
+              <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs">
+                {currentUser.name?.charAt(0)?.toUpperCase() || 'A'}
+              </div>
+              <div className="text-left">
+                <span className="font-semibold text-xs text-gray-900 block leading-tight">
+                  {currentUser.name || 'Admin'}
+                </span>
+                <span className="text-[10px] text-gray-400 block leading-tight">
+                  Quản trị viên
+                </span>
+              </div>
+              <button
+                onClick={handleLogout}
+                title="Đăng xuất"
+                className="p-1.5 hover:bg-red-50 hover:text-red-600 rounded-lg text-gray-400 transition-colors ml-1"
+              >
+                <LogOut size={15} />
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* Nội dung trang — Render children nếu được bọc trực tiếp, hoặc Outlet nếu là route layout */}
+        <main className="flex-1 overflow-y-auto bg-gray-50 p-4 sm:p-6 lg:p-8">
+          {children || <Outlet />}
+        </main>
       </div>
     </div>
   );

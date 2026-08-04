@@ -133,6 +133,7 @@ class AuthService {
 
   /**
    * Sinh mã OTP cho chức năng Quên mật khẩu.
+   * Chặn đầu: Kiểm tra tính tồn tại của máy chủ SMTP/MX trước khi gửi.
    */
   async generateOTP(email) {
     if (!email) {
@@ -147,22 +148,37 @@ class AuthService {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = Date.now() + 5 * 60 * 1000;
 
-    otpStore.set(email, { otp, expiresAt });
+    try {
+      // Gửi OTP qua email thật bằng Nodemailer (kiểm tra chặn đầu DNS/SMTP)
+      await emailService.sendOtpEmail(email, otp, 'forgot_password');
 
-    await auditLogService.log({
-      actorId: account.ma_tk,
-      actorRole: account.nguoidung.vai_tro,
-      action: 'REQUEST_OTP',
-      targetType: 'TAIKHOAN',
-      targetId: account.ma_tk,
-      result: LOG_RESULT.THANH_CONG,
-      reason: 'Yêu cầu mã OTP quên mật khẩu',
-    });
+      // Gửi email thành công mới lưu vào store và ghi audit log thành công
+      otpStore.set(email, { otp, expiresAt });
 
-    // Gửi OTP qua email thật bằng Nodemailer (sử dụng mailer chung)
-    await emailService.sendOtpEmail(email, otp, 'forgot_password');
+      await auditLogService.log({
+        actorId: account.ma_tk,
+        actorRole: account.nguoidung.vai_tro,
+        action: 'REQUEST_OTP',
+        targetType: 'TAIKHOAN',
+        targetId: account.ma_tk,
+        result: LOG_RESULT.THANH_CONG,
+        reason: 'Yêu cầu mã OTP quên mật khẩu thành công',
+      });
 
-    return otp;
+      return otp;
+    } catch (mailErr) {
+      await auditLogService.log({
+        actorId: account.ma_tk,
+        actorRole: account.nguoidung.vai_tro,
+        action: 'REQUEST_OTP',
+        targetType: 'TAIKHOAN',
+        targetId: account.ma_tk,
+        result: LOG_RESULT.THAT_BAI,
+        reason: `Gửi mã OTP thất bại: ${mailErr.message}`,
+      });
+
+      throw mailErr;
+    }
   }
 
   /**

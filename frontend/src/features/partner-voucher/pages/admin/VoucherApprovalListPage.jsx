@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import AdminLayout from "../../../../layouts/AdminLayout";
 import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
 import Badge from "../../../../shared/components/Badge";
@@ -45,8 +44,7 @@ export function VoucherApprovalListPage() {
   });
 
   return (
-    <AdminLayout>
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
         {/* Page Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -185,7 +183,6 @@ export function VoucherApprovalListPage() {
           )}
         </Card>
       </div>
-    </AdminLayout>
   );
 }
 

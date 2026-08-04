@@ -121,7 +121,7 @@ export function VoucherDetailPage() {
               className="w-full h-full object-cover opacity-90"
             />
             <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-slate-950/80 to-transparent text-white">
-              <span className="px-2.5 py-1 bg-blue-600 text-xs font-bold rounded-full mb-2 inline-block">
+              <span className="px-2.5 py-1 bg-emerald-600 text-xs font-bold rounded-full mb-2 inline-block">
                 {voucher.ten_danh_muc || "Danh mục Voucher"}
               </span>
               <h1 className="text-2xl font-bold">{voucher.ten_voucher}</h1>

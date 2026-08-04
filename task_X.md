@@ -184,3 +184,22 @@ hiện tại khi từ nhân viên quản lí voucher cập nhật thành nhân v
 
 - vai trò mới: Nhân viên bán hàng (đúng, nhưng bị dư mũi tên combobox --> chỉnh lại)
 - chi nhánh: ở đây cần hiện đủ và đúng các chi nhánh thuộc sở hữu của doanh nghiệp đó
+
+BƯỚC 8: HỢP NHẤT LAYOUT ADMIN PORTAL & KẾT NỐI NHẬT KÝ HỆ THỐNG (BR-ADM-07)
+- Hợp nhất toàn bộ thanh điều hướng Admin Portal về một layout duy nhất tại: `frontend/src/features/core-access/layouts/AdminLayout.jsx`
+- Menu sidebar hợp nhất gồm 5 tính năng cốt lõi:
+  1. Tổng quan (`/admin/overview`)
+  2. Quản lý đối tác (`/admin/partners`)
+  3. Duyệt voucher (`/admin/vouchers`)
+  4. Quản lý người dùng (`/admin/users`)
+  5. Nhật ký hệ thống (`/admin/logs`)
+- Đảm bảo cơ chế Outlet của React Router: lồng toàn bộ các route admin vào trong `AdminLayout`, bỏ triệt để việc render lặp header/sidebar ở các trang con (`PartnerManagementPage`, `PartnerDetailPage`, `VoucherApprovalListPage`, `VoucherApprovalDetailPage`, `AuditLogPage`).
+- Kết nối API Nhật ký hệ thống thật từ Supabase (`GET /admin/logs`) thông qua `auditLogApi.js`, hiển thị đầy đủ bộ lọc hành động, kết quả và phân trang.
+
+BƯỚC 9: CHẶN ĐẦU KIỂM TRA MÁY CHỦ SMTP / DNS TRƯỚC KHI GỬI EMAIL OTP
+- Xây dựng hàm chặn đầu `validateEmailDomain(email)` trong `mailer.js` sử dụng `dns.promises.resolveMx` và `resolve4`:
+  - Chặn ngay các domain nội bộ / giả lập như `@ec.local`, `@*.test`, `@*.example`, `localhost`...
+  - Kiểm tra sự tồn tại của bản ghi máy chủ nhận thư (MX/A) trên Internet trước khi gọi SMTP gửi mail.
+  - Nếu email không thể nhận thư hoặc domain không tồn tại, lập tức trả lỗi HTTP 400 và thông báo rõ ràng cho người dùng thay vì gửi đi hoặc báo thành công ngầm.
+- Chuẩn hóa luồng Quên mật khẩu trong `auth.service.js`: Chỉ ghi nhận OTP và lưu nhật ký thành công sau khi gửi email thật thành công qua SMTP; nếu thất bại sẽ ghi nhật ký `THAT_BAI` và trả lỗi trực tiếp về giao diện.
+

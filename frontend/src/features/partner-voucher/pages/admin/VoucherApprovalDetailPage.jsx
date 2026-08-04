@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import AdminLayout from "../../../../layouts/AdminLayout";
 import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
 import Badge from "../../../../shared/components/Badge";
@@ -34,19 +33,11 @@ export function VoucherApprovalDetailPage() {
   }, [id]);
 
   if (loading) {
-    return (
-      <AdminLayout>
-        <div className="p-12 text-center text-slate-500">Đang tải thông tin Voucher...</div>
-      </AdminLayout>
-    );
+    return <div className="p-12 text-center text-slate-500">Đang tải thông tin Voucher...</div>;
   }
 
   if (!voucher) {
-    return (
-      <AdminLayout>
-        <div className="p-12 text-center text-slate-500">Không tìm thấy Voucher.</div>
-      </AdminLayout>
-    );
+    return <div className="p-12 text-center text-slate-500">Không tìm thấy Voucher.</div>;
   }
 
   const discountPercent =
@@ -73,8 +64,7 @@ export function VoucherApprovalDetailPage() {
   };
 
   return (
-    <AdminLayout>
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
         {/* Header Breadcrumb */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -274,7 +264,6 @@ export function VoucherApprovalDetailPage() {
 
         <Toast message={toastMessage} onClose={() => setToastMessage("")} />
       </div>
-    </AdminLayout>
   );
 }
 

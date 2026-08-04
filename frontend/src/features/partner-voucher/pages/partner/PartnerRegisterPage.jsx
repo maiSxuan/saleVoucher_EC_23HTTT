@@ -115,7 +115,7 @@ export function PartnerRegisterPage() {
                         isCompleted
                           ? "bg-emerald-600 text-white"
                           : isCurrent
-                          ? "bg-blue-600 text-white ring-4 ring-blue-100"
+                          ? "bg-emerald-600 text-white ring-4 ring-emerald-100"
                           : "bg-slate-100 text-slate-400"
                       }`}
                     >
@@ -123,7 +123,7 @@ export function PartnerRegisterPage() {
                     </div>
                     <span
                       className={`text-xs mt-2 font-medium text-center ${
-                        isCurrent ? "text-blue-700 font-bold" : isCompleted ? "text-slate-700" : "text-slate-400"
+                        isCurrent ? "text-emerald-700 font-bold" : isCompleted ? "text-slate-700" : "text-slate-400"
                       }`}
                     >
                       {step.title}
@@ -150,7 +150,7 @@ export function PartnerRegisterPage() {
                   value={formData.ten_dn}
                   onChange={(e) => handleInputChange("ten_dn", e.target.value)}
                   placeholder="Ví dụ: Công ty TNHH Thương Mại & Dịch Vụ ABC"
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 />
                 {errors.ten_dn && <p className="text-xs text-rose-600 mt-1">{errors.ten_dn}</p>}
               </div>
@@ -165,7 +165,7 @@ export function PartnerRegisterPage() {
                     value={formData.ma_so_thue}
                     onChange={(e) => handleInputChange("ma_so_thue", e.target.value)}
                     placeholder="Ví dụ: 0312345678"
-                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   />
                   {errors.ma_so_thue && <p className="text-xs text-rose-600 mt-1">{errors.ma_so_thue}</p>}
                 </div>
@@ -180,7 +180,7 @@ export function PartnerRegisterPage() {
                   value={formData.dia_chi}
                   onChange={(e) => handleInputChange("dia_chi", e.target.value)}
                   placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố"
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 />
                 {errors.dia_chi && <p className="text-xs text-rose-600 mt-1">{errors.dia_chi}</p>}
               </div>
@@ -200,7 +200,7 @@ export function PartnerRegisterPage() {
                   value={formData.ho_ten}
                   onChange={(e) => handleInputChange("ho_ten", e.target.value)}
                   placeholder="Nguyễn Văn A"
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 />
                 {errors.ho_ten && <p className="text-xs text-rose-600 mt-1">{errors.ho_ten}</p>}
               </div>
@@ -215,7 +215,7 @@ export function PartnerRegisterPage() {
                     value={formData.sdt}
                     onChange={(e) => handleInputChange("sdt", e.target.value)}
                     placeholder="0901234567"
-                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   />
                   {errors.sdt && <p className="text-xs text-rose-600 mt-1">{errors.sdt}</p>}
                 </div>
@@ -229,7 +229,7 @@ export function PartnerRegisterPage() {
                     value={formData.email}
                     onChange={(e) => handleInputChange("email", e.target.value)}
                     placeholder="contact@company.com"
-                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   />
                   {errors.email && <p className="text-xs text-rose-600 mt-1">{errors.email}</p>}
                 </div>
@@ -242,7 +242,7 @@ export function PartnerRegisterPage() {
                   value={formData.cccd}
                   onChange={(e) => handleInputChange("cccd", e.target.value)}
                   placeholder="079090123456"
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -258,7 +258,7 @@ export function PartnerRegisterPage() {
                 Tải lên bản scan hoặc ảnh chụp rõ nét Giấy phép đăng ký kinh doanh còn hiệu lực (Định dạng JPG, PNG hoặc PDF, tối đa 10MB).
               </p>
 
-              <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-blue-500 transition-colors bg-slate-50">
+              <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-emerald-500 transition-colors bg-slate-50">
                 <div className="text-3xl mb-2">📄</div>
                 <div className="text-sm font-semibold text-slate-800">Tải lên tài liệu pháp lý</div>
                 <div className="text-xs text-slate-500 mt-1">Kéo thả file vào đây hoặc bấm để chọn tệp</div>
@@ -308,7 +308,7 @@ export function PartnerRegisterPage() {
                   value={formData.ten_chi_nhanh}
                   onChange={(e) => handleInputChange("ten_chi_nhanh", e.target.value)}
                   placeholder="Ví dụ: Chi nhánh Nguyễn Huệ - Quận 1"
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 />
                 {errors.ten_chi_nhanh && <p className="text-xs text-rose-600 mt-1">{errors.ten_chi_nhanh}</p>}
               </div>
@@ -319,7 +319,7 @@ export function PartnerRegisterPage() {
                   <select
                     value={formData.khu_vuc}
                     onChange={(e) => handleInputChange("khu_vuc", e.target.value)}
-                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   >
                     <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
                     <option value="Hà Nội">Hà Nội</option>
@@ -335,7 +335,7 @@ export function PartnerRegisterPage() {
                     value={formData.sdt_cn}
                     onChange={(e) => handleInputChange("sdt_cn", e.target.value)}
                     placeholder="02838221122"
-                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -349,7 +349,7 @@ export function PartnerRegisterPage() {
                   value={formData.dia_chi_cn}
                   onChange={(e) => handleInputChange("dia_chi_cn", e.target.value)}
                   placeholder="Địa chỉ cụ thể của điểm bán hàng"
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 />
                 {errors.dia_chi_cn && <p className="text-xs text-rose-600 mt-1">{errors.dia_chi_cn}</p>}
               </div>

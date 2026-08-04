@@ -52,7 +52,7 @@ export function PartnerReportsPage() {
             <button
               onClick={() => setDateFilter("7")}
               className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
-                dateFilter === "7" ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-slate-100"
+                dateFilter === "7" ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-slate-100"
               }`}
             >
               7 ngày qua
@@ -60,7 +60,7 @@ export function PartnerReportsPage() {
             <button
               onClick={() => setDateFilter("30")}
               className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
-                dateFilter === "30" ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-slate-100"
+                dateFilter === "30" ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-slate-100"
               }`}
             >
               30 ngày qua
@@ -68,7 +68,7 @@ export function PartnerReportsPage() {
             <button
               onClick={() => setDateFilter("90")}
               className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
-                dateFilter === "90" ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-slate-100"
+                dateFilter === "90" ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-slate-100"
               }`}
             >
               90 ngày qua

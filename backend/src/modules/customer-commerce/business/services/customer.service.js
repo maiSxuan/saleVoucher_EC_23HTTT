@@ -65,9 +65,9 @@ class CustomerService {
         mailErr.message,
       );
       const err = new Error(
-        "Không gửi được email xác thực. Vui lòng thử lại sau.",
+        mailErr.message || "Không gửi được email xác thực. Vui lòng kiểm tra lại địa chỉ email.",
       );
-      err.status = 500;
+      err.status = mailErr.statusCode || mailErr.status || 400;
       throw err;
     }
 

@@ -555,4 +555,95 @@ Bộ test script tự động (`backend/src/scripts/test_voucher_redemption.js`)
   - Gắn trực tiếp thông tin chi nhánh vào `userPayload` và phiên làm việc (`localStorage`).
 - **Giao diện hiển thị chi nhánh trực quan (`PartnerVoucherLookupPage.jsx`)**:
   - Với **Nhân viên bán hàng (Partner Staff)**: Giao diện tự động khóa và hiển thị nổi bật thẻ **Chi nhánh đang làm việc** (Ví dụ: `Am Thuc Sai Gon - Nguyen Hue`, `12 Nguyen Hue, TP. Ho Chi Minh (Q1)` 🟢 Đang hoạt động), ngăn chặn nhân viên chọn sai chi nhánh đối soát vi phạm quy tắc `RB-09`.
-  - Với **Quản lý / Quản trị viên (Admin / Partner Owner)**: Cho phép chuyển đổi linh hoạt qua Combobox giữa các quầy chi nhánh đang hoạt động để kiểm tra và đối soát linh hoạt.
+  - Với **Quản lý / Quản trị viên (Admin / Partner Owner)**: Cho phép chuyển đổi linh hoạt qua Combobox giữa các quầy chi nhánh đang hoạt động để kiểm tra và đối soát linh hoạt.
+
+---
+
+# BƯỚC 7: SỬA LOGIC CẬP NHẬT VAI TRÒ (ROLE UPDATE)
+
+### 1. Vấn đề thực tế trước khi sửa
+- Khi chuyển đổi vai trò giữa **Nhân viên bán hàng** và **Nhân viên quản lý voucher**:
+  - Ô "Vai trò mới" trước đây render dạng `<select>` (combobox) mặc dù quy tắc nghiệp vụ chỉ có đúng 1 hướng chuyển đổi duy nhất tương ứng. Điều này gây ra giao diện thừa mũi tên trỏ xuống khó nhìn và không hợp lý theo chuẩn UX/HCI.
+  - Khi chọn vai trò **Nhân viên quản lý voucher**, danh sách đối tác doanh nghiệp hiển thị thiếu do chưa query toàn bộ bảng `hosodn`.
+  - Khi chọn vai trò **Nhân viên bán hàng**, danh sách chi nhánh chưa được lọc chính xác theo mã doanh nghiệp (`ma_hsdn`) mà nhân viên đó đang trực thuộc.
+
+### 2. Giải pháp kỹ thuật đã xử lý trong `UserListPage.jsx`
+1. **Loại bỏ Combobox dư thừa ở ô Vai trò mới**:
+   - Thay thẻ `<select>` bằng một khối thẻ `<div>` cố định hiển thị rõ tên vai trò mới (`ROLE_CONFIG[selectedNewRole]?.label`) với phong nền xám nhạt tinh tế, không có mũi tên rỗng.
+2. **Nạp đầy đủ danh sách Đối tác doanh nghiệp**:
+   - Khi chuyển sang *Nhân viên quản lý voucher* hoặc *Người đại diện*, frontend gọi `fetchPartners()` nạp 100% danh sách đối tác đang hoạt động từ bảng `hosodn` trong Supabase.
+3. **Lọc chuẩn xác Chi nhánh theo đúng Doanh nghiệp (`ma_hsdn`)**:
+   - Khi chuyển từ *Nhân viên quản lý voucher* sang *Nhân viên bán hàng*, frontend lấy `ma_hsdn` của tài khoản hiện tại để gọi `fetchBranches({ maHsdn: user.maHsdn })`, đảm bảo nhân viên chỉ được phân bổ vào các chi nhánh thuộc đúng công ty của họ.
+
+---
+
+# BƯỚC 8: HỢP NHẤT TOÀN DIỆN ADMIN PORTAL LAYOUT & NHẬT KÝ HỆ THỐNG THẬT (BR-ADM-07)
+
+### 1. Mục tiêu kiến trúc
+- Trước đây hệ thống tồn tại 2 file `AdminLayout.jsx` khác nhau ở `frontend/src/layouts/AdminLayout.jsx` và `frontend/src/features/core-access/layouts/AdminLayout.jsx`, dẫn đến việc các trang con bị lồng 2 lần header/sidebar hoặc menu điều hướng không đồng bộ.
+- Yêu cầu đặt ra: Hợp nhất toàn bộ thanh điều hướng Admin Portal về một layout duy nhất tại:
+  `frontend/src/features/core-access/layouts/AdminLayout.jsx`.
+
+### 2. Menu 5 Tính năng Cốt lõi của Admin Portal
+Layout thống nhất bao gồm 5 phân hệ hoàn chỉnh:
+1. **Tổng quan (`/admin/overview`)**: Trang dashboard chào mừng, hiển thị trạng thái hệ thống hoạt động thời gian thực cùng các thẻ điều hướng nhanh đến 4 phân hệ cốt lõi (`AdminDashboardPage.jsx`).
+2. **Quản lý đối tác (`/admin/partners`)**: Quản lý và thẩm định toàn bộ hồ sơ đối tác doanh nghiệp (`PartnerManagementPage.jsx`, `PartnerDetailPage.jsx`).
+3. **Duyệt voucher (`/admin/vouchers`)**: Thẩm định và phê duyệt các chương trình khuyến mãi voucher từ đối tác (`VoucherApprovalListPage.jsx`, `VoucherApprovalDetailPage.jsx`).
+4. **Quản lý người dùng (`/admin/users`)**: Quản lý tài khoản toàn hệ thống, 3 tab thông tin chi tiết, khóa/mở khóa và phân quyền nhân viên (`UserListPage.jsx`).
+5. **Nhật ký hệ thống (`/admin/logs`)**: Tra cứu và đối soát toàn bộ thao tác hệ thống theo chuẩn kiểm toán `BR-ADM-07` (`AuditLogPage.jsx`).
+
+### 3. Chuẩn hóa Định tuyến React Router (`router.jsx`)
+- Sử dụng mô hình **Layout Route với `<Outlet />`**:
+  ```jsx
+  {
+    path: "/admin",
+    element: <ProtectedRoute allowedRoles={["ADMIN", "Admin"]} />,
+    children: [
+      {
+        element: <AdminLayout />,
+        children: [
+          { index: true, element: <Navigate to="/admin/overview" replace /> },
+          { path: "overview", element: <AdminDashboardPage /> },
+          { path: "partners", element: <PartnerManagementPage /> },
+          { path: "partners/:id", element: <PartnerDetailPage /> },
+          { path: "vouchers", element: <VoucherApprovalListPage /> },
+          { path: "vouchers/:id", element: <VoucherApprovalDetailPage /> },
+          { path: "users", element: <UserListPage /> },
+          { path: "logs", element: <AuditLogPage /> },
+          { path: "audit-logs", element: <Navigate to="/admin/logs" replace /> },
+        ],
+      },
+    ],
+  }
+  ```
+- File `frontend/src/layouts/AdminLayout.jsx` cũ được tinh gọn thành một container pass-through `({ children }) => <>{children}</>`, triệt tiêu hoàn toàn nguy cơ trùng lặp giao diện.
+
+### 4. Tích hợp API Nhật Ký Hệ Thống Thật (`auditLogApi.js` & `AuditLogPage.jsx`)
+- Kết nối trực tiếp endpoint `GET /api/admin/logs` từ backend (truy vấn bảng `log_ht` trong Supabase) với xác thực quyền Admin (`authorizeMiddleware(JWT_ROLES.ADMIN)`).
+- Hỗ trợ đầy đủ các tính năng:
+  - **Lọc theo hành động**: Tìm kiếm tức thì theo từ khóa hành động (LOGIN, LOCK_USER, UPDATE_ROLE, REDEEM_VOUCHER...).
+  - **Lọc theo kết quả**: Thành công / Thất bại.
+  - **Phân trang dữ liệu**: Xem theo trang với chỉ số tổng bản ghi thực tế.
+  - **Hiển thị trực quan**: Format thời gian Việt Nam (`vi-VN`), badge trạng thái màu xanh lá/đỏ chuẩn HCI.
+  - **Cơ chế Fallback thông minh**: Tự động chuyển đổi sang bộ lưu trữ dự phòng nếu mạng bị gián đoạn, đảm bảo trải nghiệm người dùng luôn mượt mà.
+
+---
+
+# BƯỚC 9: CHẶN ĐẦU KIỂM TRA MÁY CHỦ SMTP / DNS EMAIL TRƯỚC KHI GỬI OTP
+
+### 1. Vấn đề phát hiện
+- Khi người dùng yêu cầu mã OTP (quên mật khẩu, đăng ký) với các email nội bộ hoặc email không tồn tại máy chủ thư thực tế (ví dụ: `admin@ec.local`), trước đây hệ thống vẫn gọi SMTP và log `[Mailer] Đã gửi OTP đến admin@ec.local`, đồng thời phản hồi thành công về frontend mặc dù thư bị bounce/hỏng.
+
+### 2. Giải pháp kỹ thuật đã triển khai
+- **Cơ chế Chặn đầu (Upfront DNS/SMTP Validation)** tại `backend/src/common/utils/mailer.js`:
+  - Kiểm tra định dạng chuẩn RFC của địa chỉ email.
+  - Chặn ngay các tên miền cục bộ/nội bộ (`.local`, `.test`, `.example`, `.invalid`, `.lan`, `localhost`...).
+  - Thực hiện tra cứu DNS MX (Mail Exchange) thời gian thực qua `dns.promises.resolveMx(domain)` (kèm fallback `resolve4(domain)`).
+  - Nếu tên miền không có máy chủ nhận thư hoặc không tồn tại trên Internet, lập tức ném lỗi `AppError(..., 400, 'SMTP_DOMAIN_NOT_ROUTABLE' / 'SMTP_SERVER_NOT_FOUND')`.
+- **Nghiệp vụ Quên mật khẩu an toàn (`auth.service.js`)**:
+  - Gửi mã OTP qua SMTP trước khi xác nhận.
+  - Nếu xảy ra lỗi DNS/SMTP, hệ thống ghi nhận nhật ký kiểm toán `REQUEST_OTP` với trạng thái `THAT_BAI`, không lưu OTP rác vào bộ nhớ, và ném lỗi HTTP 400 kèm thông báo chi tiết trả về cho giao diện đăng nhập.
+- **Phản hồi người dùng rõ ràng**:
+  - Giao diện `LoginPage.jsx` và `RegisterPage.jsx` lập tức hiển thị cảnh báo đỏ chi tiết: *"Địa chỉ email với tên miền @ec.local là email nội bộ/giả lập, không có máy chủ nhận thư (SMTP) trên Internet. Vui lòng sử dụng địa chỉ email thực tế..."*, giúp người dùng nắm bắt ngay nguyên nhân thay vì đợi OTP vô ích.
+
+

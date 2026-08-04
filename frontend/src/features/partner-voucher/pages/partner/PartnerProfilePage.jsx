@@ -162,7 +162,7 @@ export function PartnerProfilePage() {
                     type="text"
                     value={formData.ten_dn}
                     onChange={(e) => setFormData({ ...formData, ten_dn: e.target.value })}
-                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -171,7 +171,7 @@ export function PartnerProfilePage() {
                     type="text"
                     value={formData.ma_so_thue}
                     onChange={(e) => setFormData({ ...formData, ma_so_thue: e.target.value })}
-                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -182,7 +182,7 @@ export function PartnerProfilePage() {
                   type="text"
                   value={formData.dia_chi}
                   onChange={(e) => setFormData({ ...formData, dia_chi: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 />
               </div>
 
@@ -195,7 +195,7 @@ export function PartnerProfilePage() {
                     type="text"
                     value={formData.ho_ten}
                     onChange={(e) => setFormData({ ...formData, ho_ten: e.target.value })}
-                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -204,7 +204,7 @@ export function PartnerProfilePage() {
                     type="text"
                     value={formData.sdt}
                     onChange={(e) => setFormData({ ...formData, sdt: e.target.value })}
-                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -213,7 +213,7 @@ export function PartnerProfilePage() {
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -222,7 +222,7 @@ export function PartnerProfilePage() {
                     type="text"
                     value={formData.cccd}
                     onChange={(e) => setFormData({ ...formData, cccd: e.target.value })}
-                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -288,7 +288,7 @@ export function PartnerProfilePage() {
                       href={partner.giay_phep_kinh_doanh}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-block text-blue-600 font-medium hover:underline pt-1"
+                      className="inline-block text-emerald-600 font-medium hover:underline pt-1"
                     >
                       🔗 Xem bản phóng to
                     </a>

@@ -155,7 +155,7 @@ export function VoucherFormPage() {
                 placeholder="Ví dụ: Voucher Buffet Hải Sản Cao Cấp Tối Cuối Tuần"
                 value={formData.ten_voucher}
                 onChange={(e) => setFormData({ ...formData, ten_voucher: e.target.value })}
-                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
               />
               {errors.ten_voucher && <p className="text-xs text-rose-600 mt-1">{errors.ten_voucher}</p>}
             </div>
@@ -166,7 +166,7 @@ export function VoucherFormPage() {
                 <select
                   value={formData.ma_danh_muc}
                   onChange={(e) => setFormData({ ...formData, ma_danh_muc: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 >
                   {categoriesList.map((c) => {
                     const cateId = c.ma_danh_muc || c.id;
@@ -185,7 +185,7 @@ export function VoucherFormPage() {
                   type="text"
                   value={formData.hinh_anh_url}
                   onChange={(e) => setFormData({ ...formData, hinh_anh_url: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -197,7 +197,7 @@ export function VoucherFormPage() {
                 placeholder="Mô tả trải nghiệm, các món ăn hoặc dịch vụ được hưởng..."
                 value={formData.mo_ta}
                 onChange={(e) => setFormData({ ...formData, mo_ta: e.target.value })}
-                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
               ></textarea>
             </div>
           </div>
@@ -216,7 +216,7 @@ export function VoucherFormPage() {
                   placeholder="890000"
                   value={formData.gia_goc}
                   onChange={(e) => setFormData({ ...formData, gia_goc: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 />
                 {errors.gia_goc && <p className="text-xs text-rose-600 mt-1">{errors.gia_goc}</p>}
               </div>
@@ -230,7 +230,7 @@ export function VoucherFormPage() {
                   placeholder="599000"
                   value={formData.gia_ban}
                   onChange={(e) => setFormData({ ...formData, gia_ban: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 />
                 {errors.gia_ban && <p className="text-xs text-rose-600 mt-1">{errors.gia_ban}</p>}
               </div>
@@ -244,7 +244,7 @@ export function VoucherFormPage() {
                   placeholder="500"
                   value={formData.so_luong_phat_hanh}
                   onChange={(e) => setFormData({ ...formData, so_luong_phat_hanh: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 />
                 {errors.so_luong_phat_hanh && <p className="text-xs text-rose-600 mt-1">{errors.so_luong_phat_hanh}</p>}
               </div>
@@ -266,7 +266,7 @@ export function VoucherFormPage() {
                   type="datetime-local"
                   value={formData.tg_bat_dau_ban}
                   onChange={(e) => setFormData({ ...formData, tg_bat_dau_ban: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 />
               </div>
 
@@ -276,7 +276,7 @@ export function VoucherFormPage() {
                   type="datetime-local"
                   value={formData.tg_ket_thuc_ban}
                   onChange={(e) => setFormData({ ...formData, tg_ket_thuc_ban: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -300,7 +300,7 @@ export function VoucherFormPage() {
                     type="checkbox"
                     checked={formData.ma_chi_nhanh.includes(branch.ma_chi_nhanh)}
                     onChange={() => handleBranchToggle(branch.ma_chi_nhanh)}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                    className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500"
                   />
                   <div>
                     <div className="text-sm font-bold text-slate-900">{branch.ten_chi_nhanh}</div>
@@ -322,7 +322,7 @@ export function VoucherFormPage() {
                 rows="2"
                 value={formData.dieu_kien_ap_dung}
                 onChange={(e) => setFormData({ ...formData, dieu_kien_ap_dung: e.target.value })}
-                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
               ></textarea>
             </div>
             <div>
@@ -331,7 +331,7 @@ export function VoucherFormPage() {
                 rows="2"
                 value={formData.chinh_sach_hoan_huy}
                 onChange={(e) => setFormData({ ...formData, chinh_sach_hoan_huy: e.target.value })}
-                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
               ></textarea>
             </div>
           </div>

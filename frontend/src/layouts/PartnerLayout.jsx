@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { LogOut, User } from "lucide-react";
 import { mockStore } from "../shared/store/mockDataStore";
 import Badge from "../shared/components/Badge";
 
@@ -7,6 +8,30 @@ export function PartnerLayout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
+
+  // Lấy thông tin user hiện tại từ localStorage
+  const userStr = localStorage.getItem("user");
+  let currentUser = null;
+  try {
+    currentUser = userStr ? JSON.parse(userStr) : null;
+  } catch {
+    currentUser = null;
+  }
+
+  const userName =
+    currentUser?.name ||
+    currentUser?.ho_ten ||
+    currentUser?.thong_tin_dang_nhap ||
+    currentUser?.email ||
+    "Đối tác";
+  const userEmail = currentUser?.email || "";
+  const userRole =
+    currentUser?.vai_tro_he_thong ||
+    (currentUser?.role === "PARTNER_STAFF"
+      ? "Nhân viên bán hàng"
+      : currentUser?.role === "PARTNER_OWNER"
+        ? "Người đại diện"
+        : "Đối tác");
 
   const activePartner = mockStore.getActivePartner();
   const allPartners = mockStore.getPartners();
@@ -19,7 +44,8 @@ export function PartnerLayout({ children }) {
 
   const navItems = [
     { label: "Báo cáo", path: "/partner/reports", icon: "📊" },
-    { label: "Voucher", path: "/partner/vouchers", icon: "🎟️" },
+    { label: "Tra cứu & Đổi Voucher", path: "/partner/vouchers/lookup", icon: "🔍" },
+    { label: "Quản lý Voucher", path: "/partner/vouchers", icon: "🎟️" },
     { label: "Chi nhánh", path: "/partner/branches", icon: "📍" },
     { label: "Hồ sơ doanh nghiệp", path: "/partner/profile", icon: "🏢" },
     { label: "Nhân viên", path: "/partner/staffs", icon: "👥" },
@@ -38,7 +64,7 @@ export function PartnerLayout({ children }) {
             ☰
           </button>
           <div className="flex items-center gap-2">
-            <span className="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold flex items-center justify-center text-sm shadow-xs">
+            <span className="w-8 h-8 rounded-lg bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shadow-xs">
               PV
             </span>
             <div>
@@ -48,31 +74,37 @@ export function PartnerLayout({ children }) {
           </div>
         </div>
 
-        {/* Top actions & Active partner switcher */}
-        <div className="flex items-center gap-4">
-          {/* <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 text-xs">
-            <span className="text-slate-500 font-medium">Đối tác hiện tại:</span>
-            <select
-              value={activePartner ? activePartner.ma_hs : ""}
-              onChange={handlePartnerSwitch}
-              className="bg-transparent font-semibold text-slate-900 focus:outline-none cursor-pointer"
-            >
-              {allPartners.map((p) => (
-                <option key={p.ma_hs} value={p.ma_hs}>
-                  {p.ten_dn} ({p.trang_thai})
-                </option>
-              ))}
-            </select>
-            {activePartner && <Badge status={activePartner.trang_thai} size="sm" />}
-          </div> */}
+        {/* Top actions & User Info & Logout */}
+        <div className="flex items-center gap-3">
+          {/* User Profile Badge */}
+          <div className="flex items-center gap-2.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+            <div className="w-8 h-8 rounded-lg bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-700 font-bold text-xs shrink-0">
+              <User className="w-4 h-4" />
+            </div>
+            <div className="text-left hidden sm:block">
+              <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <span>{userName}</span>
+                <span className="text-[10px] px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-200 font-medium">
+                  {userRole}
+                </span>
+              </div>
+              {userEmail && (
+                <div className="text-[10px] text-slate-500 truncate max-w-[180px]">
+                  {userEmail}
+                </div>
+              )}
+            </div>
+          </div>
 
           <div className="h-6 w-px bg-slate-200" />
 
           <button
             onClick={() => navigate("/logout")}
-            className="px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-500 transition-colors shadow-xs"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 border border-rose-200 text-xs font-semibold rounded-xl transition-colors shadow-xs cursor-pointer"
+            title="Đăng xuất khỏi hệ thống"
           >
-            Đăng xuất
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Đăng xuất</span>
           </button>
         </div>
       </header>
@@ -94,7 +126,7 @@ export function PartnerLayout({ children }) {
                   to={item.path}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition-colors ${
                     isActive
-                      ? "bg-blue-50 text-blue-700 font-semibold"
+                      ? "bg-emerald-50 text-emerald-700 font-semibold"
                       : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                   }`}
                 >

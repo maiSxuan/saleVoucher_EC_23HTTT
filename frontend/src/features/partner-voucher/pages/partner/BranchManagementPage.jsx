@@ -99,7 +99,7 @@ export function BranchManagementPage() {
             onClick={() => setActiveTab("official")}
             className={`pb-3 text-sm font-bold border-b-2 transition-colors cursor-pointer ${
               activeTab === "official"
-                ? "border-blue-600 text-blue-600"
+                ? "border-emerald-600 text-emerald-600"
                 : "border-transparent text-slate-500 hover:text-slate-800"
             }`}
           >
@@ -109,7 +109,7 @@ export function BranchManagementPage() {
             onClick={() => setActiveTab("requests")}
             className={`pb-3 text-sm font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
               activeTab === "requests"
-                ? "border-blue-600 text-blue-600"
+                ? "border-emerald-600 text-emerald-600"
                 : "border-transparent text-slate-500 hover:text-slate-800"
             }`}
           >
@@ -128,7 +128,7 @@ export function BranchManagementPage() {
               placeholder="Tìm kiếm chi nhánh theo tên, địa chỉ..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-xs"
+              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none shadow-xs"
             />
             <span className="absolute left-3 top-2.5 text-slate-400 text-sm">🔍</span>
           </div>
@@ -190,7 +190,7 @@ export function BranchManagementPage() {
                   <div key={req.ma_yeu_cau} className="p-6 space-y-3 hover:bg-slate-50 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-bold rounded">
+                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-bold rounded">
                           {req.loai_yeu_cau === "Them moi" ? "Thêm mới chi nhánh" : req.loai_yeu_cau}
                         </span>
                         <h4 className="font-bold text-slate-900">{req.ten_chi_nhanh}</h4>
@@ -236,7 +236,7 @@ export function BranchManagementPage() {
                 placeholder="Ví dụ: Chi nhánh Quận 7"
                 value={newBranchForm.ten_chi_nhanh}
                 onChange={(e) => setNewBranchForm({ ...newBranchForm, ten_chi_nhanh: e.target.value })}
-                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
               />
             </div>
 
@@ -246,7 +246,7 @@ export function BranchManagementPage() {
                 <select
                   value={newBranchForm.khu_vuc}
                   onChange={(e) => setNewBranchForm({ ...newBranchForm, khu_vuc: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 >
                   <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
                   <option value="Hà Nội">Hà Nội</option>
@@ -264,7 +264,7 @@ export function BranchManagementPage() {
                 placeholder="Địa chỉ cụ thể"
                 value={newBranchForm.dia_chi}
                 onChange={(e) => setNewBranchForm({ ...newBranchForm, dia_chi: e.target.value })}
-                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
               />
             </div>
           </div>

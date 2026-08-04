@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import AdminLayout from "../../../../layouts/AdminLayout";
 import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
 import Badge from "../../../../shared/components/Badge";
@@ -40,19 +39,11 @@ export function PartnerDetailPage() {
   }, [id]);
 
   if (loading) {
-    return (
-      <AdminLayout>
-        <div className="p-12 text-center text-slate-500">Đang tải hồ sơ đối tác...</div>
-      </AdminLayout>
-    );
+    return <div className="p-12 text-center text-slate-500">Đang tải hồ sơ đối tác...</div>;
   }
 
   if (!partner) {
-    return (
-      <AdminLayout>
-        <div className="p-12 text-center text-slate-500">Không tìm thấy hồ sơ đối tác.</div>
-      </AdminLayout>
-    );
+    return <div className="p-12 text-center text-slate-500">Không tìm thấy hồ sơ đối tác.</div>;
   }
 
   const handleApproveConfirm = async () => {
@@ -84,8 +75,7 @@ export function PartnerDetailPage() {
   };
 
   return (
-    <AdminLayout>
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
         {/* Header Breadcrumb */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -356,7 +346,6 @@ export function PartnerDetailPage() {
 
         <Toast message={toastMessage} onClose={() => setToastMessage("")} />
       </div>
-    </AdminLayout>
   );
 }
 
