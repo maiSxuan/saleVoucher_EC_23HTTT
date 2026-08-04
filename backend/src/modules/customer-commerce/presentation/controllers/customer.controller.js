@@ -15,6 +15,33 @@ class CustomerController {
       next(error);
     }
   }
+
+  async register(req, res) {
+    try {
+      const result = await this.customerService.register(req.body);
+      res.status(200).json({ success: true, data: result });
+    } catch (e) {
+      res.status(e.status || 400).json({ success: false, message: e.message });
+    }
+  }
+
+  async verifyOtp(req, res) {
+    try {
+      const result = await this.customerService.verifyOtp(req.body);
+      res.status(200).json({ success: true, data: result });
+    } catch (e) {
+      res.status(e.status || 400).json({ success: false, message: e.message });
+    }
+  }
+
+  async resendOtp(req, res) {
+    try {
+      const result = await this.customerService.resendOtp(req.body);
+      res.status(200).json({ success: true, data: result });
+    } catch (e) {
+      res.status(e.status || 400).json({ success: false, message: e.message });
+    }
+  }
 }
 
 module.exports = CustomerController;
