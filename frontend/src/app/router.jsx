@@ -33,6 +33,8 @@ import CustomerLayout from "../features/customer-commerce/layouts/CustomerLayout
 import VoucherSearchPage from "../features/customer-commerce/pages/customer/VoucherSearchPage";
 import VoucherDetailPage from "../features/customer-commerce/pages/customer/VoucherDetailPage";
 import CartPage from "../features/customer-commerce/pages/customer/CartPage";
+import CheckoutPage from "../features/customer-commerce/pages/customer/CheckoutPage";
+import PaymentReturnPage from "../features/customer-commerce/pages/customer/PaymentReturnPage";
 
 import { Home } from "lucide-react";
 
@@ -105,6 +107,14 @@ const router = createBrowserRouter([
               {
                 path: "cart",
                 element: <CartPage />,
+              },
+              {
+                path: "checkout",
+                element: <CheckoutPage />,
+              },
+              {
+                path: "checkout/return",
+                element: <PaymentReturnPage />,
               },
             ],
           },
