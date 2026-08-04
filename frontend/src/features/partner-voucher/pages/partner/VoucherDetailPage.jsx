@@ -6,24 +6,33 @@ import Button from "../../../../shared/components/Button";
 import Badge from "../../../../shared/components/Badge";
 import Toast from "../../../../shared/components/Toast";
 import { getVoucherByIdApi, getBranchesByPartnerApi, saveVoucherApi } from "../../../../shared/api/partnerApi";
-import { mockStore } from "../../../../shared/store/mockDataStore";
 
 export function VoucherDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const activePartner = mockStore.getActivePartner();
   const [voucher, setVoucher] = useState(null);
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [toastMessage, setToastMessage] = useState("");
 
+  const getLoggedInPartnerId = () => {
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const u = JSON.parse(storedUser);
+        return u.ma_hsdn || u.ma_hs || u.id || u.ma_nguoi_dung;
+      }
+    } catch (e) {}
+    return "20000000-0000-0000-0000-000000000001";
+  };
+
   const loadData = async () => {
     setLoading(true);
     const data = await getVoucherByIdApi(id);
     setVoucher(data);
 
-    const partnerId = data?.ma_hs || activePartner?.ma_hs;
+    const partnerId = data?.ma_hs || getLoggedInPartnerId();
     if (partnerId) {
       const bList = await getBranchesByPartnerApi(partnerId);
       setBranches(bList || []);
@@ -53,14 +62,20 @@ export function VoucherDetailPage() {
 
   const activeBranches = branches.filter((b) => (voucher.ma_chi_nhanh || []).includes(b.ma_chi_nhanh));
 
-  const handleSubmitForReview = async () => {
-    await saveVoucherApi({ ma_voucher: voucher.ma_voucher, trang_thai: "Cho duyet" });
-    setToastMessage("Gửi yêu cầu xét duyệt Voucher thành công!");
+  const handleStatusChange = async (newStatus, msg) => {
+    await saveVoucherApi({
+      ma_voucher: voucher.ma_voucher,
+      trang_thai: newStatus,
+      trang_thai_kiem_duyet: newStatus === "Cho duyet" ? "Cho duyet" : voucher.trang_thai_kiem_duyet,
+    });
+    setToastMessage(msg || "Đã cập nhật trạng thái Voucher thành công!");
     await loadData();
   };
 
+  const isNhap = voucher.trang_thai === "Nhap";
+  const isDangBan = voucher.trang_thai === "Dang ban";
+  const isTamNgung = voucher.trang_thai === "Tam ngung";
   const isRejected = voucher.trang_thai === "Tu choi" || voucher.trang_thai_kiem_duyet === "Tu choi";
-  const isDraft = voucher.trang_thai === "Nhap";
 
   return (
     <PartnerLayout>
@@ -75,17 +90,64 @@ export function VoucherDetailPage() {
             <span className="font-semibold text-slate-900">{voucher.ten_voucher}</span>
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Action buttons strictly scoped to voucher status */}
+          <div className="flex items-center gap-2">
             <Badge status={voucher.trang_thai} />
-            <Link to={`/partner/vouchers/${voucher.ma_voucher}/edit`}>
-              <Button variant="secondary" size="sm">
-                ✏️ Chỉnh sửa Voucher
+
+            {/* a. Trạng thái Nháp: Chỉnh sửa toàn bộ + Gửi duyệt */}
+            {isNhap && (
+              <>
+                <Link to={`/partner/vouchers/${voucher.ma_voucher}/edit`}>
+                  <Button variant="secondary" size="sm">
+                    ✏️ Chỉnh sửa toàn bộ thông tin
+                  </Button>
+                </Link>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => handleStatusChange("Cho duyet", "Đã gửi yêu cầu xét duyệt Voucher!")}
+                >
+                  🚀 Gửi Admin xét duyệt
+                </Button>
+              </>
+            )}
+
+            {/* b. Trạng thái Đang bán: Chỉ xem, có nút Tạm ngưng (không được sửa) */}
+            {isDangBan && (
+              <Button
+                variant="warning"
+                size="sm"
+                onClick={() => handleStatusChange("Tam ngung", "Đã tạm ngưng bán Voucher!")}
+              >
+                ⏸️ Tạm ngưng bán
               </Button>
-            </Link>
-            {(isDraft || isRejected) && (
-              <Button variant="primary" size="sm" onClick={handleSubmitForReview}>
-                🚀 Gửi Admin xét duyệt
-              </Button>
+            )}
+
+            {/* c. Trạng thái Tạm ngưng: Chỉnh sửa giới hạn + Mở bán lại */}
+            {isTamNgung && (
+              <>
+                <Link to={`/partner/vouchers/${voucher.ma_voucher}/edit`}>
+                  <Button variant="secondary" size="sm">
+                    ✏️ Chỉnh sửa (Giới hạn)
+                  </Button>
+                </Link>
+                <Button
+                  variant="success"
+                  size="sm"
+                  onClick={() => handleStatusChange("Dang ban", "Đã mở bán lại Voucher!")}
+                >
+                  ▶️ Mở bán lại
+                </Button>
+              </>
+            )}
+
+            {/* d. Trạng thái Bị từ chối: Cho sửa và gửi lại */}
+            {isRejected && (
+              <Link to={`/partner/vouchers/${voucher.ma_voucher}/edit`}>
+                <Button variant="danger" size="sm">
+                  ✏️ Khắc phục & Gửi lại
+                </Button>
+              </Link>
             )}
           </div>
         </div>
@@ -121,7 +183,7 @@ export function VoucherDetailPage() {
               className="w-full h-full object-cover opacity-90"
             />
             <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-slate-950/80 to-transparent text-white">
-              <span className="px-2.5 py-1 bg-emerald-600 text-xs font-bold rounded-full mb-2 inline-block">
+              <span className="px-2.5 py-1 bg-blue-600 text-xs font-bold rounded-full mb-2 inline-block">
                 {voucher.ten_danh_muc || "Danh mục Voucher"}
               </span>
               <h1 className="text-2xl font-bold">{voucher.ten_voucher}</h1>

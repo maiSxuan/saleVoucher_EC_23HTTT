@@ -1,127 +1,324 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PartnerLayout from "../../../../layouts/PartnerLayout";
-import Card from "../../../../shared/components/Card";
-import StatCard from "../../../../shared/components/StatCard";
-import SimpleChart from "../../../../shared/components/SimpleChart";
-import { mockStore } from "../../../../shared/store/mockDataStore";
+import { BarChart2, TrendingUp, Tag, ShoppingCart, RotateCcw, AlertCircle, Info } from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, ResponsiveContainer } from "recharts";
+import { getPartnerReportApi, getVouchersByPartnerApi } from "../../../../shared/api/partnerApi";
 
 export function PartnerReportsPage() {
-  const activePartner = mockStore.getActivePartner();
-  const vouchers = mockStore.getVouchersByPartner(activePartner?.ma_hs);
+  const formatDateYYYYMMDD = (d) => d.toISOString().slice(0, 10);
 
-  const [dateFilter, setDateFilter] = useState("30"); // 7, 30, 90 days
+  const today = new Date();
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
 
-  // Compute metrics based on mock vouchers
-  const totalSold = vouchers.reduce((acc, v) => acc + (v.so_luong_da_ban || 0), 0);
-  const totalRevenue = vouchers.reduce((acc, v) => acc + (v.so_luong_da_ban || 0) * (v.gia_ban || 0), 0);
-  const totalUsed = Math.round(totalSold * 0.75); // 75% redemption rate simulation
+  const [startDate, setStartDate] = useState(formatDateYYYYMMDD(thirtyDaysAgo));
+  const [endDate, setEndDate] = useState(formatDateYYYYMMDD(today));
+  const [selectedVoucherId, setSelectedVoucherId] = useState("all");
 
-  const revenueTrendData = [
-    { label: "T1", value: 12500000 },
-    { label: "T2", value: 18400000 },
-    { label: "T3", value: 24000000 },
-    { label: "T4", value: 31200000 },
-    { label: "T5", value: 28900000 },
-    { label: "T6", value: 45000000 },
-    { label: "T7 (Hiện tại)", value: totalRevenue > 0 ? totalRevenue : 52000000 },
+  const [vouchersList, setVouchersList] = useState([]);
+  const [reportData, setReportData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+
+  const getLoggedInPartnerId = () => {
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const u = JSON.parse(storedUser);
+        return u.ma_hsdn || u.ma_hs || u.id || u.ma_nguoi_dung;
+      }
+    } catch (e) {}
+    return "20000000-0000-0000-0000-000000000001";
+  };
+
+  const fetchReport = async () => {
+    setLoading(true);
+    setHasError(false);
+    try {
+      const partnerId = getLoggedInPartnerId();
+      const res = await getPartnerReportApi({
+        partnerId,
+        voucherId: selectedVoucherId,
+        startDate,
+        endDate,
+      });
+
+      if (res) {
+        setReportData(res);
+        if (res.vouchers) setVouchersList(res.vouchers);
+      } else {
+        setHasError(true);
+      }
+    } catch (e) {
+      console.error("[PartnerReportsPage] fetch error:", e);
+      setHasError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    async function init() {
+      const partnerId = getLoggedInPartnerId();
+      const vList = await getVouchersByPartnerApi(partnerId);
+      if (vList) setVouchersList(vList);
+      await fetchReport();
+    }
+    init();
+  }, []);
+
+  const handleUpdateReport = (e) => {
+    if (e) e.preventDefault();
+    fetchReport();
+  };
+
+  const totalRevenue = reportData?.totalRevenue || 0;
+  const totalIssued = reportData?.totalIssued || 0;
+  const totalSold = reportData?.totalSold || 0;
+  const totalUsed = reportData?.totalUsed || 0;
+  const usageRate = reportData?.usageRate || 0;
+  const filteredData = reportData?.filteredData || [];
+  const revenueTrend = reportData?.revenueTrend || [];
+  const emptyReason = hasError ? "error" : reportData?.emptyReason || "none";
+
+  const kpis = [
+    { label: "Tổng doanh thu", value: `${(totalRevenue / 1000000).toFixed(1)}M₫`, icon: <TrendingUp size={20} />, color: "emerald" },
+    { label: "Tổng voucher phát hành", value: totalIssued.toLocaleString(), icon: <Tag size={20} />, color: "blue" },
+    { label: "Tổng voucher đã bán", value: totalSold.toLocaleString(), icon: <ShoppingCart size={20} />, color: "purple" },
+    { label: "Tỷ lệ sử dụng", value: `${usageRate}%`, icon: <BarChart2 size={20} />, color: "amber" },
   ];
 
-  const topVouchersData = vouchers.map((v) => ({
-    label: v.ten_voucher,
-    value: v.so_luong_da_ban || 10,
-    displayValue: `${v.so_luong_da_ban || 10} lượt bán`,
-  }));
-
-  const branchPerformanceData = (activePartner?.branches || []).map((b, idx) => ({
-    label: b.ten_chi_nhanh,
-    value: (idx + 1) * 45,
-    displayValue: `${(idx + 1) * 45} voucher sử dụng`,
-  }));
+  const colorMap = {
+    emerald: "bg-emerald-50 border-emerald-200 text-emerald-600",
+    blue: "bg-blue-50 border-blue-200 text-blue-600",
+    purple: "bg-purple-50 border-purple-200 text-purple-600",
+    amber: "bg-amber-50 border-amber-200 text-amber-600",
+  };
 
   return (
     <PartnerLayout>
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Page Header */}
-        <div className="flex items-center justify-between">
+      <div className="p-6 max-w-7xl mx-auto space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Báo cáo Đối tác</h1>
+          <p className="text-sm text-gray-500 mt-1">Hiệu quả kinh doanh và phát hành voucher của doanh nghiệp</p>
+        </div>
+
+        {/* Filters Bar */}
+        <form onSubmit={handleUpdateReport} className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="flex flex-wrap gap-3 items-end">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                Chương trình voucher <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={selectedVoucherId}
+                onChange={(e) => setSelectedVoucherId(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+              >
+                <option value="all">Tất cả chương trình</option>
+                {vouchersList.map((v) => (
+                  <option key={v.ma_voucher} value={v.ma_voucher}>
+                    {v.ten_voucher}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                Từ ngày <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                Đến ngày <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+            <button
+              type="submit"
+              className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-700 transition-colors cursor-pointer"
+            >
+              Cập nhật báo cáo
+            </button>
+          </div>
+          <p className="text-xs text-gray-400 mt-2">
+            Khoảng thời gian: <strong>{startDate}</strong> đến <strong>{endDate}</strong>
+          </p>
+        </form>
+
+        {/* Loading State */}
+        {loading && (
+          <div className="bg-white rounded-xl border border-gray-200 p-12 flex items-center justify-center text-gray-400 gap-3">
+            <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+            <span className="text-sm">Đang tải dữ liệu báo cáo...</span>
+          </div>
+        )}
+
+        {/* Empty — No Vouchers */}
+        {!loading && emptyReason === "no_vouchers" && (
+          <div className="bg-white rounded-xl border border-gray-200 p-12 flex flex-col items-center text-center">
+            <Tag size={40} className="text-gray-300 mb-3" />
+            <h3 className="font-semibold text-gray-700 mb-1">Chưa có dữ liệu báo cáo</h3>
+            <p className="text-sm text-gray-500 mb-4">Doanh nghiệp chưa có chương trình voucher được phê duyệt.</p>
+          </div>
+        )}
+
+        {/* Empty — No Transactions */}
+        {!loading && emptyReason === "no_transactions" && (
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">Báo Cáo Doanh Thu & Hiệu Quả Voucher</h2>
-            <p className="text-sm text-slate-500 mt-1">Tổng hợp số liệu doanh số bán, lượng voucher được sử dụng tại các chi nhánh</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+              {kpis.map((k) => (
+                <div key={k.label} className={`p-4 rounded-xl border ${colorMap[k.color]}`}>
+                  <span className="mb-2 block opacity-70">{k.icon}</span>
+                  <p className="text-2xl font-bold">{k.color === "emerald" ? "0₫" : k.color === "amber" ? "0%" : "0"}</p>
+                  <p className="text-xs opacity-80 mt-0.5">{k.label}</p>
+                </div>
+              ))}
+            </div>
+            <div className="bg-white rounded-xl border border-gray-200 p-8 flex flex-col items-center text-center">
+              <Info size={32} className="text-gray-300 mb-3" />
+              <h3 className="font-semibold text-gray-700 mb-1">Không có giao dịch trong kỳ này</h3>
+              <p className="text-sm text-gray-500 mb-4">Thay đổi khoảng thời gian bộ lọc và bấm "Cập nhật báo cáo".</p>
+            </div>
           </div>
+        )}
 
-          <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-xs">
+        {/* Error State */}
+        {!loading && emptyReason === "error" && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-8 flex flex-col items-center text-center">
+            <AlertCircle size={32} className="text-red-400 mb-3" />
+            <h3 className="font-semibold text-red-700 mb-1">Không thể tải dữ liệu báo cáo</h3>
+            <p className="text-sm text-red-600 mb-4">Lỗi kết nối máy chủ. Vui lòng thử lại.</p>
             <button
-              onClick={() => setDateFilter("7")}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
-                dateFilter === "7" ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-slate-100"
-              }`}
+              onClick={fetchReport}
+              className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-700 cursor-pointer"
             >
-              7 ngày qua
-            </button>
-            <button
-              onClick={() => setDateFilter("30")}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
-                dateFilter === "30" ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-slate-100"
-              }`}
-            >
-              30 ngày qua
-            </button>
-            <button
-              onClick={() => setDateFilter("90")}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
-                dateFilter === "90" ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-slate-100"
-              }`}
-            >
-              90 ngày qua
+              <RotateCcw size={14} /> Thử lại
             </button>
           </div>
-        </div>
+        )}
 
-        {/* KPI Stat Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard
-            title="Tổng Doanh Thu Phân Phối"
-            value={`${(totalRevenue > 0 ? totalRevenue : 85050000).toLocaleString()}đ`}
-            change="+18.4%"
-            changeType="increase"
-            icon="💰"
-            subtitle="So với kỳ trước"
-          />
-          <StatCard
-            title="Tổng Đơn Đặt Hàng"
-            value={totalSold > 0 ? totalSold : 142}
-            change="+12.2%"
-            changeType="increase"
-            icon="📦"
-            subtitle="Đơn bán thành công"
-          />
-          <StatCard
-            title="Voucher Đã Sử Dụng"
-            value={totalUsed > 0 ? totalUsed : 108}
-            change="+8.5%"
-            changeType="increase"
-            icon="🎟️"
-            subtitle="Đã quét mã QR tại chi nhánh"
-          />
-          <StatCard
-            title="Tỷ Lệ Lượt Dùng (Redeem Rate)"
-            value="76.1%"
-            change="+2.4%"
-            changeType="increase"
-            icon="📈"
-            subtitle="Tỷ lệ khách tới cửa hàng"
-          />
-        </div>
+        {/* Main Report Content */}
+        {!loading && emptyReason === "none" && (
+          <>
+            {/* 4 KPIs */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {kpis.map((k) => (
+                <div key={k.label} className={`p-4 rounded-xl border ${colorMap[k.color]}`}>
+                  <span className="mb-2 block opacity-70">{k.icon}</span>
+                  <p className="text-2xl font-bold">{k.value}</p>
+                  <p className="text-xs opacity-80 mt-0.5">{k.label}</p>
+                </div>
+              ))}
+            </div>
 
-        {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <SimpleChart title="Xu Hướng Doanh Thu Theo Tháng (VNĐ)" data={revenueTrendData} type="line" />
-          <SimpleChart title="Top Voucher Bán Chạy Nhất" data={topVouchersData.length ? topVouchersData : [{ label: "Voucher Buffet", value: 142 }]} type="bar" />
-        </div>
+            {/* Revenue Area Chart */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4">
+              <h3 className="font-semibold text-gray-900 mb-4 text-sm">Doanh thu theo ngày</h3>
+              <ResponsiveContainer width="100%" height={200}>
+                <AreaChart data={revenueTrend}>
+                  <defs>
+                    <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.15} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="day" tick={{ fontSize: 11 }} />
+                  <YAxis tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`} tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={(v) => [`${Number(v).toLocaleString()}đ`, "Doanh thu"]} />
+                  <Area type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} fill="url(#revGrad)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
 
-        {/* Branch Performance */}
-        <Card title="Hiệu Quả Tiếp Nhận Khách Hàng Theo Chi Nhánh">
-          <SimpleChart data={branchPerformanceData.length ? branchPerformanceData : [{ label: "Chi nhánh Q1", value: 90 }]} type="bar" />
-        </Card>
+            {/* Breakdown Table */}
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+                <h3 className="font-semibold text-gray-900 text-sm">Bảng chi tiết theo chương trình</h3>
+                <p className="text-xs text-gray-400">
+                  Từ {startDate} đến {endDate}
+                </p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-200">
+                      {["Chương trình voucher", "Phát hành", "Đã bán", "Đã sử dụng", "Doanh thu", "Tỷ lệ sử dụng"].map((h) => (
+                        <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filteredData.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-400">
+                          Không có dữ liệu
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredData.map((d) => (
+                        <tr key={d.voucherId} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{d.voucherName}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600">{d.issued.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600">{d.sold.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600">{d.used.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-sm font-medium text-emerald-700">{(d.revenue / 1000000).toFixed(1)}M₫</td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 bg-gray-100 rounded-full h-1.5 max-w-16">
+                                <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${d.usageRate}%` }} />
+                              </div>
+                              <span className="text-sm font-medium text-gray-700">{d.usageRate}%</span>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                    {filteredData.length > 0 && (
+                      <tr className="bg-gray-50 font-semibold">
+                        <td className="px-4 py-3 text-sm text-gray-900">Tổng</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{totalIssued.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{totalSold.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{totalUsed.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-sm text-emerald-700">{(totalRevenue / 1000000).toFixed(1)}M₫</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{usageRate}%</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Vertical Bar Chart Comparison */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4">
+              <h3 className="font-semibold text-gray-900 mb-4 text-sm">So sánh Phát hành / Đã bán / Đã sử dụng</h3>
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={filteredData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 11 }} />
+                  <YAxis dataKey="voucherName" type="category" tick={{ fontSize: 10 }} width={140} />
+                  <Tooltip />
+                  <Bar dataKey="issued" fill="#e2e8f0" name="Phát hành" />
+                  <Bar dataKey="sold" fill="#6366f1" name="Đã bán" />
+                  <Bar dataKey="used" fill="#10b981" name="Đã sử dụng" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </>
+        )}
       </div>
     </PartnerLayout>
   );

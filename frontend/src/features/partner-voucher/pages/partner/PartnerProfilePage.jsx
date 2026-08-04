@@ -5,10 +5,8 @@ import Button from "../../../../shared/components/Button";
 import Badge from "../../../../shared/components/Badge";
 import Toast from "../../../../shared/components/Toast";
 import { getPartnerByIdApi, updatePartnerApi } from "../../../../shared/api/partnerApi";
-import { mockStore } from "../../../../shared/store/mockDataStore";
 
 export function PartnerProfilePage() {
-  const activePartnerFromStore = mockStore.getActivePartner();
   const [partner, setPartner] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -37,7 +35,7 @@ export function PartnerProfilePage() {
   const loadPartner = async () => {
     setLoading(true);
     const activeUser = getActiveUser();
-    const targetId = activeUser?.id || activeUser?.accountId || activePartnerFromStore?.ma_hs || "20000000-0000-0000-0000-000000000001";
+    const targetId = activeUser?.ma_hsdn || activeUser?.ma_hs || activeUser?.id || activeUser?.ma_nguoi_dung || "20000000-0000-0000-0000-000000000001";
 
     const data = await getPartnerByIdApi(targetId);
     if (data) {
@@ -63,7 +61,7 @@ export function PartnerProfilePage() {
     if (!partner?.ma_hs) return;
     setSaving(true);
 
-    const updated = await updatePartnerApi(partner.ma_hs, {
+    await updatePartnerApi(partner.ma_hs, {
       ten_dn: formData.ten_dn,
       ma_so_thue: formData.ma_so_thue,
       dia_chi: formData.dia_chi,
@@ -162,7 +160,7 @@ export function PartnerProfilePage() {
                     type="text"
                     value={formData.ten_dn}
                     onChange={(e) => setFormData({ ...formData, ten_dn: e.target.value })}
-                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -171,7 +169,7 @@ export function PartnerProfilePage() {
                     type="text"
                     value={formData.ma_so_thue}
                     onChange={(e) => setFormData({ ...formData, ma_so_thue: e.target.value })}
-                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -182,7 +180,7 @@ export function PartnerProfilePage() {
                   type="text"
                   value={formData.dia_chi}
                   onChange={(e) => setFormData({ ...formData, dia_chi: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
 
@@ -195,7 +193,7 @@ export function PartnerProfilePage() {
                     type="text"
                     value={formData.ho_ten}
                     onChange={(e) => setFormData({ ...formData, ho_ten: e.target.value })}
-                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -204,7 +202,7 @@ export function PartnerProfilePage() {
                     type="text"
                     value={formData.sdt}
                     onChange={(e) => setFormData({ ...formData, sdt: e.target.value })}
-                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -213,7 +211,7 @@ export function PartnerProfilePage() {
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -222,7 +220,7 @@ export function PartnerProfilePage() {
                     type="text"
                     value={formData.cccd}
                     onChange={(e) => setFormData({ ...formData, cccd: e.target.value })}
-                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -284,14 +282,16 @@ export function PartnerProfilePage() {
                   <div className="text-xs space-y-1">
                     <div className="font-semibold text-slate-800">File_GiayPhepKinhDoanh_Certified.pdf</div>
                     <div className="text-slate-400">Định dạng: Đã xác thực trên hệ thống</div>
-                    <a
-                      href={partner.giay_phep_kinh_doanh}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-block text-emerald-600 font-medium hover:underline pt-1"
-                    >
-                      🔗 Xem bản phóng to
-                    </a>
+                    {partner.giay_phep_kinh_doanh && (
+                      <a
+                        href={partner.giay_phep_kinh_doanh}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-block text-blue-600 font-medium hover:underline pt-1"
+                      >
+                        🔗 Xem bản phóng to
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>

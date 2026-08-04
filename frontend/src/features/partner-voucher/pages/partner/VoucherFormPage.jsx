@@ -10,15 +10,14 @@ import {
   getBranchesByPartnerApi,
   getCategoriesApi,
 } from "../../../../shared/api/partnerApi";
-import { mockStore } from "../../../../shared/store/mockDataStore";
 
 export function VoucherFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const activePartner = mockStore.getActivePartner();
 
   const [categoriesList, setCategoriesList] = useState([]);
   const [activeBranches, setActiveBranches] = useState([]);
+  const [voucherStatus, setVoucherStatus] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
@@ -40,6 +39,17 @@ export function VoucherFormPage() {
     ma_chi_nhanh: [],
   });
 
+  const getLoggedInPartnerId = () => {
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const u = JSON.parse(storedUser);
+        return u.ma_hsdn || u.ma_hs || u.id || u.ma_nguoi_dung;
+      }
+    } catch (e) {}
+    return "20000000-0000-0000-0000-000000000001";
+  };
+
   useEffect(() => {
     async function loadInitial() {
       // 1. Fetch categories
@@ -49,8 +59,9 @@ export function VoucherFormPage() {
       }
 
       // 2. Fetch partner branches
-      if (activePartner?.ma_hs) {
-        const branches = await getBranchesByPartnerApi(activePartner.ma_hs);
+      const partnerId = getLoggedInPartnerId();
+      if (partnerId) {
+        const branches = await getBranchesByPartnerApi(partnerId);
         const activeOnly = (branches || []).filter((b) => b.trang_thai === "Dang hoat dong" || !b.trang_thai);
         setActiveBranches(activeOnly);
         if (!id && activeOnly.length > 0) {
@@ -62,6 +73,7 @@ export function VoucherFormPage() {
       if (id) {
         const existing = await getVoucherByIdApi(id);
         if (existing) {
+          setVoucherStatus(existing.trang_thai || "");
           setFormData({
             ma_voucher: existing.ma_voucher,
             ten_voucher: existing.ten_voucher || "",
@@ -81,9 +93,12 @@ export function VoucherFormPage() {
       }
     }
     loadInitial();
-  }, [id, activePartner?.ma_hs]);
+  }, [id]);
+
+  const isTamNgung = voucherStatus === "Tam ngung";
 
   const handleBranchToggle = (branchId) => {
+    if (isTamNgung) return;
     setFormData((prev) => {
       const selected = prev.ma_chi_nhanh.includes(branchId)
         ? prev.ma_chi_nhanh.filter((b) => b !== branchId)
@@ -109,11 +124,12 @@ export function VoucherFormPage() {
     if (!validate()) return;
 
     setLoading(true);
+    const partnerId = getLoggedInPartnerId();
     const saved = await saveVoucherApi({
       ...formData,
-      ma_hs: activePartner?.ma_hs,
-      trang_thai: isSubmitNow ? "Cho duyet" : "Nhap",
-      trang_thai_kiem_duyet: isSubmitNow ? "Cho duyet" : "Nhap",
+      ma_hs: partnerId,
+      trang_thai: isSubmitNow ? "Cho duyet" : voucherStatus || "Nhap",
+      trang_thai_kiem_duyet: isSubmitNow ? "Cho duyet" : voucherStatus || "Nhap",
     });
 
     setLoading(false);
@@ -143,6 +159,16 @@ export function VoucherFormPage() {
           </div>
         </div>
 
+        {/* Warning banner if Voucher is Tam ngung */}
+        {isTamNgung && (
+          <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl text-amber-800 text-xs font-semibold flex items-center gap-2">
+            <span>🔒</span>
+            <span>
+              <strong>Voucher đang ở trạng thái Tạm ngưng:</strong> Theo quy định, các trường <strong>Giá niêm yết, Giá ưu đãi, Thời gian bán</strong> và <strong>Chi nhánh áp dụng</strong> bị khóa chỉnh sửa.
+            </span>
+          </div>
+        )}
+
         {/* Section 1: Basic Information */}
         <Card title="1. Thông Tin Nhận Diện Voucher">
           <div className="space-y-4">
@@ -155,7 +181,7 @@ export function VoucherFormPage() {
                 placeholder="Ví dụ: Voucher Buffet Hải Sản Cao Cấp Tối Cuối Tuần"
                 value={formData.ten_voucher}
                 onChange={(e) => setFormData({ ...formData, ten_voucher: e.target.value })}
-                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
               {errors.ten_voucher && <p className="text-xs text-rose-600 mt-1">{errors.ten_voucher}</p>}
             </div>
@@ -166,7 +192,7 @@ export function VoucherFormPage() {
                 <select
                   value={formData.ma_danh_muc}
                   onChange={(e) => setFormData({ ...formData, ma_danh_muc: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 >
                   {categoriesList.map((c) => {
                     const cateId = c.ma_danh_muc || c.id;
@@ -185,7 +211,7 @@ export function VoucherFormPage() {
                   type="text"
                   value={formData.hinh_anh_url}
                   onChange={(e) => setFormData({ ...formData, hinh_anh_url: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -197,7 +223,7 @@ export function VoucherFormPage() {
                 placeholder="Mô tả trải nghiệm, các món ăn hoặc dịch vụ được hưởng..."
                 value={formData.mo_ta}
                 onChange={(e) => setFormData({ ...formData, mo_ta: e.target.value })}
-                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               ></textarea>
             </div>
           </div>
@@ -209,28 +235,30 @@ export function VoucherFormPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Giá niêm yết (Giá gốc đ) <span className="text-rose-500">*</span>
+                  Giá niêm yết (Giá gốc đ) <span className="text-rose-500">*</span> {isTamNgung && "(Đã khóa)"}
                 </label>
                 <input
                   type="number"
+                  disabled={isTamNgung}
                   placeholder="890000"
                   value={formData.gia_goc}
                   onChange={(e) => setFormData({ ...formData, gia_goc: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500"
                 />
                 {errors.gia_goc && <p className="text-xs text-rose-600 mt-1">{errors.gia_goc}</p>}
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Giá ưu đãi bán ra (Giá bán đ) <span className="text-rose-500">*</span>
+                  Giá ưu đãi bán ra (Giá bán đ) <span className="text-rose-500">*</span> {isTamNgung && "(Đã khóa)"}
                 </label>
                 <input
                   type="number"
+                  disabled={isTamNgung}
                   placeholder="599000"
                   value={formData.gia_ban}
                   onChange={(e) => setFormData({ ...formData, gia_ban: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500"
                 />
                 {errors.gia_ban && <p className="text-xs text-rose-600 mt-1">{errors.gia_ban}</p>}
               </div>
@@ -244,7 +272,7 @@ export function VoucherFormPage() {
                   placeholder="500"
                   value={formData.so_luong_phat_hanh}
                   onChange={(e) => setFormData({ ...formData, so_luong_phat_hanh: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
                 {errors.so_luong_phat_hanh && <p className="text-xs text-rose-600 mt-1">{errors.so_luong_phat_hanh}</p>}
               </div>
@@ -261,22 +289,28 @@ export function VoucherFormPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-100 pt-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Thời gian mở bán từ</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Thời gian mở bán từ {isTamNgung && "(Đã khóa)"}
+                </label>
                 <input
                   type="datetime-local"
+                  disabled={isTamNgung}
                   value={formData.tg_bat_dau_ban}
                   onChange={(e) => setFormData({ ...formData, tg_bat_dau_ban: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Thời gian kết thúc bán</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Thời gian kết thúc bán {isTamNgung && "(Đã khóa)"}
+                </label>
                 <input
                   type="datetime-local"
+                  disabled={isTamNgung}
                   value={formData.tg_ket_thuc_ban}
                   onChange={(e) => setFormData({ ...formData, tg_ket_thuc_ban: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500"
                 />
               </div>
             </div>
@@ -284,7 +318,7 @@ export function VoucherFormPage() {
         </Card>
 
         {/* Section 3: Applicable Branches */}
-        <Card title="3. Chi Nhánh Áp Dụng (Chỉ Chọn Chi Nhánh Đang Hoạt Động)">
+        <Card title={`3. Chi Nhánh Áp Dụng ${isTamNgung ? "(Đã khóa chỉnh sửa)" : ""}`}>
           <div className="space-y-2">
             {activeBranches.length === 0 ? (
               <p className="text-xs text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-200">
@@ -294,13 +328,16 @@ export function VoucherFormPage() {
               activeBranches.map((branch) => (
                 <label
                   key={branch.ma_chi_nhanh}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer"
+                  className={`flex items-center gap-3 p-3 rounded-lg border border-slate-200 transition-colors ${
+                    isTamNgung ? "bg-slate-50 opacity-60 cursor-not-allowed" : "hover:bg-slate-50 cursor-pointer"
+                  }`}
                 >
                   <input
                     type="checkbox"
+                    disabled={isTamNgung}
                     checked={formData.ma_chi_nhanh.includes(branch.ma_chi_nhanh)}
                     onChange={() => handleBranchToggle(branch.ma_chi_nhanh)}
-                    className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500"
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                   />
                   <div>
                     <div className="text-sm font-bold text-slate-900">{branch.ten_chi_nhanh}</div>
@@ -322,7 +359,7 @@ export function VoucherFormPage() {
                 rows="2"
                 value={formData.dieu_kien_ap_dung}
                 onChange={(e) => setFormData({ ...formData, dieu_kien_ap_dung: e.target.value })}
-                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               ></textarea>
             </div>
             <div>
@@ -331,7 +368,7 @@ export function VoucherFormPage() {
                 rows="2"
                 value={formData.chinh_sach_hoan_huy}
                 onChange={(e) => setFormData({ ...formData, chinh_sach_hoan_huy: e.target.value })}
-                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               ></textarea>
             </div>
           </div>
@@ -342,12 +379,14 @@ export function VoucherFormPage() {
           <Button variant="secondary" onClick={() => navigate("/partner/vouchers")}>
             Hủy bỏ
           </Button>
-          <Button variant="outline" onClick={() => handleSave(false)} loading={loading}>
+          <Button variant="primary" onClick={() => handleSave(false)} loading={loading}>
             💾 {id ? "Lưu thay đổi" : "Lưu bản nháp"}
           </Button>
-          <Button variant="primary" onClick={() => handleSave(true)} loading={loading}>
-            🚀 {id ? "Cập nhật & Gửi duyệt" : "Gửi Admin duyệt ngay"}
-          </Button>
+          {voucherStatus === "Nhap" && (
+            <Button variant="success" onClick={() => handleSave(true)} loading={loading}>
+              🚀 Gửi Admin duyệt ngay
+            </Button>
+          )}
         </div>
 
         <Toast message={toastMessage} onClose={() => setToastMessage("")} />
