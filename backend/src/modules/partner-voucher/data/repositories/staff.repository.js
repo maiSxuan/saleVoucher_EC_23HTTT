@@ -1,29 +1,31 @@
 const supabase = require("../../../../config/supabase");
 const StaffModel = require("../models/staff.model");
 
-const PARTNER_UUID_MAP = {
-  "hs-001": "20000000-0000-0000-0000-000000000001",
-  "hs-002": "20000000-0000-0000-0000-000000000002",
-  "hs-003": "20000000-0000-0000-0000-000000000003",
-  "hs-004": "20000000-0000-0000-0000-000000000004",
-};
-
-function normalizePartnerUuid(partnerId) {
-  if (PARTNER_UUID_MAP[partnerId]) return PARTNER_UUID_MAP[partnerId];
-  const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-  if (partnerId && uuidRegex.test(partnerId)) return partnerId;
-  return "20000000-0000-0000-0000-000000000001";
-}
-
 class StaffRepository {
-  /**
-   * Tìm tất cả nhân viên của một doanh nghiệp (theo ma_hs của hosodn).
-   * Nhân viên của doanh nghiệp gồm 2 nhóm:
-   *  (1) Nhân viên quản lý voucher: nguoidung.ma_hsdn -> hosodn.ma_hs
-   *  (2) Nhân viên chi nhánh (bán hàng): nguoidung.ma_chi_nhanh -> chinhanh.ma_hs
-   */
+  async resolvePartnerId(inputPartnerId) {
+    if (!inputPartnerId) return "20000000-0000-0000-0000-000000000001";
+    let resolvedMaHs = inputPartnerId;
+    const { data: hosodn } = await supabase
+      .from("hosodn")
+      .select("ma_hs")
+      .or(`ma_hs.eq.${inputPartnerId},id_nguoi_dai_dien.eq.${inputPartnerId}`)
+      .maybeSingle();
+
+    if (hosodn?.ma_hs) {
+      resolvedMaHs = hosodn.ma_hs;
+    } else {
+      const { data: userRecord } = await supabase
+        .from("nguoidung")
+        .select("ma_hsdn")
+        .eq("ma_nguoi_dung", inputPartnerId)
+        .maybeSingle();
+      if (userRecord?.ma_hsdn) resolvedMaHs = userRecord.ma_hsdn;
+    }
+    return resolvedMaHs;
+  }
+
   async findByPartnerId(partnerId) {
-    const validPartnerId = normalizePartnerUuid(partnerId);
+    const validPartnerId = await this.resolvePartnerId(partnerId);
     try {
       // (1) Nhân viên quản lý - gắn trực tiếp với doanh nghiệp qua ma_hsdn
       const { data: quanLyData, error: quanLyError } = await supabase
@@ -108,7 +110,7 @@ class StaffRepository {
   }
 
   async create(payload) {
-    const validPartnerId = normalizePartnerUuid(payload.ma_hs);
+    const validPartnerId = await this.resolvePartnerId(payload.ma_hs);
     const isNvbh = payload.vai_tro !== "Quản lý vận hành";
 
     let branchId = payload.ma_chi_nhanh || null;
@@ -155,8 +157,9 @@ class StaffRepository {
     if (payload.cccd !== undefined) updatePayload.cccd = payload.cccd || null;
     if (payload.trang_thai !== undefined) updatePayload.trang_thai = payload.trang_thai;
     if (payload.vai_tro !== undefined) {
+      const validPartnerId = await this.resolvePartnerId(payload.ma_hs);
       updatePayload.vai_tro = isNvbh ? "Nhan vien ban hang" : "Nhan vien quan ly voucher";
-      updatePayload.ma_hsdn = isNvbh ? null : normalizePartnerUuid(payload.ma_hs);
+      updatePayload.ma_hsdn = isNvbh ? null : validPartnerId;
     }
     if (payload.ma_chi_nhanh !== undefined) {
       updatePayload.ma_chi_nhanh = isNvbh ? payload.ma_chi_nhanh : null;

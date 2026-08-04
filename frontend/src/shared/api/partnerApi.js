@@ -3,6 +3,46 @@ import { mockStore } from "../store/mockDataStore";
 const BACKEND_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || "/api"}`;
 
 /**
+ * Register partner representative account (Step 1)
+ */
+export async function registerPartnerAccountApi(accountData) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/partners/register-account`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(accountData),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json.message || "Đăng ký tài khoản thất bại.");
+    }
+    return json.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+/**
+ * Register partner business profile (Step 6)
+ */
+export async function registerPartnerProfileApi(partnerData) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/partners`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(partnerData),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json.message || "Tạo hồ sơ đối tác thất bại.");
+    }
+    return json.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+/**
  * Fetch voucher categories from backend API
  */
 export async function getCategoriesApi() {
@@ -362,4 +402,21 @@ export async function deleteStaffApi(staffId) {
 
 export async function getAuditLogsApi() {
   return mockStore.getAuditLogs();
+}
+
+/**
+ * Fetch partner report data from backend API
+ */
+export async function getPartnerReportApi(params = {}) {
+  try {
+    const queryStr = new URLSearchParams(params).toString();
+    const res = await fetch(`${BACKEND_BASE_URL}/reports/partner-reports?${queryStr}`);
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) return json.data;
+    }
+  } catch (e) {
+    console.warn("Backend API unavailable for reports:", e.message);
+  }
+  return null;
 }

@@ -12,10 +12,8 @@ import {
   getPartnerByIdApi,
   getBranchesByPartnerApi,
 } from "../../../../shared/api/partnerApi";
-import { mockStore } from "../../../../shared/store/mockDataStore";
 
 export function StaffManagementPage() {
-  const activePartnerFromStore = mockStore.getActivePartner();
   const [staffs, setStaffs] = useState([]);
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,7 +54,7 @@ export function StaffManagementPage() {
   const reload = async () => {
     setLoading(true);
     const activeUser = getActiveUser();
-    const targetId = activeUser?.id || activeUser?.accountId || activePartnerFromStore?.ma_hs || "20000000-0000-0000-0000-000000000001";
+    const targetId = activeUser?.ma_hsdn || activeUser?.ma_hs || activeUser?.id || activeUser?.ma_nguoi_dung || "20000000-0000-0000-0000-000000000001";
 
     const partner = await getPartnerByIdApi(targetId);
     const realMaHs = partner?.ma_hs || targetId;
@@ -234,7 +232,7 @@ export function StaffManagementPage() {
                     <tr key={staff.ma_nv} className="hover:bg-slate-50">
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-base font-bold text-emerald-700 shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-base font-bold text-blue-700 shrink-0">
                             {staff.ho_ten?.charAt(0) || "N"}
                           </div>
                           <div>
@@ -256,7 +254,7 @@ export function StaffManagementPage() {
                       <td className="px-4 py-4">
                         {staff.vai_tro === "Nhân viên chi nhánh" ? (
                           !staff.chi_nhanh_phu_trach || staff.chi_nhanh_phu_trach.length === 0 ? (
-                            <span className="text-slate-400 font-italic">Chưa phân công</span>
+                            <span className="text-slate-400 italic">Chưa phân công</span>
                           ) : (
                             <span className="font-medium text-slate-800">{staff.chi_nhanh_phu_trach.join(", ")}</span>
                           )
@@ -299,7 +297,7 @@ export function StaffManagementPage() {
                 <div className="md:col-span-2">
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Họ và tên *</label>
                   <input
-                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     placeholder="Nguyễn Văn A"
                     value={form.ho_ten}
                     onChange={(e) => setForm({ ...form, ho_ten: e.target.value })}
@@ -310,7 +308,7 @@ export function StaffManagementPage() {
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Email *</label>
                   <input
                     type="email"
-                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     placeholder="email@domain.com"
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -321,7 +319,7 @@ export function StaffManagementPage() {
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Số điện thoại *</label>
                   <input
                     type="text"
-                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     placeholder="0901234567"
                     value={form.sdt}
                     onChange={(e) => setForm({ ...form, sdt: e.target.value })}
@@ -332,7 +330,7 @@ export function StaffManagementPage() {
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Ngày sinh</label>
                   <input
                     type="date"
-                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     value={form.ngay_sinh}
                     onChange={(e) => setForm({ ...form, ngay_sinh: e.target.value })}
                   />
@@ -341,7 +339,7 @@ export function StaffManagementPage() {
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Giới tính</label>
                   <select
-                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white"
+                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
                     value={form.gioi_tinh}
                     onChange={(e) => setForm({ ...form, gioi_tinh: e.target.value })}
                   >
@@ -355,7 +353,7 @@ export function StaffManagementPage() {
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Số CCCD / CMND</label>
                   <input
                     type="text"
-                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     placeholder="079098000000"
                     value={form.cccd}
                     onChange={(e) => setForm({ ...form, cccd: e.target.value })}
@@ -365,7 +363,7 @@ export function StaffManagementPage() {
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Vai trò *</label>
                   <select
-                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white"
+                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
                     value={form.vai_tro}
                     onChange={(e) => handleRoleChange(e.target.value)}
                   >
@@ -374,12 +372,11 @@ export function StaffManagementPage() {
                   </select>
                 </div>
 
-                {/* Single Branch Select - ONLY visible when role is 'Nhân viên chi nhánh' */}
                 {form.vai_tro === "Nhân viên chi nhánh" && (
                   <div className="md:col-span-2">
                     <label className="block text-xs font-semibold text-slate-700 mb-1">Chi nhánh phụ trách *</label>
                     <select
-                      className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white"
+                      className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
                       value={form.ma_chi_nhanh}
                       onChange={(e) => setForm({ ...form, ma_chi_nhanh: e.target.value })}
                     >

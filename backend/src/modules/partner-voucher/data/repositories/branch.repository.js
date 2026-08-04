@@ -8,24 +8,38 @@ const PARTNER_UUID_MAP = {
   "hs-004": "20000000-0000-0000-0000-000000000004",
 };
 
-function normalizePartnerUuid(partnerId) {
-  if (PARTNER_UUID_MAP[partnerId]) return PARTNER_UUID_MAP[partnerId];
-  const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-  if (partnerId && uuidRegex.test(partnerId)) return partnerId;
-  return "20000000-0000-0000-0000-000000000001";
-}
-
 class BranchRepository {
   /**
-   * Find branches by partner ID (ma_hs) directly from Supabase DB
+   * Find branches by partner ID (ma_hs / id_nguoi_dai_dien / user ID) directly from Supabase DB
    */
   async findByPartnerId(partnerId) {
-    const validPartnerId = normalizePartnerUuid(partnerId);
+    if (!partnerId) return [];
+
     try {
+      // 1. Resolve actual ma_hs from partnerId (which could be ma_hs, id_nguoi_dai_dien, or user ma_nguoi_dung)
+      let resolvedMaHs = PARTNER_UUID_MAP[partnerId] || partnerId;
+      const { data: hosodn } = await supabase
+        .from("hosodn")
+        .select("ma_hs")
+        .or(`ma_hs.eq.${partnerId},id_nguoi_dai_dien.eq.${partnerId}`)
+        .maybeSingle();
+
+      if (hosodn?.ma_hs) {
+        resolvedMaHs = hosodn.ma_hs;
+      } else {
+        const { data: userRecord } = await supabase
+          .from("nguoidung")
+          .select("ma_hsdn")
+          .eq("ma_nguoi_dung", partnerId)
+          .maybeSingle();
+        if (userRecord?.ma_hsdn) resolvedMaHs = userRecord.ma_hsdn;
+      }
+
+      // 2. Query branches strictly for resolvedMaHs
       const { data, error } = await supabase
         .from("chinhanh")
         .select("*")
-        .eq("ma_hs", validPartnerId);
+        .eq("ma_hs", resolvedMaHs);
 
       if (error) {
         console.error("[BranchRepository] findByPartnerId error:", error.message);
@@ -77,7 +91,15 @@ class BranchRepository {
    * Create new branch record directly in Supabase CHINHANH table
    */
   async create(payload) {
-    const validPartnerId = normalizePartnerUuid(payload.ma_hs);
+    let validPartnerId = PARTNER_UUID_MAP[payload.ma_hs] || payload.ma_hs;
+    if (payload.ma_hs) {
+      const { data: userRecord } = await supabase
+        .from("nguoidung")
+        .select("ma_hsdn")
+        .eq("ma_nguoi_dung", payload.ma_hs)
+        .maybeSingle();
+      if (userRecord?.ma_hsdn) validPartnerId = userRecord.ma_hsdn;
+    }
 
     const dbPayload = {
       ten_chi_nhanh: payload.ten_chi_nhanh,

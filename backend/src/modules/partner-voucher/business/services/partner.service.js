@@ -21,6 +21,10 @@ class PartnerService {
     return { ...partner, branches };
   }
 
+  async registerAccount(payload) {
+    return await partnerRepository.createAccount(payload);
+  }
+
   async createPartner(payload) {
     return await partnerRepository.create(payload);
   }
