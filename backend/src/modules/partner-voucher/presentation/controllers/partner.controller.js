@@ -12,6 +12,16 @@ class PartnerController {
     }
   }
 
+  async checkTaxCode(req, res, next) {
+    try {
+      const { mst } = req.query;
+      await this.partnerService.checkTaxCodeUniqueness(mst);
+      res.status(200).json({ success: true, message: "Mã số thuế hợp lệ." });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
   async getById(req, res, next) {
     try {
       const data = await this.partnerService.getPartnerById(req.params.id);
@@ -38,7 +48,7 @@ class PartnerController {
       const result = await this.partnerService.createPartner(req.body);
       res.status(201).json({ success: true, data: result });
     } catch (error) {
-      next(error);
+      res.status(400).json({ success: false, message: error.message });
     }
   }
 
@@ -47,7 +57,7 @@ class PartnerController {
       const result = await this.partnerService.updatePartner(req.params.id, req.body);
       res.status(200).json({ success: true, data: result });
     } catch (error) {
-      next(error);
+      res.status(400).json({ success: false, message: error.message });
     }
   }
 

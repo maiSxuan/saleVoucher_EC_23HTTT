@@ -25,6 +25,10 @@ class PartnerService {
     return await partnerRepository.createAccount(payload);
   }
 
+  async checkTaxCodeUniqueness(mst) {
+    return await partnerRepository.checkTaxCodeUniqueness(mst);
+  }
+
   async createPartner(payload) {
     return await partnerRepository.create(payload);
   }

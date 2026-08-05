@@ -23,6 +23,22 @@ export async function registerPartnerAccountApi(accountData) {
 }
 
 /**
+ * Check if tax code (ma_so_thue) is unique
+ */
+export async function checkTaxCodeApi(mst) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/partners/check-tax-code?mst=${encodeURIComponent(mst)}`);
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json.message || "Mã số thuế này đã được đăng ký trên hệ thống.");
+    }
+    return true;
+  } catch (e) {
+    throw e;
+  }
+}
+
+/**
  * Register partner business profile (Step 6)
  */
 export async function registerPartnerProfileApi(partnerData) {
@@ -220,6 +236,42 @@ export async function createBranchRequestApi(requestData) {
     console.warn("Backend API unavailable, using mockStore fallback:", e.message);
   }
   return mockStore.createBranchRequest(requestData);
+}
+
+/**
+ * Approve branch change request (Admin action)
+ */
+export async function approveBranchRequestApi(requestId) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/branches/requests/${requestId}/approve`, {
+      method: "POST",
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) return json.data;
+    }
+  } catch (e) {
+    console.warn("Backend API unavailable:", e.message);
+  }
+}
+
+/**
+ * Reject branch change request (Admin action)
+ */
+export async function rejectBranchRequestApi(requestId, adminNote = "") {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/branches/requests/${requestId}/reject`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminNote }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) return json.data;
+    }
+  } catch (e) {
+    console.warn("Backend API unavailable:", e.message);
+  }
 }
 
 /**

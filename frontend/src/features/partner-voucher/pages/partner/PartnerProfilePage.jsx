@@ -21,6 +21,8 @@ export function PartnerProfilePage() {
     sdt: "",
     email: "",
     cccd: "",
+    ngay_sinh: "",
+    gioi_tinh: "Nam",
   });
 
   const getActiveUser = () => {
@@ -48,6 +50,8 @@ export function PartnerProfilePage() {
         sdt: data.nguoi_dai_dien?.sdt || "",
         email: data.nguoi_dai_dien?.email || "",
         cccd: data.nguoi_dai_dien?.cccd || "",
+        ngay_sinh: data.nguoi_dai_dien?.ngay_sinh ? data.nguoi_dai_dien.ngay_sinh.slice(0, 10) : "",
+        gioi_tinh: data.nguoi_dai_dien?.gioi_tinh || "Nam",
       });
     }
     setLoading(false);
@@ -72,6 +76,8 @@ export function PartnerProfilePage() {
         sdt: formData.sdt,
         email: formData.email,
         cccd: formData.cccd,
+        ngay_sinh: formData.ngay_sinh,
+        gioi_tinh: formData.gioi_tinh,
       },
     });
 
@@ -215,13 +221,34 @@ export function PartnerProfilePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Số CCCD</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Số CCCD / CMND</label>
                   <input
                     type="text"
                     value={formData.cccd}
                     onChange={(e) => setFormData({ ...formData, cccd: e.target.value })}
                     className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Ngày sinh</label>
+                  <input
+                    type="date"
+                    value={formData.ngay_sinh}
+                    onChange={(e) => setFormData({ ...formData, ngay_sinh: e.target.value })}
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Giới tính</label>
+                  <select
+                    value={formData.gioi_tinh}
+                    onChange={(e) => setFormData({ ...formData, gioi_tinh: e.target.value })}
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                  >
+                    <option value="Nam">Nam</option>
+                    <option value="Nu">Nữ</option>
+                    <option value="Khac">Khác</option>
+                  </select>
                 </div>
               </div>
 
@@ -253,19 +280,27 @@ export function PartnerProfilePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <span className="text-xs text-slate-400 font-medium">Họ và tên:</span>
-                    <div className="text-sm font-semibold text-slate-900 mt-0.5">{partner.nguoi_dai_dien?.ho_ten}</div>
+                    <div className="text-sm font-semibold text-slate-900 mt-0.5">{partner.nguoi_dai_dien?.ho_ten || "Chưa cập nhật"}</div>
                   </div>
                   <div>
                     <span className="text-xs text-slate-400 font-medium">Số điện thoại:</span>
-                    <div className="text-sm font-semibold text-slate-900 mt-0.5">{partner.nguoi_dai_dien?.sdt}</div>
+                    <div className="text-sm font-semibold text-slate-900 mt-0.5">{partner.nguoi_dai_dien?.sdt || "Chưa cập nhật"}</div>
                   </div>
                   <div>
                     <span className="text-xs text-slate-400 font-medium">Email:</span>
-                    <div className="text-sm font-semibold text-slate-900 mt-0.5">{partner.nguoi_dai_dien?.email}</div>
+                    <div className="text-sm font-semibold text-slate-900 mt-0.5">{partner.nguoi_dai_dien?.email || "Chưa cập nhật"}</div>
                   </div>
                   <div>
-                    <span className="text-xs text-slate-400 font-medium">CCCD:</span>
-                    <div className="text-sm font-semibold text-slate-900 mt-0.5">{partner.nguoi_dai_dien?.cccd}</div>
+                    <span className="text-xs text-slate-400 font-medium">Số CCCD / CMND:</span>
+                    <div className="text-sm font-semibold text-slate-900 mt-0.5">{partner.nguoi_dai_dien?.cccd || "Chưa cập nhật"}</div>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-400 font-medium">Ngày sinh:</span>
+                    <div className="text-sm font-semibold text-slate-900 mt-0.5">{partner.nguoi_dai_dien?.ngay_sinh ? partner.nguoi_dai_dien.ngay_sinh.slice(0, 10) : "Chưa cập nhật"}</div>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-400 font-medium">Giới tính:</span>
+                    <div className="text-sm font-semibold text-slate-900 mt-0.5">{partner.nguoi_dai_dien?.gioi_tinh === "Nu" ? "Nữ" : partner.nguoi_dai_dien?.gioi_tinh === "Nam" ? "Nam" : "Khác"}</div>
                   </div>
                 </div>
               </div>

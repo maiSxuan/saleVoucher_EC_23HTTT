@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Plus, Search, X, Tag, Eye } from "lucide-react";
 import PartnerLayout from "../../../../layouts/PartnerLayout";
-import Card from "../../../../shared/components/Card";
-import Button from "../../../../shared/components/Button";
 import Badge from "../../../../shared/components/Badge";
 import Toast from "../../../../shared/components/Toast";
 import { getVouchersByPartnerApi, getCategoriesApi } from "../../../../shared/api/partnerApi";
@@ -55,6 +54,12 @@ export function VoucherListPage() {
     loadData();
   }, []);
 
+  const handleResetFilters = () => {
+    setSearchQuery("");
+    setSelectedStatusTab("All");
+    setSelectedCategory("All");
+  };
+
   const filteredVouchers = vouchers.filter((v) => {
     const matchesSearch =
       (v.ten_voucher || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -91,22 +96,25 @@ export function VoucherListPage() {
 
   return (
     <PartnerLayout>
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Page Header */}
+      <div className="p-6 max-w-7xl mx-auto space-y-5">
+        {/* Title & Action Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">Danh Sách Chương Trình Voucher</h2>
-            <p className="text-sm text-slate-500 mt-1">Quản lý toàn bộ danh mục Voucher, trạng thái duyệt và tình hình bán hàng</p>
+            <h1 className="text-2xl font-bold text-gray-900">Danh sách voucher</h1>
+            <p className="text-sm text-gray-500 mt-1">Quản lý toàn bộ danh mục Voucher, trạng thái duyệt và tình hình bán hàng.</p>
           </div>
-          <Button variant="primary" icon="➕" onClick={() => navigate("/partner/vouchers/new")}>
-            Tạo Voucher mới
-          </Button>
+          <button
+            onClick={() => navigate("/partner/vouchers/new")}
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer shadow-xs"
+          >
+            <Plus size={16} /> Tạo Voucher mới
+          </button>
         </div>
 
-        {/* Filters Card */}
-        <Card padding={false} className="p-4 space-y-4">
+        {/* Filters Bar matching prototype */}
+        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4 space-y-3">
           {/* Status Tabs */}
-          <div className="flex items-center gap-2 border-b border-slate-100 pb-3 overflow-x-auto">
+          <div className="flex items-center gap-2 border-b border-gray-100 pb-3 overflow-x-auto">
             {statusTabs.map((tab) => {
               const count =
                 tab.key === "All"
@@ -119,7 +127,7 @@ export function VoucherListPage() {
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
                     selectedStatusTab === tab.key
                       ? "bg-blue-600 text-white shadow-xs"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
                   {tab.label} ({count})
@@ -128,24 +136,24 @@ export function VoucherListPage() {
             })}
           </div>
 
-          {/* Search & Category Filter */}
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="relative flex-1 w-full">
+          {/* Search & Category Select Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="relative sm:col-span-2">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Tìm kiếm Voucher theo tên..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <span className="absolute left-3 top-2.5 text-slate-400 text-sm">🔍</span>
             </div>
 
-            <div className="w-full md:w-64">
+            <div>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-3.5 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
               >
                 <option value="All">Tất cả danh mục</option>
                 {categories.map((c) => {
@@ -159,47 +167,62 @@ export function VoucherListPage() {
               </select>
             </div>
           </div>
-        </Card>
+
+          {/* Filter Footer */}
+          <div className="flex items-center justify-between pt-1">
+            <p className="text-sm text-gray-500">{filteredVouchers.length} voucher</p>
+            <button
+              onClick={handleResetFilters}
+              className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1 cursor-pointer"
+            >
+              <X size={14} /> Đặt lại
+            </button>
+          </div>
+        </div>
 
         {/* Voucher Table */}
-        <Card padding={false}>
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-xs">
           {loading ? (
-            <div className="p-12 text-center text-slate-400">Đang tải danh sách voucher...</div>
+            <div className="p-12 text-center text-gray-400">Đang tải danh sách voucher...</div>
           ) : filteredVouchers.length === 0 ? (
-            <div className="p-12 text-center text-slate-400">Không tìm thấy Voucher nào phù hợp với bộ lọc.</div>
+            <div className="flex flex-col items-center py-16 text-gray-400">
+              <Tag size={40} className="mb-2 text-gray-300" />
+              <p className="text-sm">Không tìm thấy Voucher nào phù hợp với bộ lọc.</p>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  <tr className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     <th className="py-3.5 px-4">Voucher</th>
                     <th className="py-3.5 px-4">Trạng thái duyệt</th>
                     <th className="py-3.5 px-4">Trạng thái công bố</th>
                     <th className="py-3.5 px-4">Giá bán / Giá gốc</th>
                     <th className="py-3.5 px-4">Đã bán / Tồn kho</th>
                     <th className="py-3.5 px-4">Thời gian bán</th>
+                    <th className="py-3.5 px-4 text-right">Thao tác</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-sm">
+                <tbody className="divide-y divide-gray-100 text-sm">
                   {filteredVouchers.map((v) => {
                     return (
-                      <tr key={v.ma_voucher} className="hover:bg-slate-50/80 transition-colors">
+                      <tr key={v.ma_voucher} className="hover:bg-gray-50 transition-colors">
                         {/* Column 1: Image & Title */}
                         <td className="py-4 px-4">
                           <div className="flex items-center gap-3">
                             <img
                               src={v.hinh_anh_url}
                               alt={v.ten_voucher}
-                              className="w-14 h-14 object-cover rounded-lg border border-slate-200 shrink-0"
+                              className="w-12 h-12 object-cover rounded-lg border border-gray-200 shrink-0"
                             />
                             <div>
                               <Link
                                 to={`/partner/vouchers/${v.ma_voucher}`}
-                                className="font-bold text-slate-900 hover:text-blue-600 line-clamp-1"
+                                className="font-bold text-gray-900 hover:text-blue-600 line-clamp-1"
                               >
                                 {v.ten_voucher}
                               </Link>
-                              <div className="text-xs text-slate-400 mt-0.5">{v.ten_danh_muc}</div>
+                              <div className="text-xs text-gray-400 mt-0.5">{v.ten_danh_muc}</div>
                             </div>
                           </div>
                         </td>
@@ -217,15 +240,15 @@ export function VoucherListPage() {
                         {/* Column 4: Price */}
                         <td className="py-4 px-4 whitespace-nowrap">
                           <div className="font-bold text-emerald-600">{v.gia_ban?.toLocaleString()}đ</div>
-                          <div className="text-xs text-slate-400 line-through">{v.gia_goc?.toLocaleString()}đ</div>
+                          <div className="text-xs text-gray-400 line-through">{v.gia_goc?.toLocaleString()}đ</div>
                         </td>
 
                         {/* Column 5: Sales Stock */}
                         <td className="py-4 px-4 whitespace-nowrap">
-                          <div className="font-semibold text-slate-800">
+                          <div className="font-semibold text-gray-800">
                             {v.so_luong_da_ban} / {v.so_luong_phat_hanh}
                           </div>
-                          <div className="w-24 bg-slate-100 rounded-full h-1.5 mt-1 overflow-hidden">
+                          <div className="w-24 bg-gray-100 rounded-full h-1.5 mt-1 overflow-hidden">
                             <div
                               className="bg-blue-600 h-1.5 rounded-full"
                               style={{
@@ -238,16 +261,20 @@ export function VoucherListPage() {
                           </div>
                         </td>
 
-                        {/* Column 6: Selling Time (Thời gian bán) */}
-                        <td className="py-4 px-4 whitespace-nowrap text-xs text-slate-600">
-                          <div>
-                            <span className="text-slate-400">Từ: </span>
-                            <span className="font-semibold text-slate-800">{formatDate(v.tg_bat_dau_ban)}</span>
-                          </div>
-                          <div className="mt-0.5">
-                            <span className="text-slate-400">Đến: </span>
-                            <span className="font-semibold text-slate-800">{formatDate(v.tg_ket_thuc_ban)}</span>
-                          </div>
+                        {/* Column 6: Selling Time */}
+                        <td className="py-4 px-4 whitespace-nowrap text-xs text-gray-600 font-mono">
+                          <div>From: {formatDate(v.tg_bat_dau_ban)}</div>
+                          <div>To: {formatDate(v.tg_ket_thuc_ban)}</div>
+                        </td>
+
+                        {/* Column 7: Action */}
+                        <td className="py-4 px-4 text-right whitespace-nowrap">
+                          <Link
+                            to={`/partner/vouchers/${v.ma_voucher}`}
+                            className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 font-semibold hover:bg-blue-50 px-2.5 py-1 rounded-lg transition-colors"
+                          >
+                            <Eye size={14} /> Chi tiết
+                          </Link>
                         </td>
                       </tr>
                     );
@@ -256,7 +283,7 @@ export function VoucherListPage() {
               </table>
             </div>
           )}
-        </Card>
+        </div>
 
         <Toast message={toastMessage} onClose={() => setToastMessage("")} />
       </div>
