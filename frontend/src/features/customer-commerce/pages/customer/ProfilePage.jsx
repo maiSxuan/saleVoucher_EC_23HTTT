@@ -11,7 +11,7 @@ function PwField({ label, value, onChange, placeholder }) {
   const [show, setShow] = useState(false);
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-600 mb-1">
+      <label className="block text-sm font-medium text-gray-600 mb-1">
         {label}
       </label>
       <div className="relative">
@@ -20,7 +20,7 @@ function PwField({ label, value, onChange, placeholder }) {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full border border-gray-200 rounded-xl px-3 py-2.5 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
+          className="w-full border border-gray-200 rounded-xl px-3 py-2.5 pr-9 text-base focus:outline-none focus:ring-2 focus:ring-orange-300"
         />
         <button
           type="button"
@@ -98,13 +98,13 @@ export default function ProfilePage() {
 
   if (loading)
     return (
-      <div className="py-16 text-center text-gray-400 text-sm">
+      <div className="py-16 text-center text-gray-400 text-base">
         Đang tải hồ sơ...
       </div>
     );
   if (errorMsg)
     return (
-      <div className="py-16 text-center text-red-500 text-sm">{errorMsg}</div>
+      <div className="py-16 text-center text-red-500 text-base">{errorMsg}</div>
     );
   if (!profile) return null;
 
@@ -114,35 +114,35 @@ export default function ProfilePage() {
         Tài khoản của tôi
       </h1>
 
-      <div className="flex bg-white border border-gray-200 rounded-xl p-1 mb-5">
+      <div className="flex bg-white border border-gray-300 rounded-xl p-1 mb-5">
         <button
           onClick={() => setTab("info")}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-colors ${tab === "info" ? "bg-orange-500 text-white shadow-sm" : "text-gray-600"}`}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-base font-medium transition-colors ${tab === "info" ? "bg-orange-500 text-white shadow-sm" : "text-gray-600"}`}
         >
-          <User size={14} /> Hồ sơ cá nhân
+          <User size={18} /> Hồ sơ cá nhân
         </button>
         <button
           onClick={() => setTab("password")}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-colors ${tab === "password" ? "bg-orange-500 text-white shadow-sm" : "text-gray-600"}`}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-base font-medium transition-colors ${tab === "password" ? "bg-orange-500 text-white shadow-sm" : "text-gray-600"}`}
         >
-          <Lock size={14} /> Đổi mật khẩu
+          <Lock size={18} /> Đổi mật khẩu
         </button>
       </div>
 
       {tab === "info" && (
-        <div className="bg-white rounded-xl border border-gray-100 p-4 space-y-3">
+        <div className="bg-white rounded-xl border border-gray-300 p-5 space-y-3">
           <div className="flex flex-col items-center mb-4">
             <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center mb-2">
               <User size={28} className="text-orange-500" />
             </div>
-            <p className="text-sm font-semibold text-gray-900">
+            <p className="text-base font-semibold text-gray-900">
               {profile.ho_ten}
             </p>
-            <p className="text-xs text-gray-400">{profile.email}</p>
+            <p className="text-sm text-gray-500">{profile.email}</p>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
+            <label className="block text-sm font-medium text-gray-600 mb-1">
               Họ và tên <span className="text-red-500">*</span>
             </label>
             <input
@@ -150,15 +150,15 @@ export default function ProfilePage() {
               onChange={(e) =>
                 setProfile((p) => ({ ...p, ho_ten: e.target.value }))
               }
-              className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 ${fieldErrors.ho_ten ? "border-red-300" : "border-gray-200"}`}
+              className={`w-full border rounded-xl px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-orange-300 ${fieldErrors.ho_ten ? "border-red-300" : "border-gray-300"}`}
             />
             {fieldErrors.ho_ten && (
-              <p className="text-xs text-red-500 mt-1">{fieldErrors.ho_ten}</p>
+              <p className="text-sm text-red-500 mt-1">{fieldErrors.ho_ten}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
+            <label className="block text-sm font-medium text-gray-600 mb-1">
               Email <span className="text-red-500">*</span>
             </label>
             <input
@@ -167,15 +167,15 @@ export default function ProfilePage() {
               onChange={(e) =>
                 setProfile((p) => ({ ...p, email: e.target.value }))
               }
-              className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 ${fieldErrors.email ? "border-red-300" : "border-gray-200"}`}
+              className={`w-full border rounded-xl px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-orange-300 ${fieldErrors.email ? "border-red-300" : "border-gray-300"}`}
             />
             {fieldErrors.email && (
-              <p className="text-xs text-red-500 mt-1">{fieldErrors.email}</p>
+              <p className="text-sm text-red-500 mt-1">{fieldErrors.email}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
+            <label className="block text-sm font-medium text-gray-600 mb-1">
               Số điện thoại <span className="text-red-500">*</span>
             </label>
             <input
@@ -184,15 +184,15 @@ export default function ProfilePage() {
               onChange={(e) =>
                 setProfile((p) => ({ ...p, sdt: e.target.value }))
               }
-              className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 ${fieldErrors.sdt ? "border-red-300" : "border-gray-200"}`}
+              className={`w-full border rounded-xl px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-orange-300 ${fieldErrors.sdt ? "border-red-300" : "border-gray-300"}`}
             />
             {fieldErrors.sdt && (
-              <p className="text-xs text-red-500 mt-1">{fieldErrors.sdt}</p>
+              <p className="text-sm text-red-500 mt-1">{fieldErrors.sdt}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
+            <label className="block text-sm font-medium text-gray-600 mb-1">
               Ngày sinh
             </label>
             <input
@@ -201,12 +201,12 @@ export default function ProfilePage() {
               onChange={(e) =>
                 setProfile((p) => ({ ...p, ngay_sinh: e.target.value }))
               }
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
+              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-orange-300"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
+            <label className="block text-sm font-medium text-gray-600 mb-1">
               Giới tính
             </label>
             <select
@@ -214,7 +214,7 @@ export default function ProfilePage() {
               onChange={(e) =>
                 setProfile((p) => ({ ...p, gioi_tinh: e.target.value }))
               }
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"
+              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"
             >
               <option value="">-- Chọn --</option>
               <option value="Nam">Nam</option>
@@ -226,7 +226,7 @@ export default function ProfilePage() {
           <button
             onClick={handleSaveProfile}
             disabled={saving}
-            className="w-full flex items-center justify-center gap-2 bg-orange-500 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-orange-600 disabled:opacity-50 mt-2"
+            className="w-full flex items-center justify-center gap-2 bg-orange-500 text-white py-2.5 rounded-xl font-semibold text-base hover:bg-orange-600 disabled:opacity-50 mt-2"
           >
             <Save size={15} /> {saving ? "Đang lưu..." : "Lưu thay đổi"}
           </button>
@@ -245,7 +245,7 @@ export default function ProfilePage() {
             label="Mật khẩu mới *"
             value={newPw}
             onChange={setNewPw}
-            placeholder="Tối thiểu 8 ký tự"
+            placeholder="Tối thiểu 6 ký tự"
           />
           <PwField
             label="Xác nhận mật khẩu mới *"
@@ -255,7 +255,7 @@ export default function ProfilePage() {
           />
 
           {pwError && (
-            <div className="flex items-center gap-2 text-red-600 text-xs bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">
               <AlertCircle size={12} /> {pwError}
             </div>
           )}
@@ -263,7 +263,7 @@ export default function ProfilePage() {
           <button
             onClick={handleChangePassword}
             disabled={changingPw}
-            className="w-full flex items-center justify-center gap-2 bg-orange-500 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-orange-600 disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 bg-orange-500 text-white py-2.5 rounded-xl font-semibold text-base hover:bg-orange-600 disabled:opacity-50"
           >
             <Lock size={15} /> {changingPw ? "Đang xử lý..." : "Đổi mật khẩu"}
           </button>

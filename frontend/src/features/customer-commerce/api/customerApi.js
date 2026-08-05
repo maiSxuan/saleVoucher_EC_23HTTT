@@ -19,14 +19,14 @@ async function handleResponse(res) {
 }
 
 export async function fetchProfile() {
-  const res = await fetch(`${BASE_URL}/customers/profile`, {
+  const res = await fetch(`${BASE_URL}/customer/profile`, {
     headers: authHeaders(),
   });
   return handleResponse(res);
 }
 
 export async function updateProfile(data) {
-  const res = await fetch(`${BASE_URL}/customers/profile`, {
+  const res = await fetch(`${BASE_URL}/customer/profile`, {
     method: "PATCH",
     headers: authHeaders(),
     body: JSON.stringify(data),
@@ -35,7 +35,7 @@ export async function updateProfile(data) {
 }
 
 export async function changePassword(data) {
-  const res = await fetch(`${BASE_URL}/customers/profile/password`, {
+  const res = await fetch(`${BASE_URL}/customer/profile/password`, {
     method: "PATCH",
     headers: authHeaders(),
     body: JSON.stringify(data),
