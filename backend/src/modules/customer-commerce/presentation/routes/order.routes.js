@@ -17,23 +17,10 @@ router.post(
   authenticateMiddleware,
   controller.review.bind(controller),
 );
-
 router.post(
   "/:id/cancel",
   authenticateMiddleware,
   controller.cancel.bind(controller),
-);
-
-router.post(
-  "/vnpay-return",
-  authenticateMiddleware,
-  controller.vnpayReturn.bind(controller),
-);
-router.get("/vnpay-ipn", controller.vnpayIpn.bind(controller));
-router.post(
-  "/paypal-return",
-  authenticateMiddleware,
-  controller.paypalReturn.bind(controller),
 );
 
 module.exports = router;

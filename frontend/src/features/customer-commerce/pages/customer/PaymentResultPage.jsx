@@ -1,19 +1,26 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle, XCircle, Loader } from "lucide-react";
 import {
   finalizeVnpayReturn,
   finalizePaypalReturn,
-  cancelOrder,
-} from "../../api/orderApi";
+} from "../../api/paymentApi";
+import { cancelOrder } from "../../api/orderApi";
 
-export default function PaymentReturnPage() {
+export default function PaymentResultPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState("processing");
   const [orderId, setOrderId] = useState(null);
 
+  // 1. Thêm ref để chặn gọi API trùng lặp
+  const isCalledRef = useRef(false);
+
   useEffect(() => {
+    // Nếu đã gọi API 1 lần rồi thì bỏ qua lần chạy thứ 2 của Strict Mode
+    if (isCalledRef.current) return;
+    isCalledRef.current = true;
+
     const isPaypal = searchParams.has("token");
     const run = isPaypal
       ? finalizePaypalReturn(searchParams.get("token"))
@@ -26,10 +33,7 @@ export default function PaymentReturnPage() {
           setStatus("success");
         } else {
           setStatus("failed");
-          // Đơn đã tạo nhưng thanh toán thất bại -> hủy để giải phóng voucher/tồn kho
-          cancelOrder(res.orderId).catch(() => {
-            // best-effort, không cần chặn UI nếu cancel lỗi
-          });
+          cancelOrder(res.orderId).catch(() => {});
         }
       })
       .catch(() => setStatus("failed"));

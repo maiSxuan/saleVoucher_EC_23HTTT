@@ -42,23 +42,3 @@ export async function cancelOrder(orderId) {
   });
   return handleResponse(res);
 }
-
-export async function finalizeVnpayReturn(queryParams) {
-  const res = await fetch(
-    `${BASE_URL}/orders/vnpay-return?${new URLSearchParams(queryParams).toString()}`,
-    {
-      method: "POST",
-      headers: authHeaders(),
-    },
-  );
-  return handleResponse(res);
-}
-
-export async function finalizePaypalReturn(token) {
-  const res = await fetch(`${BASE_URL}/orders/paypal-return`, {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify({ token }),
-  });
-  return handleResponse(res);
-}

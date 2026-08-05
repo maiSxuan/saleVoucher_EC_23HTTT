@@ -18,10 +18,10 @@ class OrderRepository {
     return data;
   }
 
-  async updateStatus(orderId, trangThai) {
+  async updateStatus(orderId, status) {
     const { error } = await supabase
       .from("donhang")
-      .update({ trang_thai: trangThai })
+      .update({ trang_thai: status })
       .eq("ma_dh", orderId);
     if (error) {
       const err = new Error("Không thể cập nhật trạng thái đơn hàng");

@@ -36,7 +36,7 @@ import VoucherSearchPage from "../features/customer-commerce/pages/customer/Vouc
 import VoucherDetailPage from "../features/customer-commerce/pages/customer/VoucherDetailPage";
 import CartPage from "../features/customer-commerce/pages/customer/CartPage";
 import CheckoutPage from "../features/customer-commerce/pages/customer/CheckoutPage";
-import PaymentReturnPage from "../features/customer-commerce/pages/customer/PaymentReturnPage";
+import PaymentResultPage from "../features/customer-commerce/pages/customer/PaymentResultPage";
 import MyOrdersPage from "../features/customer-commerce/pages/customer/MyOrdersPage";
 import ProfilePage from "../features/customer-commerce/pages/customer/ProfilePage";
 
@@ -90,12 +90,10 @@ const router = createBrowserRouter([
     path: "/",
     element: <App />,
     children: [
-      // Mở ứng dụng tại trang đăng nhập
       { index: true, element: <Navigate to="/login" replace /> },
 
-      // CUSTOMER ROUTES
       {
-        path: "customer",
+        path: "/customer",
         element: <ProtectedRoute allowedRoles={["CUSTOMER"]} />,
         children: [
           {
@@ -119,7 +117,7 @@ const router = createBrowserRouter([
               },
               {
                 path: "checkout/return",
-                element: <PaymentReturnPage />,
+                element: <PaymentResultPage />,
               },
               {
                 path: "orders",
