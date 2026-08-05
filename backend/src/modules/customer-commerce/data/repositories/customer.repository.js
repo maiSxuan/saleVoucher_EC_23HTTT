@@ -48,6 +48,75 @@ class CustomerRepository {
     }
     return { user, account };
   }
+
+  async findProfileById(userId) {
+    const { data, error } = await supabase
+      .from("nguoidung")
+      .select("ma_nguoi_dung, ho_ten, email, sdt, ngay_sinh, gioi_tinh")
+      .eq("ma_nguoi_dung", userId)
+      .maybeSingle();
+    if (error) {
+      const err = new Error("Không thể truy xuất hồ sơ khách hàng"); // E1
+      err.status = 500;
+      throw err;
+    }
+    return data;
+  }
+
+  async findByEmailOrPhoneExcludingSelf({ email, sdt, userId }) {
+    const { data, error } = await supabase
+      .from("nguoidung")
+      .select("ma_nguoi_dung, email, sdt")
+      .neq("ma_nguoi_dung", userId)
+      .or(`email.eq.${email},sdt.eq.${sdt}`);
+    if (error) {
+      const err = new Error("Không thể kiểm tra dữ liệu hồ sơ");
+      err.status = 500;
+      throw err;
+    }
+    return data || [];
+  }
+
+  async updateProfile(userId, { ho_ten, email, sdt, ngay_sinh, gioi_tinh }) {
+    const { data, error } = await supabase
+      .from("nguoidung")
+      .update({ ho_ten, email, sdt, ngay_sinh, gioi_tinh })
+      .eq("ma_nguoi_dung", userId)
+      .select("ma_nguoi_dung, ho_ten, email, sdt, ngay_sinh, gioi_tinh")
+      .single();
+    if (error) {
+      const err = new Error("Không thể cập nhật hồ sơ"); // E2
+      err.status = 500;
+      throw err;
+    }
+    return data;
+  }
+
+  async findAccountByUserId(userId) {
+    const { data, error } = await supabase
+      .from("taikhoan")
+      .select("ma_tk, mat_khau")
+      .eq("ma_nguoi_dung", userId)
+      .maybeSingle();
+    if (error) {
+      const err = new Error("Không thể truy xuất tài khoản");
+      err.status = 500;
+      throw err;
+    }
+    return data;
+  }
+
+  async updatePassword(accountId, hashedPassword) {
+    const { error } = await supabase
+      .from("taikhoan")
+      .update({ mat_khau: hashedPassword })
+      .eq("ma_tk", accountId);
+    if (error) {
+      const err = new Error("Không thể đổi mật khẩu");
+      err.status = 500;
+      throw err;
+    }
+  }
 }
 
 module.exports = new CustomerRepository();

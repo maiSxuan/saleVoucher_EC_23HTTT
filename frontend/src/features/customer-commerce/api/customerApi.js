@@ -1,0 +1,44 @@
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+
+function authHeaders() {
+  const token = localStorage.getItem("accessToken");
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+async function handleResponse(res) {
+  const json = await res.json().catch(() => null);
+  if (!res.ok) {
+    const err = new Error(json?.message || "Có lỗi xảy ra");
+    err.details = json?.details;
+    throw err;
+  }
+  return json.data;
+}
+
+export async function fetchProfile() {
+  const res = await fetch(`${BASE_URL}/customers/profile`, {
+    headers: authHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function updateProfile(data) {
+  const res = await fetch(`${BASE_URL}/customers/profile`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse(res);
+}
+
+export async function changePassword(data) {
+  const res = await fetch(`${BASE_URL}/customers/profile/password`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse(res);
+}
