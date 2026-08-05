@@ -4,7 +4,7 @@ import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
 import Toast from "../../../../shared/components/Toast";
 import Modal from "../../../../shared/components/Modal";
-import { registerPartnerAccountApi, registerPartnerProfileApi } from "../../../../shared/api/partnerApi";
+import { registerPartnerAccountApi, registerPartnerProfileApi, checkTaxCodeApi } from "../../../../shared/api/partnerApi";
 
 export function PartnerRegisterPage() {
   const navigate = useNavigate();
@@ -32,6 +32,8 @@ export function PartnerRegisterPage() {
     sdt: "",
     email: "",
     cccd: "",
+    ngay_sinh: "1990-01-01",
+    gioi_tinh: "Nam",
 
     // Step 4: Business License
     giay_phep_kinh_doanh: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80",
@@ -89,6 +91,7 @@ export function PartnerRegisterPage() {
       if (!formData.ho_ten.trim()) newErrors.ho_ten = "Họ tên người đại diện không được để trống";
       if (!formData.sdt.trim()) newErrors.sdt = "Số điện thoại liên hệ không được để trống";
       if (!formData.email.trim()) newErrors.email = "Email liên hệ không được để trống";
+      if (!formData.ngay_sinh) newErrors.ngay_sinh = "Ngày sinh người đại diện không được để trống";
     } else if (step === 5) {
       if (!formData.ten_chi_nhanh.trim()) newErrors.ten_chi_nhanh = "Tên chi nhánh không được để trống";
       if (!formData.dia_chi_cn.trim()) newErrors.dia_chi_cn = "Địa chỉ chi nhánh không được để trống";
@@ -134,6 +137,19 @@ export function PartnerRegisterPage() {
       return;
     }
 
+    // Step 2: Check Tax Code Uniqueness immediately
+    if (currentStep === 2) {
+      setLoading(true);
+      try {
+        await checkTaxCodeApi(formData.ma_so_thue);
+      } catch (err) {
+        setErrors((prev) => ({ ...prev, ma_so_thue: err.message }));
+        setLoading(false);
+        return;
+      }
+      setLoading(false);
+    }
+
     setCurrentStep((prev) => Math.min(prev + 1, 6));
   };
 
@@ -154,6 +170,8 @@ export function PartnerRegisterPage() {
         sdt: formData.sdt,
         email: formData.email,
         cccd: formData.cccd,
+        ngay_sinh: formData.ngay_sinh,
+        gioi_tinh: formData.gioi_tinh,
         ten_chi_nhanh: formData.ten_chi_nhanh,
         khu_vuc: formData.khu_vuc,
         dia_chi_cn: formData.dia_chi_cn,
@@ -400,15 +418,43 @@ export function PartnerRegisterPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Số CCCD / Hộ chiếu</label>
-                <input
-                  type="text"
-                  value={formData.cccd}
-                  onChange={(e) => handleInputChange("cccd", e.target.value)}
-                  placeholder="079090123456"
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Số CCCD / Hộ chiếu</label>
+                  <input
+                    type="text"
+                    value={formData.cccd}
+                    onChange={(e) => handleInputChange("cccd", e.target.value)}
+                    placeholder="079090123456"
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Ngày sinh <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.ngay_sinh}
+                    onChange={(e) => handleInputChange("ngay_sinh", e.target.value)}
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                  {errors.ngay_sinh && <p className="text-xs text-rose-600 mt-1">{errors.ngay_sinh}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Giới tính</label>
+                  <select
+                    value={formData.gioi_tinh}
+                    onChange={(e) => handleInputChange("gioi_tinh", e.target.value)}
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                  >
+                    <option value="Nam">Nam</option>
+                    <option value="Nu">Nữ</option>
+                    <option value="Khac">Khác</option>
+                  </select>
+                </div>
               </div>
             </div>
           )}
@@ -544,9 +590,15 @@ export function PartnerRegisterPage() {
                   <span className="font-semibold text-slate-900">{formData.ho_ten || "Chưa nhập"}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 border-b border-slate-200 pb-2">
-                  <span className="text-slate-500">SĐT / Email:</span>
+                  <span className="text-slate-500">SĐT / Email người đại diện:</span>
                   <span className="font-semibold text-slate-900">
                     {formData.sdt} - {formData.email}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 border-b border-slate-200 pb-2">
+                  <span className="text-slate-500">CCCD / Ngày sinh / Giới tính:</span>
+                  <span className="font-semibold text-slate-900">
+                    {formData.cccd || "Chưa nhập"} | {formData.ngay_sinh || "Chưa nhập"} | {formData.gioi_tinh === "Nu" ? "Nữ" : formData.gioi_tinh === "Nam" ? "Nam" : "Khác"}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">

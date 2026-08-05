@@ -1,37 +1,62 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import Card from "../../../../shared/components/Card";
-import Button from "../../../../shared/components/Button";
-import Badge from "../../../../shared/components/Badge";
-import Modal from "../../../../shared/components/Modal";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  ArrowLeft,
+  Tag,
+  CheckCircle,
+  XCircle,
+  Calendar,
+  DollarSign,
+  MapPin,
+  Info,
+} from "lucide-react";
 import Toast from "../../../../shared/components/Toast";
-import { getPartnerByIdApi, approvePartnerApi, rejectPartnerApi } from "../../../../shared/api/partnerApi";
+import {
+  getPartnerByIdApi,
+  approvePartnerApi,
+  rejectPartnerApi,
+} from "../../../../shared/api/partnerApi";
+
+const rejectReasons = [
+  "Giấy phép kinh doanh mờ hoặc không hợp lệ",
+  "Mã số thuế không tồn tại trên hệ thống Cục Thuế",
+  "Thông tin người đại diện mâu thuẫn",
+  "Thiếu thông tin chứng thực pháp lý",
+  "Khác",
+];
+
+const checklistItems = [
+  "Tên doanh nghiệp trùng khớp với đăng ký kinh doanh",
+  "Mã số thuế hợp lệ và duy nhất",
+  "Địa chỉ trụ sở chính rõ ràng",
+  "Thông tin người đại diện đầy đủ (Họ tên, CCCD, Email, SĐT)",
+  "Giấy phép kinh doanh còn hiệu lực",
+  "Các chi nhánh đăng ký đủ điều kiện",
+];
 
 export function PartnerDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [partner, setPartner] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  const [activeTab, setActiveTab] = useState("profile"); // profile, rep, docs, branches
   const [toastMessage, setToastMessage] = useState("");
 
-  // Modals state
-  const [showApproveModal, setShowApproveModal] = useState(false);
-  const [approveReason, setApproveReason] = useState("Hồ sơ hợp lệ và đạt điều kiện pháp lý.");
-
-  const [showRejectModal, setShowRejectModal] = useState(false);
-  const [rejectReason, setRejectReason] = useState("");
-  const [rejectError, setRejectError] = useState("");
-
-  const [showLockModal, setShowLockModal] = useState(false);
-  const [lockReason, setLockReason] = useState("");
+  const [checklist, setChecklist] = useState({});
+  const [approveModal, setApproveModal] = useState(false);
+  const [rejectModal, setRejectModal] = useState(false);
+  const [selectedRejectReason, setSelectedRejectReason] = useState(rejectReasons[0]);
+  const [customRejectNote, setCustomRejectNote] = useState("");
 
   const loadPartner = async () => {
     setLoading(true);
-    const data = await getPartnerByIdApi(id);
-    setPartner(data);
-    setLoading(false);
+    try {
+      const data = await getPartnerByIdApi(id);
+      setPartner(data);
+    } catch (e) {
+      console.error("Error loading partner detail:", e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -46,306 +71,348 @@ export function PartnerDetailPage() {
     return <div className="p-12 text-center text-slate-500">Không tìm thấy hồ sơ đối tác.</div>;
   }
 
-  const handleApproveConfirm = async () => {
-    await approvePartnerApi(partner.ma_hs, approveReason);
-    setShowApproveModal(false);
-    setToastMessage("Đã phê duyệt đối tác thành công!");
-    await loadPartner();
+  const getPartnerStatusBadge = (status) => {
+    if (status === "Dang hoat dong" || status === "Hoat dong" || status === "Da duyet") {
+      return { label: "Đang hoạt động", color: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" };
+    }
+    if (status === "Tu choi") {
+      return { label: "Bị từ chối", color: "bg-rose-50 text-rose-700 border-rose-200", dot: "bg-rose-500" };
+    }
+    if (status === "Tam khoa") {
+      return { label: "Tạm khóa", color: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400" };
+    }
+    return { label: "Chờ duyệt", color: "bg-amber-50 text-amber-700 border-amber-200", dot: "bg-amber-500" };
   };
 
-  const handleRejectConfirm = async () => {
-    if (!rejectReason.trim()) {
-      setRejectError("Vui lòng nhập lý do từ chối cụ thể!");
-      return;
+  const sb = getPartnerStatusBadge(partner.trang_thai);
+
+  const toggleCheck = (item) => {
+    setChecklist((prev) => ({ ...prev, [item]: !prev[item] }));
+  };
+  const checkedCount = Object.values(checklist).filter(Boolean).length;
+
+  const handleApprove = async () => {
+    setLoading(true);
+    try {
+      await approvePartnerApi(partner.ma_hs);
+      setApproveModal(false);
+      setToastMessage("Phê duyệt đối tác thành công!");
+      await loadPartner();
+    } catch (e) {
+      setToastMessage("Phê duyệt thất bại: " + e.message);
+    } finally {
+      setLoading(false);
     }
-    await rejectPartnerApi(partner.ma_hs, rejectReason);
-    setShowRejectModal(false);
-    setToastMessage("Đã từ chối hồ sơ đối tác.");
-    await loadPartner();
   };
 
-  const handleLockConfirm = async () => {
-    if (!lockReason.trim()) {
-      alert("Vui lòng nhập lý do khóa/mở khóa!");
-      return;
+  const handleReject = async () => {
+    const finalReason = customRejectNote.trim()
+      ? `${selectedRejectReason}: ${customRejectNote}`
+      : selectedRejectReason;
+
+    setLoading(true);
+    try {
+      await rejectPartnerApi(partner.ma_hs, finalReason);
+      setRejectModal(false);
+      setToastMessage("Đã từ chối hồ sơ đối tác.");
+      await loadPartner();
+    } catch (e) {
+      setToastMessage("Từ chối thất bại: " + e.message);
+    } finally {
+      setLoading(false);
     }
-    setShowLockModal(false);
-    setToastMessage("Cập nhật trạng thái đối tác thành công.");
-    await loadPartner();
   };
+
+  const activeBranches = (partner.branches || []).filter(
+    (b) => b.trang_thai === "Dang hoat dong" || b.trang_thai === "Hoat dong" || b.trang_thai === "Da duyet"
+  );
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header Breadcrumb */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <Link to="/admin/partners" className="hover:underline">
-              Quản lý đối tác
-            </Link>
-            <span>/</span>
-            <span className="font-semibold text-slate-900">{partner.ten_dn}</span>
-          </div>
+    <div className="p-6 max-w-6xl mx-auto space-y-4">
+      {/* Back Button */}
+      <button
+        onClick={() => navigate("/admin/partners")}
+        className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 font-medium transition-colors cursor-pointer"
+      >
+        <ArrowLeft size={16} /> Quay lại danh sách đối tác
+      </button>
 
-          <Badge status={partner.trang_thai} />
-        </div>
-
-        {/* Main Grid: Left Tabs (70%) + Right Action Panel (30%) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Content Column */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Tab Navigation Header */}
-            <div className="flex items-center gap-4 border-b border-slate-200 bg-white p-2 rounded-xl shadow-xs">
-              <button
-                onClick={() => setActiveTab("profile")}
-                className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
-                  activeTab === "profile" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                Thông tin DN
-              </button>
-              <button
-                onClick={() => setActiveTab("rep")}
-                className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
-                  activeTab === "rep" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                Người đại diện
-              </button>
-              <button
-                onClick={() => setActiveTab("docs")}
-                className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
-                  activeTab === "docs" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                Giấy phép KD
-              </button>
-              <button
-                onClick={() => setActiveTab("branches")}
-                className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
-                  activeTab === "branches" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                Chi nhánh ({partner.branches?.length || 0})
-              </button>
+      {/* Header Card */}
+      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xl border border-blue-100 shrink-0">
+              🏢
             </div>
-
-            {/* TAB 1: Business Profile */}
-            {activeTab === "profile" && (
-              <Card title="Hồ Sơ Pháp Lý Doanh Nghiệp">
-                <div className="space-y-4 text-sm">
-                  <div className="grid grid-cols-2 gap-4 border-b pb-3 border-slate-100">
-                    <span className="text-slate-500">Tên doanh nghiệp:</span>
-                    <span className="font-bold text-slate-900">{partner.ten_dn}</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 border-b pb-3 border-slate-100">
-                    <span className="text-slate-500">Mã số thuế / MST:</span>
-                    <span className="font-mono font-bold text-slate-900">{partner.ma_so_thue}</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 border-b pb-3 border-slate-100">
-                    <span className="text-slate-500">Địa chỉ đăng ký:</span>
-                    <span className="font-medium text-slate-800">{partner.dia_chi}</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <span className="text-slate-500">Ngày nộp hồ sơ:</span>
-                    <span className="font-medium text-slate-800">
-                      {new Date(partner.ngay_tao).toLocaleString("vi-VN")}
-                    </span>
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            {/* TAB 2: Representative */}
-            {activeTab === "rep" && (
-              <Card title="Người Đại Diện Pháp Luật">
-                <div className="space-y-4 text-sm">
-                  <div className="grid grid-cols-2 gap-4 border-b pb-3 border-slate-100">
-                    <span className="text-slate-500">Họ và tên:</span>
-                    <span className="font-bold text-slate-900">{partner.nguoi_dai_dien?.ho_ten}</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 border-b pb-3 border-slate-100">
-                    <span className="text-slate-500">Số điện thoại:</span>
-                    <span className="font-medium text-slate-900">{partner.nguoi_dai_dien?.sdt}</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 border-b pb-3 border-slate-100">
-                    <span className="text-slate-500">Email:</span>
-                    <span className="font-medium text-slate-900">{partner.nguoi_dai_dien?.email}</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <span className="text-slate-500">Số CCCD / Hộ chiếu:</span>
-                    <span className="font-mono font-bold text-slate-900">{partner.nguoi_dai_dien?.cccd}</span>
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            {/* TAB 3: Documents */}
-            {activeTab === "docs" && (
-              <Card title="Tài Liệu Giấy Phép Đăng Ký Kinh Doanh">
-                <div className="space-y-4">
-                  <img
-                    src={partner.giay_phep_kinh_doanh}
-                    alt="Giấy phép kinh doanh"
-                    className="w-full max-h-96 object-contain rounded-lg border border-slate-200 bg-slate-900/5"
-                  />
-                  <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
-                    <span>Xác thực tính pháp lý tài liệu scan từ Cục quản lý ĐKKD</span>
-                    <a
-                      href={partner.giay_phep_kinh_doanh}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-blue-600 font-bold hover:underline"
-                    >
-                      🔗 Tải xuống tệp gốc
-                    </a>
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            {/* TAB 4: Branches */}
-            {activeTab === "branches" && (
-              <Card title="Danh Sách Chi Nhánh">
-                <div className="space-y-4">
-                  <div className="divide-y divide-slate-100">
-                    {(partner.branches || []).map((b) => (
-                      <div key={b.ma_chi_nhanh} className="py-3 flex items-center justify-between">
-                        <div>
-                          <div className="font-bold text-slate-900">{b.ten_chi_nhanh}</div>
-                          <div className="text-xs text-slate-500">📍 {b.dia_chi} ({b.khu_vuc})</div>
-                        </div>
-                        <Badge status={b.trang_thai} size="sm" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </Card>
-            )}
-          </div>
-
-          {/* Right Column: Admin Action Panel */}
-          <div className="space-y-6">
-            <Card title="Bảng Hành Động Quản Trị">
-              <div className="space-y-3">
-                <div className="text-xs text-slate-500">
-                  Trạng thái hiện tại: <strong className="text-slate-900">{partner.trang_thai}</strong>
-                </div>
-
-                <div className="space-y-2 pt-2">
-                  <Button
-                    variant="success"
-                    className="w-full justify-center"
-                    icon="✓"
-                    onClick={() => setShowApproveModal(true)}
-                  >
-                    Duyệt đối tác
-                  </Button>
-
-                  <Button
-                    variant="danger"
-                    className="w-full justify-center"
-                    icon="✕"
-                    onClick={() => setShowRejectModal(true)}
-                  >
-                    Từ chối hồ sơ
-                  </Button>
-
-                  <Button
-                    variant="secondary"
-                    className="w-full justify-center"
-                    icon="🔒"
-                    onClick={() => setShowLockModal(true)}
-                  >
-                    {partner.trang_thai === "Tam khoa" ? "Mở khóa đối tác" : "Tạm khóa đối tác"}
-                  </Button>
-                </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">{partner.ten_dn}</h2>
+              <div className="flex flex-wrap gap-2 mt-1.5 items-center">
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${sb.color}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${sb.dot}`} />
+                  {sb.label}
+                </span>
+                <span className="text-xs font-mono text-slate-500 font-medium">MST: {partner.ma_so_thue}</span>
+                <span className="text-xs text-slate-400 font-mono">
+                  Đăng ký: {partner.ngay_tao ? partner.ngay_tao.slice(0, 10) : "2025-10-21"}
+                </span>
               </div>
-            </Card>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setApproveModal(true)}
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors cursor-pointer shadow-xs"
+            >
+              <CheckCircle size={14} /> Duyệt đối tác
+            </button>
+            <button
+              onClick={() => setRejectModal(true)}
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors cursor-pointer shadow-xs"
+            >
+              <XCircle size={14} /> Từ chối
+            </button>
           </div>
         </div>
 
-        {/* Modal Approve Partner */}
-        <Modal
-          isOpen={showApproveModal}
-          onClose={() => setShowApproveModal(false)}
-          onConfirm={handleApproveConfirm}
-          title="Xác Nhận Phê Duyệt Hồ Sơ Đối Tác"
-          confirmText="Xác nhận duyệt"
-          confirmVariant="success"
-        >
-          <div className="space-y-3 text-left">
-            <p className="text-sm text-slate-700">
-              Bằng cách phê duyệt đối tác <strong>{partner.ten_dn}</strong>, tài khoản và các chi nhánh thuộc đối tác sẽ được kích hoạt trạng thái <strong>"Đang hoạt động"</strong> và có quyền đăng bán Voucher trên hệ thống.
-            </p>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Ghi chú / Lý do duyệt:</label>
-              <textarea
-                rows="2"
-                value={approveReason}
-                onChange={(e) => setApproveReason(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg text-sm border-slate-300 focus:outline-none"
-              ></textarea>
-            </div>
+        {partner.ly_do_tu_choi && (
+          <div className="mt-3 bg-slate-50 rounded-lg px-4 py-2.5 text-sm text-slate-700 border border-slate-200">
+            <strong>Ghi chú từ chối:</strong> {partner.ly_do_tu_choi}
           </div>
-        </Modal>
-
-        {/* Modal Reject Partner */}
-        <Modal
-          isOpen={showRejectModal}
-          onClose={() => setShowRejectModal(false)}
-          onConfirm={handleRejectConfirm}
-          title="Từ Chối Hồ Sơ Đối Tác"
-          confirmText="Từ chối hồ sơ"
-          confirmVariant="danger"
-        >
-          <div className="space-y-3 text-left">
-            <p className="text-sm text-rose-700 font-medium">
-              Vui lòng nhập chi tiết lý do từ chối để thông báo phản hồi về cho đối tác.
-            </p>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Lý do từ chối (Bắt buộc) <span className="text-rose-500">*</span>
-              </label>
-              <textarea
-                rows="3"
-                placeholder="Ví dụ: Giấy phép kinh doanh bị mờ, mã số thuế không khớp với Cục Thuế..."
-                value={rejectReason}
-                onChange={(e) => {
-                  setRejectReason(e.target.value);
-                  setRejectError("");
-                }}
-                className="w-full px-3 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-rose-500 focus:outline-none"
-              ></textarea>
-              {rejectError && <p className="text-xs text-rose-600 mt-1 font-semibold">{rejectError}</p>}
-            </div>
-          </div>
-        </Modal>
-
-        {/* Modal Lock/Unlock Partner */}
-        <Modal
-          isOpen={showLockModal}
-          onClose={() => setShowLockModal(false)}
-          onConfirm={handleLockConfirm}
-          title={partner.trang_thai === "Tam khoa" ? "Mở Khóa Đối Tác" : "Khóa Quyền Hoạt Động Đối Tác"}
-          confirmText="Xác nhận"
-          confirmVariant="danger"
-        >
-          <div className="space-y-3 text-left">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Lý do khóa / mở khóa (Bắt buộc):</label>
-              <textarea
-                rows="3"
-                placeholder="Nhập lý do chi tiết..."
-                value={lockReason}
-                onChange={(e) => setLockReason(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg text-sm border-slate-300 focus:outline-none"
-              ></textarea>
-            </div>
-          </div>
-        </Modal>
-
-        <Toast message={toastMessage} onClose={() => setToastMessage("")} />
+        )}
       </div>
+
+      {/* Main Grid: Left 2 Cols + Right 1 Col */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Left Column */}
+        <div className="lg:col-span-2 space-y-4">
+          {/* Business Legal Info */}
+          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+            <h3 className="font-semibold text-slate-800 mb-3 flex items-center gap-2 border-b border-slate-100 pb-2">
+              <Tag size={16} className="text-blue-600" /> Hồ sơ pháp lý doanh nghiệp
+            </h3>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p className="text-xs text-slate-400">Tên doanh nghiệp</p>
+                <p className="font-bold text-slate-900 mt-0.5">{partner.ten_dn}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">Mã số thuế</p>
+                <p className="font-mono font-bold text-slate-900 mt-0.5">{partner.ma_so_thue}</p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-xs text-slate-400">Địa chỉ đăng ký ĐKKD</p>
+                <p className="text-slate-700 mt-0.5">{partner.dia_chi}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Representative Info */}
+          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+            <h3 className="font-semibold text-slate-800 mb-3 flex items-center gap-2 border-b border-slate-100 pb-2">
+              <DollarSign size={16} className="text-blue-600" /> Người đại diện pháp luật
+            </h3>
+            <div className="grid grid-cols-3 gap-3 text-sm">
+              <div>
+                <p className="text-xs text-slate-400">Họ và tên</p>
+                <p className="font-bold text-slate-900 mt-0.5">{partner.nguoi_dai_dien?.ho_ten || "Chưa cập nhật"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">Số điện thoại</p>
+                <p className="font-semibold text-slate-800 mt-0.5">{partner.nguoi_dai_dien?.sdt || "Chưa cập nhật"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">Email</p>
+                <p className="font-medium text-slate-800 mt-0.5">{partner.nguoi_dai_dien?.email || "Chưa cập nhật"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">Số CCCD</p>
+                <p className="font-mono font-bold text-slate-900 mt-0.5">{partner.nguoi_dai_dien?.cccd || "Chưa cập nhật"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">Ngày sinh</p>
+                <p className="font-medium text-slate-800 mt-0.5">
+                  {partner.nguoi_dai_dien?.ngay_sinh ? partner.nguoi_dai_dien.ngay_sinh.slice(0, 10) : "Chưa cập nhật"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">Giới tính</p>
+                <p className="font-medium text-slate-800 mt-0.5">
+                  {partner.nguoi_dai_dien?.gioi_tinh === "Nu" ? "Nữ" : "Nam"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Active Branches */}
+          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+            <h3 className="font-semibold text-slate-800 mb-3 flex items-center gap-2 border-b border-slate-100 pb-2">
+              <MapPin size={16} className="text-amber-600" /> Danh sách chi nhánh ({activeBranches.length})
+            </h3>
+            {activeBranches.length === 0 ? (
+              <p className="text-xs text-slate-400 py-2">Chưa có chi nhánh nào được kích hoạt.</p>
+            ) : (
+              <div className="space-y-2 text-sm text-slate-700">
+                {activeBranches.map((b) => (
+                  <div key={b.ma_chi_nhanh} className="flex items-center gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    <CheckCircle size={15} className="text-emerald-500 shrink-0" />
+                    <div>
+                      <div className="font-bold text-slate-900 text-sm">{b.ten_chi_nhanh}</div>
+                      <div className="text-xs text-slate-500">📍 {b.dia_chi} ({b.khu_vuc})</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right Column: Checklist & Info */}
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+            <h3 className="font-semibold text-slate-800 mb-1 flex items-center gap-2">
+              <Info size={16} className="text-blue-600" /> Checklist kiểm tra hồ sơ
+            </h3>
+            <p className="text-xs text-slate-400 mb-3">Hỗ trợ kiểm định pháp lý đối tác</p>
+            <div className="space-y-2">
+              {checklistItems.map((item) => (
+                <label
+                  key={item}
+                  className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer hover:bg-slate-50 rounded p-1.5 transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checklist[item] || false}
+                    onChange={() => toggleCheck(item)}
+                    className="rounded text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer"
+                  />
+                  <span>{item}</span>
+                </label>
+              ))}
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-between text-xs font-semibold">
+                <span className="text-slate-500">Đã kiểm tra</span>
+                <span className={checkedCount === checklistItems.length ? "text-emerald-600" : "text-amber-600"}>
+                  {checkedCount}/{checklistItems.length}
+                </span>
+              </div>
+              <div className="mt-2 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                <div
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    checkedCount === checklistItems.length ? "bg-emerald-500" : "bg-amber-500"
+                  }`}
+                  style={{ width: `${(checkedCount / checklistItems.length) * 100}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-blue-50 rounded-xl border border-blue-200 p-4 shadow-xs">
+            <h4 className="text-sm font-semibold text-blue-900 mb-2">Quyền hạn sau khi kích hoạt</h4>
+            <ul className="space-y-1.5 text-xs text-blue-800 leading-relaxed">
+              <li>• Tự động mở khóa Portal Đối Tác</li>
+              <li>• Cho phép đăng ký và đăng bán Voucher mới</li>
+              <li>• Cho phép đăng ký mở thêm Chi Nhánh</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Approve Modal */}
+      {approveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" onClick={() => setApproveModal(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4 text-slate-800">
+            <h3 className="font-bold text-slate-900 text-lg">Phê duyệt hồ sơ đối tác</h3>
+
+            <div className="bg-slate-50 rounded-xl p-3.5 text-xs space-y-2 border border-slate-200">
+              <div className="flex justify-between">
+                <span className="text-slate-400">Doanh nghiệp:</span>
+                <span className="font-bold text-slate-900">{partner.ten_dn}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Mã số thuế:</span>
+                <span className="font-mono font-bold text-slate-900">{partner.ma_so_thue}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Trạng thái sau duyệt:</span>
+                <span className="text-emerald-600 font-bold">Đang hoạt động</span>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setApproveModal(false)}
+                className="px-4 py-2 text-xs font-semibold border border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleApprove}
+                className="px-4 py-2 text-xs font-bold bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors cursor-pointer shadow-xs"
+              >
+                Xác nhận phê duyệt
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Modal */}
+      {rejectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" onClick={() => setRejectModal(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4 text-slate-800">
+            <h3 className="font-bold text-slate-900 text-lg">Từ chối hồ sơ đối tác</h3>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Lý do từ chối:</label>
+              <select
+                value={selectedRejectReason}
+                onChange={(e) => setSelectedRejectReason(e.target.value)}
+                className="w-full px-3 py-2 border rounded-xl text-xs border-slate-300 focus:ring-2 focus:ring-rose-500 focus:outline-none bg-white font-medium"
+              >
+                {rejectReasons.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Ghi chú thêm:</label>
+              <textarea
+                rows="3"
+                placeholder="Nhập phản hồi chi tiết cho đối tác..."
+                value={customRejectNote}
+                onChange={(e) => setCustomRejectNote(e.target.value)}
+                className="w-full px-3 py-2 border rounded-xl text-xs border-slate-300 focus:ring-2 focus:ring-rose-500 focus:outline-none"
+              ></textarea>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setRejectModal(false)}
+                className="px-4 py-2 text-xs font-semibold border border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleReject}
+                className="px-4 py-2 text-xs font-bold bg-rose-600 text-white rounded-xl hover:bg-rose-700 transition-colors cursor-pointer shadow-xs"
+              >
+                Xác nhận từ chối
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <Toast message={toastMessage} onClose={() => setToastMessage("")} />
+    </div>
   );
 }
 
