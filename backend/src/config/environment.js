@@ -48,9 +48,24 @@ function loadAuthGmail() {
   };
 }
 
+// Cấu hình JWT (Access Token + Refresh Token)
+function loadJwt() {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error("JWT_SECRET chưa được cấu hình trong .env");
+
+  return {
+    secret,
+    refreshSecret:
+      process.env.JWT_REFRESH_SECRET || secret + "_refresh",
+    accessTokenExpiry: process.env.ACCESS_TOKEN_EXPIRY || "15m",
+    refreshTokenExpiry: process.env.REFRESH_TOKEN_EXPIRY || "7d",
+  };
+}
+
 module.exports = {
   loadEnvironment,
   loadDatabase,
   loadGmail,
   loadAuthGmail,
+  loadJwt,
 };

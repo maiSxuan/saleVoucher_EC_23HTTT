@@ -189,20 +189,18 @@ export function PartnerRegisterPage() {
                 return (
                   <div key={step.number} className="flex-1 flex flex-col items-center relative z-10">
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all shadow-xs ${
-                        isCompleted
+                      className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all shadow-xs ${isCompleted
                           ? "bg-emerald-600 text-white"
                           : isCurrent
-                          ? "bg-blue-600 text-white ring-4 ring-blue-100"
-                          : "bg-slate-100 text-slate-400"
-                      }`}
+                            ? "bg-blue-600 text-white ring-4 ring-blue-100"
+                            : "bg-slate-100 text-slate-400"
+                        }`}
                     >
                       {isCompleted ? "✓" : step.number}
                     </div>
                     <span
-                      className={`text-xs mt-2 font-medium text-center ${
-                        isCurrent ? "text-blue-700 font-bold" : isCompleted ? "text-slate-700" : "text-slate-400"
-                      }`}
+                      className={`text-xs mt-2 font-medium text-center ${isCurrent ? "text-blue-700 font-bold" : isCompleted ? "text-slate-700" : "text-slate-400"
+                        }`}
                     >
                       {step.title}
                     </span>
@@ -294,7 +292,7 @@ export function PartnerRegisterPage() {
                     disabled={!!createdUser}
                     value={formData.account_sdt}
                     onChange={(e) => handleInputChange("account_sdt", e.target.value)}
-                    placeholder="0901234567"
+                    placeholder=""
                     className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-50"
                   />
                 </div>

@@ -203,3 +203,89 @@ BƯỚC 9: CHẶN ĐẦU KIỂM TRA MÁY CHỦ SMTP / DNS TRƯỚC KHI GỬI EMA
   - Nếu email không thể nhận thư hoặc domain không tồn tại, lập tức trả lỗi HTTP 400 và thông báo rõ ràng cho người dùng thay vì gửi đi hoặc báo thành công ngầm.
 - Chuẩn hóa luồng Quên mật khẩu trong `auth.service.js`: Chỉ ghi nhận OTP và lưu nhật ký thành công sau khi gửi email thật thành công qua SMTP; nếu thất bại sẽ ghi nhật ký `THAT_BAI` và trả lỗi trực tiếp về giao diện.
 
+BƯỚC 10: CẬP NHẬT THÊM LOGIC CÒN THIẾU TRONG UC-BUS-05 TRONG docs/đặc tả hệ thống cho khách hàng(2).pdf
+Luồng cơ bản
+Khách hàng chọn chức năng “Quên mật khẩu”.
+Hệ thống hiển thị biểu mẫu nhập email đã đăng ký.
+Khách hàng nhập email hoặc số điện thoại đã đăng ký.
+Hệ thống tiếp nhận thông tin.
+Hệ thống đối chiếu email với dữ liệu tài khoản.
+Hệ thống phát hành mã xác thực.
+Hệ thống gửi mã xác thực đến email đã đăng ký.
+Hệ thống hiển thị màn hình nhập mã xác thực.
+Khách hàng nhập mã xác thực.
+Hệ thống tiếp nhận mã xác thực.
+Hệ thống kiểm tra tính hợp lệ của mã xác thực.
+Hệ thống hiển thị biểu mẫu thiết lập mật khẩu mới.
+Khách hàng nhập mật khẩu mới và xác nhận mật khẩu mới.
+Hệ thống tiếp nhận thông tin mật khẩu mới.
+Hệ thống cập nhật mật khẩu mới vào tài khoản.
+Hệ thống lưu mật khẩu mới vào cơ sở dữ liệu.
+Hệ thống hiển thị thông báo đặt lại mật khẩu thành công và yêu cầu khách hàng đăng nhập lại.
+Hệ thống kết thúc Use Case.
+Luồng thay thế
+A5: Không tìm thấy tài khoản  
+Hệ thống không tìm thấy tài khoản tương ứng với email hoặc số điện thoại đã cung cấp.
+Hệ thống hiển thị thông báo không tìm thấy tài khoản.
+Hệ thống hiển thị lại biểu mẫu nhập email hoặc số điện thoại.
+Khách hàng nhập lại email hoặc số điện thoại.
+Hệ thống tiếp nhận thông tin và quay lại bước 5 của luồng cơ bản.
+A11: Mã xác thực không hợp lệ 
+Hệ thống phát hiện mã xác thực không hợp lệ.
+Hệ thống hiển thị thông báo mã xác thực không hợp lệ.
+Hệ thống hiển thị lựa chọn nhập lại mã xác thực hoặc yêu cầu gửi lại mã xác thực.
+A11.1: Nhập lại mã xác thực
+Khách hàng nhập lại mã xác thực.
+Hệ thống tiếp nhận mã xác thực và quay lại bước 11 của luồng cơ bản.
+A11.2: Gửi lại mã xác thực
+Khách hàng chọn gửi lại mã xác thực.
+Hệ thống phát hành và gửi mã xác thực mới, sau đó quay lại bước 8 của luồng cơ bản.
+Luồng ngoại lệ
+E1: Không thể truy cập dữ liệu tài khoản 
+Hệ thống không thể truy cập dữ liệu tài khoản để kiểm tra thông tin. 
+Hệ thống hiển thị thông báo không thể thực hiện yêu cầu khôi phục mật khẩu. 
+Hệ thống kết thúc Use Case thất bại. 
+E2: Không thể gửi mã xác thực 
+Hệ thống không thể phát hành hoặc gửi mã xác thực đến Email hoặc Số điện thoại đã đăng ký. 
+Hệ thống hiển thị thông báo không thể gửi mã xác thực. 
+Hệ thống kết thúc Use Case thất bại. 
+E3: Không thể cập nhật mật khẩu mới 
+Hệ thống không thể lưu mật khẩu mới vào cơ sở dữ liệu. 
+Hệ thống giữ nguyên mật khẩu hiện tại của tài khoản. 
+Hệ thống hiển thị thông báo đặt lại mật khẩu thất bại. 
+Hệ thống kết thúc Use Case thất bại. 
+Yêu cầu phi chức năng
+NFR-01 – Hiệu năng
+Hệ thống phải phản hồi nhanh khi kiểm tra Email hoặc Số điện thoại đã đăng ký.
+Quá trình gửi và xác thực mã xác thực phải được thực hiện liên tục sau khi khách hàng gửi yêu cầu.
+Trong thời gian xử lý, hệ thống phải hiển thị trạng thái đang xử lý.
+
+NFR-02 – Bảo mật
+Hệ thống chỉ cho phép thiết lập mật khẩu mới sau khi mã xác thực được kiểm tra hợp lệ.
+Mật khẩu mới phải được mã hóa trước khi lưu vào cơ sở dữ liệu.
+Mã xác thực chỉ được sử dụng cho yêu cầu khôi phục mật khẩu đang thực hiện.
+Sau khi cập nhật thành công, mật khẩu cũ không còn được sử dụng để đăng nhập.
+
+NFR-03 – Tính ổn định
+Nếu xảy ra lỗi trong quá trình cập nhật mật khẩu, hệ thống phải giữ nguyên mật khẩu hiện tại.
+Hệ thống không được cập nhật một phần dữ liệu tài khoản.
+Hệ thống không được hiển thị thông báo thành công khi mật khẩu chưa được lưu thành công.
+
+NFR-05 – Khả năng sử dụng
+Giao diện phải hiển thị lần lượt:
+Biểu mẫu nhập Email hoặc Số điện thoại.
+Biểu mẫu nhập mã xác thực.
+Biểu mẫu thiết lập mật khẩu mới.
+Hệ thống phải hiển thị rõ các thông báo:
+Không tìm thấy tài khoản.
+Mã xác thực không hợp lệ.
+Không thể gửi mã xác thực.
+Đặt lại mật khẩu thành công.
+Giao diện nhập mã xác thực phải cho phép:
+Nhập lại mã xác thực.
+Yêu cầu gửi lại mã xác thực.
+
+NFR-06 – Toàn vẹn dữ liệu
+Hệ thống chỉ cập nhật mật khẩu sau khi hoàn thành toàn bộ quy trình xác thực.
+Mật khẩu mới phải được lưu toàn vẹn; nếu xảy ra lỗi, hệ thống phải giữ nguyên mật khẩu cũ.
+Sau khi khôi phục mật khẩu thành công, khách hàng phải sử dụng mật khẩu mới trong các lần đăng nhập tiếp theo.

@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { loginApi, logoutApi, getMeApi } from "../shared/api/authApi";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { loginApi, logoutApi, getMeApi, refreshApi } from "../shared/api/authApi";
 
 const AuthContext = createContext(null);
 
@@ -16,47 +16,99 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(
     () => localStorage.getItem("accessToken") || localStorage.getItem("ec_auth_token") || ""
   );
+
+  const [refreshToken, setRefreshToken] = useState(
+    () => localStorage.getItem("refreshToken") || ""
+  );
+
   const [loading, setLoading] = useState(false);
 
-  const persistSession = (nextToken, nextUser) => {
+  // ---------------------------------------------------------------
+  // persistSession — lưu/xóa toàn bộ session (access + refresh + user)
+  // ---------------------------------------------------------------
+  const persistSession = useCallback((nextToken, nextUser, nextRefreshToken) => {
     setToken(nextToken || "");
     setUser(nextUser || null);
+    setRefreshToken(nextRefreshToken || "");
 
     if (nextToken && nextUser) {
       localStorage.setItem("accessToken", nextToken);
       localStorage.setItem("user", JSON.stringify(nextUser));
-      // Giữ tương thích với các màn hình do Ngân phát triển.
+      // Tương thích với các màn hình cũ
       localStorage.setItem("ec_auth_token", nextToken);
       localStorage.setItem("ec_auth_user", JSON.stringify(nextUser));
+
+      if (nextRefreshToken) {
+        localStorage.setItem("refreshToken", nextRefreshToken);
+      }
       return;
     }
 
+    // Clear all
     localStorage.removeItem("accessToken");
     localStorage.removeItem("user");
     localStorage.removeItem("ec_auth_token");
     localStorage.removeItem("ec_auth_user");
-  };
+    localStorage.removeItem("refreshToken");
+  }, []);
 
+  // ---------------------------------------------------------------
+  // refreshSession — dùng refreshToken để lấy accessToken mới
+  // Trả về true nếu thành công, false nếu thất bại (cần login lại)
+  // ---------------------------------------------------------------
+  const refreshSession = useCallback(async () => {
+    const storedRefreshToken =
+      refreshToken || localStorage.getItem("refreshToken");
+
+    if (!storedRefreshToken) return false;
+
+    try {
+      const result = await refreshApi(storedRefreshToken);
+      if (result && result.accessToken) {
+        // Cập nhật access token + refresh token mới (rotation)
+        const currentUser = user || JSON.parse(localStorage.getItem("user") || "null");
+        persistSession(result.accessToken, currentUser, result.refreshToken || storedRefreshToken);
+        return true;
+      }
+    } catch (e) {
+      console.warn("[Auth] refreshSession thất bại:", e);
+    }
+
+    // Refresh thất bại → clear session
+    persistSession("", null, "");
+    return false;
+  }, [refreshToken, user, persistSession]);
+
+  // ---------------------------------------------------------------
+  // Khi mount: nếu có token nhưng không có user → lấy lại từ /me
+  // Nếu /me thất bại (token hết hạn) → thử refresh
+  // ---------------------------------------------------------------
   useEffect(() => {
     if (token && !user) {
-      getMeApi(token).then((userData) => {
+      getMeApi(token).then(async (userData) => {
         if (userData) {
-          persistSession(token, userData);
+          persistSession(token, userData, refreshToken);
         } else {
-          persistSession("", null);
+          // Access token hết hạn → thử dùng refresh token
+          const ok = await refreshSession();
+          if (!ok) {
+            persistSession("", null, "");
+          }
         }
       });
     }
-    // persistSession chỉ ghi state/localStorage và không phụ thuộc props.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, user]);
+  }, []);
 
+  // ---------------------------------------------------------------
+  // login — dùng bởi LoginPage qua auth context (không dùng trực tiếp)
+  // ---------------------------------------------------------------
   const login = async (username, password) => {
     setLoading(true);
     try {
       const res = await loginApi({ username, password });
       if (res.success && res.token) {
-        persistSession(res.token, res.user);
+        persistSession(res.token, res.user, res.refreshToken || "");
         return res;
       }
       throw new Error(res.message || "Đăng nhập thất bại");
@@ -67,16 +119,21 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // ---------------------------------------------------------------
+  // logout — revoke refreshToken trên server + clear local state
+  // ---------------------------------------------------------------
   const logout = async () => {
     setLoading(true);
     try {
+      const currentRefreshToken =
+        refreshToken || localStorage.getItem("refreshToken");
       if (token) {
-        await logoutApi(token);
+        await logoutApi(token, currentRefreshToken);
       }
     } catch (e) {
       console.warn("Logout error:", e);
     } finally {
-      persistSession("", null);
+      persistSession("", null, "");
       setLoading(false);
     }
   };
@@ -86,6 +143,7 @@ export function AuthProvider({ children }) {
       value={{
         user,
         token,
+        refreshToken,
         isAuthenticated: !!user && !!token,
         loading,
         login,
@@ -93,6 +151,7 @@ export function AuthProvider({ children }) {
         setUser,
         setToken,
         persistSession,
+        refreshSession,
       }}
     >
       {children}

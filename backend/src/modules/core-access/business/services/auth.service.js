@@ -1,7 +1,13 @@
-/**
+﻿/**
  * Purpose: Service xử lý logic authentication.
  * Login từ Supabase thật (bảng TAIKHOAN + NGUOIDUNG).
  * Ghi audit log sau mỗi lần login thành công hoặc thất bại.
+ *
+ * JWT Flow:
+ *  - Login → sinh accessToken (15m) + refreshToken (7d)
+ *  - refreshToken lưu trong refreshTokenStore (in-memory Map)
+ *  - POST /auth/refresh → verify refreshToken → cấp accessToken mới
+ *  - POST /auth/logout  → revoke refreshToken khỏi store
  */
 require("dotenv").config();
 const bcrypt = require("bcryptjs");
@@ -15,17 +21,87 @@ const AppError = require("../../../../common/errors/AppError");
 const UnauthorizedError = require("../../../../common/errors/UnauthorizedError");
 const ForbiddenError = require("../../../../common/errors/ForbiddenError");
 const emailService = require("./email.service");
+const { loadJwt } = require("../../../../config/environment");
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const jwtConfig = loadJwt();
+const JWT_SECRET = jwtConfig.secret;
+const JWT_REFRESH_SECRET = jwtConfig.refreshSecret;
+const ACCESS_TOKEN_EXPIRY = jwtConfig.accessTokenExpiry;
+const REFRESH_TOKEN_EXPIRY = jwtConfig.refreshTokenExpiry;
 
-const otpStore = new Map();
+// ---------------------------------------------------------------
+// In-memory stores (đủ dùng cho môi trường học tập / dev)
+// Nếu cần production: thay bằng Redis hoặc bảng DB refresh_tokens
+// ---------------------------------------------------------------
+const otpStore = new Map();          // key: email → { otp, expiresAt }
+const refreshTokenStore = new Map(); // key: refreshToken → userPayload
+
+// ---------------------------------------------------------------
+// Helper: Sinh cặp access + refresh token từ userPayload
+// ---------------------------------------------------------------
+function generateTokenPair(userPayload) {
+  const accessToken = jwt.sign(userPayload, JWT_SECRET, {
+    expiresIn: ACCESS_TOKEN_EXPIRY,
+  });
+
+  const refreshToken = jwt.sign(
+    { id: userPayload.id, accountId: userPayload.accountId },
+    JWT_REFRESH_SECRET,
+    { expiresIn: REFRESH_TOKEN_EXPIRY },
+  );
+
+  // Lưu vào store để có thể revoke
+  refreshTokenStore.set(refreshToken, userPayload);
+
+  return { accessToken, refreshToken };
+}
+
+// ---------------------------------------------------------------
+// Helper: Lấy thêm thông tin hồ sơ DN + chi nhánh
+// ---------------------------------------------------------------
+async function enrichUserPayload(account) {
+  let maHsdn = account.nguoidung.ma_hsdn || null;
+  let tenDn = null;
+
+  if (!maHsdn) {
+    const { data: hsByRep } = await supabase
+      .from("hosodn")
+      .select("ma_hs, ten_dn")
+      .eq("id_nguoi_dai_dien", account.nguoidung.ma_nguoi_dung)
+      .maybeSingle();
+    if (hsByRep) {
+      maHsdn = hsByRep.ma_hs;
+      tenDn = hsByRep.ten_dn;
+    }
+  } else {
+    const { data: hsData } = await supabase
+      .from("hosodn")
+      .select("ma_hs, ten_dn")
+      .eq("ma_hs", maHsdn)
+      .maybeSingle();
+    if (hsData) tenDn = hsData.ten_dn;
+  }
+
+  let branchInfo = null;
+  if (account.nguoidung.ma_chi_nhanh) {
+    const { data: bData } = await supabase
+      .from("chinhanh")
+      .select("ma_chi_nhanh, ten_chi_nhanh, dia_chi, khu_vuc, ma_hs")
+      .eq("ma_chi_nhanh", account.nguoidung.ma_chi_nhanh)
+      .maybeSingle();
+    if (bData) {
+      branchInfo = bData;
+      if (!maHsdn && bData.ma_hs) maHsdn = bData.ma_hs;
+    }
+  }
+
+  return { maHsdn, tenDn, branchInfo };
+}
 
 class AuthService {
   /**
    * Đăng nhập người dùng.
-   * @param {string} email - Thông tin đăng nhập (email hoặc SĐT hoặc username)
-   * @param {string} password - Mật khẩu
-   * @returns {{ token, user }}
+   * @returns {{ accessToken, refreshToken, user }}
    */
   async login({ email, username, password }) {
     const loginIdentifier = (email || username || "").trim();
@@ -38,7 +114,6 @@ class AuthService {
       );
     }
 
-    // Lấy tài khoản từ Supabase (hỗ trợ email hoặc prefix username)
     const account =
       await userRepository.findAccountByLoginInfo(loginIdentifier);
 
@@ -55,7 +130,6 @@ class AuthService {
       throw new UnauthorizedError("Email hoặc mật khẩu không đúng");
     }
 
-    // Kiểm tra trạng thái tài khoản
     if (account.nguoidung.trang_thai !== "Dang hoat dong") {
       await auditLogService.log({
         actorId: account.ma_tk,
@@ -93,7 +167,6 @@ class AuthService {
       throw new UnauthorizedError("Email hoặc mật khẩu không đúng");
     }
 
-    // Map vai trò DB → JWT role
     const dbVaiTro = account.nguoidung.vai_tro;
     const mappedRole = DB_TO_JWT[dbVaiTro] || "CUSTOMER";
 
@@ -151,9 +224,8 @@ class AuthService {
       khu_vuc_chi_nhanh: branchInfo?.khu_vuc ?? null,
     };
 
-    const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: "1d" });
+    const { accessToken, refreshToken } = generateTokenPair(userPayload);
 
-    // Ghi audit log thành công
     await auditLogService.log({
       actorId: account.ma_tk,
       actorRole: mappedRole,
@@ -163,24 +235,94 @@ class AuthService {
       result: LOG_RESULT.THANH_CONG,
     });
 
-    return { token, accessToken: token, user: userPayload };
+    // Tương thích ngược: trả thêm `token` field
+    return { accessToken, token: accessToken, refreshToken, user: userPayload };
+  }
+
+  /**
+   * Sinh Access Token mới từ Refresh Token còn hạn.
+   * @param {string} refreshToken
+   * @returns {{ accessToken, refreshToken }}
+   */
+  async refreshAccessToken(refreshToken) {
+    if (!refreshToken) {
+      throw new UnauthorizedError("Thiếu refresh token");
+    }
+
+    // Kiểm tra token có trong store (chưa bị revoke)
+    if (!refreshTokenStore.has(refreshToken)) {
+      throw new UnauthorizedError(
+        "Refresh token không hợp lệ hoặc đã bị thu hồi",
+      );
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
+    } catch (error) {
+      // Xóa khỏi store nếu hết hạn/sai
+      refreshTokenStore.delete(refreshToken);
+      throw new UnauthorizedError(
+        error.name === "TokenExpiredError"
+          ? "Refresh token đã hết hạn. Vui lòng đăng nhập lại."
+          : "Refresh token không hợp lệ.",
+      );
+    }
+
+    // Lấy full userPayload từ store để sign access token mới
+    const userPayload = refreshTokenStore.get(refreshToken);
+
+    // Revoke refresh token cũ (Rotation: mỗi lần refresh → token mới)
+    refreshTokenStore.delete(refreshToken);
+
+    // Tạo cặp token mới
+    const tokens = generateTokenPair(userPayload);
+
+    return {
+      accessToken: tokens.accessToken,
+      token: tokens.accessToken, // tương thích ngược
+      refreshToken: tokens.refreshToken,
+    };
+  }
+
+  /**
+   * Thu hồi Refresh Token (dùng khi Logout).
+   * @param {string} refreshToken
+   */
+  revokeRefreshToken(refreshToken) {
+    if (refreshToken) {
+      refreshTokenStore.delete(refreshToken);
+    }
   }
 
   /**
    * Sinh mã OTP cho chức năng Quên mật khẩu.
-   * Chặn đầu: Kiểm tra tính tồn tại của máy chủ SMTP/MX trước khi gửi.
    */
-  async generateOTP(email) {
-    if (!email) {
-      throw new AppError("Email là bắt buộc", 400, "VALIDATION_ERROR");
+  /**
+   * Sinh mã OTP cho chức năng Quên mật khẩu (UC-BUS-05).
+   * Hỗ trợ tìm tài khoản theo Email hoặc Số điện thoại đăng ký.
+   */
+  async generateOTP(emailOrPhone) {
+    const cleanInfo = (emailOrPhone || "").trim();
+    if (!cleanInfo) {
+      throw new AppError("Vui lòng nhập email đã đăng ký", 400, "VALIDATION_ERROR");
     }
 
-    const account = await userRepository.findAccountByLoginInfo(email);
+    const account = await userRepository.findAccountByLoginInfo(cleanInfo);
     if (!account || !account.nguoidung) {
       throw new AppError(
-        "Không tìm thấy tài khoản với email này",
+        "Không tìm thấy tài khoản tương ứng với thông tin đã cung cấp",
         404,
         "USER_NOT_FOUND",
+      );
+    }
+
+    const targetEmail = account.nguoidung.email || (cleanInfo.includes("@") ? cleanInfo : null);
+    if (!targetEmail) {
+      throw new AppError(
+        "Tài khoản chưa được cấu hình địa chỉ email hợp lệ để nhận mã xác thực",
+        400,
+        "EMAIL_NOT_CONFIGURED",
       );
     }
 
@@ -189,10 +331,13 @@ class AuthService {
 
     try {
       // Gửi OTP qua email thật bằng Nodemailer (kiểm tra chặn đầu DNS/SMTP)
-      await emailService.sendOtpEmail(email, otp, "forgot_password");
+      await emailService.sendOtpEmail(targetEmail, otp, "forgot_password");
 
       // Gửi email thành công mới lưu vào store và ghi audit log thành công
-      otpStore.set(email, { otp, expiresAt });
+      otpStore.set(targetEmail.toLowerCase(), { otp, expiresAt, accountId: account.ma_tk });
+      if (cleanInfo.toLowerCase() !== targetEmail.toLowerCase()) {
+        otpStore.set(cleanInfo.toLowerCase(), { otp, expiresAt, accountId: account.ma_tk });
+      }
 
       await auditLogService.log({
         actorId: account.ma_tk,
@@ -204,7 +349,16 @@ class AuthService {
         reason: "Yêu cầu mã OTP quên mật khẩu thành công",
       });
 
-      return otp;
+      // Tạo chuỗi che giấu email (ví dụ: c***r@gmail.com)
+      const maskedEmail = targetEmail.replace(/^(.)(.*)(@.*)$/, (_, first, middle, domain) => {
+        return first + "*".repeat(Math.max(middle.length, 3)) + domain;
+      });
+
+      return {
+        email: targetEmail,
+        maskedEmail,
+        expiresIn: 300,
+      };
     } catch (mailErr) {
       await auditLogService.log({
         actorId: account.ma_tk,
@@ -215,13 +369,13 @@ class AuthService {
         result: LOG_RESULT.THAT_BAI,
         reason: `Gửi mã OTP thất bại: ${mailErr.message}`,
       });
-
       throw mailErr;
     }
   }
 
   /**
    * Đăng nhập bằng OTP.
+   * @returns {{ accessToken, refreshToken, user }}
    */
   async loginWithOTP({ email, otp }) {
     if (!email || !otp) {
@@ -313,7 +467,7 @@ class AuthService {
       khu_vuc_chi_nhanh: branchInfo?.khu_vuc ?? null,
     };
 
-    const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: "1d" });
+    const { accessToken, refreshToken } = generateTokenPair(userPayload);
 
     await auditLogService.log({
       actorId: account.ma_tk,
@@ -324,7 +478,7 @@ class AuthService {
       result: LOG_RESULT.THANH_CONG,
     });
 
-    return { token, accessToken: token, user: userPayload };
+    return { accessToken, token: accessToken, refreshToken, user: userPayload };
   }
 
   async getMe(token) {
@@ -343,8 +497,127 @@ class AuthService {
     }
   }
 
-  async logout() {
-    // JWT hiện là stateless; client xóa token để kết thúc phiên.
+
+  /**
+   * UC-BUS-05 (Bước 11 / A11): Xác minh OTP hợp lệ mà KHÔNG xóa.
+   * Dùng trước bước đặt mật khẩu mới để kiểm tra và báo lỗi sớm (A11).
+   * @param {{ email: string, otp: string }}
+   * @returns {{ valid: true }}
+   */
+  verifyOtp({ email, otp }) {
+    const cleanInfo = (email || "").trim().toLowerCase();
+    const cleanOtp = (otp || "").trim();
+
+    if (!cleanInfo || !cleanOtp) {
+      throw new AppError("Thông tin tài khoản và mã xác thực là bắt buộc", 400, "VALIDATION_ERROR");
+    }
+
+    const storedData = otpStore.get(cleanInfo);
+    if (!storedData) {
+      throw new UnauthorizedError("Mã xác thực không hợp lệ hoặc chưa được yêu cầu");
+    }
+
+    if (Date.now() > storedData.expiresAt) {
+      otpStore.delete(cleanInfo);
+      throw new UnauthorizedError("Mã xác thực đã hết hạn. Vui lòng yêu cầu gửi lại mã mới.");
+    }
+
+    if (storedData.otp !== cleanOtp) {
+      throw new UnauthorizedError("Mã xác thực không chính xác");
+    }
+
+    return { valid: true };
+  }
+
+  /**
+   * UC-BUS-05 (Bước 15-16): Đặt lại mật khẩu sau khi mã xác thực hợp lệ.
+   * NFR-02: Hash bcrypt trước khi lưu.
+   * NFR-03/E3: Nếu DB thất bại, giữ nguyên mật khẩu cũ.
+   * NFR-06: OTP chỉ bị xóa sau khi DB lưu thành công.
+   * @param {{ email, otp, newPassword, confirmPassword }}
+   */
+  async resetPassword({ email, otp, newPassword, confirmPassword }) {
+    const cleanInfo = (email || "").trim();
+    const cleanOtp = (otp || "").trim();
+
+    if (!cleanInfo || !cleanOtp || !newPassword) {
+      throw new AppError(
+        "Thông tin tài khoản, mã xác thực và mật khẩu mới là bắt buộc",
+        400,
+        "VALIDATION_ERROR",
+      );
+    }
+
+    // A11: Xác minh mã OTP trước khi tiếp tục
+    this.verifyOtp({ email: cleanInfo, otp: cleanOtp });
+
+    if (newPassword.length < 6) {
+      throw new AppError(
+        "Mật khẩu mới phải có ít nhất 6 ký tự",
+        400,
+        "WEAK_PASSWORD",
+      );
+    }
+
+    if (confirmPassword !== undefined && newPassword !== confirmPassword) {
+      throw new AppError(
+        "Mật khẩu mới và xác nhận mật khẩu không khớp",
+        400,
+        "PASSWORD_MISMATCH",
+      );
+    }
+
+    // E1: Lấy tài khoản
+    const account = await userRepository.findAccountByLoginInfo(cleanInfo);
+    if (!account || !account.nguoidung) {
+      throw new AppError("Không tìm thấy tài khoản tương ứng", 404, "USER_NOT_FOUND");
+    }
+
+    // NFR-02: Hash mật khẩu bằng bcrypt trước khi lưu
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // E3: Cập nhật DB — nếu thất bại, giữ nguyên mật khẩu cũ
+    try {
+      await userRepository.updatePassword(account.ma_tk, hashedPassword);
+    } catch (dbError) {
+      await auditLogService.log({
+        actorId: account.ma_tk,
+        actorRole: account.nguoidung.vai_tro,
+        action: "RESET_PASSWORD",
+        targetType: "TAIKHOAN",
+        targetId: account.ma_tk,
+        result: LOG_RESULT.THAT_BAI,
+        reason: "Lưu mật khẩu vào DB thất bại: " + dbError.message,
+      });
+      throw new AppError(
+        "Không thể cập nhật mật khẩu mới. Mật khẩu hiện tại của bạn vẫn được giữ nguyên.",
+        500,
+        "RESET_PASSWORD_FAILED",
+      );
+    }
+
+    // NFR-06: Chỉ xóa OTP sau khi DB lưu thành công
+    otpStore.delete(cleanInfo.toLowerCase());
+    if (account.nguoidung.email) {
+      otpStore.delete(account.nguoidung.email.toLowerCase());
+    }
+
+    await auditLogService.log({
+      actorId: account.ma_tk,
+      actorRole: account.nguoidung.vai_tro,
+      action: "RESET_PASSWORD",
+      targetType: "TAIKHOAN",
+      targetId: account.ma_tk,
+      result: LOG_RESULT.THANH_CONG,
+      reason: "Đặt lại mật khẩu thành công qua OTP",
+    });
+
+    return { message: "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại." };
+  }
+
+  async logout(refreshToken) {
+    // Thu hồi refresh token nếu có
+    this.revokeRefreshToken(refreshToken);
     return { message: "Đã đăng xuất" };
   }
 }

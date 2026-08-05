@@ -542,10 +542,10 @@ Bộ test script tự động (`backend/src/scripts/test_voucher_redemption.js`)
 
 ---
 
-## 4. File `requirement.txt` & `requirements.txt`
+<!-- ## 4. File `requirement.txt` & `requirements.txt`
 - Đã khởi tạo 2 file `requirement.txt` và `requirements.txt` ở thư mục gốc chứa đầy đủ:
   - Danh sách gói Python (`pip install -r requirement.txt`) nếu chạy môi trường Python / Backend Microservices / AI.
-  - Bảng chú giải và hướng dẫn lệnh `npm install` chi tiết cho cả Backend (Node.js/Express/Supabase/QRCode) và Frontend (React/Vite/TailwindCSS/HTML5-QRCode).
+  - Bảng chú giải và hướng dẫn lệnh `npm install` chi tiết cho cả Backend (Node.js/Express/Supabase/QRCode) và Frontend (React/Vite/TailwindCSS/HTML5-QRCode). -->
 
 ---
 
@@ -646,4 +646,114 @@ Layout thống nhất bao gồm 5 phân hệ hoàn chỉnh:
 - **Phản hồi người dùng rõ ràng**:
   - Giao diện `LoginPage.jsx` và `RegisterPage.jsx` lập tức hiển thị cảnh báo đỏ chi tiết: *"Địa chỉ email với tên miền @ec.local là email nội bộ/giả lập, không có máy chủ nhận thư (SMTP) trên Internet. Vui lòng sử dụng địa chỉ email thực tế..."*, giúp người dùng nắm bắt ngay nguyên nhân thay vì đợi OTP vô ích.
 
+
+
+---
+
+# SUA LOI: Bo Sung Co Che JWT Refresh Token (Ngay 05/08/2026)
+
+## Van de phat hien
+He thong truoc day chi co Access Token (het han sau 1d), khong co Refresh Token. Day khong phai co che JWT chuan vi:
+- Access token song qua lau (1 ngay) -> nguy co bao mat cao neu bi lo token
+- Khong co cach cap lai token moi ma khong bat user dang nhap lai
+- Khong co co che thu hoi phien (revoke)
+
+## Cac file da sua
+
+### Backend
+
+#### backend/.env
+- Them JWT_REFRESH_SECRET= -- secret rieng biet de ky refresh token
+- Them ACCESS_TOKEN_EXPIRY=15m -- access token chi song 15 phut (ngan han)
+- Them REFRESH_TOKEN_EXPIRY=7d -- refresh token song 7 ngay (dai han)
+
+#### auth.service.js
+- Them refreshTokenStore -- in-memory Map luu refreshToken -> userPayload, cho phep revoke khi logout
+- Them helper generateTokenPair(userPayload) -- sinh cap { accessToken (15m), refreshToken (7d) }
+- Them helper enrichUserPayload(account) -- tach logic lay thong tin DN + chi nhanh ra ham rieng
+- Sua login() -- tra ve { accessToken, refreshToken, token, user } (tuong thich nguoc)
+- Sua loginWithOTP() -- tuong tu, tra them refreshToken
+- Them refreshAccessToken(refreshToken) -- verify refresh token -> xoa token cu -> sinh cap token moi (Rotation Pattern)
+- Them revokeRefreshToken(refreshToken) -- xoa khoi store ngay lap tuc
+- Sua logout(refreshToken) -- goi revokeRefreshToken() truoc khi tra response
+
+#### auth.controller.js
+- Them handler refresh(req, res, next) -- nhan refreshToken tu body, goi authService.refreshAccessToken()
+- Sua logout() -- doc refreshToken tu body de truyen xuong service revoke
+
+#### auth.routes.js
+- Them route POST /auth/refresh -> controller.refresh
+
+### Frontend
+
+#### shared/api/authApi.js
+- Sua loginApi() -- tra them field refreshToken tu response
+- Sua logoutApi(token, refreshToken) -- gui refreshToken len server de revoke
+- Them refreshApi(refreshToken) -- goi POST /auth/refresh, tra { accessToken, refreshToken } moi
+
+#### app/auth-context.jsx
+- Them state refreshToken -- doc tu localStorage.refreshToken khi khoi dong
+- Sua persistSession(token, user, refreshToken) -- luu/xoa ca refreshToken trong localStorage
+- Them refreshSession() -- tu dong dung refreshApi() de lay access token moi khi het han
+- Sua useEffect khoi dong -- neu /me tra null -> thu refreshSession() truoc khi logout
+- Sua logout() -- gui ca refreshToken de revoke tren server
+- Expose refreshToken + refreshSession trong Context value
+
+#### LoginPage.jsx
+- Sua handleLoginSuccess(data) -- trich refreshToken tu response va goi persistSession(accessToken, user, refreshToken)
+
+## Ket qua kiem thu
+
+| STT | Kiem tra | Ket qua |
+|-----|----------|---------|
+| 1 | JWT_SECRET + JWT_REFRESH_SECRET doc tu .env dung | DAT |
+| 2 | Sign accessToken (15m) thanh cong | DAT |
+| 3 | Sign refreshToken (7d) thanh cong | DAT |
+| 4 | Verify ca 2 token thanh cong | DAT |
+| 5 | authService load OK voi 7 methods day du | DAT |
+| 6 | refreshAccessToken, revokeRefreshToken load OK | DAT |
+
+---
+
+# Cập nhật: BƯỚC 10 Đã Hoàn Thành — Bổ Sung Toàn Diện Logic UC-BUS-05 (Quên Mật Khẩu)
+
+Đã hoàn thiện 100% logic và giao diện cho Use Case **UC-BUS-05: Quên mật khẩu** theo đúng chuẩn trong tài liệu `docs/đặc tả hệ thống cho khách hàng(2).pdf` và checklist `task_X.md`.
+
+## 1. Tóm tắt các luồng đã hiện thực
+
+### Luồng cơ bản (18 bước)
+1. **Bước 1-3**: Khách hàng chọn "Quên mật khẩu", nhập Email hoặc Số điện thoại đã đăng ký.
+2. **Bước 4-7**: Hệ thống đối chiếu dữ liệu tài khoản (`userRepository.findAccountByLoginInfo`), sinh mã xác thực OTP 6 số (hạn 5 phút), gửi email thật qua SMTP (`emailService.sendOtpEmail`), che giấu email dạng `c***r@gmail.com` trả về client.
+3. **Bước 8-11**: Hiển thị màn hình nhập OTP. Khách hàng nhập OTP, hệ thống kiểm tra hợp lệ (`POST /auth/verify-otp`) mà **không xóa OTP** để phục vụ bước kế tiếp.
+4. **Bước 12-16**: Hiển thị biểu mẫu thiết lập mật khẩu mới (Mật khẩu mới + Xác nhận mật khẩu). Mã hóa bcrypt 10 vòng, cập nhật vào DB (`userRepository.updatePassword`).
+5. **Bước 17-18**: Hiển thị thông báo thành công xanh nổi bật, tự động xóa OTP khỏi store (chống tái sử dụng - NFR-02), chuyển về màn hình đăng nhập yêu cầu đăng nhập lại với mật khẩu mới.
+
+### Luồng thay thế & Ngoại lệ
+- **A5 (Không tìm thấy tài khoản)**: Báo lỗi tiếng Việt rõ ràng `USER_NOT_FOUND`, cho phép nhập lại.
+- **A11 (Mã xác thực không hợp lệ / hết hạn)**: Báo lỗi mã không hợp lệ / hết hạn.
+  - **A11.1**: Cho phép nhập lại mã ngay trên form.
+  - **A11.2**: Nút "Gửi lại mã" (kèm bộ đếm ngược 60s) để yêu cầu cấp lại mã mới.
+- **E1 (Không truy cập được tài khoản)**: Trả lỗi `500` hoặc `404` phù hợp, ghi audit log `THAT_BAI`.
+- **E2 (Không gửi được mã)**: Bắt lỗi SMTP / email không hợp lệ, ghi audit log `THAT_BAI`.
+- **E3 (Lỗi DB khi cập nhật mật khẩu)**: Giữ nguyên mật khẩu cũ của tài khoản, ghi audit log `THAT_BAI`, thông báo lỗi rõ ràng.
+
+### Đáp ứng các yêu cầu phi chức năng (NFRs)
+- **NFR-01 (Hiệu năng)**: Hiển thị spinner loading ở tất cả các nút bấm và trạng thái xử lý.
+- **NFR-02 (Bảo mật)**: Chỉ cho phép đặt mật khẩu mới sau khi xác thực OTP thành công. Mật khẩu mã hóa bcrypt 10 rounds. OTP dùng 1 lần và xóa ngay sau khi cập nhật thành công.
+- **NFR-03 (Ổn định)**: Không cập nhật một phần. Nếu lỗi DB giữ nguyên mật khẩu cũ.
+- **NFR-05 (Giao diện)**: Giao diện 3 bước mượt mà với thanh tiến trình trực quan (1. Nhập thông tin -> 2. Nhập OTP -> 3. Đổi mật khẩu), các nút Show/Hide Password, nút Gửi lại mã có countdown.
+
+## 2. Các file đã cập nhật / tạo mới
+- **`backend/src/config/environment.js`**: Hợp nhất hàm `loadJwt()` tập trung cho toàn bộ hệ thống JWT config.
+- **`backend/src/modules/core-access/data/repositories/user.repository.js`**:
+  - Thêm `updatePassword(accountId, hashedPassword)`.
+  - Cập nhật `findAccountByLoginInfo()` hỗ trợ tra cứu linh hoạt qua `thong_tin_dang_nhap`, `email` hoặc `sdt`.
+- **`backend/src/modules/core-access/business/services/auth.service.js`**:
+  - Hoàn thiện `generateOTP(emailOrPhone)` (trả `maskedEmail` + lưu `otpStore`).
+  - Thêm `verifyOtp({ email, otp })` (kiểm tra tính hợp lệ mà không xóa).
+  - Thêm `resetPassword({ email, otp, newPassword, confirmPassword })` (hash bcrypt, cập nhật DB, xóa OTP, ghi Audit Log).
+- **`backend/src/modules/core-access/presentation/controllers/auth.controller.js`**: Thêm handler `verifyOtp` và `resetPassword`.
+- **`backend/src/modules/core-access/presentation/routes/auth.routes.js`**: Đăng ký `POST /auth/verify-otp` và `POST /auth/reset-password`.
+- **`frontend/src/shared/api/authApi.js`**: Thêm `forgotPasswordApi`, `verifyOtpApi`, `resetPasswordApi`.
+- **`frontend/src/features/core-access/pages/auth/LoginPage.jsx`**: Xây dựng toàn bộ giao diện 3 bước chuẩn UC-BUS-05, kết nối các API và hiển thị thông báo, thanh tiến trình, đếm ngược gửi lại OTP.
 

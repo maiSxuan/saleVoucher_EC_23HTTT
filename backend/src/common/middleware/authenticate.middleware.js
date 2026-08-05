@@ -6,8 +6,9 @@
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const UnauthorizedError = require("../errors/UnauthorizedError");
+const { loadJwt } = require("../../config/environment");
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const { secret: JWT_SECRET } = loadJwt();
 
 function authenticateMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
