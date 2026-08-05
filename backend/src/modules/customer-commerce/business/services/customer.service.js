@@ -197,8 +197,8 @@ class CustomerService {
       err.status = 400;
       throw err;
     }
-    if (newPassword.length < 8) {
-      const err = new Error("Mật khẩu mới phải từ 8 ký tự");
+    if (newPassword.length < 6) {
+      const err = new Error("Mật khẩu mới phải từ 6 ký tự");
       err.status = 400;
       throw err;
     }
