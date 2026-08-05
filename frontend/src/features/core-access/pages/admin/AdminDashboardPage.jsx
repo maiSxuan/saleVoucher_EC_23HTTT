@@ -8,6 +8,7 @@ import {
   TrendingUp,
   ShieldCheck,
   ArrowRight,
+  LayoutGrid,
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
@@ -36,15 +37,24 @@ export default function AdminDashboardPage() {
       color: 'bg-indigo-50 text-indigo-600 border-indigo-200',
       btnText: 'Quản lý user',
     },
-    {
-      title: 'Nhật ký hệ thống',
-      desc: 'Ghi nhận và đối soát toàn bộ thao tác hệ thống (BR-ADM-07)',
-      icon: ScrollText,
-      path: '/admin/logs',
-      color: 'bg-amber-50 text-amber-600 border-amber-200',
-      btnText: 'Tra cứu logs',
-    },
-  ];
+      {
+        title: 'Nhật ký hệ thống',
+        desc: 'Ghi nhận và đối soát toàn bộ thao tác hệ thống (BR-ADM-07)',
+        icon: ScrollText,
+        path: '/admin/audit-logs',
+        color: 'bg-amber-50 text-amber-600 border-amber-200',
+        btnText: 'Tra cứu logs',
+      },
+      {
+        title: 'Quản lý nội dung',
+        desc: 'Danh mục, Banner, Bài viết, Popup, Chính sách',
+        icon: LayoutGrid,
+        path: '/admin/contents',
+        color: 'bg-orange-50 text-orange-600 border-orange-200',
+        btnText: 'Quản lý ngay',
+      },
+    ];
+
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">

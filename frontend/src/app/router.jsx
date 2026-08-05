@@ -16,6 +16,7 @@ import VoucherApprovalListPage from "../features/partner-voucher/pages/admin/Vou
 import VoucherApprovalDetailPage from "../features/partner-voucher/pages/admin/VoucherApprovalDetailPage";
 import UserListPage from "../features/core-access/pages/admin/UserListPage";
 import PartnerVoucherLookupPage from "../features/core-access/pages/partner/PartnerVoucherLookupPage";
+import ContentListPage from "../features/content-feedback/pages/admin/ContentListPage";
 
 // Partner Portal Pages
 import PartnerRegisterPage from "../features/partner-voucher/pages/partner/PartnerRegisterPage";
@@ -162,13 +163,15 @@ const router = createBrowserRouter([
           { path: "partners/:id", element: <PartnerDetailPage /> },
           { path: "vouchers", element: <VoucherApprovalListPage /> },
           { path: "vouchers/:id", element: <VoucherApprovalDetailPage /> },
-          { path: "users", element: <UserListPage /> },
-          { path: "logs", element: <AuditLogPage /> },
-          { path: "audit-logs", element: <Navigate to="/admin/logs" replace /> },
-        ],
-      },
-    ],
-  },
+           { path: "users", element: <UserListPage /> },
+           { path: "logs", element: <AuditLogPage /> },
+           { path: "audit-logs", element: <Navigate to="/admin/logs" replace /> },
+           { path: "contents", element: <ContentListPage /> },
+         ],
+       },
+     ],
+   },
+
 
   // Fallback -> /login
   {

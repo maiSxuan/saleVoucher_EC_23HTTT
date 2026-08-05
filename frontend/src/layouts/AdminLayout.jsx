@@ -12,6 +12,7 @@ import {
   Menu,             // Icon mở sidebar mobile
   X,                // Icon đóng sidebar mobile
   Bell,             // Icon thông báo
+  LayoutGrid,       // Icon quản lý nội dung
 } from 'lucide-react';
 
 // Danh sách menu sidebar hợp nhất cho Admin Portal — 5 tính năng cốt lõi
@@ -21,6 +22,7 @@ const NAV_ITEMS = [
   { path: '/admin/vouchers', label: 'Duyệt voucher', icon: Ticket },
   { path: '/admin/users', label: 'Quản lý người dùng', icon: Users },
   { path: '/admin/logs', label: 'Nhật ký hệ thống', icon: ScrollText },
+  { path: '/admin/contents', label: 'Quản lý nội dung', icon: LayoutGrid },
 ];
 
 export function AdminLayout({ children }) {
