@@ -31,14 +31,14 @@ import StaffManagementPage from "../features/partner-voucher/pages/partner/Staff
 import AuditLogPage from "../features/partner-voucher/pages/admin/AuditLogPage";
 
 // Customer Portal Pages & Layout
-import CustomerLayout from "../features/customer-commerce/layouts/CustomerLayout";
+import CustomerLayout from "../layouts/CustomerLayout";
 import VoucherSearchPage from "../features/customer-commerce/pages/customer/VoucherSearchPage";
 import VoucherDetailPage from "../features/customer-commerce/pages/customer/VoucherDetailPage";
 import CartPage from "../features/customer-commerce/pages/customer/CartPage";
 import CheckoutPage from "../features/customer-commerce/pages/customer/CheckoutPage";
 import PaymentReturnPage from "../features/customer-commerce/pages/customer/PaymentReturnPage";
-
-
+import MyOrdersPage from "../features/customer-commerce/pages/customer/MyOrdersPage";
+import ProfilePage from "../features/customer-commerce/pages/customer/ProfilePage";
 
 function PartnerHome() {
   try {
@@ -121,6 +121,14 @@ const router = createBrowserRouter([
                 path: "checkout/return",
                 element: <PaymentReturnPage />,
               },
+              {
+                path: "orders",
+                element: <MyOrdersPage />,
+              },
+              {
+                path: "profile",
+                element: <ProfilePage />,
+              },
             ],
           },
         ],
@@ -174,7 +182,10 @@ const router = createBrowserRouter([
           { path: "vouchers/:id", element: <VoucherApprovalDetailPage /> },
           { path: "users", element: <UserListPage /> },
           { path: "logs", element: <AuditLogPage /> },
-          { path: "audit-logs", element: <Navigate to="/admin/logs" replace /> },
+          {
+            path: "audit-logs",
+            element: <Navigate to="/admin/logs" replace />,
+          },
         ],
       },
     ],
