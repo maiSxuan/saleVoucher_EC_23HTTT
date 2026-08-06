@@ -576,6 +576,24 @@ getStaffById(id) {
             sdt: req.sdt,
             gio_mo_cua: req.gio_mo_cua,
           });
+        } else if (req.loai_yeu_cau === "Cap nhat" && req.ma_chi_nhanh) {
+          const branch = partner.branches.find((b) => b.ma_chi_nhanh === req.ma_chi_nhanh);
+          if (branch) {
+            const updatePayload = req.du_lieu_de_xuat || {
+              ten_chi_nhanh: req.ten_chi_nhanh,
+              khu_vuc: req.khu_vuc,
+              dia_chi: req.dia_chi,
+            };
+            branch.ten_chi_nhanh = updatePayload.ten_chi_nhanh;
+            branch.khu_vuc = updatePayload.khu_vuc;
+            branch.dia_chi = updatePayload.dia_chi;
+            branch.trang_thai = "Dang hoat dong";
+          }
+        } else if (req.loai_yeu_cau === "Xoá" && req.ma_chi_nhanh) {
+          const branch = partner.branches.find((b) => b.ma_chi_nhanh === req.ma_chi_nhanh);
+          if (branch) {
+            branch.trang_thai = "Tam ngung hoat dong";
+          }
         }
       }
       this.saveData(data);

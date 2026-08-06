@@ -193,7 +193,7 @@ export function VoucherApprovalListPage() {
 
                       {/* Đối tác */}
                       <td className="px-3.5 py-3.5 text-slate-600 truncate max-w-[120px]">
-                        {v.ten_dn || "Pizza Hut Vietnam"}
+                        {v.ten_dn || "Doanh nghiệp đối tác"}
                       </td>
 
                       {/* Danh mục */}

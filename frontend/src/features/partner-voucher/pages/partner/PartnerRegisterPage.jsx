@@ -42,7 +42,6 @@ export function PartnerRegisterPage() {
     ten_chi_nhanh: "",
     khu_vuc: "TP. Hồ Chí Minh",
     dia_chi_cn: "",
-    sdt_cn: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -66,10 +65,15 @@ export function PartnerRegisterPage() {
   const validateStep = (step) => {
     const newErrors = {};
 
+    const phoneRegex = /^0\d{9}$/;
+    const taxRegex = /^\d{10}(\d{3})?$/;
+    const cccdRegex = /^\d{9}(\d{3})?$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     if (step === 1) {
       if (!formData.account_email.trim()) {
         newErrors.account_email = "Email không được để trống";
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.account_email)) {
+      } else if (!emailRegex.test(formData.account_email.trim())) {
         newErrors.account_email = "Email không đúng định dạng";
       }
       if (!formData.account_password) {
@@ -83,17 +87,43 @@ export function PartnerRegisterPage() {
       if (!formData.account_ho_ten.trim()) {
         newErrors.account_ho_ten = "Họ tên không được để trống";
       }
+      if (!formData.account_sdt.trim()) {
+        newErrors.account_sdt = "Số điện thoại không được để trống";
+      } else if (!phoneRegex.test(formData.account_sdt.trim())) {
+        newErrors.account_sdt = "Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0";
+      }
     } else if (step === 2) {
       if (!formData.ten_dn.trim()) newErrors.ten_dn = "Tên doanh nghiệp không được để trống";
-      if (!formData.ma_so_thue.trim()) newErrors.ma_so_thue = "Mã số thuế không được để trống";
+      if (!formData.ma_so_thue.trim()) {
+        newErrors.ma_so_thue = "Mã số thuế không được để trống";
+      } else if (!taxRegex.test(formData.ma_so_thue.trim())) {
+        newErrors.ma_so_thue = "Mã số thuế phải gồm 10 hoặc 13 chữ số";
+      }
       if (!formData.dia_chi.trim()) newErrors.dia_chi = "Địa chỉ kinh doanh không được để trống";
     } else if (step === 3) {
       if (!formData.ho_ten.trim()) newErrors.ho_ten = "Họ tên người đại diện không được để trống";
-      if (!formData.sdt.trim()) newErrors.sdt = "Số điện thoại liên hệ không được để trống";
-      if (!formData.email.trim()) newErrors.email = "Email liên hệ không được để trống";
+      if (!formData.sdt.trim()) {
+        newErrors.sdt = "Số điện thoại liên hệ không được để trống";
+      } else if (!phoneRegex.test(formData.sdt.trim())) {
+        newErrors.sdt = "Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0";
+      }
+      if (!formData.email.trim()) {
+        newErrors.email = "Email liên hệ không được để trống";
+      } else if (!emailRegex.test(formData.email.trim())) {
+        newErrors.email = "Email liên hệ không đúng định dạng";
+      }
+      if (!formData.cccd.trim()) {
+        newErrors.cccd = "Số CCCD/CMND không được để trống";
+      } else if (!cccdRegex.test(formData.cccd.trim())) {
+        newErrors.cccd = "Số CCCD/CMND phải gồm 9 hoặc 12 chữ số";
+      }
       if (!formData.ngay_sinh) newErrors.ngay_sinh = "Ngày sinh người đại diện không được để trống";
+      if (!formData.gioi_tinh) newErrors.gioi_tinh = "Giới tính không được để trống";
+    } else if (step === 4) {
+      if (!formData.giay_phep_kinh_doanh) newErrors.giay_phep_kinh_doanh = "Giấy phép kinh doanh không được để trống";
     } else if (step === 5) {
       if (!formData.ten_chi_nhanh.trim()) newErrors.ten_chi_nhanh = "Tên chi nhánh không được để trống";
+      if (!formData.khu_vuc) newErrors.khu_vuc = "Khu vực chi nhánh không được để trống";
       if (!formData.dia_chi_cn.trim()) newErrors.dia_chi_cn = "Địa chỉ chi nhánh không được để trống";
     }
 
@@ -306,7 +336,9 @@ export function PartnerRegisterPage() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Số điện thoại liên hệ</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Số điện thoại liên hệ <span className="text-rose-500">*</span>
+                  </label>
                   <input
                     type="text"
                     disabled={!!createdUser}
@@ -315,6 +347,7 @@ export function PartnerRegisterPage() {
                     placeholder="0901234567"
                     className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-50"
                   />
+                  {errors.account_sdt && <p className="text-xs text-rose-600 mt-1">{errors.account_sdt}</p>}
                 </div>
               </div>
             </div>
@@ -420,7 +453,9 @@ export function PartnerRegisterPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Số CCCD / Hộ chiếu</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Số CCCD / CMND <span className="text-rose-500">*</span>
+                  </label>
                   <input
                     type="text"
                     value={formData.cccd}
@@ -428,6 +463,7 @@ export function PartnerRegisterPage() {
                     placeholder="079090123456"
                     className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
+                  {errors.cccd && <p className="text-xs text-rose-600 mt-1">{errors.cccd}</p>}
                 </div>
 
                 <div>
@@ -524,31 +560,21 @@ export function PartnerRegisterPage() {
                 {errors.ten_chi_nhanh && <p className="text-xs text-rose-600 mt-1">{errors.ten_chi_nhanh}</p>}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Tỉnh / Thành Phố</label>
-                  <select
-                    value={formData.khu_vuc}
-                    onChange={(e) => handleInputChange("khu_vuc", e.target.value)}
-                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  >
-                    <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
-                    <option value="Hà Nội">Hà Nội</option>
-                    <option value="Đà Nẵng">Đà Nẵng</option>
-                    <option value="Cần Thơ">Cần Thơ</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">SĐT chi nhánh</label>
-                  <input
-                    type="text"
-                    value={formData.sdt_cn}
-                    onChange={(e) => handleInputChange("sdt_cn", e.target.value)}
-                    placeholder="02838221122"
-                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Tỉnh / Thành Phố <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={formData.khu_vuc}
+                  onChange={(e) => handleInputChange("khu_vuc", e.target.value)}
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                >
+                  <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
+                  <option value="Hà Nội">Hà Nội</option>
+                  <option value="Đà Nẵng">Đà Nẵng</option>
+                  <option value="Cần Thơ">Cần Thơ</option>
+                </select>
+                {errors.khu_vuc && <p className="text-xs text-rose-600 mt-1">{errors.khu_vuc}</p>}
               </div>
 
               <div>

@@ -38,7 +38,7 @@ const checklistItems = [
   "Điều kiện sử dụng không mâu thuẫn",
 ];
 
-export function VoucherApprovalDetailPage() {
+export function VoucherApprovalDetailPage({ voucherId, onNavigate }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const [voucher, setVoucher] = useState(null);
@@ -56,7 +56,8 @@ export function VoucherApprovalDetailPage() {
   const loadVoucher = async () => {
     setLoading(true);
     try {
-      const data = await getVoucherByIdApi(id);
+      const vId = voucherId || id || "v-001";
+      const data = await getVoucherByIdApi(vId);
       setVoucher(data);
     } catch (e) {
       console.error("Error loading voucher detail:", e);
@@ -67,7 +68,7 @@ export function VoucherApprovalDetailPage() {
 
   useEffect(() => {
     loadVoucher();
-  }, [id]);
+  }, [voucherId, id]);
 
   if (loading) {
     return <div className="p-12 text-center text-slate-500">Đang tải thông tin voucher...</div>;
@@ -165,7 +166,13 @@ export function VoucherApprovalDetailPage() {
     <div className="p-6 max-w-6xl mx-auto space-y-4">
       {/* Back Button */}
       <button
-        onClick={() => navigate("/admin/vouchers")}
+        onClick={() => {
+          if (onNavigate) {
+            onNavigate("voucher-approval");
+          } else {
+            navigate("/admin/vouchers");
+          }
+        }}
         className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 font-medium transition-colors cursor-pointer"
       >
         <ArrowLeft size={16} /> Quay lại danh sách
@@ -238,7 +245,7 @@ export function VoucherApprovalDetailPage() {
               </div>
               <div>
                 <p className="text-xs text-slate-400">Đối tác phát hành</p>
-                <p className="font-bold text-blue-600 mt-0.5">{voucher.ten_dn || "Pizza Hut Vietnam"}</p>
+                <p className="font-bold text-blue-600 mt-0.5">{voucher.ten_dn || "Doanh nghiệp đối tác"}</p>
               </div>
               <div>
                 <p className="text-xs text-slate-400">Điều kiện sử dụng</p>
@@ -392,7 +399,7 @@ export function VoucherApprovalDetailPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Đối tác:</span>
-                <span className="font-semibold text-slate-800">{voucher.ten_dn || "Pizza Hut Vietnam"}</span>
+                <span className="font-semibold text-slate-800">{voucher.ten_dn || "Doanh nghiệp đối tác"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Giá bán:</span>

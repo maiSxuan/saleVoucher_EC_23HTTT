@@ -380,11 +380,11 @@ export function VoucherFormPage() {
             Hủy bỏ
           </Button>
           <Button variant="primary" onClick={() => handleSave(false)} loading={loading}>
-            💾 {id ? "Lưu thay đổi" : "Lưu bản nháp"}
+            Lưu bản nháp
           </Button>
           {voucherStatus === "Nhap" && (
             <Button variant="success" onClick={() => handleSave(true)} loading={loading}>
-              🚀 Gửi Admin duyệt ngay
+              Gửi Admin duyệt
             </Button>
           )}
         </div>

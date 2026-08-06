@@ -384,7 +384,7 @@ export async function rejectVoucherApi(voucherId, reason = "") {
   } catch (e) {
     console.warn("Backend API unavailable, using mockStore fallback:", e.message);
   }
-  return mockStore.rejectPartner(voucherId, reason);
+  return mockStore.rejectVoucher(voucherId, reason);
 }
 
 /**

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import PartnerLayout from "../../../../layouts/PartnerLayout";
 import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
@@ -82,12 +83,21 @@ export function VoucherDetailPage() {
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Top Breadcrumb & Action Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <Link to="/partner/vouchers" className="hover:underline">
-              Vouchers
-            </Link>
-            <span>/</span>
-            <span className="font-semibold text-slate-900">{voucher.ten_voucher}</span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+              title="Quay lại danh sách Voucher"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <Link to="/partner/vouchers" className="hover:underline font-semibold text-slate-700">
+                Danh sách Voucher
+              </Link>
+              <span>/</span>
+              <span className="font-bold text-slate-900 line-clamp-1">{voucher.ten_voucher}</span>
+            </div>
           </div>
 
           {/* Action buttons strictly scoped to voucher status */}
@@ -99,7 +109,7 @@ export function VoucherDetailPage() {
               <>
                 <Link to={`/partner/vouchers/${voucher.ma_voucher}/edit`}>
                   <Button variant="secondary" size="sm">
-                    ✏️ Chỉnh sửa toàn bộ thông tin
+                    Chỉnh sửa
                   </Button>
                 </Link>
                 <Button
@@ -107,7 +117,7 @@ export function VoucherDetailPage() {
                   size="sm"
                   onClick={() => handleStatusChange("Cho duyet", "Đã gửi yêu cầu xét duyệt Voucher!")}
                 >
-                  🚀 Gửi Admin xét duyệt
+                  Gửi duyệt
                 </Button>
               </>
             )}
@@ -119,7 +129,7 @@ export function VoucherDetailPage() {
                 size="sm"
                 onClick={() => handleStatusChange("Tam ngung", "Đã tạm ngưng bán Voucher!")}
               >
-                ⏸️ Tạm ngưng bán
+                Tạm ngưng
               </Button>
             )}
 
@@ -128,7 +138,7 @@ export function VoucherDetailPage() {
               <>
                 <Link to={`/partner/vouchers/${voucher.ma_voucher}/edit`}>
                   <Button variant="secondary" size="sm">
-                    ✏️ Chỉnh sửa (Giới hạn)
+                    Chỉnh sửa
                   </Button>
                 </Link>
                 <Button
@@ -165,7 +175,7 @@ export function VoucherDetailPage() {
                 <div className="pt-2">
                   <Link to={`/partner/vouchers/${voucher.ma_voucher}/edit`}>
                     <Button variant="danger" size="sm">
-                      Chỉnh sửa thông tin & Gửi lại
+                      Chỉnh sửa & Gửi lại
                     </Button>
                   </Link>
                 </div>
