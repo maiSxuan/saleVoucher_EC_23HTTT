@@ -20,8 +20,8 @@ import {
 import {
   finalizeVnpayReturn,
   finalizePaypalReturn,
-} from "../../api/paymentApi";
-import { cancelOrder } from "../../api/orderApi";
+} from "../../../../shared/api/paymentApi";
+import { cancelOrder } from "../../../../shared/api/orderApi";
 import { getVouchersByOrder } from "../../../../shared/api/issuedVoucherApi";
 import QrCodeDisplay from "../../../core-access/component/QRCodeDisplay";
 

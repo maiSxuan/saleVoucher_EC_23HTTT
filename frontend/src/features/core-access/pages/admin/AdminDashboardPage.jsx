@@ -21,8 +21,6 @@ import {
   Activity,
   BarChart3,
   ListTodo,
-  CheckCircle2,
-  ExternalLink,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
