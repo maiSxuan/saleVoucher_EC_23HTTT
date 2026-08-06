@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { Search, SlidersHorizontal } from "lucide-react";
-import { fetchSellingVouchers } from "../../api/catalogApi";
+import { fetchSellingVouchers } from "../../../../shared/api/catalogApi";
 import VoucherCard from "../../components/VoucherCard";
 
 export default function VoucherSearchPage() {

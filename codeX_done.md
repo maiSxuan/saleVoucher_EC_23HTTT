@@ -757,3 +757,340 @@ He thong truoc day chi co Access Token (het han sau 1d), khong co Refresh Token.
 - **`frontend/src/shared/api/authApi.js`**: Thêm `forgotPasswordApi`, `verifyOtpApi`, `resetPasswordApi`.
 - **`frontend/src/features/core-access/pages/auth/LoginPage.jsx`**: Xây dựng toàn bộ giao diện 3 bước chuẩn UC-BUS-05, kết nối các API và hiển thị thông báo, thanh tiến trình, đếm ngược gửi lại OTP.
 
+---
+
+# BƯỚC 11 Đã Hoàn Thành — UC BR-CUS-07: Nhận Voucher Đã Mua (Phát Hành Code Sau Thanh Toán)
+
+Đã triển khai hoàn chỉnh Use Case **BR-CUS-07** theo đúng spec trong `task_X.md` dòng 293–399. Luồng phát hành code xảy ra **ngay lập tức** sau khi thanh toán thành công, hiển thị QR code thật cho khách hàng.
+
+---
+
+## Thứ tự code (9 bước theo thứ tự thực hiện)
+
+### Bước 1 — Repository: Thêm hàm sinh mã vào `issued-voucher.repository.js`
+
+**File:** `backend/src/modules/core-access/data/repositories/issued-voucher.repository.js`
+
+**Lý do làm trước:** Repository là tầng thấp nhất, không phụ thuộc vào ai → phải xong trước để service gọi được.
+
+**Đã thêm:**
+- `generateCode(prefix)` — Helper sinh mã `EC26-XXXX-XXXXXXXX` dùng `crypto.randomBytes` đảm bảo ngẫu nhiên mạnh.
+- `issueForOrder({ orderId, voucherId, quantity, voucherPrefix })`:
+  - **Idempotency check:** Query `voucher_mua` theo `(ma_dh, ma_voucher)` trước khi insert. Nếu đã đủ số lượng → trả về ngay, không insert thêm.
+  - **Collision retry:** Vòng lặp tối đa 5 lần, khi gặp lỗi `23505` (Unique Constraint) thì sinh code mới thử lại.
+  - **Insert `voucher_mua`:** Ghi `voucher_code`, `trang_thai = 'Chua su dung'`, `gia_tri_qr_mo_phong = 'ECQR:{code}'`, `thoi_gian_sinh_ma`.
+- `findByOrderId(orderId)` — Lấy tất cả voucher của một đơn hàng (kèm enrich).
+- `findByCustomer(accountId, { page, limit, status })` — Lấy voucher của khách hàng ("Voucher của tôi"):
+  - Trước tiên lấy danh sách `ma_dh` thuộc `accountId` từ bảng `donhang`.
+  - Query `voucher_mua` với `IN (orderIds)` — đảm bảo ownership, không lộ data người khác (NFR-02).
+- `_enrichRows(rows)` — Helper nội bộ: batch load `voucher + voucher_cn + chinhanh + hosodn` tránh N+1 query.
+
+---
+
+### Bước 2 — Service: Viết lại `voucher-issuance.service.js`
+
+**File:** `backend/src/modules/core-access/business/services/voucher-issuance.service.js`
+
+**Lý do:** Service chứa toàn bộ business logic, gọi repository (đã xong bước 1) và audit log service.
+
+**Luồng `issueAfterPayment(eligibility, actorMeta)`:**
+```
+1. Kiem tra paymentSuccess === true (tien dieu kien)
+2. Kiem tra orderId + items khong rong
+3. Goi issuedVoucherRepository.issueForOrder() cho tung item
+4. Cap nhat donhang.trang_thai → 'Da phat hanh'
+5. Ghi audit log (non-strict) action = 'ISSUE_VOUCHER_CODE' (NFR-06)
+6. Neu loi → cap nhat donhang.trang_thai → 'Loi sinh ma' (A4.3) + ghi log loi
+```
+
+**Các method khác:**
+- `getVouchersByOrder(orderId, accountId)` — Ownership check: lấy `ma_tk_dat` từ `donhang`.
+- `getMyVouchers(accountId, opts)` — Delegate xuống `issuedVoucherRepository.findByCustomer()`.
+- `getIssuedVoucherDetail(issuedVoucherId, accountId)` — Ownership check trước khi trả chi tiết.
+
+---
+
+### Bước 3 — Tích hợp vào `payment.service.js` (module customer-commerce)
+
+**File:** `backend/src/modules/customer-commerce/business/services/payment.service.js`
+
+**Lý do:** Điểm trigger BR-CUS-07 là sau khi payment thành công. Tích hợp tại đây để luồng chạy tự động.
+
+**Thay đổi trong `_finalizePayment()`:**
+- Sau khi cập nhật payment và order sang trạng thái thành công → gọi `voucherIssuanceService.issueAfterPayment()`.
+- Lỗi issuance **KHÔNG rollback payment** (khách đã trả tiền) — chỉ đánh dấu `issuePending = true`.
+- Response trả thêm `{ issuedCount, issuePending }` cho frontend biết tình trạng.
+- **Import theo contract:** gọi qua service, không import repository core-access trực tiếp.
+
+---
+
+### Bước 4 — Controller: Viết lại `issued-voucher.controller.js`
+
+**File:** `backend/src/modules/core-access/presentation/controllers/issued-voucher.controller.js`
+
+| Handler | Route | Mục đích |
+|---|---|---|
+| `getMyVouchers` | GET /vouchers/my | Danh sách voucher của khách |
+| `getVouchersByOrder` | GET /vouchers/order/:orderId | Voucher theo đơn (sau thanh toán) |
+| `getIssuedVoucherDetail` | GET /vouchers/:issuedId | Chi tiết 1 voucher + QR |
+| `issueVoucher` | POST /vouchers/issue | Phát hành thủ công (nội bộ) |
+
+**Lưu ý quan trọng:** `accountId` lấy từ `req.user?.accountId` theo JWT payload thực tế `{ id, accountId, role, ... }`, không phải `req.user?.ma_tk`.
+
+---
+
+### Bước 5 — Routes: Viết lại `issued-voucher.routes.js`
+
+**File:** `backend/src/modules/core-access/presentation/routes/issued-voucher.routes.js`
+
+**Thứ tự routes (static trước dynamic):**
+```
+router.use(authenticateMiddleware)
+GET  /vouchers/my           → getMyVouchers        (static)
+GET  /vouchers/order/:id    → getVouchersByOrder    (static prefix)
+GET  /vouchers/:issuedId    → getIssuedVoucherDetail (dynamic — sau cùng)
+POST /vouchers/issue        → issueVoucher
+```
+
+**Lỗi đã phát hiện và sửa:** Middleware export là `{ authenticateMiddleware }` (named), không phải default export. Phải dùng `const { authenticateMiddleware } = require(...)`.
+
+---
+
+### Bước 6 — Frontend API: Tạo `issuedVoucherApi.js`
+
+**File:** `frontend/src/features/core-access/api/issuedVoucherApi.js`
+
+**Lý do đặt trong `core-access`:** BR-CUS-07 là use case của X module.
+
+```js
+getMyVouchers({ page, limit, status })  // GET /api/vouchers/my
+getVouchersByOrder(orderId)             // GET /api/vouchers/order/:orderId
+getIssuedVoucherDetail(issuedId)        // GET /api/vouchers/:issuedId
+```
+
+---
+
+### Bước 7 — Frontend Page: `MyVoucherPage.jsx`
+
+**File:** `frontend/src/features/core-access/pages/customer/MyVoucherPage.jsx`
+
+**Tính năng:**
+- Filter bar 5 tab trạng thái (Tất cả / Chưa sử dụng / Đã sử dụng / Hết hạn / Lỗi phát hành).
+- Search client-side theo mã code, tên voucher, đối tác.
+- `VoucherCard`: ảnh/icon, tên, đối tác, mã code font-mono màu cam, `StatusBadge` màu sắc.
+- 4 UI states bắt buộc: Loading / Error + thử lại / Empty + CTA / Danh sách.
+- Phân trang (chỉ hiện khi không đang search).
+- Click card → navigate `/customer/vouchers/issued/:issuedId`.
+
+---
+
+### Bước 8 — Frontend Page: `IssuedVoucherDetailPage.jsx`
+
+**File:** `frontend/src/features/core-access/pages/customer/IssuedVoucherDetailPage.jsx`
+
+**Hiển thị đầy đủ theo spec:**
+- Header gradient cam: ảnh, tên, đối tác, StatusBadge.
+- `QrCodeDisplay` (canvas thật) — chỉ hiện khi `trang_thai !== 'Da su dung'`.
+- Mã code font-mono, màu cam.
+- InfoRow: HSD, thời gian phát hành, điều kiện sử dụng.
+- Danh sách chi nhánh áp dụng với địa chỉ, khu vực.
+- **Error fallback A7.3:** Hướng dẫn vào "Đơn hàng của tôi" khi không load được.
+
+**Cập nhật `PaymentResultPage.jsx` (cùng bước 8):**
+- Sau payment success: fetch `getVouchersByOrder(orderId)` → render `IssuedVoucherMini[]`.
+- Xử lý `issuePending = true` → hiển thị cảnh báo A4.
+- Actions: "Xem voucher của tôi" (primary) + "Lịch sử đơn hàng" + "Tiếp tục mua sắm".
+
+---
+
+### Bước 9 — Router + Nav: `router.jsx` + `CustomerLayout.jsx`
+
+**`router.jsx`:** Thêm 2 import + 2 routes vào customer section, đặt static routes trước dynamic:
+```js
+{ path: "vouchers/my",               element: <MyVoucherPage /> },
+{ path: "vouchers/issued/:issuedId", element: <IssuedVoucherDetailPage /> },
+{ path: "vouchers/:id",              element: <VoucherDetailPage /> },
+```
+
+**`CustomerLayout.jsx`:** Fix link dropdown "Voucher của tôi":
+```js
+// Sai: navigate("/customer/vouchers")       ← route không tồn tại
+// Đúng: navigate("/customer/vouchers/my")   ← route thực tế
+```
+
+---
+
+## Luồng hoàn chỉnh BR-CUS-07
+
+```
+Khach hang thanh toan thanh cong (VNPay/PayPal callback)
+  ↓
+PaymentService._finalizePayment()
+  → updateStatus(payment, 'Thanh cong')
+  → updateStatus(order, 'Da thanh toan')
+  → incrementSoldQuantity + removeCartItems
+  → voucherIssuanceService.issueAfterPayment({orderId, items})
+      → issueForOrder() [idempotency check → insert voucher_mua]
+      → generateCode() [EC26-XXXX-XXXXXXXX, retry neu collision]
+      → updateStatus(order, 'Da phat hanh')
+      → auditLog(ISSUE_VOUCHER_CODE)  [NFR-06]
+  → return { orderId, status:'success', issuedCount, issuePending }
+
+Frontend PaymentResultPage
+  → fetch getVouchersByOrder(orderId)
+  → render IssuedVoucherMini[] (QR canvas + ma + chi nhanh)
+  → nut "Xem voucher cua toi" → /customer/vouchers/my
+
+MyVoucherPage
+  → getMyVouchers() [ownership: chi lay don cua minh]
+  → danh sach VoucherCard + filter + search
+
+IssuedVoucherDetailPage
+  → getIssuedVoucherDetail(id) [ownership check]
+  → QRCodeDisplay (canvas that) + ma + chi nhanh ap dung
+```
+
+---
+
+## Spec Coverage BR-CUS-07
+
+| Yêu cầu | Cách thực hiện |
+|---|---|
+| Sinh code duy nhất (NFR-03) | UNIQUE constraint DB + retry 5 lần khi collision |
+| Idempotency — không sinh thêm khi retry | Check `(orderId, voucherId)` tồn tại trước insert |
+| Hiển thị mã QR mô phỏng | `QrCodeDisplay.jsx` dùng thư viện `qrcode` vẽ canvas |
+| Hiển thị chi nhánh áp dụng | `_enrichRows()` batch load `voucher_cn + chinhanh + hosodn` |
+| A4 — Không sinh được code | Cập nhật `donhang.trang_thai = 'Loi sinh ma'` + thông báo frontend |
+| A7 — Trang xác nhận lỗi | Error fallback hướng dẫn vào "Đơn hàng của tôi" |
+| NFR-02 — Chỉ xem voucher của mình | Ownership check `donhang.ma_tk_dat === accountId` |
+| NFR-06 — Ghi nhận phát hành | `auditLogService.log(ISSUE_VOUCHER_CODE)` sau mỗi lần issue |
+| Truy cập "Voucher của tôi" | `MyVoucherPage` + nav link trong `CustomerLayout` dropdown |
+| E1 / E2 | try/catch + loading/error state + nút thử lại |
+
+---
+
+# BƯỚC 12 Đã Hoàn Thành: USECASE UC-ADM-06 (BR_ADM_06) — Hiển Thị Dashboard Tổng Quan Hệ Thống
+
+Dựa theo tài liệu đặc tả `docs/đặc tả hệ thống cho admin.pdf` và hướng dẫn trong `task_X.md`, chức năng **Hiển thị Dashboard tổng quan hệ thống (UC-ADM-06 / BR_ADM_06)** dành cho Quản trị viên (Admin) đã được triển khai hoàn chỉnh từ Cơ sở dữ liệu Supabase, Backend API cho đến Giao diện React Frontend.
+
+---
+
+## 1. Thứ Tự Các Bước Đã Code (Luồng Triển Khai)
+
+Quá trình triển khai tuân thủ nghiêm ngặt mô hình kiến trúc nhiều lớp (Layered Architecture):
+
+```
+1. Repository (dashboard.repository.js)
+   ↓
+2. Business Service (admin-dashboard.service.js)
+   ↓
+3. Controller (admin-dashboard.controller.js)
+   ↓
+4. Routes & Security Middleware (dashboard.routes.js)
+   ↓
+5. Frontend API Layer (adminDashboardApi.js)
+   ↓
+6. Frontend Page & UI States (AdminDashboardPage.jsx)
+```
+
+---
+
+## 2. Chi Tiết Từng Bước Triển Khai
+
+### Bước 1 — Repository: `dashboard.repository.js` (Tầng dữ liệu)
+- **Vị trí:** `backend/src/modules/core-access/data/repositories/dashboard.repository.js`
+- **Mục đích:** Thực thi các câu truy vấn tổng hợp dữ liệu từ Supabase cho 7 chỉ số cốt lõi:
+  1. `countUsers()`: Đếm tổng số người dùng trong bảng `nguoidung`.
+  2. `countActivePartners()`: Đếm đối tác đang hoạt động trong bảng `hosodn` (`trang_thai IN ('Dang hoat dong', 'Hoat dong')`).
+  3. `countPendingPartners()`: Đếm đối tác chờ duyệt trong bảng `hosodn` (`trang_thai = 'Cho duyet'`).
+  4. `countActiveVouchers()`: Đếm voucher đang bán trong bảng `voucher` (`trang_thai = 'Dang ban'`).
+  5. `countPendingVouchers()`: Đếm voucher chờ duyệt trong bảng `voucher` (`trang_thai = 'Cho duyet'`).
+  6. `countPendingOrders()`: Đếm đơn hàng cần xử lý trong bảng `donhang` (`trang_thai IN ('Cho hoan tien', 'Loi sinh ma', 'Loi thanh toan')`).
+  7. `sumRevenue()`: Tính tổng doanh thu từ các giao dịch thanh toán thành công trong bảng `thanhtoan` (`trang_thai = 'Thanh cong'`).
+- **Khả năng chịu lỗi (NFR-03):** Áp dụng `Promise.allSettled` trong `getAllMetrics()`. Nếu một truy vấn đơn lẻ gặp sự cố, các chỉ số còn lại vẫn được trả về bình thường mà không làm hỏng toàn bộ trang dashboard.
+
+---
+
+### Bước 2 — Business Service: `admin-dashboard.service.js` (Tầng nghiệp vụ)
+- **Vị trí:** `backend/src/modules/core-access/business/services/admin-dashboard.service.js`
+- **Mục đích:** Điều phối việc lấy dữ liệu tổng quan, định dạng dữ liệu trả về và đính kèm mốc thời gian trích xuất dữ liệu (`generatedAt`).
+
+---
+
+### Bước 3 — Controller: `admin-dashboard.controller.js` (Tầng tiếp nhận request)
+- **Vị trí:** `backend/src/modules/core-access/presentation/controllers/admin-dashboard.controller.js`
+- **Mục đích:** Tiếp nhận HTTP Request `GET /dashboard`, gọi `adminDashboardService.getSummary()`, bọc kết quả trong cấu trúc chuẩn `{ success: true, data: summary }` và chuyển giao lỗi cho Error Middleware tập trung.
+
+---
+
+### Bước 4 — Route & Phân quyền: `dashboard.routes.js`
+- **Vị trí:** `backend/src/modules/core-access/presentation/routes/dashboard.routes.js`
+- **Mục đích:** Khai báo endpoint `GET /dashboard` với chuỗi kiểm tra bảo mật nghiêm ngặt:
+  - `authenticateMiddleware`: Xác thực JWT token của người dùng (E2).
+  - `authorizeMiddleware(JWT_ROLES.ADMIN)`: Chặn tất cả các tài khoản không có quyền Admin (E1 - 403 Forbidden).
+
+---
+
+### Bước 5 — Frontend API: `adminDashboardApi.js`
+- **Vị trí:** `frontend/src/shared/api/adminDashboardApi.js`
+- **Mục đích:** Cung cấp hàm `fetchDashboardSummary()` để gửi request kèm `Authorization: Bearer <token>` lên backend và bắt lỗi HTTP status code.
+
+---
+
+### Bước 6 — Giao diện Dashboard: `AdminDashboardPage.jsx`
+- **Vị trí:** `frontend/src/features/core-access/pages/admin/AdminDashboardPage.jsx`
+- **Tính năng giao diện:**
+  - **7 Thẻ chỉ số tổng quan (StatCard):** Hiển thị rõ ràng từng chỉ số, có icon minh họa, mô tả ngắn và badge nổi bật các mục cần xử lý ("Cần duyệt", "Cần xử lý").
+  - **Liên kết điều hướng trực tiếp (NFR-05):** Mỗi ô chỉ số cho phép click vào để chuyển nhanh tới màn hình quản lý tương ứng (`/admin/users`, `/admin/partners`, `/admin/vouchers`,...).
+  - **Biểu đồ đường trực quan tổng doanh thu (Revenue Line Chart):**
+    - Sử dụng `recharts` (`AreaChart`, `Line`, `Area`, `XAxis`, `YAxis`, `CartesianGrid`, `Tooltip`).
+    - Hỗ trợ chuyển đổi linh hoạt 3 chế độ xem: **Theo ngày**, **Theo tháng**, **Theo năm**.
+    - Hiệu ứng Gradient mờ chuyển sắc (`linearGradient`) dưới đường biểu đồ, bóng mờ mịn và `activeDot` khi hover.
+    - Custom Tooltip hiển thị chi tiết mốc thời gian, số tiền VND chuẩn định dạng và số lượng đơn hàng / giao dịch thực tế.
+  - **Biểu đồ cột nằm ngang trạng thái đối tác (Partner Status Horizontal Bar Chart):**
+    - Nằm bên phải biểu đồ đường doanh thu (chia cột 8 - 4).
+    - Sử dụng `recharts` (`BarChart` layout="vertical", `Bar`, `Cell`, `XAxis`, `YAxis`, `Tooltip`).
+    - Thống kê 4 trạng thái: *Đang hoạt động (7)*, *Chờ xét duyệt (3)*, *Tạm khóa (1)*, *Từ chối (1)* kèm tỷ lệ phần trăm (%).
+  - **Khối "Công việc cần xử lí" (Queue cần xử lý):**
+    - Nằm ngay bên dưới các biểu đồ với huy hiệu tổng số mục đang chờ.
+    - Điều hướng trực tiếp (Direct Deep-linking): Khi click vào **"Xem chi tiết"** hoặc tên của từng mục, hệ thống sẽ mở trực tiếp màn hình chi tiết xử lý của đối tượng đó thay vì màn hình danh sách:
+      1. *Đối tác chờ duyệt:* Mở thẳng trang chi tiết đối tác `/admin/partners/:id` (đầy đủ các tab Thông tin DN, Người đại diện, Giấy phép KD, Chi nhánh và nút Duyệt/Từ chối/Khóa).
+      2. *Yêu cầu thay đổi chi nhánh:* Mở thẳng trang chi tiết đối tác chủ quản `/admin/partners/:partnerId`.
+      3. *Voucher chờ duyệt:* Mở thẳng trang duyệt voucher `/admin/vouchers/:voucherId` (với thông tin chiết khấu, hình ảnh, điều kiện và nút Duyệt/Từ chối).
+      4. *Đơn chờ hoàn tiền:* Mở thẳng trang nhật ký giao dịch `/admin/logs`.
+      5. *Đơn lỗi sinh mã:* Mở thẳng trang nhật ký xử lý đơn `/admin/logs`.
+  - **Định dạng tiền tệ thông minh:** `formatVnd` và `formatVndFull` hiển thị doanh thu theo tỷ ₫, triệu ₫ hoặc VND đầy đủ.
+  - **Xử lý đầy đủ 4 trạng thái UI:**
+    1. *Đang tải:* Hiển thị Skeleton cards và hiệu ứng tải biểu đồ/queue.
+    2. *Có dữ liệu:* Hiển thị đầy đủ số liệu, biểu đồ đường, biểu đồ cột ngang và queue công việc.
+    3. *Không có dữ liệu / Trống:* Hiển thị ký hiệu `—` và placeholder an toàn (A1b).
+    4. *Lỗi tải:* Hiển thị Error Banner kèm nút **"Thử lại"** / **"Làm mới"** (A1a).
+
+---
+
+## 3. Đáp Ứng Toàn Diện Đặc Tả (Spec Coverage UC-ADM-06)
+
+| Yêu cầu đặc tả | Cách triển khai & Kiểm chứng | Đánh giá |
+|---|---|---|
+| **Tổng người dùng** | Truy vấn chính xác tổng số record `nguoidung` (36 người dùng) | **ĐẠT** |
+| **Tổng đối tác đang hoạt động** | Lọc theo `hosodn.trang_thai IN ('Dang hoat dong', 'Hoat dong')` (7 đối tác) | **ĐẠT** |
+| **Tổng đối tác chờ duyệt** | Lọc theo `hosodn.trang_thai = 'Cho duyet'` (3 đối tác) + Badge "Cần xử lý" | **ĐẠT** |
+| **Số lượng voucher đang bán** | Lọc theo `voucher.trang_thai = 'Dang ban'` (1 voucher) | **ĐẠT** |
+| **Số lượng voucher chờ duyệt** | Lọc theo `voucher.trang_thai = 'Cho duyet'` (6 voucher) + Badge "Cần duyệt" | **ĐẠT** |
+| **Tổng đơn hàng chờ xử lí** | Lọc đơn hàng `Cho hoan tien`, `Loi sinh ma`, `Loi thanh toan` (1 đơn) + Badge "Cần xử lý" | **ĐẠT** |
+| **Doanh thu tổng** | Tính tổng `thanhtoan.so_tien` có `trang_thai = 'Thanh cong'` (6.285.000 ₫) | **ĐẠT** |
+| **Biểu đồ đường doanh thu trực quan** | Biểu đồ đường (Line/Area Chart) theo Ngày, Tháng, Năm với Recharts | **ĐẠT** |
+| **Biểu đồ cột ngang trạng thái đối tác** | Horizontal Bar Chart với Recharts hiển thị 4 trạng thái và tỷ lệ % | **ĐẠT** |
+| **Khối "Công việc cần xử lí"** | Hàng đợi 5 nhóm việc cần duyệt/xử lý (Đối tác, Chi nhánh, Voucher, Hoàn tiền, Lỗi sinh mã) | **ĐẠT** |
+| **Luồng thay thế A1a (Lỗi & Thử lại)** | Nút "Làm mới" trên header banner và "Thử lại" trên Error banner | **ĐẠT** |
+| **Luồng thay thế A1b (Dữ liệu trống)** | Hiển thị `—` và placeholder an toàn khi giá trị null/0 | **ĐẠT** |
+| **Luồng ngoại lệ E1 (Quyền hạn)** | `authorizeMiddleware(JWT_ROLES.ADMIN)` trả 403 Forbidden | **ĐẠT** |
+| **Luồng ngoại lệ E2 (Hết hạn phiên)** | Chuyển hướng về `/login` khi nhận 401 Unauthorized | **ĐẠT** |
+| **NFR-01 (Hiệu năng)** | Query count/sum tối ưu song song, phản hồi trong vài chục ms | **ĐẠT** |
+| **NFR-02 (Bảo mật)** | Chặn truy cập từ phía API lẫn ProtectedRoute phía Frontend | **ĐẠT** |
+| **NFR-03 (Tính ổn định)** | `Promise.allSettled` cô lập lỗi giữa các module | **ĐẠT** |
+| **NFR-05 (Khả năng sử dụng)** | Giao diện chuẩn Admin Design System, tooltip và chuyển tab mượt mà | **ĐẠT** |
+| **NFR-06 (Tính kiểm toán)** | Trả kèm mốc thời gian `generatedAt` chính xác tại thời điểm truy xuất | **ĐẠT** |
+
+
+

@@ -289,3 +289,212 @@ NFR-06 – Toàn vẹn dữ liệu
 Hệ thống chỉ cập nhật mật khẩu sau khi hoàn thành toàn bộ quy trình xác thực.
 Mật khẩu mới phải được lưu toàn vẹn; nếu xảy ra lỗi, hệ thống phải giữ nguyên mật khẩu cũ.
 Sau khi khôi phục mật khẩu thành công, khách hàng phải sử dụng mật khẩu mới trong các lần đăng nhập tiếp theo.
+
+BƯỚC 11: THÊM CODE USECASE UC-BUS-07 TRONG docs/đặc tả hệ thống cho khách hàng(2).pdf (USECASE này xảy ra khi khách hàng mua voucher thành công, đơn hàng có trạng thái thanh toán thành công và ngay lập tức sinh mã code liền cho khách hàng. Hãy thêm vào code phần code này nhé.)
+Tên UC
+Nhận voucher đã mua 
+Use case ID
+BR_CUS_07
+Mô tả
+Hệ thống thực hiện phát hành voucher code điện tử sau khi đơn hàng được thanh toán thành công, hiển thị thông tin voucher và cho phép khách hàng xem lại voucher, trạng thái sử dụng và lịch sử đơn hàng. 
+Actor
+Khách hàng
+Độ ưu tiên
+Cao
+Trigger
+BR_CUS_07 – Nhận voucher đã mua
+Tiền điều kiện
+Đơn hàng của khách hàng đã được thanh toán thành công.
+Giao dịch thanh toán đã được hệ thống xác nhận hợp lệ.
+Hệ thống có khả năng xử lý phát hành voucher code.
+Hậu điều kiện
+Trường hợp thành công
+Voucher code được sinh và gắn với đơn hàng.
+Hệ thống hiển thị:
+Mã voucher;
+Mã QR mô phỏng;
+Thời hạn sử dụng;
+Chi nhánh áp dụng.
+Voucher được lưu trong hệ thống để khách hàng có thể truy cập lại.
+Khách hàng có thể xem:
+Trạng thái sử dụng;
+Lịch sử đơn hàng.
+Trường hợp phát hành chưa hoàn tất
+Đơn hàng được giữ ở trạng thái “Chờ phát hành mã”.
+Voucher code chưa được tạo.
+Hệ thống ghi nhận lỗi phát hành.
+Luồng cơ bản
+Hệ thống nhận xác nhận đơn hàng đã thanh toán thành công.
+Hệ thống kiểm tra trạng thái thanh toán của đơn hàng.
+Hệ thống xác nhận đơn hàng hợp lệ để phát hành voucher.
+Hệ thống Sinh voucher code duy nhất gắn với đơn hàng.
+Hệ thống Tạo mã QR mô phỏng tương ứng với voucher code.
+Hệ thống Lưu voucher code và thông tin liên quan vào hệ thống.
+Hệ thống Hiển thị trang xác nhận đơn hàng.
+Hệ thống Hiển thị thông tin voucher gồm: mã voucher, mã QR mô phỏng, thời hạn sử dụng, chi nhánh áp dụng, tên đối tác, điều kiện sử dụng
+khách hàng Xem thông tin voucher được hiển thị.
+Khách hàng Truy cập mục “Voucher của tôi”.
+Hệ thống Truy xuất danh sách voucher của khách hàng.
+Hệ thống Hiển thị danh sách voucher cùng trạng thái sử dụng.
+Hệ thống Hiển thị lịch sử đơn hàng liên quan đến voucher.
+Hệ thống Kết thúc Use Case.
+Luồng thay thế
+A4 – Không sinh được voucher code
+A4.1 Hệ thống Không thể sinh voucher code.
+A4.2 Hệ thống Ghi nhận lỗi phát hành voucher.
+A4.3 Hệ thống Cập nhật trạng thái đơn hàng thành “Lỗi sinh mã”.
+A4.4 Hệ thống Hiển thị thông báo cho khách hàng về việc chưa thể phát hành voucher.
+A4.5 Hệ thống Thông báo cho Quản trị viên để xử lý thủ công.
+A4.6 Hệ thống Kết thúc Use Case.
+A7 – Trang xác nhận không tải được
+A7.1 Hệ thống Không thể hiển thị trang xác nhận đơn hàng.
+A7.2 Hệ thống Không hiển thị thông tin voucher tại trang xác nhận.
+A7.3 Hệ thống Hiển thị hướng dẫn truy cập mục “Đơn hàng của tôi”.
+A7.4 Khách hàng Truy cập mục “Đơn hàng của tôi”.
+A7.5 Hệ thống Truy xuất thông tin đơn hàng đã thanh toán.
+A7.6 Hệ thống Hiển thị voucher code đã được phát hành.
+A7.7 Hệ thống Kết thúc Use Case.
+Luồng ngoại lệ
+E1 – Không thể lưu voucher vào hệ thống
+E1.1 Hệ thống Không thể lưu voucher code sau khi sinh.
+E1.2 Hệ thống Không hiển thị thông tin voucher như một kết quả thành công.
+E1.3 Hệ thống Ghi nhận lỗi hệ thống.
+E1.4 Hệ thống Hiển thị thông báo: “Không thể phát hành voucher. Vui lòng thử lại.”
+E1.5 Hệ thống Giữ trạng thái đơn hàng chưa hoàn tất phát hành voucher.
+E1.6 Hệ thống Kết thúc Use Case thất bại.
+E2 – Không thể truy xuất danh sách voucher
+E2.1 Hệ thống Không thể truy xuất danh sách voucher tại bước 11.
+E2.2 Hệ thống Không hiển thị danh sách voucher.
+E2.3 Hệ thống Hiển thị thông báo: “Không thể tải danh sách voucher.”
+E2.4 Hệ thống  Kết thúc Use Case thất bại.
+YC Phi chức năng
+NFR-01 – Hiệu năng
+Hệ thống phải tự động phát hành voucher ngay sau khi thanh toán thành công.
+Thời gian hiển thị trang xác nhận và thông tin voucher phải đảm bảo không gây gián đoạn trải nghiệm người dùng.
+Hệ thống phải thể hiện trạng thái xử lý khi đang sinh voucher.
+NFR-02 – Bảo mật
+Voucher code phải là duy nhất và gắn với đúng đơn hàng.
+Hệ thống chỉ cho phép khách hàng truy cập voucher thuộc về tài khoản của mình.
+Hệ thống không hiển thị voucher của khách hàng khác.
+NFR-03 – Tính ổn định
+Hệ thống không được phát hành trùng voucher code.
+Hệ thống phải đảm bảo dữ liệu voucher không bị mất sau khi sinh.
+Khi xảy ra lỗi phát hành, hệ thống phải giữ trạng thái đơn hàng phù hợp.
+NFR-05 – Khả năng sử dụng
+Hệ thống phải hiển thị rõ:
+Mã voucher;
+Mã QR mô phỏng;
+Thời hạn sử dụng;
+Chi nhánh áp dụng.
+Khách hàng có thể dễ dàng truy cập:
+“Voucher của tôi”;
+“Đơn hàng của tôi”.Thông báo lỗi phải rõ ràng và dễ hiểu.
+NFR-06 – Khả năng kiểm toán
+Hệ thống phải ghi nhận việc phát hành voucher.
+Ghi nhận phải bao gồm:
+Thời gian phát hành;
+Đơn hàng liên quan;
+Trạng thái phát hành.
+Các lỗi phát hành phải được ghi nhận để xử lý.
+
+BƯỚC 12:  THÊM CODE USECASE UC-ADM-06 TRONG docs/đặc tả hệ thống cho admin.pdf. code xong thì ghi lại luồng code (thứ tự mà bạn đã code) vào codeX_done.md
+Tên UC
+Hiển thị dashboard tổng quan hệ thống 
+Use case ID
+BR_ADM_06
+Mô tả
+Hệ thống tổng hợp và hiển thị các chỉ số tổng quan về người dùng, đối tác, voucher, đơn hàng và doanh thu; đồng thời hiển thị các mục cần xử lý để Quản trị viên nắm bắt tình trạng vận hành và truy cập nhanh vào các màn hình quản lý tương ứng.
+Actor
+Admin
+Độ ưu tiên
+Cao
+Trigger
+Quản trị viên đăng nhập vào hệ thống và truy cập giao diện Admin Dashboard
+Tiền điều kiện
+Quản trị viên đã đăng nhập vào hệ thống.
+Tài khoản có vai trò Quản trị viên.
+Phiên đăng nhập còn hiệu lực.
+Hệ thống có quyền truy xuất dữ liệu tổng hợp 
+Hậu điều kiện
+3.1. Trường hợp hiển thị thành công
+Hệ thống hiển thị đầy đủ các chỉ số tổng quan:
+Tổng người dùng
+Tổng đối tác đang hoạt động 
+Tổng đối tác chờ duyệt
+Số lượng voucher đang bán
+Số lượng voucher chờ duyệt
+Tổng đơn hàng chờ xử lí (hoàn tiền, lỗi)
+Doanh thu tổng
+3.2. Trường hợp dữ liệu trống
+Hệ thống hiển thị các khu vực dữ liệu với trạng thái trống.
+Không hiển thị dữ liệu không tồn tại như một kết quả hợp lệ.
+3.3. Trường hợp dữ liệu chưa tải được
+Hệ thống hiển thị trạng thái đang tải.
+Không hiển thị dữ liệu chưa xác định.
+Luồng cơ bản
+1  Quản trị viên  Đăng nhập vào hệ thống và truy cập giao diện Admin Dashboard.
+2  Hệ thống  Kiểm tra phiên đăng nhập và quyền truy cập của tài khoản.
+3  Hệ thống  Khởi tạo quá trình tải dữ liệu dashboard.
+4  Hệ thống  Truy xuất dữ liệu tổng hợp từ các module: người dùng, đối tác, voucher, đơn hàng và doanh thu.
+5  Hệ thống  Tính toán và truy xuất các chỉ số tổng quan gồm: Tổng người dùng, , Tổng đối tác đang hoạt động, Tổng đối tác chờ duyệt, Số lượng voucher đang bán, Số lượng voucher chờ duyệt, Tổng đơn hàng chờ xử lí (hoàn tiền, lỗi), Doanh thu tổng
+6  Hệ thống  Hiển thị dashboard với các chỉ số tổng quan.
+7  Hệ thống  Kết thúc Use Case.
+Luồng thay thế
+A1a – Dữ liệu dashboard chưa tải được 
+A1a.1  Hệ thống  Không thể hoàn tất việc truy xuất dữ liệu dashboard trong thời gian chờ.
+A1a.2  Hệ thống  Hiển thị trạng thái đang tải dữ liệu.
+A1a.3  Hệ thống  Khi vượt quá thời gian chờ, hiển thị thông báo lỗi tải dữ liệu.
+A1a.4  Hệ thống  Hiển thị lựa chọn cho phép tải lại dashboard.
+A1a.5  Quản trị viên  Chọn tải lại dashboard.
+A1a.6  Hệ thống  Thực hiện lại quá trình tải dữ liệu từ bước 3 của Basic Flow.
+A1a.7  Hệ thống  Kết thúc Use Case nếu không tiếp tục thao tác.
+A1b – Không có dữ liệu  
+A1b.1  Hệ thống  Không có dữ liệu cho một hoặc nhiều chỉ số dashboard.
+A1b.2  Hệ thống  Hiển thị các khu vực dữ liệu tương ứng với trạng thái trống.
+A1b.3  Hệ thống  Không hiển thị dữ liệu không tồn tại như kết quả hợp lệ.
+A1b.4  Hệ thống  Cho phép Quản trị viên tiếp tục xem các phần còn lại của dashboard.
+A1b.5  Hệ thống  Kết thúc Use Case.
+Luồng ngoại lệ
+E1 – Không có quyền truy cập
+E1.1  Hệ thống  Phát hiện tài khoản không có vai trò Quản trị viên.
+E1.2  Hệ thống  Từ chối truy cập dashboard quản trị.
+E1.3  Hệ thống  Hiển thị thông báo: “Bạn không có quyền truy cập.”
+E1.4  Hệ thống  Kết thúc Use Case thất bại.
+E2 – Dữ liệu trả về không hợp lệ 
+E2.1  Hệ thống  Phát hiện phiên đăng nhập không còn hiệu lực.
+E2.2  Hệ thống  Không thực hiện truy xuất dữ liệu dashboard.
+E2.3  Hệ thống  Hiển thị yêu cầu đăng nhập lại.
+E2.4  Hệ thống  Kết thúc Use Case thất bại.
+E3 – Không thể truy xuất dữ liệu dashboard
+E3.1  Hệ thống  Không thể truy xuất dữ liệu từ một hoặc nhiều module.
+E3.2  Hệ thống  Không hiển thị dữ liệu không đầy đủ như kết quả hợp lệ.
+E3.3  Hệ thống  Hiển thị thông báo lỗi tải dữ liệu.
+E3.4  Hệ thống  Cho phép thực hiện lại thao tác tải dữ liệu.
+E3.5  Hệ thống  Kết thúc Use Case nếu không thể khôi phục dữ liệu.
+YC Phi chức năng
+NFR-01 – Hiệu năng
+Dashboard phải hiển thị trong thời gian hợp lý sau khi Quản trị viên truy cập.
+Các chỉ số tổng quan phải được tính toán nhanh để không làm gián đoạn trải nghiệm.
+Hệ thống phải thể hiện trạng thái đang tải trong quá trình truy xuất dữ liệu.
+NFR-02 – Bảo mật
+Chỉ tài khoản có vai trò Quản trị viên mới được truy cập dashboard.
+Hệ thống phải kiểm tra quyền trước khi truy xuất dữ liệu tổng hợp.
+Không hiển thị dữ liệu dashboard cho tài khoản không có quyền.
+NFR-03 – Tính ổn định
+Hệ thống phải xử lý lỗi khi không thể truy xuất dữ liệu từ các module.
+Không được hiển thị dữ liệu sai hoặc chưa hoàn chỉnh như dữ liệu hợp lệ.
+Dashboard không được gây lỗi toàn bộ hệ thống nếu một phần dữ liệu bị lỗi.
+NFR-05 – Khả năng sử dụng
+Các chỉ số tổng quan phải được hiển thị rõ ràng và dễ phân biệt.
+Các mục cần xử lý phải được hiển thị riêng biệt.
+Hệ thống phải cho phép chọn trực tiếp vào từng chỉ số hoặc mục để chuyển sang màn hình quản lý tương ứng.
+Trạng thái giao diện phải rõ ràng:
+Đang tải
+Có dữ liệu
+Không có dữ liệu
+Lỗi tải dữ liệu
+NFR-06 – Khả năng kiểm toán
+Dashboard phải phản ánh dữ liệu tổng hợp chính xác tại thời điểm truy xuất.
+Không hiển thị dữ liệu không xác định hoặc chưa được hệ thống xác nhận.
+Các chỉ số hiển thị phải có nguồn dữ liệu rõ ràng từ các module tương ứng.
+

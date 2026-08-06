@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { CreditCard, ArrowLeft, Building2, Globe } from "lucide-react";
 import { toast } from "sonner";
-import { reviewOrder, createOrder } from "../../api/orderApi";
+import { reviewOrder, createOrder } from "../../../../shared/api/orderApi";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();

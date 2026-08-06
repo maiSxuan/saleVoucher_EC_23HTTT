@@ -8,8 +8,8 @@ import {
   CheckCircle,
   AlertCircle,
 } from "lucide-react";
-import { fetchVoucherDetail } from "../../api/catalogApi";
-import { addToCart } from "../../api/cartApi";
+import { fetchVoucherDetail } from "../../../../shared/api/catalogApi";
+import { addToCart } from "../../../../shared/api/cartApi";
 import { toast } from "sonner";
 
 const unavailableMsg = {

@@ -39,6 +39,8 @@ import CheckoutPage from "../features/customer-commerce/pages/customer/CheckoutP
 import PaymentResultPage from "../features/customer-commerce/pages/customer/PaymentResultPage";
 import MyOrdersPage from "../features/customer-commerce/pages/customer/MyOrdersPage";
 import ProfilePage from "../features/customer-commerce/pages/customer/ProfilePage";
+import MyVoucherPage from "../features/core-access/pages/customer/MyVoucherPage";
+import IssuedVoucherDetailPage from "../features/core-access/pages/customer/IssuedVoucherDetailPage";
 
 function PartnerHome() {
   try {
@@ -102,6 +104,15 @@ const router = createBrowserRouter([
               {
                 index: true,
                 element: <VoucherSearchPage />,
+              },
+              // BR-CUS-07: Static routes trước dynamic routes
+              {
+                path: "vouchers/my",
+                element: <MyVoucherPage />,
+              },
+              {
+                path: "vouchers/issued/:issuedId",
+                element: <IssuedVoucherDetailPage />,
               },
               {
                 path: "vouchers/:id",

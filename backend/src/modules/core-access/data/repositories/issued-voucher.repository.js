@@ -1,7 +1,20 @@
 /**
- * Purpose: Repository cho thao tác phát hành voucher.
+ * Purpose: Repository cho thao tác phát hành voucher (VOUCHER_MUA).
+ * BR-CUS-07: Phát hành voucher code sau khi thanh toán thành công.
+ *
+ * Idempotency: Mỗi (orderId, voucherId, stt) chỉ sinh một mã.
+ * Unique: voucher_code là UNIQUE trong DB — collision retry tối đa 5 lần.
  */
 const supabase = require('../../../../config/supabase');
+const crypto = require('crypto');
+
+/** Sinh mã code dạng EC26-XXXX-XXXXXXXX (không dùng lại) */
+function generateCode(prefix = 'EC') {
+  const year = new Date().getFullYear().toString().slice(-2);
+  const rand1 = Math.random().toString(36).toUpperCase().slice(2, 6).padEnd(4, '0');
+  const rand2 = crypto.randomBytes(4).toString('hex').toUpperCase();
+  return `${prefix}${year}-${rand1}-${rand2}`;
+}
 
 class IssuedVoucherRepository {
   /**
@@ -332,6 +345,216 @@ class IssuedVoucherRepository {
       console.error('[IssuedVoucherRepository] findSampleCodes exception:', err.message);
       return [];
     }
+  }
+  /**
+   * 6. [BR-CUS-07] Phát hành voucher code cho một item trong đơn hàng.
+   *    Idempotency: Kiểm tra bản ghi đã tồn tại cho (orderId, voucherId, stt) trước khi sinh mới.
+   *    Retry tối đa 5 lần nếu collision code.
+   * @param {object} params - { orderId, voucherId, quantity, voucherPrefix }
+   * @returns {Array<object>} Danh sách bản ghi voucher_mua vừa sinh
+   */
+  async issueForOrder({ orderId, voucherId, quantity = 1, voucherPrefix = 'EC' }) {
+    // Idempotency: Kiểm tra đã phát hành cho đơn này chưa
+    const { data: existing } = await supabase
+      .from('voucher_mua')
+      .select('ma_voucher_mua, voucher_code, trang_thai')
+      .eq('ma_dh', orderId)
+      .eq('ma_voucher', voucherId);
+
+    if (existing && existing.length >= quantity) {
+      // Đã phát hành đủ số lượng — trả về mà không insert thêm (idempotency)
+      return existing;
+    }
+
+    const alreadyIssued = existing ? existing.length : 0;
+    const toIssue = quantity - alreadyIssued;
+    const now = new Date().toISOString();
+    const results = [...(existing || [])];
+
+    for (let i = 0; i < toIssue; i++) {
+      let inserted = null;
+      let attempt = 0;
+      while (!inserted && attempt < 5) {
+        attempt++;
+        const code = generateCode(voucherPrefix);
+        const qrValue = `ECQR:${code}`;
+
+        const { data, error } = await supabase
+          .from('voucher_mua')
+          .insert({
+            ma_dh: orderId,
+            ma_voucher: voucherId,
+            voucher_code: code,
+            trang_thai: 'Chua su dung',
+            gia_tri_qr_mo_phong: qrValue,
+            thoi_gian_sinh_ma: now,
+          })
+          .select('ma_voucher_mua, voucher_code, trang_thai, ma_dh, ma_voucher, thoi_gian_sinh_ma, gia_tri_qr_mo_phong')
+          .single();
+
+        if (!error) {
+          inserted = data;
+        } else if (error.code === '23505') {
+          // Unique violation — thử lại với code khác
+          console.warn(`[IssuedVoucherRepository] Code collision attempt ${attempt}: ${error.message}`);
+        } else {
+          throw new Error(`Lỗi phát hành voucher code: ${error.message}`);
+        }
+      }
+
+      if (!inserted) {
+        throw new Error('Không thể sinh mã voucher duy nhất sau 5 lần thử. Vui lòng thử lại.');
+      }
+      results.push(inserted);
+    }
+
+    return results;
+  }
+
+  /**
+   * 7. [BR-CUS-07] Lấy tất cả voucher đã phát hành của một đơn hàng (kèm chi tiết voucher + chi nhánh).
+   * @param {string} orderId - Mã đơn hàng
+   * @returns {Array<object>} raw rows
+   */
+  async findByOrderId(orderId) {
+    if (!orderId) return [];
+
+    const { data: vms, error } = await supabase
+      .from('voucher_mua')
+      .select('*')
+      .eq('ma_dh', orderId)
+      .order('thoi_gian_sinh_ma', { ascending: true });
+
+    if (error) {
+      console.error('[IssuedVoucherRepository] findByOrderId error:', error.message);
+      return [];
+    }
+
+    return this._enrichRows(vms || []);
+  }
+
+  /**
+   * 8. [BR-CUS-07] Lấy danh sách voucher của khách hàng ("Voucher của tôi").
+   * Chỉ trả về voucher thuộc về tài khoản đang đăng nhập — không lộ data người khác (NFR-02).
+   * @param {string} accountId - ma_tk của khách hàng
+   * @param {object} opts - { page, limit, status }
+   */
+  async findByCustomer(accountId, { page = 1, limit = 20, status } = {}) {
+    if (!accountId) return { records: [], total: 0, page, limit, totalPages: 0 };
+
+    const offset = (page - 1) * limit;
+
+    // Lấy danh sách ma_dh thuộc về accountId
+    const { data: orders } = await supabase
+      .from('donhang')
+      .select('ma_dh')
+      .eq('ma_tk_dat', accountId);
+
+    if (!orders || orders.length === 0) {
+      return { records: [], total: 0, page, limit, totalPages: 0 };
+    }
+
+    const orderIds = orders.map((o) => o.ma_dh);
+
+    let query = supabase
+      .from('voucher_mua')
+      .select('*', { count: 'exact' })
+      .in('ma_dh', orderIds)
+      .order('thoi_gian_sinh_ma', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (status) {
+      query = query.eq('trang_thai', status);
+    }
+
+    const { data, error, count } = await query;
+    if (error) {
+      console.error('[IssuedVoucherRepository] findByCustomer error:', error.message);
+      return { records: [], total: 0, page, limit, totalPages: 0 };
+    }
+
+    const enriched = await this._enrichRows(data || []);
+    return {
+      records: enriched,
+      total: count || 0,
+      page,
+      limit,
+      totalPages: Math.ceil((count || 0) / limit),
+    };
+  }
+
+  /**
+   * Helper nội bộ: Nạp thêm thông tin voucher + chi nhánh áp dụng cho một mảng raw rows.
+   * @private
+   */
+  async _enrichRows(rows) {
+    if (!rows || rows.length === 0) return [];
+
+    const voucherIds = [...new Set(rows.map((r) => r.ma_voucher).filter(Boolean))];
+    let voucherMap = new Map();
+
+    if (voucherIds.length > 0) {
+      const { data: vouchers } = await supabase
+        .from('voucher')
+        .select('ma_voucher, ten_voucher, mo_ta, gia_goc, gia_tri_giam, dieu_kien_ap_dung, tg_bat_dau_ban, tg_ket_thuc_ban, trang_thai, hinh_anh_url')
+        .in('ma_voucher', voucherIds);
+
+      (vouchers || []).forEach((v) => voucherMap.set(v.ma_voucher, v));
+    }
+
+    // Lấy chi nhánh áp dụng cho từng voucher
+    let branchMap = new Map(); // voucherId → [{...}]
+    if (voucherIds.length > 0) {
+      const { data: vcLinks } = await supabase
+        .from('voucher_cn')
+        .select('ma_voucher, ma_chi_nhanh')
+        .in('ma_voucher', voucherIds);
+
+      if (vcLinks && vcLinks.length > 0) {
+        const branchIds = [...new Set(vcLinks.map((vc) => vc.ma_chi_nhanh).filter(Boolean))];
+        const { data: branches } = await supabase
+          .from('chinhanh')
+          .select('ma_chi_nhanh, ten_chi_nhanh, dia_chi, khu_vuc, ma_hs')
+          .in('ma_chi_nhanh', branchIds);
+
+        const partnerIds = [...new Set((branches || []).map((b) => b.ma_hs).filter(Boolean))];
+        let partnerMap = new Map();
+        if (partnerIds.length > 0) {
+          const { data: partners } = await supabase
+            .from('hosodn')
+            .select('ma_hs, ten_dn')
+            .in('ma_hs', partnerIds);
+          (partners || []).forEach((p) => partnerMap.set(p.ma_hs, p.ten_dn));
+        }
+
+        const branchById = new Map((branches || []).map((b) => [b.ma_chi_nhanh, b]));
+        vcLinks.forEach((vc) => {
+          const b = branchById.get(vc.ma_chi_nhanh);
+          if (!b) return;
+          if (!branchMap.has(vc.ma_voucher)) branchMap.set(vc.ma_voucher, []);
+          branchMap.get(vc.ma_voucher).push({
+            branchId: b.ma_chi_nhanh,
+            branchName: b.ten_chi_nhanh,
+            address: b.dia_chi,
+            area: b.khu_vuc,
+            partnerId: b.ma_hs,
+            partnerName: partnerMap.get(b.ma_hs) || '',
+          });
+        });
+      }
+    }
+
+    return rows.map((row) => {
+      const v = voucherMap.get(row.ma_voucher) || {};
+      const branches = branchMap.get(row.ma_voucher) || [];
+      return {
+        ...row,
+        voucher: v,
+        applicableBranches: branches,
+        partnerName: branches[0]?.partnerName || '',
+        partnerId: branches[0]?.partnerId || null,
+      };
+    });
   }
 }
 

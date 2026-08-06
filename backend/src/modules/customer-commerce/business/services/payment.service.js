@@ -1,5 +1,6 @@
 /**
  * Purpose: Service xử lý thanh toán cho đơn hàng.
+ * BR-CUS-07: Sau khi payment thành công → gọi voucherIssuanceService để sinh code.
  */
 
 const vnpayGateway = require("./gateways/vnpay.gateway");
@@ -9,6 +10,8 @@ const orderRepository = require("../../data/repositories/order.repository");
 const cartRepository = require("../../data/repositories/cart.repository");
 const orderItemRepository = require("../../data/repositories/order-item.repository");
 const catalogRepository = require("../../data/repositories/catalog.repository");
+// Contract: gọi qua service (không import repository của core-access trực tiếp)
+const voucherIssuanceService = require('../../../core-access/business/services/voucher-issuance.service');
 
 class PaymentService {
   // Tạo bản ghi thanh toán "Dang xu ly" + sinh link redirect tới cổng đã chọn
@@ -114,10 +117,38 @@ class PaymentService {
       /* không chặn kết quả thành công nếu dọn giỏ hàng lỗi */
     }
 
+    // BR-CUS-07: Phát hành voucher code ngay sau thanh toán thành công
+    let issuanceResult = { issued: [], issuePending: false };
+    try {
+      const order = await orderRepository.findRawById(payment.ma_dh);
+      const issuanceItems = items.map((i) => ({
+        voucherId: i.ma_voucher,
+        quantity: i.so_luong,
+      }));
+
+      const issued = await voucherIssuanceService.issueAfterPayment(
+        {
+          orderId: payment.ma_dh,
+          customerId: order?.ma_tk_dat || null,
+          items: issuanceItems,
+          paymentSuccess: true,
+          requestKey: payment.ma_dh,
+        },
+        { actorId: null, actorRole: 'SYSTEM' },
+      );
+      issuanceResult.issued = issued;
+    } catch (issueErr) {
+      // A4: Lỗi phát hành không rollback payment — ghi nhận và để admin xử lý thủ công
+      console.error('[PaymentService] Issuance failed after payment success:', issueErr.message);
+      issuanceResult.issuePending = true;
+    }
+
     return {
       orderId: payment.ma_dh,
       status: "success",
-      orderStatus: "Da thanh toan",
+      orderStatus: issuanceResult.issuePending ? "Loi sinh ma" : "Da phat hanh",
+      issuedCount: issuanceResult.issued.length,
+      issuePending: issuanceResult.issuePending,
     };
   }
 }

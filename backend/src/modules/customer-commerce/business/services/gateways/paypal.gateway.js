@@ -1,17 +1,17 @@
 /**
  * Purpose: Tích hợp cổng thanh toán quốc tế PayPal (sandbox).
  */
-const PAYPAL_API_BASE =
-  process.env.PAYPAL_API_BASE || "https://api-m.sandbox.paypal.com";
+const { loadPaypal } = require("../../../../../config/environment");
 
 // [Tạm thời] Tỷ giá quy đổi cố định VND -> USD vì PayPal không hỗ trợ VND.
 const VND_TO_USD_RATE = 25000;
 
 async function getAccessToken() {
+  const paypalConfig = loadPaypal();
   const auth = Buffer.from(
-    `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`,
+    `${paypalConfig.clientId}:${paypalConfig.clientSecret}`,
   ).toString("base64");
-  const res = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
+  const res = await fetch(`${paypalConfig.apiBase}/v1/oauth2/token`, {
     method: "POST",
     headers: {
       Authorization: `Basic ${auth}`,
@@ -29,10 +29,11 @@ async function getAccessToken() {
 }
 
 async function createOrder({ paymentId, amountVnd }) {
+  const paypalConfig = loadPaypal();
   const accessToken = await getAccessToken();
   const amountUsd = (amountVnd / VND_TO_USD_RATE).toFixed(2);
 
-  const res = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders`, {
+  const res = await fetch(`${paypalConfig.apiBase}/v2/checkout/orders`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -47,8 +48,8 @@ async function createOrder({ paymentId, amountVnd }) {
         },
       ],
       application_context: {
-        return_url: process.env.PAYPAL_RETURN_URL,
-        cancel_url: process.env.PAYPAL_CANCEL_URL,
+        return_url: paypalConfig.returnUrl,
+        cancel_url: paypalConfig.cancelUrl,
       },
     }),
   });
@@ -65,9 +66,10 @@ async function createOrder({ paymentId, amountVnd }) {
 }
 
 async function captureOrder(paypalOrderId) {
+  const paypalConfig = loadPaypal();
   const accessToken = await getAccessToken();
   const res = await fetch(
-    `${PAYPAL_API_BASE}/v2/checkout/orders/${paypalOrderId}/capture`,
+    `${paypalConfig.apiBase}/v2/checkout/orders/${paypalOrderId}/capture`,
     {
       method: "POST",
       headers: {

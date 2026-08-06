@@ -12,7 +12,7 @@ import {
   fetchCart,
   updateCartItemQuantity,
   removeCartItems,
-} from "../../api/cartApi";
+} from "../../../../shared/api/cartApi";
 
 export default function CartPage() {
   const navigate = useNavigate();

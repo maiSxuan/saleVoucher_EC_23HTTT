@@ -10,7 +10,7 @@ import {
   LogOut,
   Package,
 } from "lucide-react";
-import { fetchCategories } from "../features/customer-commerce/api/catalogApi";
+import { fetchCategories } from "../shared/api/catalogApi";
 
 function getStoredUser() {
   try {
@@ -126,7 +126,7 @@ export default function CustomerLayout() {
                   <MenuLink
                     icon={Tag}
                     label="Voucher của tôi"
-                    onClick={() => navigate("/customer/vouchers")}
+                    onClick={() => navigate("/customer/vouchers/my")}
                   />
                   <hr className="my-1 border-gray-100" />
                   <MenuLink

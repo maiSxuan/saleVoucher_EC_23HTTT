@@ -5,7 +5,7 @@ import {
   fetchProfile,
   updateProfile,
   changePassword,
-} from "../../api/customerApi";
+} from "../../../../shared/api/customerApi";
 
 function PwField({ label, value, onChange, placeholder }) {
   const [show, setShow] = useState(false);
