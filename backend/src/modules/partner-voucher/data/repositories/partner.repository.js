@@ -28,17 +28,35 @@ class PartnerRepository {
       const data = hosodnRes.data || [];
       const branchesData = chinhanhRes.data || [];
 
-      // Group branches and count pending branch requests in O(N) memory
+      // Fetch pending branch change requests from store (Add, Edit, Delete)
+      const branchRequestRepo = require("./branch-request.repository");
+      const pendingStoreReqsMap = await branchRequestRepo.getAllPendingRequestsMap();
+
+      // Group branches and count pending branch requests
       const branchesByPartner = new Map();
       const pendingReqsByPartner = new Map();
 
+      // 1. Fill count from store
+      for (const [hsId, count] of pendingStoreReqsMap.entries()) {
+        pendingReqsByPartner.set(hsId, count);
+      }
+
+      // 2. Add count from chinhanh table status if any
       for (const b of branchesData) {
         if (b.ma_hs) {
           if (!branchesByPartner.has(b.ma_hs)) branchesByPartner.set(b.ma_hs, []);
           branchesByPartner.get(b.ma_hs).push(b);
 
-          if (b.trang_thai === "Cho duyet" || b.trang_thai === "Cho xu ly" || b.trang_thai === "Chờ xử lý") {
-            pendingReqsByPartner.set(b.ma_hs, (pendingReqsByPartner.get(b.ma_hs) || 0) + 1);
+          if (
+            b.trang_thai === "Cho duyet" ||
+            b.trang_thai === "Cho xu ly" ||
+            b.trang_thai === "Chờ xử lý" ||
+            b.trang_thai === "Cho duyet cap nhat" ||
+            b.trang_thai === "Cho duyet huy"
+          ) {
+            if (!pendingStoreReqsMap.has(b.ma_hs)) {
+              pendingReqsByPartner.set(b.ma_hs, (pendingReqsByPartner.get(b.ma_hs) || 0) + 1);
+            }
           }
         }
       }
@@ -59,7 +77,11 @@ class PartnerRepository {
       return uniquePartners.map((item) => {
         const rep = item.nguoidung || item.nguoi_dai_dien || {};
         const pBranches = branchesByPartner.get(item.ma_hs) || item.branches || [];
-        const pendingBranchReqCount = pendingReqsByPartner.get(item.ma_hs) || (item.trang_thai === "Cho duyet" ? 1 : 0);
+        
+        // Active partner OR pending partner: Count all pending branch requests
+        const branchPendingCount = pendingReqsByPartner.get(item.ma_hs) || 0;
+        const registrationPendingCount = item.trang_thai === "Cho duyet" ? 1 : 0;
+        const totalPendingReqs = branchPendingCount + registrationPendingCount;
 
         return new PartnerModel({
           ma_hs: item.ma_hs,
@@ -72,7 +94,7 @@ class PartnerRepository {
           id_nguoi_dai_dien: item.id_nguoi_dai_dien,
           ly_do_tu_choi: item.ly_do_tu_choi || "",
           branches: pBranches,
-          pending_branch_requests: pendingBranchReqCount,
+          pending_branch_requests: totalPendingReqs,
           nguoi_dai_dien: {
             ho_ten: rep.ho_ten || "Chưa cập nhật",
             sdt: rep.sdt || "",

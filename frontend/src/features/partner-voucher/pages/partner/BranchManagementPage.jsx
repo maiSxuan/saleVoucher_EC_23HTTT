@@ -126,43 +126,49 @@ export function BranchManagementPage() {
       return;
     }
 
-    // Validation A7.b: Check duplicate name or address among active branches
+    if (!selectedBranchForEdit) return;
+
+    // Check duplicate name and address on ANOTHER branch
     const isDuplicate = activeBranches.some(
       (b) =>
-        b.ma_chi_nhanh !== selectedBranchForEdit.ma_chi_nhanh &&
-        (b.ten_chi_nhanh.toLowerCase() === editBranchForm.ten_chi_nhanh.trim().toLowerCase() ||
-          b.dia_chi.toLowerCase() === editBranchForm.dia_chi.trim().toLowerCase())
+        String(b.ma_chi_nhanh) !== String(selectedBranchForEdit.ma_chi_nhanh) &&
+        b.ten_chi_nhanh.trim().toLowerCase() === editBranchForm.ten_chi_nhanh.trim().toLowerCase() &&
+        b.dia_chi.trim().toLowerCase() === editBranchForm.dia_chi.trim().toLowerCase()
     );
 
     if (isDuplicate) {
-      setToastMessage("Tên chi nhánh hoặc địa chỉ trùng lặp với chi nhánh hiện có.");
+      setToastMessage("Tên chi nhánh và địa chỉ trùng lặp với chi nhánh khác hiện có.");
       return;
     }
 
-    const partnerId = getLoggedInPartnerId();
+    try {
+      const partnerId = getLoggedInPartnerId();
 
-    // A3.x.6: Store change proposal separately inside du_lieu_de_xuat JSON without overwriting official chinhanh row
-    await createBranchRequestApi({
-      ma_hs: partnerId,
-      ma_chi_nhanh: selectedBranchForEdit.ma_chi_nhanh,
-      ten_dn: "Doanh nghiệp đối tác",
-      loai_yeu_cau: "Cap nhat",
-      ten_chi_nhanh: editBranchForm.ten_chi_nhanh,
-      khu_vuc: editBranchForm.khu_vuc,
-      dia_chi: editBranchForm.dia_chi,
-      du_lieu_de_xuat: {
-        ten_chi_nhanh: editBranchForm.ten_chi_nhanh,
+      await createBranchRequestApi({
+        ma_hs: partnerId,
+        ma_chi_nhanh: selectedBranchForEdit.ma_chi_nhanh,
+        ten_dn: selectedBranchForEdit.ten_dn || "Doanh nghiệp đối tác",
+        loai_yeu_cau: "Cap nhat",
+        ten_chi_nhanh: editBranchForm.ten_chi_nhanh.trim(),
         khu_vuc: editBranchForm.khu_vuc,
-        dia_chi: editBranchForm.dia_chi,
-      },
-    });
+        dia_chi: editBranchForm.dia_chi.trim(),
+        du_lieu_de_xuat: {
+          ten_chi_nhanh: editBranchForm.ten_chi_nhanh.trim(),
+          khu_vuc: editBranchForm.khu_vuc,
+          dia_chi: editBranchForm.dia_chi.trim(),
+        },
+      });
 
-    setShowEditModal(false);
-    setSelectedBranchForEdit(null);
-    setToastMessage(
-      "Yêu cầu cập nhật chi nhánh đã được gửi, thông tin hiện tại vẫn được áp dụng cho đến khi có kết quả duyệt."
-    );
-    await loadData();
+      setShowEditModal(false);
+      setSelectedBranchForEdit(null);
+      setToastMessage(
+        "Yêu cầu cập nhật chi nhánh đã được gửi thành công, đang chờ Quản trị viên duyệt!"
+      );
+      await loadData();
+    } catch (e) {
+      console.error("Error submitting branch edit:", e);
+      setToastMessage("Gửi yêu cầu cập nhật chi nhánh thất bại: " + e.message);
+    }
   };
 
   // A3.y: Delete branch
@@ -256,9 +262,15 @@ export function BranchManagementPage() {
                 : "border-transparent text-gray-500 hover:text-gray-800"
             }`}
           >
-            Yêu cầu thay đổi ({partnerRequests.length})
-            {partnerRequests.some((r) => r.trang_thai === "Cho duyet") && (
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+            Yêu cầu thay đổi
+            {partnerRequests.filter((r) => r.trang_thai === "Cho duyet" || r.trang_thai === "Cho xu ly").length > 0 ? (
+              <span className="px-2 py-0.5 text-xs bg-amber-500 text-white font-bold rounded-full animate-pulse">
+                {partnerRequests.filter((r) => r.trang_thai === "Cho duyet" || r.trang_thai === "Cho xu ly").length} chờ duyệt
+              </span>
+            ) : (
+              <span className="text-xs text-gray-400 font-normal">
+                ({partnerRequests.length})
+              </span>
             )}
           </button>
         </div>
@@ -295,7 +307,7 @@ export function BranchManagementPage() {
               <div className="divide-y divide-gray-100">
                 {filteredBranches.map((branch) => {
                   const pendingReq = partnerRequests.find(
-                    (r) => r.ma_chi_nhanh === branch.ma_chi_nhanh && r.trang_thai === "Cho duyet"
+                    (r) => r.ma_chi_nhanh === branch.ma_chi_nhanh && (r.trang_thai === "Cho duyet" || r.trang_thai === "Cho xu ly")
                   );
 
                   return (
@@ -343,48 +355,93 @@ export function BranchManagementPage() {
           </div>
         )}
 
-        {/* Tab 2: Pending Branch Change Requests */}
+        {/* Tab 2: Branch Change Requests (Clean & Separated UX) */}
         {activeTab === "requests" && (
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-xs">
-            {loading ? (
-              <div className="p-12 text-center text-gray-400">Đang tải danh sách yêu cầu...</div>
-            ) : partnerRequests.length === 0 ? (
-              <div className="flex flex-col items-center py-16 text-gray-400">
-                <Building2 size={40} className="mb-2 text-gray-300" />
-                <p className="text-sm">Chưa có yêu cầu thay đổi chi nhánh nào.</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-gray-100">
-                {partnerRequests.map((req) => (
-                  <div key={req.ma_yeu_cau} className="p-5 space-y-3 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 text-xs font-bold rounded-md">
-                          {req.loai_yeu_cau === "Them moi"
-                            ? "Thêm mới chi nhánh"
-                            : req.loai_yeu_cau === "Cap nhat"
-                            ? "Cập nhật thông tin chi nhánh"
-                            : "Yêu cầu xóa chi nhánh"}
-                        </span>
-                        <h4 className="font-bold text-gray-900">{req.ten_chi_nhanh}</h4>
-                      </div>
-                      <Badge status={req.trang_thai} />
-                    </div>
+          <div className="space-y-6">
+            {/* Section 1: Pending Requests */}
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-xs p-5 space-y-4">
+              <h3 className="font-bold text-gray-900 text-base flex items-center justify-between border-b border-gray-100 pb-3">
+                <span>📋 Yêu cầu đang chờ duyệt</span>
+                <span className="text-xs px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full font-bold">
+                  {partnerRequests.filter((r) => r.trang_thai === "Cho duyet" || r.trang_thai === "Cho xu ly").length} chờ duyệt
+                </span>
+              </h3>
 
-                    <div className="text-xs text-gray-600 grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                      <div><strong>Địa chỉ:</strong> {req.dia_chi} ({req.khu_vuc})</div>
-                      <div><strong>Lý do gửi:</strong> {req.ly_do || "Khai báo thay đổi chi nhánh"}</div>
-                      <div><strong>Thời gian gửi:</strong> {new Date(req.ngay_tao).toLocaleString("vi-VN")}</div>
-                    </div>
+              {partnerRequests.filter((r) => r.trang_thai === "Cho duyet" || r.trang_thai === "Cho xu ly").length === 0 ? (
+                <div className="py-8 text-center text-gray-400 text-sm bg-gray-50 rounded-lg border border-gray-100 italic">
+                  ✓ Hiện không có yêu cầu thay đổi chi nhánh nào đang chờ duyệt.
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-100">
+                  {partnerRequests
+                    .filter((r) => r.trang_thai === "Cho duyet" || r.trang_thai === "Cho xu ly")
+                    .map((req) => (
+                      <div key={req.ma_yeu_cau} className="py-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 text-xs font-bold rounded-md">
+                              {req.loai_yeu_cau === "Them moi"
+                                ? "Thêm mới chi nhánh"
+                                : req.loai_yeu_cau === "Cap nhat"
+                                ? "Cập nhật thông tin chi nhánh"
+                                : "Yêu cầu xóa chi nhánh"}
+                            </span>
+                            <h4 className="font-bold text-gray-900 text-base">{req.ten_chi_nhanh}</h4>
+                          </div>
+                          <Badge status={req.trang_thai} />
+                        </div>
 
-                    {req.ghi_chu_admin && (
-                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 space-y-1">
-                        <div className="font-bold">Ghi chú từ Admin Quản lý:</div>
-                        <div>{req.ghi_chu_admin}</div>
+                        {req.loai_yeu_cau === "Cap nhat" && req.du_lieu_de_xuat && (
+                          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs space-y-1 text-gray-800">
+                            <div className="font-bold text-amber-900">📌 Thông tin đề xuất mới đang chờ Admin duyệt:</div>
+                            <div>Tên chi nhánh: <strong>{req.du_lieu_de_xuat.ten_chi_nhanh}</strong></div>
+                            <div>Địa chỉ đề xuất: <strong>{req.du_lieu_de_xuat.dia_chi} ({req.du_lieu_de_xuat.khu_vuc})</strong></div>
+                          </div>
+                        )}
+
+                        <div className="text-xs text-gray-600 grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                          <div><strong>Địa chỉ:</strong> {req.dia_chi} ({req.khu_vuc})</div>
+                          <div><strong>Thời gian gửi:</strong> {new Date(req.ngay_tao).toLocaleString("vi-VN")}</div>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                ))}
+                    ))}
+                </div>
+              )}
+            </div>
+
+            {/* Section 2: Processed History */}
+            {partnerRequests.filter((r) => r.trang_thai !== "Cho duyet" && r.trang_thai !== "Cho xu ly").length > 0 && (
+              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-xs p-5 space-y-4">
+                <h3 className="font-bold text-gray-700 text-sm border-b border-gray-100 pb-3">
+                  📜 Lịch sử các yêu cầu đã xử lý ({partnerRequests.filter((r) => r.trang_thai !== "Cho duyet" && r.trang_thai !== "Cho xu ly").length})
+                </h3>
+                <div className="divide-y divide-gray-100">
+                  {partnerRequests
+                    .filter((r) => r.trang_thai !== "Cho duyet" && r.trang_thai !== "Cho xu ly")
+                    .map((req) => (
+                      <div key={req.ma_yeu_cau} className="py-3.5 space-y-2 text-xs">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-gray-900">{req.ten_chi_nhanh}</span>
+                            <span className="text-gray-400">
+                              ({req.loai_yeu_cau === "Them moi" ? "Thêm mới" : req.loai_yeu_cau === "Cap nhat" ? "Cập nhật" : "Xóa"})
+                            </span>
+                          </div>
+                          <Badge status={req.trang_thai} />
+                        </div>
+
+                        <div className="text-gray-500">
+                          📍 {req.dia_chi} ({req.khu_vuc}) • 🕒 {new Date(req.ngay_tao).toLocaleString("vi-VN")}
+                        </div>
+
+                        {req.ghi_chu_admin && (
+                          <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 font-medium">
+                            💬 Ghi chú từ Admin: {req.ghi_chu_admin}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                </div>
               </div>
             )}
           </div>

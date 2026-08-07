@@ -220,7 +220,6 @@ export function StaffManagementPage() {
               <option value="All">Tất cả trạng thái</option>
               <option value="Dang hoat dong">Đang hoạt động</option>
               <option value="Tam khoa">Tạm khóa</option>
-              <option value="Tam ngung">Tạm ngưng</option>
             </select>
           </div>
 
@@ -313,13 +312,6 @@ export function StaffManagementPage() {
                             title={staff.trang_thai === "Dang hoat dong" ? "Khóa tài khoản" : "Mở khóa tài khoản"}
                           >
                             {staff.trang_thai === "Dang hoat dong" ? <Lock size={15} /> : <Unlock size={15} />}
-                          </button>
-                          <button
-                            onClick={() => handleDelete(staff.ma_nv)}
-                            className="p-1.5 text-gray-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                            title="Xóa nhân viên"
-                          >
-                            <Trash2 size={15} />
                           </button>
                         </div>
                       </td>

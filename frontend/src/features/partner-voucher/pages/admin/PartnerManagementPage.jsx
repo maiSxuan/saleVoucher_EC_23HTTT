@@ -99,7 +99,7 @@ export function PartnerManagementPage() {
           ? p.trang_thai === "Dang hoat dong" || p.trang_thai === "Hoat dong" || p.trang_thai === "Da duyet"
           : p.trang_thai === selectedStatusFilter;
 
-    const pendingReqCount = p.pending_branch_requests || (p.trang_thai === "Cho duyet" ? 1 : 0);
+    const pendingReqCount = Number(p.pending_branch_requests) || 0;
     const matchesBranchReqFilter = !filterPendingBranchReqs || pendingReqCount > 0;
 
     return matchesTenDn && matchesMst && matchesStatus && matchesBranchReqFilter;
@@ -198,7 +198,7 @@ export function PartnerManagementPage() {
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm">
                 {filteredPartners.map((partner) => {
-                  const pendingReqs = partner.pending_branch_requests || (partner.trang_thai === "Cho duyet" ? 1 : 0);
+                  const pendingReqs = Number(partner.pending_branch_requests) || 0;
                   const branchCount = partner.branches?.length || 0;
                   const sb = getPartnerStatusBadge(partner.trang_thai);
 

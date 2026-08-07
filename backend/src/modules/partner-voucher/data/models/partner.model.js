@@ -15,6 +15,7 @@ class PartnerModel {
     ly_do_tu_choi = "",
     nguoi_dai_dien = null,
     branches = [],
+    pending_branch_requests = 0,
   }) {
     this.ma_hs = ma_hs;
     this.ten_dn = ten_dn;
@@ -27,6 +28,7 @@ class PartnerModel {
     this.ly_do_tu_choi = ly_do_tu_choi;
     this.nguoi_dai_dien = nguoi_dai_dien;
     this.branches = branches;
+    this.pending_branch_requests = pending_branch_requests;
   }
 }
 

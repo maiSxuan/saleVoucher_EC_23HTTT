@@ -273,7 +273,7 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
               : "border-transparent text-slate-500 hover:text-slate-800"
           }`}
         >
-          <Clock size={16} /> Yêu cầu chi nhánh ({branchRequests.length})
+          <Clock size={16} /> Yêu cầu chi nhánh 
           {pendingRequestsCount > 0 && (
             <span className="px-2 py-0.5 text-xs bg-amber-500 text-white font-bold rounded-full animate-pulse">
               {pendingRequestsCount} chờ duyệt
@@ -414,59 +414,66 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
 
       {/* TAB 3: BRANCH REQUESTS */}
       {activeTab === "requests" && (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
-          {branchRequests.length === 0 ? (
-            <div className="p-12 text-center text-slate-400">
-              Chưa có yêu cầu thay đổi chi nhánh nào từ đối tác này.
-            </div>
-          ) : (
-            <div className="divide-y divide-slate-100">
-              {branchRequests.map((req) => {
-                const isPending = req.trang_thai === "Cho duyet";
+        <div className="space-y-6">
+          {/* Pending Branch Requests Section */}
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs p-5 space-y-4">
+            <h3 className="font-bold text-slate-900 text-base flex items-center justify-between border-b border-slate-100 pb-3">
+              <span>📋 Yêu cầu chi nhánh đang chờ xử lý</span>
+              <span className="text-xs px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full font-bold">
+                {branchRequests.filter((r) => r.trang_thai === "Cho duyet" || r.trang_thai === "Cho xu ly").length} yêu cầu
+              </span>
+            </h3>
 
-                return (
-                  <div key={req.ma_yeu_cau} className="p-5 space-y-3 hover:bg-slate-50 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-bold ${
-                            req.loai_yeu_cau === "Them moi"
-                              ? "bg-blue-100 text-blue-800"
+            {branchRequests.filter((r) => r.trang_thai === "Cho duyet" || r.trang_thai === "Cho xu ly").length === 0 ? (
+              <div className="py-8 text-center text-slate-400 text-sm bg-slate-50 rounded-lg border border-slate-100 italic">
+                ✓ Chưa có yêu cầu thay đổi chi nhánh nào đang chờ xử lý từ đối tác này.
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {branchRequests
+                  .filter((r) => r.trang_thai === "Cho duyet" || r.trang_thai === "Cho xu ly")
+                  .map((req) => (
+                    <div key={req.ma_yeu_cau} className="py-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-bold ${
+                              req.loai_yeu_cau === "Them moi"
+                                ? "bg-blue-100 text-blue-800"
+                                : req.loai_yeu_cau === "Cap nhat"
+                                ? "bg-amber-100 text-amber-800"
+                                : "bg-rose-100 text-rose-800"
+                            }`}
+                          >
+                            {req.loai_yeu_cau === "Them moi"
+                              ? "Thêm mới chi nhánh"
                               : req.loai_yeu_cau === "Cap nhat"
-                              ? "bg-amber-100 text-amber-800"
-                              : "bg-rose-100 text-rose-800"
-                          }`}
-                        >
-                          {req.loai_yeu_cau === "Them moi"
-                            ? "Thêm mới chi nhánh"
-                            : req.loai_yeu_cau === "Cap nhat"
-                            ? "Cập nhật thông tin chi nhánh"
-                            : "Yêu cầu xóa chi nhánh"}
-                        </span>
-                        <h4 className="font-bold text-slate-900 text-base">{req.ten_chi_nhanh}</h4>
-                      </div>
-                      <Badge status={req.trang_thai} />
-                    </div>
-
-                    {req.loai_yeu_cau === "Cap nhat" && req.du_lieu_de_xuat && (
-                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs space-y-1.5 text-slate-800">
-                        <div className="font-bold text-amber-900 flex items-center gap-1">
-                          <Info size={14} /> Thông tin đề xuất cập nhật mới (Đang chờ duyệt):
+                              ? "Cập nhật thông tin chi nhánh"
+                              : "Yêu cầu xóa chi nhánh"}
+                          </span>
+                          <h4 className="font-bold text-slate-900 text-base">{req.ten_chi_nhanh}</h4>
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div><strong>Tên đề xuất:</strong> {req.du_lieu_de_xuat.ten_chi_nhanh}</div>
-                          <div><strong>Khu vực đề xuất:</strong> {req.du_lieu_de_xuat.khu_vuc}</div>
-                          <div className="col-span-2"><strong>Địa chỉ đề xuất:</strong> {req.du_lieu_de_xuat.dia_chi}</div>
-                        </div>
+                        <Badge status={req.trang_thai} />
                       </div>
-                    )}
 
-                    <div className="text-xs text-slate-600 grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                      <div><strong>Địa chỉ:</strong> {req.dia_chi} ({req.khu_vuc})</div>
-                      <div><strong>Thời gian gửi:</strong> {new Date(req.ngay_tao).toLocaleString("vi-VN")}</div>
-                    </div>
+                      {req.loai_yeu_cau === "Cap nhat" && req.du_lieu_de_xuat && (
+                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs space-y-1.5 text-slate-800">
+                          <div className="font-bold text-amber-900 flex items-center gap-1">
+                            <Info size={14} /> Thông tin đề xuất cập nhật mới (Đang chờ duyệt):
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div><strong>Tên đề xuất:</strong> {req.du_lieu_de_xuat.ten_chi_nhanh}</div>
+                            <div><strong>Khu vực đề xuất:</strong> {req.du_lieu_de_xuat.khu_vuc}</div>
+                            <div className="col-span-2"><strong>Địa chỉ đề xuất:</strong> {req.du_lieu_de_xuat.dia_chi}</div>
+                          </div>
+                        </div>
+                      )}
 
-                    {isPending && (
+                      <div className="text-xs text-slate-600 grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <div><strong>Địa chỉ:</strong> {req.dia_chi} ({req.khu_vuc})</div>
+                        <div><strong>Thời gian gửi:</strong> {new Date(req.ngay_tao).toLocaleString("vi-VN")}</div>
+                      </div>
+
                       <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                         <button
                           onClick={() => {
@@ -483,10 +490,34 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
                           <CheckCircle size={14} /> Phê duyệt yêu cầu
                         </button>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+
+          {/* Processed History Section */}
+          {branchRequests.filter((r) => r.trang_thai !== "Cho duyet" && r.trang_thai !== "Cho xu ly").length > 0 && (
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs p-5 space-y-4">
+              <h3 className="font-bold text-slate-700 text-sm border-b border-slate-100 pb-3">
+                📜 Lịch sử các yêu cầu chi nhánh đã xử lý ({branchRequests.filter((r) => r.trang_thai !== "Cho duyet" && r.trang_thai !== "Cho xu ly").length})
+              </h3>
+              <div className="divide-y divide-slate-100">
+                {branchRequests
+                  .filter((r) => r.trang_thai !== "Cho duyet" && r.trang_thai !== "Cho xu ly")
+                  .map((req) => (
+                    <div key={req.ma_yeu_cau} className="py-3 flex items-center justify-between text-xs">
+                      <div>
+                        <span className="font-bold text-slate-900">{req.ten_chi_nhanh}</span>
+                        <span className="text-slate-400 ml-2">
+                          ({req.loai_yeu_cau === "Them moi" ? "Thêm mới" : req.loai_yeu_cau === "Cap nhat" ? "Cập nhật" : "Xóa"})
+                        </span>
+                        <p className="text-slate-500 mt-0.5">📍 {req.dia_chi} ({req.khu_vuc})</p>
+                      </div>
+                      <Badge status={req.trang_thai} />
+                    </div>
+                  ))}
+              </div>
             </div>
           )}
         </div>

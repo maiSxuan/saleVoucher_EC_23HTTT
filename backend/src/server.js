@@ -7,6 +7,7 @@ const { loadEnvironment } = require("./config/environment");
 
 const config = loadEnvironment();
 
+// Express Server Entry Point (Hot Reload Trigger)
 app.listen(config.port, () => {
   console.log(`Backend running on port ${config.port}...`);
 });
