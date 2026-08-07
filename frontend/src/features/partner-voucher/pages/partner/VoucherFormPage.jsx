@@ -10,6 +10,7 @@ import {
   getBranchesByPartnerApi,
   getCategoriesApi,
 } from "../../../../shared/api/partnerApi";
+import { formatCategoryName } from "../../../../shared/utils/categoryFormatter";
 
 export function VoucherFormPage() {
   const { id } = useParams();
@@ -254,7 +255,7 @@ export function VoucherFormPage() {
                     const cateId = c.ma_danh_muc || c.id;
                     return (
                       <option key={cateId} value={cateId}>
-                        {c.ten_danh_muc}
+                        {formatCategoryName(c.ten_danh_muc)}
                       </option>
                     );
                   })}

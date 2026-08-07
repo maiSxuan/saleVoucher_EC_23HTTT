@@ -12,6 +12,7 @@ import {
   verifyPartnerOtpApi,
   resendPartnerOtpApi,
 } from "../../../../shared/api/partnerApi";
+import { VIETNAM_PROVINCES } from "../../../../shared/constants/vietnamProvinces";
 
 export function PartnerRegisterPage() {
   const navigate = useNavigate();
@@ -638,10 +639,11 @@ export function PartnerRegisterPage() {
                   onChange={(e) => handleInputChange("khu_vuc", e.target.value)}
                   className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
                 >
-                  <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
-                  <option value="Hà Nội">Hà Nội</option>
-                  <option value="Đà Nẵng">Đà Nẵng</option>
-                  <option value="Cần Thơ">Cần Thơ</option>
+                  {VIETNAM_PROVINCES.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
                 </select>
                 {errors.khu_vuc && <p className="text-xs text-rose-600 mt-1">{errors.khu_vuc}</p>}
               </div>

@@ -103,59 +103,64 @@ export function PartnerReportsPage() {
         </div>
 
         {/* Filters Bar */}
-        <form onSubmit={handleUpdateReport} className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex flex-wrap gap-3 items-end">
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">
-                Chương trình voucher <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={selectedVoucherId}
-                onChange={(e) => setSelectedVoucherId(e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
-              >
-                <option value="all">Tất cả chương trình</option>
-                {vouchersList.map((v) => (
-                  <option key={v.ma_voucher} value={v.ma_voucher}>
-                    {v.ten_voucher}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">
-                Từ ngày <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">
-                Đến ngày <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
-            </div>
-            <button
-              type="submit"
-              className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-700 transition-colors cursor-pointer"
-            >
-              Cập nhật báo cáo
-            </button>
-          </div>
-          <p className="text-xs text-gray-400 mt-2">
-            Khoảng thời gian: <strong>{startDate}</strong> đến <strong>{endDate}</strong>
-          </p>
-        </form>
+<form onSubmit={handleUpdateReport} className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+    <div className="sm:col-span-2">
+      <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+        Chương trình voucher <span className="text-red-500">*</span>
+      </label>
+      <select
+        value={selectedVoucherId}
+        onChange={(e) => setSelectedVoucherId(e.target.value)}
+        className="w-full h-11 border border-gray-200 rounded-xl px-3.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
+      >
+        <option value="all">Tất cả chương trình</option>
+        {vouchersList.map((v) => (
+          <option key={v.ma_voucher} value={v.ma_voucher}>
+            {v.ten_voucher}
+          </option>
+        ))}
+      </select>
+    </div>
 
+    <div>
+      <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+        Từ ngày <span className="text-red-500">*</span>
+      </label>
+      <input
+        type="date"
+        value={startDate}
+        onChange={(e) => setStartDate(e.target.value)}
+        className="w-full h-11 border border-gray-200 rounded-xl px-3.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
+      />
+    </div>
+
+    <div>
+      <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+        Đến ngày <span className="text-red-500">*</span>
+      </label>
+      <input
+        type="date"
+        value={endDate}
+        onChange={(e) => setEndDate(e.target.value)}
+        className="w-full h-11 border border-gray-200 rounded-xl px-3.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
+      />
+    </div>
+  </div>
+
+  <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+    <p className="text-xs text-gray-400">
+      Khoảng thời gian: <strong className="text-gray-600">{startDate}</strong> đến{" "}
+      <strong className="text-gray-600">{endDate}</strong>
+    </p>
+    <button
+      type="submit"
+      className="h-10 px-5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-colors cursor-pointer"
+    >
+      Cập nhật báo cáo
+    </button>
+  </div>
+</form>
         {/* Loading State */}
         {loading && (
           <div className="bg-white rounded-xl border border-gray-200 p-12 flex items-center justify-center text-gray-400 gap-3">

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, X, Tag, XCircle, Eye } from "lucide-react";
 import { getVouchersApi, getPartnersApi } from "../../../../shared/api/partnerApi";
+import { formatCategoryName } from "../../../../shared/utils/categoryFormatter";
 
 export function VoucherApprovalListPage() {
   const [vouchers, setVouchers] = useState([]);
@@ -197,7 +198,7 @@ export function VoucherApprovalListPage() {
                       </td>
 
                       {/* Danh mục */}
-                      <td className="px-3.5 py-3.5 text-slate-600">{v.ten_danh_muc || "Ẩm thực"}</td>
+                      <td className="px-3.5 py-3.5 text-slate-600">{formatCategoryName(v.ten_danh_muc || v.ma_danh_muc)}</td>
 
                       {/* Giá gốc */}
                       <td className="px-3.5 py-3.5 font-medium text-slate-700">{giaGoc.toLocaleString("vi-VN")}đ</td>

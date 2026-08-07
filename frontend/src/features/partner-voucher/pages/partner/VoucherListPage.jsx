@@ -5,6 +5,7 @@ import PartnerLayout from "../../../../layouts/PartnerLayout";
 import Badge from "../../../../shared/components/Badge";
 import Toast from "../../../../shared/components/Toast";
 import { getVouchersByPartnerApi, getCategoriesApi } from "../../../../shared/api/partnerApi";
+import { formatCategoryName } from "../../../../shared/utils/categoryFormatter";
 
 export function VoucherListPage() {
   const navigate = useNavigate();
@@ -160,7 +161,7 @@ export function VoucherListPage() {
                   const catVal = c.ma_danh_muc || c.id || c.ten_danh_muc;
                   return (
                     <option key={catVal} value={catVal}>
-                      {c.ten_danh_muc}
+                      {formatCategoryName(c.ten_danh_muc)}
                     </option>
                   );
                 })}
@@ -222,7 +223,7 @@ export function VoucherListPage() {
                               >
                                 {v.ten_voucher}
                               </Link>
-                              <div className="text-xs text-gray-400 mt-0.5">{v.ten_danh_muc}</div>
+                              <div className="text-xs text-gray-400 mt-0.5">{formatCategoryName(v.ten_danh_muc || v.ma_danh_muc)}</div>
                             </div>
                           </div>
                         </td>

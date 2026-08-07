@@ -12,6 +12,15 @@ const CATEGORY_UUID_MAP = {
 // Memory cache for newly created vouchers during the session
 const VOUCHERS_MEMORY_STORE = new Map();
 
+const CATEGORY_ACCENT_MAP = {
+  "An uong": "Ẩm Thực & Nhà Hàng",
+  "Lam dep": "Làm Đẹp & Spa",
+  "Giai tri": "Giải Trí & Vui Chơi",
+  "Du lich": "Du Lịch & Khách Sạn",
+  "Giao duc": "Giáo Dục & Khóa Học",
+  "Mua sam": "Mua Sắm & Bán Lẻ",
+};
+
 class VoucherRepository {
   /**
    * Fetch all voucher categories directly from DB
@@ -27,7 +36,10 @@ class VoucherRepository {
         return [];
       }
 
-      return data || [];
+      return (data || []).map((c) => ({
+        ...c,
+        ten_danh_muc: CATEGORY_ACCENT_MAP[c.ten_danh_muc] || c.ten_danh_muc,
+      }));
     } catch (e) {
       console.error("[VoucherRepository] getVoucherCategories exception:", e.message);
       return [];

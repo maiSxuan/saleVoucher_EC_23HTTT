@@ -7,7 +7,7 @@ const { loadEnvironment } = require("./config/environment");
 
 const config = loadEnvironment();
 
-// Express Server Entry Point (Hot Reload Trigger)
+// Express Server Entry Point (Category Accents & Vietnam Provinces Enabled)
 app.listen(config.port, () => {
   console.log(`Backend running on port ${config.port}...`);
 });
