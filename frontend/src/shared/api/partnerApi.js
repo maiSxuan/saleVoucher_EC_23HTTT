@@ -23,6 +23,66 @@ export async function registerPartnerAccountApi(accountData) {
 }
 
 /**
+ * Request OTP for partner registration account verification
+ */
+export async function requestPartnerOtpApi(data) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/partners/register/request-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json.message || "Yêu cầu gửi mã OTP thất bại.");
+    }
+    return json;
+  } catch (e) {
+    throw e;
+  }
+}
+
+/**
+ * Verify OTP for partner registration
+ */
+export async function verifyPartnerOtpApi(data) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/partners/register/verify-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json.message || "Xác thực mã OTP thất bại.");
+    }
+    return json;
+  } catch (e) {
+    throw e;
+  }
+}
+
+/**
+ * Resend OTP for partner registration
+ */
+export async function resendPartnerOtpApi(data) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/partners/register/resend-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json.message || "Gửi lại mã OTP thất bại.");
+    }
+    return json;
+  } catch (e) {
+    throw e;
+  }
+}
+
+/**
  * Check if tax code (ma_so_thue) is unique
  */
 export async function checkTaxCodeApi(mst) {

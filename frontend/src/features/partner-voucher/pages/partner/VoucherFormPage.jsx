@@ -15,6 +15,18 @@ export function VoucherFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  const getTodayDateTimeLocal = () => {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 16);
+  };
+
+  const getFutureDateTimeLocal = (days = 30) => {
+    const d = new Date(Date.now() + days * 86400000);
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 16);
+  };
+
   const [categoriesList, setCategoriesList] = useState([]);
   const [activeBranches, setActiveBranches] = useState([]);
   const [voucherStatus, setVoucherStatus] = useState("");
@@ -31,8 +43,8 @@ export function VoucherFormPage() {
     gia_goc: "",
     gia_ban: "",
     so_luong_phat_hanh: "",
-    tg_bat_dau_ban: "2026-08-01T00:00",
-    tg_ket_thuc_ban: "2026-08-31T23:59",
+    tg_bat_dau_ban: getTodayDateTimeLocal(),
+    tg_ket_thuc_ban: getFutureDateTimeLocal(30),
     dieu_kien_ap_dung: "Áp dụng cho 01 người lớn. Vui lòng xuất trình mã QR trước khi sử dụng.",
     chinh_sach_hoan_huy: "Không quy đổi thành tiền mặt. Hỗ trợ hoàn tiền nếu hủy trước 24h.",
     hinh_anh_url: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80",
@@ -82,8 +94,8 @@ export function VoucherFormPage() {
             gia_goc: existing.gia_goc || "",
             gia_ban: existing.gia_ban || "",
             so_luong_phat_hanh: existing.so_luong_phat_hanh || "",
-            tg_bat_dau_ban: existing.tg_bat_dau_ban ? existing.tg_bat_dau_ban.slice(0, 16) : "",
-            tg_ket_thuc_ban: existing.tg_ket_thuc_ban ? existing.tg_ket_thuc_ban.slice(0, 16) : "",
+            tg_bat_dau_ban: existing.tg_bat_dau_ban ? existing.tg_bat_dau_ban.slice(0, 16) : getTodayDateTimeLocal(),
+            tg_ket_thuc_ban: existing.tg_ket_thuc_ban ? existing.tg_ket_thuc_ban.slice(0, 16) : getFutureDateTimeLocal(30),
             dieu_kien_ap_dung: existing.dieu_kien_ap_dung || "",
             chinh_sach_hoan_huy: existing.chinh_sach_hoan_huy || "",
             hinh_anh_url: existing.hinh_anh_url || "",
@@ -103,6 +115,9 @@ export function VoucherFormPage() {
       const selected = prev.ma_chi_nhanh.includes(branchId)
         ? prev.ma_chi_nhanh.filter((b) => b !== branchId)
         : [...prev.ma_chi_nhanh, branchId];
+      if (errors.ma_chi_nhanh && selected.length > 0) {
+        setErrors((errs) => ({ ...errs, ma_chi_nhanh: "" }));
+      }
       return { ...prev, ma_chi_nhanh: selected };
     });
   };
@@ -115,6 +130,45 @@ export function VoucherFormPage() {
     if (Number(formData.gia_ban) >= Number(formData.gia_goc)) errs.gia_ban = "Giá bán phải nhỏ hơn Giá gốc";
     if (!formData.so_luong_phat_hanh || Number(formData.so_luong_phat_hanh) <= 0)
       errs.so_luong_phat_hanh = "Số lượng phát hành phải lớn hơn 0";
+
+    // 1. Validation 2 mốc thời gian
+    if (!formData.tg_bat_dau_ban) {
+      errs.tg_bat_dau_ban = "Thời gian mở bán không được để trống";
+    }
+
+    if (!formData.tg_ket_thuc_ban) {
+      errs.tg_ket_thuc_ban = "Thời gian kết thúc bán không được để trống";
+    }
+
+    if (formData.tg_bat_dau_ban && formData.tg_ket_thuc_ban) {
+      const startTime = new Date(formData.tg_bat_dau_ban).getTime();
+      const endTime = new Date(formData.tg_ket_thuc_ban).getTime();
+      // Grace period buffer: 5 minutes before now to allow filling the form
+      const nowBufferTime = Date.now() - 5 * 60 * 1000;
+
+      if (isNaN(startTime)) {
+        errs.tg_bat_dau_ban = "Thời gian mở bán không hợp lệ";
+      } else if (startTime < nowBufferTime) {
+        errs.tg_bat_dau_ban = "Thời gian mở bán phải lớn hơn hoặc bằng ngày hiện tại";
+      }
+
+      if (isNaN(endTime)) {
+        errs.tg_ket_thuc_ban = "Thời gian kết thúc không hợp lệ";
+      } else if (endTime <= nowBufferTime) {
+        errs.tg_ket_thuc_ban = "Thời gian kết thúc bán phải lớn hơn ngày hiện tại";
+      }
+
+      if (!isNaN(startTime) && !isNaN(endTime)) {
+        if (endTime <= startTime) {
+          errs.tg_ket_thuc_ban = "Thời gian kết thúc bán phải sau thời gian bắt đầu mở bán";
+        }
+      }
+    }
+
+    // 2. Validation bắt buộc chọn ít nhất 1 chi nhánh
+    if (!formData.ma_chi_nhanh || formData.ma_chi_nhanh.length === 0) {
+      errs.ma_chi_nhanh = "Voucher phải được áp dụng cho ít nhất 1 chi nhánh";
+    }
 
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -178,7 +232,7 @@ export function VoucherFormPage() {
               </label>
               <input
                 type="text"
-                placeholder="Ví dụ: Voucher Buffet Hải Sản Cao Cấp Tối Cuối Tuần"
+                placeholder="Ví dụ: Voucher Thưởng Thức Buffet Lẩu Nướng Hải Sản Cao Cấp"
                 value={formData.ten_voucher}
                 onChange={(e) => setFormData({ ...formData, ten_voucher: e.target.value })}
                 className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -188,11 +242,13 @@ export function VoucherFormPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Danh mục Voucher</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Danh mục Voucher <span className="text-rose-500">*</span>
+                </label>
                 <select
                   value={formData.ma_danh_muc}
                   onChange={(e) => setFormData({ ...formData, ma_danh_muc: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
                 >
                   {categoriesList.map((c) => {
                     const cateId = c.ma_danh_muc || c.id;
@@ -290,28 +346,36 @@ export function VoucherFormPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-100 pt-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Thời gian mở bán từ {isTamNgung && "(Đã khóa)"}
+                  Thời gian mở bán từ <span className="text-rose-500">*</span> {isTamNgung && "(Đã khóa)"}
                 </label>
                 <input
                   type="datetime-local"
                   disabled={isTamNgung}
                   value={formData.tg_bat_dau_ban}
-                  onChange={(e) => setFormData({ ...formData, tg_bat_dau_ban: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, tg_bat_dau_ban: e.target.value });
+                    if (errors.tg_bat_dau_ban) setErrors((prev) => ({ ...prev, tg_bat_dau_ban: "" }));
+                  }}
                   className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500"
                 />
+                {errors.tg_bat_dau_ban && <p className="text-xs text-rose-600 mt-1 font-medium">{errors.tg_bat_dau_ban}</p>}
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Thời gian kết thúc bán {isTamNgung && "(Đã khóa)"}
+                  Thời gian kết thúc bán <span className="text-rose-500">*</span> {isTamNgung && "(Đã khóa)"}
                 </label>
                 <input
                   type="datetime-local"
                   disabled={isTamNgung}
                   value={formData.tg_ket_thuc_ban}
-                  onChange={(e) => setFormData({ ...formData, tg_ket_thuc_ban: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, tg_ket_thuc_ban: e.target.value });
+                    if (errors.tg_ket_thuc_ban) setErrors((prev) => ({ ...prev, tg_ket_thuc_ban: "" }));
+                  }}
                   className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500"
                 />
+                {errors.tg_ket_thuc_ban && <p className="text-xs text-rose-600 mt-1 font-medium">{errors.tg_ket_thuc_ban}</p>}
               </div>
             </div>
           </div>
@@ -322,7 +386,7 @@ export function VoucherFormPage() {
           <div className="space-y-2">
             {activeBranches.length === 0 ? (
               <p className="text-xs text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-200">
-                Áp dụng cho toàn bộ các chi nhánh thuộc doanh nghiệp.
+                Chưa có chi nhánh chính thức nào. Vui lòng đăng ký chi nhánh trước khi phát hành Voucher.
               </p>
             ) : (
               activeBranches.map((branch) => (
@@ -346,15 +410,19 @@ export function VoucherFormPage() {
                 </label>
               ))
             )}
-            {errors.ma_chi_nhanh && <p className="text-xs text-rose-600 mt-1">{errors.ma_chi_nhanh}</p>}
+            {errors.ma_chi_nhanh && (
+              <p className="text-xs font-semibold text-rose-600 bg-rose-50 p-2.5 rounded-lg border border-rose-200 mt-2">
+                ⚠️ {errors.ma_chi_nhanh}
+              </p>
+            )}
           </div>
         </Card>
 
-        {/* Section 4: Terms & Conditions */}
-        <Card title="4. Điều Kiện & Chính Sách">
+        {/* Section 4: Terms & Policies */}
+        <Card title="4. Điều Khoản & Chính Sách">
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Điều kiện sử dụng Voucher</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Điều kiện áp dụng</label>
               <textarea
                 rows="2"
                 value={formData.dieu_kien_ap_dung}
@@ -362,6 +430,7 @@ export function VoucherFormPage() {
                 className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               ></textarea>
             </div>
+
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">Chính sách hoàn hủy</label>
               <textarea
@@ -374,19 +443,20 @@ export function VoucherFormPage() {
           </div>
         </Card>
 
-        {/* Form Action Footer */}
-        <div className="flex items-center justify-end gap-4 p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+        {/* Footer Actions */}
+        <div className="flex items-center justify-between pt-4 border-t border-slate-200">
           <Button variant="secondary" onClick={() => navigate("/partner/vouchers")}>
             Hủy bỏ
           </Button>
-          <Button variant="primary" onClick={() => handleSave(false)} loading={loading}>
-            Lưu bản nháp
-          </Button>
-          {voucherStatus === "Nhap" && (
-            <Button variant="success" onClick={() => handleSave(true)} loading={loading}>
-              Gửi Admin duyệt
+
+          <div className="flex items-center gap-3">
+            <Button variant="secondary" onClick={() => handleSave(false)} loading={loading}>
+              Lưu bản nháp
             </Button>
-          )}
+            <Button variant="primary" onClick={() => handleSave(true)} loading={loading}>
+              ✓ Lưu & Gửi duyệt ngay
+            </Button>
+          </div>
         </div>
 
         <Toast message={toastMessage} onClose={() => setToastMessage("")} />

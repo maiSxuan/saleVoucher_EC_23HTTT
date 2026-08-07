@@ -1,6 +1,8 @@
 const supabase = require("../../../../config/supabase");
 const StaffModel = require("../models/staff.model");
 
+const bcrypt = require("bcryptjs");
+
 class StaffRepository {
   async resolvePartnerId(inputPartnerId) {
     if (!inputPartnerId) return "20000000-0000-0000-0000-000000000001";
@@ -143,6 +145,23 @@ class StaffRepository {
       console.error("[StaffRepository] create error:", error.message);
       throw new Error(`Thêm nhân viên thất bại: ${error.message}`);
     }
+
+    // Tự động khởi tạo Tài khoản Đăng nhập trong bảng `taikhoan` cho nhân viên
+    const loginIdentifier = payload.email || payload.sdt;
+    if (loginIdentifier) {
+      try {
+        const rawPassword = payload.mat_khau || "123456";
+        const hashedPassword = await bcrypt.hash(rawPassword, 10);
+        await supabase.from("taikhoan").insert({
+          thong_tin_dang_nhap: loginIdentifier.trim().toLowerCase(),
+          mat_khau: hashedPassword,
+          ma_nguoi_dung: data.ma_nguoi_dung,
+        });
+      } catch (accErr) {
+        console.warn("[StaffRepository] create taikhoan warning:", accErr.message);
+      }
+    }
+
     return this.findById(data.ma_nguoi_dung);
   }
 

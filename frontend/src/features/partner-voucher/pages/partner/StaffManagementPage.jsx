@@ -30,6 +30,7 @@ export function StaffManagementPage() {
     ho_ten: "",
     email: "",
     sdt: "",
+    mat_khau: "123456",
     ngay_sinh: "",
     gioi_tinh: "Nam",
     cccd: "",
@@ -367,6 +368,19 @@ export function StaffManagementPage() {
                     onChange={(e) => setForm({ ...form, sdt: e.target.value })}
                   />
                 </div>
+
+                {!editing && (
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Mật khẩu khởi tạo *</label>
+                    <input
+                      type="password"
+                      className="w-full border rounded-lg px-3.5 py-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
+                      placeholder="Nhập mật khẩu (Mặc định: 123456)"
+                      value={form.mat_khau || "123456"}
+                      onChange={(e) => setForm({ ...form, mat_khau: e.target.value })}
+                    />
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">Ngày sinh</label>

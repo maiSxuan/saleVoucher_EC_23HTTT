@@ -1,10 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
 import Toast from "../../../../shared/components/Toast";
 import Modal from "../../../../shared/components/Modal";
-import { registerPartnerAccountApi, registerPartnerProfileApi, checkTaxCodeApi } from "../../../../shared/api/partnerApi";
+import {
+  registerPartnerAccountApi,
+  registerPartnerProfileApi,
+  checkTaxCodeApi,
+  requestPartnerOtpApi,
+  verifyPartnerOtpApi,
+  resendPartnerOtpApi,
+} from "../../../../shared/api/partnerApi";
 
 export function PartnerRegisterPage() {
   const navigate = useNavigate();
@@ -13,6 +20,24 @@ export function PartnerRegisterPage() {
   const [toastMessage, setToastMessage] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [createdUser, setCreatedUser] = useState(null);
+
+  // OTP Verification Modal states
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpValue, setOtpValue] = useState("");
+  const [otpCountdown, setOtpCountdown] = useState(60);
+  const [otpError, setOtpError] = useState("");
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [demoOtpHint, setDemoOtpHint] = useState("");
+
+  useEffect(() => {
+    let timer;
+    if (showOtpModal && otpCountdown > 0) {
+      timer = setInterval(() => {
+        setOtpCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [showOtpModal, otpCountdown]);
 
   const [formData, setFormData] = useState({
     // Step 1: Account Creation
@@ -134,31 +159,23 @@ export function PartnerRegisterPage() {
   const handleNext = async () => {
     if (!validateStep(currentStep)) return;
 
-    // Step 1: Create Account
+    // Step 1: Request OTP Verification
     if (currentStep === 1 && !createdUser) {
       setLoading(true);
       try {
-        const userAccount = await registerPartnerAccountApi({
+        const res = await requestPartnerOtpApi({
           email: formData.account_email,
+          sdt: formData.account_sdt,
           password: formData.account_password,
           ho_ten: formData.account_ho_ten,
-          sdt: formData.account_sdt,
         });
 
-        setCreatedUser(userAccount);
-        localStorage.setItem("user", JSON.stringify(userAccount));
-        localStorage.setItem("accessToken", "demo-partner-token");
-
-        // Prefill Step 3 fields with account data
-        setFormData((prev) => ({
-          ...prev,
-          ho_ten: prev.ho_ten || userAccount.ho_ten,
-          email: prev.email || userAccount.email,
-          sdt: prev.sdt || userAccount.sdt,
-        }));
-
-        setToastMessage("Tạo tài khoản thành công! Vui lòng hoàn tất thông tin hồ sơ doanh nghiệp.");
-        setCurrentStep(2);
+        setDemoOtpHint(res.demoOtp || "");
+        setOtpCountdown(60);
+        setOtpError("");
+        setOtpValue("");
+        setShowOtpModal(true);
+        setToastMessage("Mã OTP đã được gửi đến email của bạn. Vui lòng kiểm tra và xác nhận!");
       } catch (err) {
         setErrors((prev) => ({ ...prev, account_email: err.message }));
       } finally {
@@ -208,11 +225,63 @@ export function PartnerRegisterPage() {
         sdt_cn: formData.sdt_cn,
       });
 
+      setToastMessage("Hồ sơ đối tác đã được tạo thành công! Trạng thái đang Chờ duyệt.");
       setShowSuccessModal(true);
     } catch (err) {
-      setToastMessage(err.message || "Gửi hồ sơ thất bại. Vui lòng thử lại.");
+      setToastMessage("Đăng ký thất bại: " + err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otpValue || otpValue.length < 6) {
+      setOtpError("Vui lòng nhập đủ 6 chữ số mã OTP.");
+      return;
+    }
+    setOtpLoading(true);
+    setOtpError("");
+    try {
+      const res = await verifyPartnerOtpApi({
+        email: formData.account_email,
+        otp: otpValue,
+      });
+
+      const userAccount = res.userAccount;
+      setCreatedUser(userAccount);
+      localStorage.setItem("user", JSON.stringify(userAccount));
+      localStorage.setItem("accessToken", "demo-partner-token");
+
+      // Prefill Step 3 fields with account data
+      setFormData((prev) => ({
+        ...prev,
+        ho_ten: prev.ho_ten || userAccount.ho_ten,
+        email: prev.email || userAccount.email,
+        sdt: prev.sdt || userAccount.sdt,
+      }));
+
+      setShowOtpModal(false);
+      setToastMessage("Xác thực tài khoản thành công! Vui lòng hoàn tất thông tin hồ sơ doanh nghiệp.");
+      setCurrentStep(2);
+    } catch (err) {
+      setOtpError(err.message || "Xác thực mã OTP thất bại.");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setOtpLoading(true);
+    setOtpError("");
+    try {
+      const res = await resendPartnerOtpApi({ email: formData.account_email });
+      setDemoOtpHint(res.demoOtp || "");
+      setOtpCountdown(60);
+      setToastMessage("Đã gửi lại mã OTP thành công! Vui lòng kiểm tra hòm thư.");
+    } catch (err) {
+      setOtpError(err.message || "Gửi lại mã OTP thất bại.");
+    } finally {
+      setOtpLoading(false);
     }
   };
 
@@ -661,6 +730,83 @@ export function PartnerRegisterPage() {
             )}
           </div>
         </Card>
+
+        {/* Modal Xác Thực Mã OTP */}
+        {showOtpModal && (
+          <Modal
+            isOpen={showOtpModal}
+            onClose={() => setShowOtpModal(false)}
+            title="Xác Thực Tài Khoản Đăng Ký Đối Tác"
+            confirmText="Xác nhận mã OTP"
+            confirmVariant="primary"
+            onConfirm={handleVerifyOtp}
+            cancelText="Hủy"
+          >
+            <div className="space-y-4 text-left">
+              <p className="text-sm text-slate-700">
+                Mã xác thực 6 chữ số đã được gửi đến email:{" "}
+                <strong className="text-blue-600 font-mono">{formData.account_email}</strong>
+              </p>
+
+              {/* {demoOtpHint && (
+                <div className="p-2.5 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800 flex items-center justify-between">
+                  <span>💡 Mã OTP gợi ý thử nghiệm:</span>
+                  <span className="font-mono font-bold text-sm bg-white px-2 py-0.5 rounded border border-blue-300">
+                    {demoOtpHint}
+                  </span>
+                </div>
+              )} */}
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Nhập mã OTP 6 chữ số *
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={otpValue}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "");
+                    setOtpValue(val);
+                    if (otpError) setOtpError("");
+                  }}
+                  placeholder="000000"
+                  className="w-full text-center font-mono tracking-widest text-2xl font-bold py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-50"
+                  autoFocus
+                />
+              </div>
+
+              {otpError && (
+                <p className="text-xs text-rose-600 font-medium bg-rose-50 p-2 rounded border border-rose-200">
+                  {otpError}
+                </p>
+              )}
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs text-slate-500">
+                <span>
+                  {otpCountdown > 0 ? (
+                    <>Mã hết hạn sau: <strong className="text-slate-900 font-mono">00:{otpCountdown < 10 ? `0${otpCountdown}` : otpCountdown}</strong></>
+                  ) : (
+                    <span className="text-rose-600 font-medium">Mã OTP đã hết hạn</span>
+                  )}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={otpCountdown > 0 || otpLoading}
+                  className={`font-semibold transition-colors cursor-pointer ${
+                    otpCountdown > 0 || otpLoading
+                      ? "text-slate-300 cursor-not-allowed"
+                      : "text-blue-600 hover:text-blue-800 hover:underline"
+                  }`}
+                >
+                  Gửi lại mã OTP
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )}
 
         {/* Success Modal */}
         <Modal

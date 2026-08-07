@@ -165,6 +165,17 @@ class PartnerRepository {
     }
   }
 
+  async checkAccountExists(email) {
+    const cleanEmail = (email || "").trim().toLowerCase();
+    if (!cleanEmail) return false;
+    const { data } = await supabase
+      .from("taikhoan")
+      .select("ma_tk")
+      .eq("thong_tin_dang_nhap", cleanEmail)
+      .maybeSingle();
+    return !!data;
+  }
+
   async createAccount({ email, password, ho_ten, sdt }) {
     const bcrypt = require("bcryptjs");
     const cleanEmail = (email || "").trim().toLowerCase();
