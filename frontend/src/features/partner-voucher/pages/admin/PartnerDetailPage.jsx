@@ -27,6 +27,9 @@ import {
   getBranchRequestsApi,
   approveBranchRequestApi,
   rejectBranchRequestApi,
+  getPendingPartnerProfileRequestApi,
+  approvePartnerProfileRequestApi,
+  rejectPartnerProfileRequestApi,
 } from "../../../../shared/api/partnerApi";
 
 export function PartnerDetailPage({ partnerId, onNavigate }) {
@@ -34,6 +37,7 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
   const navigate = useNavigate();
 
   const [partner, setPartner] = useState(null);
+  const [pendingProfileReq, setPendingProfileReq] = useState(null);
   const [activeBranches, setActiveBranches] = useState([]);
   const [branchRequests, setBranchRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -57,14 +61,16 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
     setLoading(true);
     try {
       const pId = partnerId || id || "hs-001";
-      const [pData, bData, rData] = await Promise.all([
+      const [pData, bData, rData, profReq] = await Promise.all([
         getPartnerByIdApi(pId),
         getBranchesByPartnerApi(pId),
         getBranchRequestsApi(pId),
+        getPendingPartnerProfileRequestApi(pId),
       ]);
       setPartner(pData);
       setActiveBranches(bData || []);
       setBranchRequests(rData || []);
+      setPendingProfileReq(profReq);
     } catch (e) {
       console.error("Error loading partner detail:", e);
     } finally {
@@ -119,6 +125,18 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
     await rejectBranchRequestApi(selectedBranchReqForReject.ma_yeu_cau, branchRejectNote);
     setSelectedBranchReqForReject(null);
     setToastMessage("Đã từ chối yêu cầu chi nhánh.");
+    await loadPartnerData();
+  };
+
+  const handleApproveProfileReq = async (reqId) => {
+    await approvePartnerProfileRequestApi(reqId);
+    setToastMessage("Đã phê duyệt Cập nhật Hồ sơ Doanh nghiệp thành công!");
+    await loadPartnerData();
+  };
+
+  const handleRejectProfileReq = async (reqId) => {
+    await rejectPartnerProfileRequestApi(reqId, "Thông tin hồ sơ mới không phù hợp quy định");
+    setToastMessage("Đã từ chối Yêu cầu Cập nhật Hồ sơ Doanh nghiệp.");
     await loadPartnerData();
   };
 
@@ -297,6 +315,87 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
       {activeTab === "overview" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
+            {/* Pending Profile Update Request Comparison Card */}
+            {pendingProfileReq && (
+              <div className="bg-amber-50/80 border-2 border-amber-300 rounded-xl p-5 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-amber-200 pb-3">
+                  <div className="flex items-center gap-2 text-amber-900 font-bold text-base">
+                    <span>📋</span>
+                    <span>Đề xuất Cập nhật Hồ sơ Doanh nghiệp mới (Đang chờ duyệt)</span>
+                  </div>
+                  <span className="px-2.5 py-0.5 text-xs font-bold bg-amber-500 text-white rounded-full">
+                    Chờ duyệt
+                  </span>
+                </div>
+
+                <div className="space-y-2 text-xs">
+                  <p className="text-gray-600 font-medium">So sánh thông tin hiện tại vs Đề xuất thay đổi mới:</p>
+                  
+                  <div className="bg-white p-3.5 rounded-lg border border-amber-200 space-y-2">
+                    {pendingProfileReq.ten_dn_moi && (
+                      <div className="flex justify-between items-center py-1 border-b border-gray-100">
+                        <span className="text-gray-500">Tên doanh nghiệp:</span>
+                        <span className="font-bold text-slate-900">
+                          {partner.ten_dn} <span className="text-amber-600">➔</span> <span className="text-emerald-700">{pendingProfileReq.ten_dn_moi}</span>
+                        </span>
+                      </div>
+                    )}
+
+                    {pendingProfileReq.ma_so_thue_moi && (
+                      <div className="flex justify-between items-center py-1 border-b border-gray-100">
+                        <span className="text-gray-500">Mã số thuế:</span>
+                        <span className="font-mono font-bold text-slate-900">
+                          {partner.ma_so_thue} <span className="text-amber-600">➔</span> <span className="text-emerald-700">{pendingProfileReq.ma_so_thue_moi}</span>
+                        </span>
+                      </div>
+                    )}
+
+                    {pendingProfileReq.dia_chi_moi && (
+                      <div className="flex justify-between items-center py-1 border-b border-gray-100">
+                        <span className="text-gray-500">Địa chỉ trụ sở:</span>
+                        <span className="font-medium text-slate-900">
+                          {partner.dia_chi} <span className="text-amber-600">➔</span> <span className="text-emerald-700">{pendingProfileReq.dia_chi_moi}</span>
+                        </span>
+                      </div>
+                    )}
+
+                    {pendingProfileReq.ho_ten_nguoi_dai_dien_moi && (
+                      <div className="flex justify-between items-center py-1 border-b border-gray-100">
+                        <span className="text-gray-500">Người đại diện:</span>
+                        <span className="font-bold text-slate-900">
+                          {partner.nguoi_dai_dien?.ho_ten || "Chưa có"} <span className="text-amber-600">➔</span> <span className="text-emerald-700">{pendingProfileReq.ho_ten_nguoi_dai_dien_moi}</span>
+                        </span>
+                      </div>
+                    )}
+
+                    {pendingProfileReq.sdt_nguoi_dai_dien_moi && (
+                      <div className="flex justify-between items-center py-1">
+                        <span className="text-gray-500">SĐT người đại diện:</span>
+                        <span className="font-medium text-slate-900">
+                          {partner.nguoi_dai_dien?.sdt || "Chưa có"} <span className="text-amber-600">➔</span> <span className="text-emerald-700">{pendingProfileReq.sdt_nguoi_dai_dien_moi}</span>
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    onClick={() => handleRejectProfileReq(pendingProfileReq.ma_yc || pendingProfileReq.ma_req)}
+                    className="px-3.5 py-1.5 text-xs font-semibold border border-rose-300 text-rose-700 bg-white hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                  >
+                    Từ chối đề xuất
+                  </button>
+                  <button
+                    onClick={() => handleApproveProfileReq(pendingProfileReq.ma_yc || pendingProfileReq.ma_req)}
+                    className="px-4 py-1.5 text-xs font-bold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors cursor-pointer shadow-xs"
+                  >
+                    Phê duyệt cập nhật hồ sơ
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Legal Business Info */}
             <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
               <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">

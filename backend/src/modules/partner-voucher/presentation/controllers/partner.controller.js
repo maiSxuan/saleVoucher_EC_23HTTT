@@ -115,6 +115,42 @@ class PartnerController {
       next(error);
     }
   }
+
+  async createProfileRequest(req, res, next) {
+    try {
+      const result = await this.partnerService.createProfileRequest(req.body);
+      res.status(201).json({ success: true, data: result });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async getPendingProfileRequest(req, res, next) {
+    try {
+      const result = await this.partnerService.getPendingProfileRequest(req.params.partnerId);
+      res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async approveProfileRequest(req, res, next) {
+    try {
+      const result = await this.partnerService.approveProfileRequest(req.params.reqId, req.body.adminId);
+      res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async rejectProfileRequest(req, res, next) {
+    try {
+      const result = await this.partnerService.rejectProfileRequest(req.params.reqId, req.body.reason, req.body.adminId);
+      res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
 }
 
 module.exports = PartnerController;

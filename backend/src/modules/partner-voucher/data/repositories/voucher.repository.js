@@ -361,16 +361,37 @@ class VoucherRepository {
       VOUCHERS_MEMORY_STORE.set(id, memoryVoucher);
     }
 
-    const updatePayload = { ...payload };
-    delete updatePayload.ma_hs;
-    delete updatePayload.ten_dn;
-    delete updatePayload.ten_danh_muc;
-    delete updatePayload.ma_chi_nhanh;
-    delete updatePayload.trang_thai_kiem_duyet;
-    delete updatePayload.trang_thai_cong_bo;
-    delete updatePayload.ly_do_tu_choi;
-    delete updatePayload.ngay_tao;
-    delete updatePayload.lich_su_duyet;
+    const allowedColumns = [
+      "ten_voucher",
+      "mo_ta",
+      "gia_goc",
+      "gia_tri_giam",
+      "dieu_kien_ap_dung",
+      "so_luong_phat_hanh",
+      "tg_bat_dau_ban",
+      "tg_ket_thuc_ban",
+      "trang_thai",
+      "chinh_sach_hoan_huy",
+      "hinh_anh_url",
+      "so_luong_da_ban",
+      "ma_danh_muc",
+    ];
+
+    const updatePayload = {};
+
+    for (const key of Object.keys(payload)) {
+      if (allowedColumns.includes(key)) {
+        updatePayload[key] = payload[key];
+      }
+    }
+
+    if (payload.gia_goc !== undefined) {
+      updatePayload.gia_goc = Number(payload.gia_goc);
+    }
+
+    if (payload.so_luong_phat_hanh !== undefined) {
+      updatePayload.so_luong_phat_hanh = Number(payload.so_luong_phat_hanh);
+    }
 
     if (payload.gia_goc !== undefined && payload.gia_ban !== undefined) {
       updatePayload.gia_tri_giam = Math.max(0, Number(payload.gia_goc) - Number(payload.gia_ban));
@@ -382,10 +403,23 @@ class VoucherRepository {
         .update(updatePayload)
         .eq("ma_voucher", id)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("[VoucherRepository] update error:", error.message);
+      } else if (data && Array.isArray(payload.ma_chi_nhanh)) {
+        try {
+          await supabase.from("voucher_cn").delete().eq("ma_voucher", id);
+          if (payload.ma_chi_nhanh.length > 0) {
+            const links = payload.ma_chi_nhanh.map((bId) => ({
+              ma_voucher: id,
+              ma_chi_nhanh: bId,
+            }));
+            await supabase.from("voucher_cn").insert(links);
+          }
+        } catch (linkErr) {
+          console.warn("[VoucherRepository] voucher_cn update warning:", linkErr.message);
+        }
       }
     }
 

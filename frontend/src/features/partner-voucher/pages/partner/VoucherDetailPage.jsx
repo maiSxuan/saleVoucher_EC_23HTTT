@@ -146,7 +146,7 @@ export function VoucherDetailPage() {
                   size="sm"
                   onClick={() => handleStatusChange("Dang ban", "Đã mở bán lại Voucher!")}
                 >
-                  ▶️ Mở bán lại
+                  Mở bán lại
                 </Button>
               </>
             )}
@@ -155,7 +155,7 @@ export function VoucherDetailPage() {
             {isRejected && (
               <Link to={`/partner/vouchers/${voucher.ma_voucher}/edit`}>
                 <Button variant="danger" size="sm">
-                  ✏️ Khắc phục & Gửi lại
+                  Khắc phục & Gửi lại
                 </Button>
               </Link>
             )}

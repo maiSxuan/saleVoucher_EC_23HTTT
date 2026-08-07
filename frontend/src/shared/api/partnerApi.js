@@ -516,6 +516,70 @@ export async function getAuditLogsApi() {
   return mockStore.getAuditLogs();
 }
 
+export async function createPartnerProfileRequestApi(payload) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/partners/profile-requests`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) return json.data;
+    }
+  } catch (e) {
+    console.warn("Backend API error for createPartnerProfileRequestApi:", e.message);
+  }
+  return mockStore.createProfileRequest(payload);
+}
+
+export async function getPendingPartnerProfileRequestApi(partnerId) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/partners/${partnerId}/profile-requests`);
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) return json.data;
+    }
+  } catch (e) {
+    console.warn("Backend API error for getPendingPartnerProfileRequestApi:", e.message);
+  }
+  return mockStore.getPendingProfileRequest(partnerId);
+}
+
+export async function approvePartnerProfileRequestApi(reqId, adminId) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/partners/profile-requests/${reqId}/approve`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminId }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) return json.data;
+    }
+  } catch (e) {
+    console.warn("Backend API error for approvePartnerProfileRequestApi:", e.message);
+  }
+  return mockStore.approveProfileRequest(reqId, adminId);
+}
+
+export async function rejectPartnerProfileRequestApi(reqId, reason, adminId) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/partners/profile-requests/${reqId}/reject`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason, adminId }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) return json.data;
+    }
+  } catch (e) {
+    console.warn("Backend API error for rejectPartnerProfileRequestApi:", e.message);
+  }
+  return mockStore.rejectProfileRequest(reqId, reason, adminId);
+}
+
 /**
  * Fetch partner report data from backend API
  */

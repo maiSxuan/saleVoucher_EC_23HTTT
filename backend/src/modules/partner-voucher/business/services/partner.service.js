@@ -195,6 +195,79 @@ class PartnerService {
     const status = isLocking ? "Tam khoa" : "Dang hoat dong";
     return await partnerRepository.updateStatus(id, status, reason);
   }
+
+  /**
+   * Tạo Yêu cầu Cập nhật Hồ sơ Doanh nghiệp mới trong yeu_cau_cap_nhat_hosodn
+   */
+  async createProfileRequest(payload) {
+    const partnerProfileRequestRepo = require("../../data/repositories/partner-profile-request.repository");
+    return await partnerProfileRequestRepo.create(payload);
+  }
+
+  /**
+   * Lấy yêu cầu sửa hồ sơ đang chờ duyệt của đối tác
+   */
+  async getPendingProfileRequest(partnerId) {
+    const partnerProfileRequestRepo = require("../../data/repositories/partner-profile-request.repository");
+    return await partnerProfileRequestRepo.findPendingByPartnerId(partnerId);
+  }
+
+  /**
+   * Admin Phê duyệt Yêu cầu Cập nhật Hồ sơ Doanh nghiệp:
+   * Ghi đè thông tin mới vào CSDL gốc (hosodn & nguoidung) và chuyển trang_thai = 'Da duyet'
+   */
+  async approveProfileRequest(reqId, adminId = null) {
+    const partnerProfileRequestRepo = require("../../data/repositories/partner-profile-request.repository");
+    const req = await partnerProfileRequestRepo.findById(reqId);
+    if (!req) {
+      const err = new Error("Không tìm thấy yêu cầu cập nhật hồ sơ");
+      err.status = 404;
+      throw err;
+    }
+
+    // 1. Ghi đè thông tin mới vào bảng gốc hosodn
+    const updateHosodnFields = {};
+    if (req.ten_dn_moi) updateHosodnFields.ten_dn = req.ten_dn_moi;
+    if (req.ma_so_thue_moi) updateHosodnFields.ma_so_thue = req.ma_so_thue_moi;
+    if (req.dia_chi_moi) updateHosodnFields.dia_chi = req.dia_chi_moi;
+    if (req.giay_phep_kinh_doanh_moi) updateHosodnFields.giay_phep_kinh_doanh = req.giay_phep_kinh_doanh_moi;
+
+    if (Object.keys(updateHosodnFields).length > 0) {
+      await partnerRepository.update(req.ma_hs, updateHosodnFields);
+    }
+
+    // 2. Ghi đè thông tin người đại diện vào bảng nguoidung nếu có
+    if (req.ho_ten_nguoi_dai_dien_moi || req.sdt_nguoi_dai_dien_moi || req.email_nguoi_dai_dien_moi || req.cccd_moi) {
+      const partner = await partnerRepository.findById(req.ma_hs);
+      const userId = req.id_nguoi_dai_dien_moi || partner?.ma_nguoi_dung;
+
+      if (userId) {
+        const supabase = require("../../../../config/supabase");
+        const updateUserFields = {};
+        if (req.ho_ten_nguoi_dai_dien_moi) updateUserFields.ho_ten = req.ho_ten_nguoi_dai_dien_moi;
+        if (req.sdt_nguoi_dai_dien_moi) updateUserFields.sdt = req.sdt_nguoi_dai_dien_moi;
+        if (req.email_nguoi_dai_dien_moi) updateUserFields.email = req.email_nguoi_dai_dien_moi;
+        if (req.cccd_moi) updateUserFields.cccd = req.cccd_moi;
+
+        try {
+          await supabase.from("nguoidung").update(updateUserFields).eq("ma_nguoi_dung", userId);
+        } catch (e) {
+          console.warn("[PartnerService] Update nguoidung error:", e.message);
+        }
+      }
+    }
+
+    // 3. Đổi trạng thái yêu cầu thành 'Da duyet'
+    return await partnerProfileRequestRepo.updateStatus(reqId, "Da duyet", null, adminId);
+  }
+
+  /**
+   * Admin Từ chối Yêu cầu Cập nhật Hồ sơ Doanh nghiệp
+   */
+  async rejectProfileRequest(reqId, reason = "", adminId = null) {
+    const partnerProfileRequestRepo = require("../../data/repositories/partner-profile-request.repository");
+    return await partnerProfileRequestRepo.updateStatus(reqId, "Tu choi", reason, adminId);
+  }
 }
 
 module.exports = new PartnerService();

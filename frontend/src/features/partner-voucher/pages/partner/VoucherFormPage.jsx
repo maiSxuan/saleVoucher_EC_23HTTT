@@ -31,6 +31,7 @@ export function VoucherFormPage() {
   const [categoriesList, setCategoriesList] = useState([]);
   const [activeBranches, setActiveBranches] = useState([]);
   const [voucherStatus, setVoucherStatus] = useState("");
+  const [initialQuantity, setInitialQuantity] = useState(0);
 
   const [loading, setLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
@@ -87,6 +88,8 @@ export function VoucherFormPage() {
         const existing = await getVoucherByIdApi(id);
         if (existing) {
           setVoucherStatus(existing.trang_thai || "");
+          const initQty = Number(existing.so_luong_phat_hanh) || 0;
+          setInitialQuantity(initQty);
           setFormData({
             ma_voucher: existing.ma_voucher,
             ten_voucher: existing.ten_voucher || "",
@@ -109,6 +112,7 @@ export function VoucherFormPage() {
   }, [id]);
 
   const isTamNgung = voucherStatus === "Tam ngung";
+  const isRejected = voucherStatus === "Tu choi";
 
   const handleBranchToggle = (branchId) => {
     if (isTamNgung) return;
@@ -123,14 +127,40 @@ export function VoucherFormPage() {
     });
   };
 
+  const isAllBranchesSelected =
+    activeBranches.length > 0 &&
+    activeBranches.every((b) => formData.ma_chi_nhanh.includes(b.ma_chi_nhanh));
+
+  const handleSelectAllBranches = (e) => {
+    if (isTamNgung) return;
+    const isChecked = e.target.checked;
+    if (isChecked) {
+      setFormData((prev) => ({
+        ...prev,
+        ma_chi_nhanh: activeBranches.map((b) => b.ma_chi_nhanh),
+      }));
+      if (errors.ma_chi_nhanh) setErrors((errs) => ({ ...errs, ma_chi_nhanh: "" }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        ma_chi_nhanh: [],
+      }));
+    }
+  };
+
   const validate = () => {
     const errs = {};
     if (!formData.ten_voucher.trim()) errs.ten_voucher = "Tên Voucher không được để trống";
     if (!formData.gia_goc || Number(formData.gia_goc) <= 0) errs.gia_goc = "Giá gốc phải lớn hơn 0";
     if (!formData.gia_ban || Number(formData.gia_ban) <= 0) errs.gia_ban = "Giá bán phải lớn hơn 0";
     if (Number(formData.gia_ban) >= Number(formData.gia_goc)) errs.gia_ban = "Giá bán phải nhỏ hơn Giá gốc";
-    if (!formData.so_luong_phat_hanh || Number(formData.so_luong_phat_hanh) <= 0)
+
+    const newQty = Number(formData.so_luong_phat_hanh);
+    if (!formData.so_luong_phat_hanh || newQty <= 0) {
       errs.so_luong_phat_hanh = "Số lượng phát hành phải lớn hơn 0";
+    } else if (isTamNgung && initialQuantity > 0 && newQty < initialQuantity) {
+      errs.so_luong_phat_hanh = `Khi tạm ngưng, số lượng phát hành mới (${newQty}) không được nhỏ hơn số lượng ban đầu (${initialQuantity}). Bạn chỉ có thể tăng thêm giới hạn.`;
+    }
 
     // 1. Validation 2 mốc thời gian
     if (!formData.tg_bat_dau_ban) {
@@ -144,19 +174,17 @@ export function VoucherFormPage() {
     if (formData.tg_bat_dau_ban && formData.tg_ket_thuc_ban) {
       const startTime = new Date(formData.tg_bat_dau_ban).getTime();
       const endTime = new Date(formData.tg_ket_thuc_ban).getTime();
-      // Grace period buffer: 5 minutes before now to allow filling the form
       const nowBufferTime = Date.now() - 5 * 60 * 1000;
 
       if (isNaN(startTime)) {
         errs.tg_bat_dau_ban = "Thời gian mở bán không hợp lệ";
-      } else if (startTime < nowBufferTime) {
+      } else if (!id && startTime < nowBufferTime) {
+        // Chỉ kiểm tra thời gian bắt đầu so với hiện tại khi TẠO MỚI voucher (!id)
         errs.tg_bat_dau_ban = "Thời gian mở bán phải lớn hơn hoặc bằng ngày hiện tại";
       }
 
       if (isNaN(endTime)) {
         errs.tg_ket_thuc_ban = "Thời gian kết thúc không hợp lệ";
-      } else if (endTime <= nowBufferTime) {
-        errs.tg_ket_thuc_ban = "Thời gian kết thúc bán phải lớn hơn ngày hiện tại";
       }
 
       if (!isNaN(startTime) && !isNaN(endTime)) {
@@ -180,15 +208,37 @@ export function VoucherFormPage() {
 
     setLoading(true);
     const partnerId = getLoggedInPartnerId();
+
+    // Determine target status
+    let targetStatus = "Nhap";
+    if (isTamNgung) {
+      targetStatus = "Tam ngung"; // Giữ nguyên trạng thái Tạm ngưng khi chỉnh sửa
+    } else if (isRejected || isSubmitNow) {
+      targetStatus = "Cho duyet";
+    } else if (id) {
+      targetStatus = voucherStatus || "Nhap";
+    }
+
+    const targetKiemDuyet = isTamNgung ? "Da duyet" : targetStatus;
+
     const saved = await saveVoucherApi({
       ...formData,
       ma_hs: partnerId,
-      trang_thai: isSubmitNow ? "Cho duyet" : voucherStatus || "Nhap",
-      trang_thai_kiem_duyet: isSubmitNow ? "Cho duyet" : voucherStatus || "Nhap",
+      trang_thai: targetStatus,
+      trang_thai_kiem_duyet: targetKiemDuyet,
+      ly_do_tu_choi: targetStatus === "Cho duyet" ? "" : undefined,
     });
 
     setLoading(false);
-    setToastMessage(id ? "Cập nhật Voucher thành công!" : isSubmitNow ? "Tạo và Gửi duyệt Voucher thành công!" : "Lưu bản nháp thành công!");
+    setToastMessage(
+      isTamNgung
+        ? "Đã cập nhật thông tin Voucher thành công (Trạng thái giữ nguyên Tạm ngưng)!"
+        : isRejected
+        ? "Đã khắc phục thông tin & Gửi lại yêu cầu duyệt thành công!"
+        : isSubmitNow
+        ? "Tạo và Gửi duyệt Voucher thành công!"
+        : "Lưu bản nháp thành công!"
+    );
     setTimeout(() => {
       navigate(`/partner/vouchers/${saved?.ma_voucher || id}`);
     }, 1000);
@@ -214,12 +264,22 @@ export function VoucherFormPage() {
           </div>
         </div>
 
+        {/* Warning banner if Voucher is Rejected */}
+        {isRejected && (
+          <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl text-rose-800 text-xs font-semibold flex items-center gap-2">
+            <span>⚠️</span>
+            <span>
+              <strong>Voucher bị từ chối phê duyệt:</strong> Vui lòng chỉnh sửa, bổ sung thông tin cần thiết và bấm <strong>"✓ Lưu & Gửi duyệt ngay"</strong> để gửi lại cho Quản trị viên xét duyệt.
+            </span>
+          </div>
+        )}
+
         {/* Warning banner if Voucher is Tam ngung */}
         {isTamNgung && (
           <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl text-amber-800 text-xs font-semibold flex items-center gap-2">
             <span>🔒</span>
             <span>
-              <strong>Voucher đang ở trạng thái Tạm ngưng:</strong> Theo quy định, các trường <strong>Giá niêm yết, Giá ưu đãi, Thời gian bán</strong> và <strong>Chi nhánh áp dụng</strong> bị khóa chỉnh sửa.
+              <strong>Voucher đang ở trạng thái Tạm ngưng:</strong> Bạn có thể điều chỉnh <strong>Số lượng phát hành (Chỉnh sửa giới hạn)</strong>, tên hoặc mô tả. Các trường Giá và Chi nhánh bị khóa chỉnh sửa theo quy định.
             </span>
           </div>
         )}
@@ -331,7 +391,12 @@ export function VoucherFormPage() {
                   onChange={(e) => setFormData({ ...formData, so_luong_phat_hanh: e.target.value })}
                   className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
-                {errors.so_luong_phat_hanh && <p className="text-xs text-rose-600 mt-1">{errors.so_luong_phat_hanh}</p>}
+                {isTamNgung && initialQuantity > 0 && (
+                  <p className="text-[11px] text-amber-700 mt-1 font-medium">
+                    💡 Khi tạm ngưng, số lượng phát hành mới chỉ được điều chỉnh tăng thêm (tối thiểu {initialQuantity}).
+                  </p>
+                )}
+                {errors.so_luong_phat_hanh && <p className="text-xs text-rose-600 mt-1 font-semibold">{errors.so_luong_phat_hanh}</p>}
               </div>
             </div>
 
@@ -384,7 +449,29 @@ export function VoucherFormPage() {
 
         {/* Section 3: Applicable Branches */}
         <Card title={`3. Chi Nhánh Áp Dụng ${isTamNgung ? "(Đã khóa chỉnh sửa)" : ""}`}>
-          <div className="space-y-2">
+          <div className="space-y-3">
+            {activeBranches.length > 0 && (
+              <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                <label
+                  className={`flex items-center gap-2 text-xs font-bold text-slate-800 ${
+                    isTamNgung ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:text-blue-600"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    disabled={isTamNgung}
+                    checked={isAllBranchesSelected}
+                    onChange={handleSelectAllBranches}
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  />
+                  <span>✓ Chọn tất cả chi nhánh ({activeBranches.length})</span>
+                </label>
+                <span className="text-xs text-slate-500 font-medium">
+                  Đã chọn: <strong className="text-blue-600 font-bold">{formData.ma_chi_nhanh.length}</strong> / {activeBranches.length} chi nhánh
+                </span>
+              </div>
+            )}
+
             {activeBranches.length === 0 ? (
               <p className="text-xs text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-200">
                 Chưa có chi nhánh chính thức nào. Vui lòng đăng ký chi nhánh trước khi phát hành Voucher.
@@ -446,18 +533,26 @@ export function VoucherFormPage() {
 
         {/* Footer Actions */}
         <div className="flex items-center justify-between pt-4 border-t border-slate-200">
-          <Button variant="secondary" onClick={() => navigate("/partner/vouchers")}>
+          <Button variant="secondary" onClick={() => navigate(-1)}>
             Hủy bỏ
           </Button>
 
           <div className="flex items-center gap-3">
-            <Button variant="secondary" onClick={() => handleSave(false)} loading={loading}>
-              Lưu bản nháp
-            </Button>
-            <Button variant="primary" onClick={() => handleSave(true)} loading={loading}>
-              ✓ Lưu & Gửi duyệt ngay
-            </Button>
-          </div>
+  {id && !["Nhap", "Tu choi"].includes(voucherStatus) ? (
+    <Button variant="primary" onClick={() => handleSave(true)} loading={loading}>
+      Lưu thay đổi
+    </Button>
+  ) : (
+    <>
+      <Button variant="secondary" onClick={() => handleSave(false)} loading={loading}>
+        Lưu bản nháp
+      </Button>
+      <Button variant="primary" onClick={() => handleSave(true)} loading={loading}>
+        ✓ Lưu & Gửi duyệt ngay
+      </Button>
+    </>
+  )}
+</div>
         </div>
 
         <Toast message={toastMessage} onClose={() => setToastMessage("")} />

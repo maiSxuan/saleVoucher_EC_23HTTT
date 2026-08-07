@@ -7,7 +7,7 @@ const { loadEnvironment } = require("./config/environment");
 
 const config = loadEnvironment();
 
-// Express Server Entry Point (Category Accents & Vietnam Provinces Enabled)
+// Express Server Entry Point (Voucher Update Query Fixed with Allowed Columns)
 app.listen(config.port, () => {
   console.log(`Backend running on port ${config.port}...`);
 });

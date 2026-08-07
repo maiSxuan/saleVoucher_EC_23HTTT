@@ -4,10 +4,16 @@ import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
 import Badge from "../../../../shared/components/Badge";
 import Toast from "../../../../shared/components/Toast";
-import { getPartnerByIdApi, updatePartnerApi } from "../../../../shared/api/partnerApi";
+import {
+  getPartnerByIdApi,
+  updatePartnerApi,
+  createPartnerProfileRequestApi,
+  getPendingPartnerProfileRequestApi,
+} from "../../../../shared/api/partnerApi";
 
 export function PartnerProfilePage() {
   const [partner, setPartner] = useState(null);
+  const [pendingProfileReq, setPendingProfileReq] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -53,6 +59,10 @@ export function PartnerProfilePage() {
         ngay_sinh: data.nguoi_dai_dien?.ngay_sinh ? data.nguoi_dai_dien.ngay_sinh.slice(0, 10) : "",
         gioi_tinh: data.nguoi_dai_dien?.gioi_tinh || "Nam",
       });
+
+      // Check pending profile update request
+      const req = await getPendingPartnerProfileRequestApi(targetId);
+      setPendingProfileReq(req);
     }
     setLoading(false);
   };
@@ -65,25 +75,38 @@ export function PartnerProfilePage() {
     if (!partner?.ma_hs) return;
     setSaving(true);
 
-    await updatePartnerApi(partner.ma_hs, {
-      ten_dn: formData.ten_dn,
-      ma_so_thue: formData.ma_so_thue,
-      dia_chi: formData.dia_chi,
-      trang_thai: "Cho duyet",
-      ly_do_tu_choi: "",
-      nguoi_dai_dien: {
-        ho_ten: formData.ho_ten,
-        sdt: formData.sdt,
-        email: formData.email,
-        cccd: formData.cccd,
-        ngay_sinh: formData.ngay_sinh,
-        gioi_tinh: formData.gioi_tinh,
-      },
-    });
+    if (partner.trang_thai === "Cho duyet") {
+      // Direct registration edit for initial pending partner
+      await updatePartnerApi(partner.ma_hs, {
+        ten_dn: formData.ten_dn,
+        ma_so_thue: formData.ma_so_thue,
+        dia_chi: formData.dia_chi,
+        nguoi_dai_dien: {
+          ho_ten: formData.ho_ten,
+          sdt: formData.sdt,
+          email: formData.email,
+          cccd: formData.cccd,
+        },
+      });
+      setToastMessage("Đã cập nhật lại thông tin đăng ký ban đầu.");
+    } else {
+      // Active partner submits a profile update request to yeu_cau_cap_nhat_hosodn
+      await createPartnerProfileRequestApi({
+        ma_hs: partner.ma_hs,
+        ten_dn_moi: formData.ten_dn,
+        ma_so_thue_moi: formData.ma_so_thue,
+        dia_chi_moi: formData.dia_chi,
+        ho_ten_nguoi_dai_dien_moi: formData.ho_ten,
+        sdt_nguoi_dai_dien_moi: formData.sdt,
+        email_nguoi_dai_dien_moi: formData.email,
+        cccd_moi: formData.cccd,
+        trang_thai: "Cho duyet",
+      });
+      setToastMessage("Đã gửi Yêu cầu Cập nhật Hồ sơ Doanh nghiệp tới Quản trị viên!");
+    }
 
     setSaving(false);
     setIsEditing(false);
-    setToastMessage("Cập nhật hồ sơ thành công! Đã chuyển trạng thái sang Chờ duyệt.");
     await loadPartner();
   };
 
@@ -145,12 +168,29 @@ export function PartnerProfilePage() {
           </div>
         )}
 
-        {/* Pending Banner */}
+        {/* Pending Profile Update Request Banner */}
+        {pendingProfileReq && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-900 space-y-1.5 shadow-xs">
+            <div className="flex items-center gap-2 font-bold text-amber-900">
+              <span>⏳</span>
+              <span>Bạn có 1 Yêu cầu cập nhật hồ sơ doanh nghiệp đang chờ Quản trị viên duyệt</span>
+            </div>
+            <div className="text-gray-700 grid grid-cols-2 gap-1 pt-1 bg-white/70 p-2.5 rounded-lg border border-amber-100">
+              {pendingProfileReq.ten_dn_moi && <div>• Tên DN mới đề xuất: <strong>{pendingProfileReq.ten_dn_moi}</strong></div>}
+              {pendingProfileReq.dia_chi_moi && <div>• Địa chỉ trụ sở mới: <strong>{pendingProfileReq.dia_chi_moi}</strong></div>}
+              {pendingProfileReq.ho_ten_nguoi_dai_dien_moi && <div>• Người đại diện mới: <strong>{pendingProfileReq.ho_ten_nguoi_dai_dien_moi}</strong></div>}
+              {pendingProfileReq.sdt_nguoi_dai_dien_moi && <div>• SĐT mới: <strong>{pendingProfileReq.sdt_nguoi_dai_dien_moi}</strong></div>}
+            </div>
+            <p className="text-[11px] text-amber-700 italic">📌 Trong thời gian chờ duyệt, các giao dịch kinh doanh vẫn áp dụng theo thông tin hồ sơ hiện tại.</p>
+          </div>
+        )}
+
+        {/* Pending Initial Partner Banner */}
         {isPending && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span>⏳</span>
-              <span>Hồ sơ đang ở trạng thái <strong>"Chờ duyệt"</strong>. Quản trị viên đang thẩm định thông tin của bạn.</span>
+              <span>Hồ sơ đối tác mới đăng ký đang ở trạng thái <strong>"Chờ duyệt"</strong>. Quản trị viên đang thẩm định thông tin của bạn.</span>
             </div>
           </div>
         )}
