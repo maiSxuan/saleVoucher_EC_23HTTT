@@ -416,19 +416,19 @@ class MockDataStore {
 
   getStaffs() {
     return this.getData().staffs || [];
-}
+  }
 
-getStaffsByPartner(partnerId) {
+  getStaffsByPartner(partnerId) {
     return this.getStaffs().filter(
-        staff => staff.ma_hs === partnerId
+      staff => staff.ma_hs === partnerId
     );
-}
+  }
 
-getStaffById(id) {
+  getStaffById(id) {
     return this.getStaffs().find(
-        staff => staff.ma_nv === id
+      staff => staff.ma_nv === id
     );
-}
+  }
 
   updatePartnerProfile(partnerId, updatedFields) {
     const data = this.getData();

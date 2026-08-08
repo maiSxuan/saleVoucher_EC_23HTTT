@@ -42,6 +42,9 @@ export function VoucherApprovalListPage() {
   };
 
   const getPublicationStatusBadge = (v) => {
+    if (v.trang_thai === "Tam ngung" || v.trang_thai === "Tam an") {
+      return { label: "Tạm ngưng", color: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400" };
+    }
     const isApproved = v.trang_thai === "Dang ban" || v.trang_thai === "Da duyet" || v.reviewStatus === "approved";
     if (!isApproved) {
       return { label: "Chưa công bố", color: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400" };

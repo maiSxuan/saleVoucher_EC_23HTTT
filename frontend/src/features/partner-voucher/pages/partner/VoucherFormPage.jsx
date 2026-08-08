@@ -90,6 +90,10 @@ export function VoucherFormPage() {
       if (id) {
         const existing = await getVoucherByIdApi(id);
         if (existing) {
+          if (existing.trang_thai === "Ngung ban") {
+            navigate(`/partner/vouchers/${id}`);
+            return;
+          }
           setVoucherStatus(existing.trang_thai || "");
           const initQty = Number(existing.so_luong_phat_hanh) || 0;
           setInitialQuantity(initQty);

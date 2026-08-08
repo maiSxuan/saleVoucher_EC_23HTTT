@@ -24,6 +24,7 @@ export function VoucherListPage() {
     { key: "Cho duyet", label: "Chờ duyệt" },
     { key: "Dang ban", label: "Đang bán" },
     { key: "Tam ngung", label: "Tạm ngưng" },
+    { key: "Ngung ban", label: "Ngừng bán" },
     { key: "Tu choi", label: "Bị từ chối" },
   ];
 
@@ -80,6 +81,30 @@ export function VoucherListPage() {
 
     return matchesSearch && matchesStatus && matchesCategory;
   });
+
+  const getPublicationStatusBadge = (v) => {
+    if (v.trang_thai === "Ngung ban") {
+      return { label: "Ngừng bán", color: "bg-rose-50 text-rose-700 border-rose-200", dot: "bg-rose-500" };
+    }
+    if (v.trang_thai === "Tam ngung" || v.trang_thai === "Tam an") {
+      return { label: "Tạm ngưng", color: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400" };
+    }
+    const isApproved = v.trang_thai === "Dang ban" || v.trang_thai === "Da duyet";
+    if (!isApproved) {
+      return { label: "Chưa công bố", color: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400" };
+    }
+
+    const now = new Date();
+    const start = v.tg_bat_dau_ban ? new Date(v.tg_bat_dau_ban) : now;
+    const end = v.tg_ket_thuc_ban ? new Date(v.tg_ket_thuc_ban) : new Date(Date.now() + 86400000 * 30);
+    const sold = Number(v.so_luong_da_ban) || 0;
+    const total = Number(v.so_luong_phat_hanh) || 0;
+
+    if (now > end) return { label: "Hết hạn", color: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400" };
+    if (sold >= total && total > 0) return { label: "Hết hàng", color: "bg-purple-50 text-purple-700 border-purple-200", dot: "bg-purple-500" };
+    if (now >= start) return { label: "Đang bán", color: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" };
+    return { label: "Chờ mở bán", color: "bg-blue-50 text-blue-700 border-blue-200", dot: "bg-blue-500" };
+  };
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "---";
@@ -232,7 +257,15 @@ export function VoucherListPage() {
 
                         {/* Column 3: Publication status */}
                         <td className="py-4 px-4 whitespace-nowrap">
-                          <Badge status={v.trang_thai_cong_bo || v.trang_thai} size="sm" />
+                          {(() => {
+                            const pb = getPublicationStatusBadge(v);
+                            return (
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${pb.color}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${pb.dot}`} />
+                                {pb.label}
+                              </span>
+                            );
+                          })()}
                         </td>
 
                         {/* Column 4: Price */}

@@ -51,7 +51,6 @@ export function VoucherApprovalDetailPage({ voucherId, onNavigate }) {
   const [checklist, setChecklist] = useState({});
   const [approveModal, setApproveModal] = useState(false);
   const [rejectModal, setRejectModal] = useState(false);
-  const [hideAfterApprove, setHideAfterApprove] = useState(false);
 
   const [selectedRejectReason, setSelectedRejectReason] = useState(rejectReasons[0]);
   const [customRejectNote, setCustomRejectNote] = useState("");
@@ -117,6 +116,9 @@ export function VoucherApprovalDetailPage({ voucherId, onNavigate }) {
   };
 
   const getPublicationStatusBadge = (v) => {
+    if (v.trang_thai === "Tam ngung" || v.trang_thai === "Tam an") {
+      return { label: "Tạm ngưng", color: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400" };
+    }
     const isApproved = v.trang_thai === "Dang ban" || v.trang_thai === "Da duyet";
     if (!isApproved) {
       return { label: "Chưa công bố", color: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400" };
@@ -144,9 +146,9 @@ export function VoucherApprovalDetailPage({ voucherId, onNavigate }) {
   const handleApprove = async () => {
     setLoading(true);
     try {
-      await approveVoucherApi(voucher.ma_voucher, hideAfterApprove);
+      await approveVoucherApi(voucher.ma_voucher, false);
       setApproveModal(false);
-      setToastMessage(`Voucher đã được phê duyệt. Trạng thái công bố: ${computePublicationStatus(hideAfterApprove)}`);
+      setToastMessage(`Voucher đã được phê duyệt thành công!`);
       await loadVoucher();
     } catch (e) {
       setToastMessage("Phê duyệt thất bại: " + e.message);
@@ -273,7 +275,7 @@ export function VoucherApprovalDetailPage({ voucherId, onNavigate }) {
                 <p className="text-xs text-slate-400">Mô tả</p>
                 <p className="text-slate-700 mt-0.5">{voucher.mo_ta || "Chưa có mô tả chi tiết."}</p>
               </div>
-                            <div>
+              <div>
                 <p className="text-xs text-slate-400">Chính sách hoàn hủy</p>
                 <p className="text-slate-700 mt-0.5">{voucher.chinh_sach_hoan_huy || "Chưa có chính sách."}</p>
               </div>
@@ -281,7 +283,7 @@ export function VoucherApprovalDetailPage({ voucherId, onNavigate }) {
                 <p className="text-xs text-slate-400">Đối tác phát hành</p>
                 <p className="font-bold text-blue-600 mt-0.5">{voucher.ten_dn || "Doanh nghiệp đối tác"}</p>
               </div>
-              
+
               <div>
                 <p className="text-xs text-slate-400">Điều kiện sử dụng</p>
                 <p className="text-slate-700 mt-0.5">{voucher.dieu_kien_ap_dung || "Áp dụng toàn hệ thống."}</p>
@@ -407,9 +409,8 @@ export function VoucherApprovalDetailPage({ voucherId, onNavigate }) {
               </div>
               <div className="mt-2 bg-slate-200 rounded-full h-1.5 overflow-hidden">
                 <div
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    checkedCount === checklistItems.length ? "bg-emerald-500" : "bg-amber-500"
-                  }`}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${checkedCount === checklistItems.length ? "bg-emerald-500" : "bg-amber-500"
+                    }`}
                   style={{ width: `${(checkedCount / checklistItems.length) * 100}%` }}
                 />
               </div>
@@ -458,21 +459,11 @@ export function VoucherApprovalDetailPage({ voucherId, onNavigate }) {
               </div>
               <div className="flex justify-between items-center pt-1 border-t border-slate-200">
                 <span className="text-slate-400">Trạng thái công bố dự kiến:</span>
-                <span className="text-blue-600 font-bold">{computePublicationStatus(hideAfterApprove)}</span>
+                <span className="text-blue-600 font-bold">{computePublicationStatus(false)}</span>
               </div>
             </div>
 
-            <label className="flex items-center gap-2 text-xs text-slate-700 font-medium cursor-pointer">
-              <input
-                type="checkbox"
-                checked={hideAfterApprove}
-                onChange={(e) => setHideAfterApprove(e.target.checked)}
-                className="rounded text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer"
-              />
-              <span>Tạm ẩn sau khi phê duyệt</span>
-            </label>
-
-            {!hideAfterApprove && computePublicationStatus(false) === "Chờ mở bán" && (
+            {computePublicationStatus(false) === "Chờ mở bán" && (
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-800">
                 <strong>Lưu ý:</strong> Hệ thống sẽ tự động công bố voucher khi đến thời gian bán ({startDate}) nếu vẫn còn đủ điều kiện.
               </div>

@@ -7,7 +7,7 @@ const { loadEnvironment } = require("./config/environment");
 
 const config = loadEnvironment();
 
-// Express Server Entry Point (DOB ngay_sinh and Gender gioi_tinh integrated into profile requests & approvals)
+// Express Server Entry Point (Discontinue Voucher Ngung ban status added with confirmation modal & read-only lock)
 app.listen(config.port, () => {
   console.log(`Backend running on port ${config.port}...`);
 });

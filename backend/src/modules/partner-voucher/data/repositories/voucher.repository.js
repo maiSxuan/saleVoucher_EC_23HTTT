@@ -315,8 +315,8 @@ class VoucherRepository {
     let branchIds = Array.isArray(payload.ma_chi_nhanh)
       ? payload.ma_chi_nhanh
       : payload.ma_chi_nhanh
-      ? [payload.ma_chi_nhanh]
-      : [];
+        ? [payload.ma_chi_nhanh]
+        : [];
 
     if (branchIds.length === 0 && maHs) {
       const { data: partnerBranches } = await supabase
