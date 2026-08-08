@@ -7,7 +7,7 @@ const { loadEnvironment } = require("./config/environment");
 
 const config = loadEnvironment();
 
-// Express Server Entry Point (Voucher Update Query Fixed with Allowed Columns)
+// Express Server Entry Point (DOB ngay_sinh and Gender gioi_tinh integrated into profile requests & approvals)
 app.listen(config.port, () => {
   console.log(`Backend running on port ${config.port}...`);
 });

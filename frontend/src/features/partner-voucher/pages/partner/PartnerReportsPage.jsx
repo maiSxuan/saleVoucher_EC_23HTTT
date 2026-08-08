@@ -21,13 +21,13 @@ export function PartnerReportsPage() {
 
   const getLoggedInPartnerId = () => {
     try {
-      const storedUser = localStorage.getItem("user");
+      const storedUser = localStorage.getItem("user") || localStorage.getItem("ec_auth_user");
       if (storedUser) {
         const u = JSON.parse(storedUser);
         return u.ma_hsdn || u.ma_hs || u.id || u.ma_nguoi_dung;
       }
     } catch (e) {}
-    return "20000000-0000-0000-0000-000000000001";
+    return null;
   };
 
   const fetchReport = async () => {

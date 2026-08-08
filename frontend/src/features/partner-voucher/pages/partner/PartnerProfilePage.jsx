@@ -43,7 +43,11 @@ export function PartnerProfilePage() {
   const loadPartner = async () => {
     setLoading(true);
     const activeUser = getActiveUser();
-    const targetId = activeUser?.ma_hsdn || activeUser?.ma_hs || activeUser?.id || activeUser?.ma_nguoi_dung || "20000000-0000-0000-0000-000000000001";
+    const targetId = activeUser?.ma_hsdn || activeUser?.ma_hs || activeUser?.id || activeUser?.ma_nguoi_dung;
+    if (!targetId) {
+      setLoading(false);
+      return;
+    }
 
     const data = await getPartnerByIdApi(targetId);
     if (data) {
@@ -86,6 +90,8 @@ export function PartnerProfilePage() {
           sdt: formData.sdt,
           email: formData.email,
           cccd: formData.cccd,
+          ngay_sinh: formData.ngay_sinh,
+          gioi_tinh: formData.gioi_tinh,
         },
       });
       setToastMessage("Đã cập nhật lại thông tin đăng ký ban đầu.");
@@ -100,6 +106,8 @@ export function PartnerProfilePage() {
         sdt_nguoi_dai_dien_moi: formData.sdt,
         email_nguoi_dai_dien_moi: formData.email,
         cccd_moi: formData.cccd,
+        ngay_sinh: formData.ngay_sinh,
+        gioi_tinh: formData.gioi_tinh,
         trang_thai: "Cho duyet",
       });
       setToastMessage("Đã gửi Yêu cầu Cập nhật Hồ sơ Doanh nghiệp tới Quản trị viên!");

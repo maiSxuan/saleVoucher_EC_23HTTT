@@ -242,7 +242,7 @@ export async function lockPartnerApi(partnerId, isLocked = true) {
   } catch (e) {
     console.warn("Backend API unavailable, using mockStore fallback:", e.message);
   }
-  return mockStore.lockPartner(partnerId, isLocked);
+  return mockStore.lockUnlockPartner(partnerId, isLocked);
 }
 
 /**

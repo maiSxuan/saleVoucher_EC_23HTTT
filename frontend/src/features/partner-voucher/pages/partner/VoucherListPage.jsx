@@ -112,75 +112,72 @@ export function VoucherListPage() {
           </button>
         </div>
 
-        {/* Filters Bar matching prototype */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4 space-y-3">
-          {/* Status Tabs */}
-          <div className="flex items-center gap-2 border-b border-gray-100 pb-3 overflow-x-auto">
-            {statusTabs.map((tab) => {
-              const count =
-                tab.key === "All"
-                  ? vouchers.length
-                  : vouchers.filter((v) => v.trang_thai === tab.key || v.trang_thai_kiem_duyet === tab.key).length;
-              return (
-                <button
-                  key={tab.key}
-                  onClick={() => setSelectedStatusTab(tab.key)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
-                    selectedStatusTab === tab.key
-                      ? "bg-blue-600 text-white shadow-xs"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                >
-                  {tab.label} ({count})
-                </button>
-              );
-            })}
-          </div>
+        {/* Filters Bar */}
+<div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
+  {/* Status Tabs */}
+  <div className="flex items-center gap-2 overflow-x-auto pb-1">
+    {statusTabs.map((tab) => {
+      const count =
+        tab.key === "All"
+          ? vouchers.length
+          : vouchers.filter((v) => v.trang_thai === tab.key || v.trang_thai_kiem_duyet === tab.key).length;
+      return (
+        <button
+          key={tab.key}
+          onClick={() => setSelectedStatusTab(tab.key)}
+          className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+            selectedStatusTab === tab.key
+              ? "bg-blue-600 text-white shadow-sm"
+              : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+          }`}
+        >
+          {tab.label} <span className={selectedStatusTab === tab.key ? "opacity-80" : "opacity-60"}>({count})</span>
+        </button>
+      );
+    })}
+  </div>
 
-          {/* Search & Category Select Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="relative sm:col-span-2">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Tìm kiếm Voucher theo tên..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+  {/* Search & Category Select Grid */}
+  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-gray-100">
+    <div className="relative sm:col-span-2">
+      <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+      <input
+        type="text"
+        placeholder="Tìm kiếm Voucher theo tên..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="w-full h-11 pl-10 pr-3.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+      />
+    </div>
 
-            <div>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-              >
-                <option value="All">Tất cả danh mục</option>
-                {categories.map((c) => {
-                  const catVal = c.ma_danh_muc || c.id || c.ten_danh_muc;
-                  return (
-                    <option key={catVal} value={catVal}>
-                      {formatCategoryName(c.ten_danh_muc)}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
-          </div>
+    <select
+      value={selectedCategory}
+      onChange={(e) => setSelectedCategory(e.target.value)}
+      className="w-full h-11 border border-gray-200 rounded-xl px-3.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+    >
+      <option value="All">Tất cả danh mục</option>
+      {categories.map((c) => {
+        const catVal = c.ma_danh_muc || c.id || c.ten_danh_muc;
+        return (
+          <option key={catVal} value={catVal}>
+            {formatCategoryName(c.ten_danh_muc)}
+          </option>
+        );
+      })}
+    </select>
+  </div>
 
-          {/* Filter Footer */}
-          <div className="flex items-center justify-between pt-1">
-            <p className="text-sm text-gray-500">{filteredVouchers.length} voucher</p>
-            <button
-              onClick={handleResetFilters}
-              className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1 cursor-pointer"
-            >
-              <X size={14} /> Đặt lại
-            </button>
-          </div>
-        </div>
-
+  {/* Filter Footer */}
+  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+    <p className="text-sm text-gray-500">{filteredVouchers.length} voucher</p>
+    <button
+      onClick={handleResetFilters}
+      className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1 cursor-pointer"
+    >
+      <X size={14} /> Đặt lại
+    </button>
+  </div>
+</div>
         {/* Voucher Table */}
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-xs">
           {loading ? (

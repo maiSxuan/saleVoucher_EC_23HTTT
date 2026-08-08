@@ -60,7 +60,11 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
   const loadPartnerData = async () => {
     setLoading(true);
     try {
-      const pId = partnerId || id || "hs-001";
+      const pId = partnerId || id;
+      if (!pId) {
+        setLoading(false);
+        return;
+      }
       const [pData, bData, rData, profReq] = await Promise.all([
         getPartnerByIdApi(pId),
         getBranchesByPartnerApi(pId),
@@ -369,10 +373,28 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
                     )}
 
                     {pendingProfileReq.sdt_nguoi_dai_dien_moi && (
-                      <div className="flex justify-between items-center py-1">
+                      <div className="flex justify-between items-center py-1 border-b border-gray-100">
                         <span className="text-gray-500">SĐT người đại diện:</span>
                         <span className="font-medium text-slate-900">
                           {partner.nguoi_dai_dien?.sdt || "Chưa có"} <span className="text-amber-600">➔</span> <span className="text-emerald-700">{pendingProfileReq.sdt_nguoi_dai_dien_moi}</span>
+                        </span>
+                      </div>
+                    )}
+
+                    {(pendingProfileReq.ngay_sinh || pendingProfileReq.ngay_sinh_moi) && (
+                      <div className="flex justify-between items-center py-1 border-b border-gray-100">
+                        <span className="text-gray-500">Ngày sinh đại diện:</span>
+                        <span className="font-medium text-slate-900">
+                          {partner.nguoi_dai_dien?.ngay_sinh ? partner.nguoi_dai_dien.ngay_sinh.slice(0, 10) : "Chưa có"} <span className="text-amber-600">➔</span> <span className="text-emerald-700">{(pendingProfileReq.ngay_sinh || pendingProfileReq.ngay_sinh_moi).slice(0, 10)}</span>
+                        </span>
+                      </div>
+                    )}
+
+                    {(pendingProfileReq.gioi_tinh || pendingProfileReq.gioi_tinh_moi) && (
+                      <div className="flex justify-between items-center py-1">
+                        <span className="text-gray-500">Giới tính đại diện:</span>
+                        <span className="font-medium text-slate-900">
+                          {partner.nguoi_dai_dien?.gioi_tinh || "Nam"} <span className="text-amber-600">➔</span> <span className="text-emerald-700">{pendingProfileReq.gioi_tinh || pendingProfileReq.gioi_tinh_moi}</span>
                         </span>
                       </div>
                     )}

@@ -391,7 +391,23 @@ class MockDataStore {
 
   // Partners
   getPartners() {
-    return this.getData().partners || [];
+    const data = this.getData();
+    const partners = data.partners || [];
+    const profileRequests = data.profileRequests || [];
+    const branchRequests = data.branchRequests || [];
+
+    return partners.map((p) => {
+      let count = 0;
+      if (p.trang_thai === "Cho duyet") count += 1;
+
+      const pendingProf = profileRequests.filter((r) => r.ma_hs === p.ma_hs && r.trang_thai === "Cho duyet").length;
+      const pendingBranch = branchRequests.filter((r) => r.ma_hs === p.ma_hs && r.trang_thai === "Cho duyet").length;
+
+      return {
+        ...p,
+        pending_branch_requests: count + pendingProf + pendingBranch,
+      };
+    });
   }
 
   getPartnerById(id) {
@@ -826,6 +842,8 @@ getStaffById(id) {
       sdt_nguoi_dai_dien_moi: payload.sdt_nguoi_dai_dien_moi || null,
       email_nguoi_dai_dien_moi: payload.email_nguoi_dai_dien_moi || null,
       cccd_moi: payload.cccd_moi || null,
+      ngay_sinh: payload.ngay_sinh || payload.ngay_sinh_moi || null,
+      gioi_tinh: payload.gioi_tinh || payload.gioi_tinh_moi || null,
       trang_thai: "Cho duyet",
       ngay_yeu_cau: new Date().toISOString(),
     };
@@ -852,7 +870,9 @@ getStaffById(id) {
     req.nguoi_duyet = adminId;
 
     // Apply changes to partner record
-    const partner = data.partners.find((p) => p.ma_hs === req.ma_hs);
+    const partner = data.partners.find(
+      (p) => p.ma_hs === req.ma_hs || p.id === req.ma_hs || p.id_nguoi_dai_dien === req.ma_hs
+    );
     if (partner) {
       if (req.ten_dn_moi) partner.ten_dn = req.ten_dn_moi;
       if (req.ma_so_thue_moi) partner.ma_so_thue = req.ma_so_thue_moi;
@@ -864,6 +884,8 @@ getStaffById(id) {
       if (req.sdt_nguoi_dai_dien_moi) partner.nguoi_dai_dien.sdt = req.sdt_nguoi_dai_dien_moi;
       if (req.email_nguoi_dai_dien_moi) partner.nguoi_dai_dien.email = req.email_nguoi_dai_dien_moi;
       if (req.cccd_moi) partner.nguoi_dai_dien.cccd = req.cccd_moi;
+      if (req.ngay_sinh || req.ngay_sinh_moi) partner.nguoi_dai_dien.ngay_sinh = req.ngay_sinh || req.ngay_sinh_moi;
+      if (req.gioi_tinh || req.gioi_tinh_moi) partner.nguoi_dai_dien.gioi_tinh = req.gioi_tinh || req.gioi_tinh_moi;
     }
 
     this.saveData(data);

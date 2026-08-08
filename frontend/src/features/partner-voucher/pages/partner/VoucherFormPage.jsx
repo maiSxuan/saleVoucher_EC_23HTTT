@@ -41,7 +41,7 @@ export function VoucherFormPage() {
     ma_voucher: "",
     ten_voucher: "",
     mo_ta: "",
-    ma_danh_muc: "40000000-0000-0000-0000-000000000001",
+    ma_danh_muc: "",
     gia_goc: "",
     gia_ban: "",
     so_luong_phat_hanh: "",
@@ -55,13 +55,13 @@ export function VoucherFormPage() {
 
   const getLoggedInPartnerId = () => {
     try {
-      const storedUser = localStorage.getItem("user");
+      const storedUser = localStorage.getItem("user") || localStorage.getItem("ec_auth_user");
       if (storedUser) {
         const u = JSON.parse(storedUser);
         return u.ma_hsdn || u.ma_hs || u.id || u.ma_nguoi_dung;
       }
     } catch (e) {}
-    return "20000000-0000-0000-0000-000000000001";
+    return null;
   };
 
   useEffect(() => {
@@ -70,6 +70,9 @@ export function VoucherFormPage() {
       const cates = await getCategoriesApi();
       if (cates && cates.length > 0) {
         setCategoriesList(cates);
+        if (!formData.ma_danh_muc) {
+          setFormData((prev) => ({ ...prev, ma_danh_muc: cates[0]?.ma_danh_muc || "" }));
+        }
       }
 
       // 2. Fetch partner branches
@@ -94,7 +97,7 @@ export function VoucherFormPage() {
             ma_voucher: existing.ma_voucher,
             ten_voucher: existing.ten_voucher || "",
             mo_ta: existing.mo_ta || "",
-            ma_danh_muc: existing.ma_danh_muc || "40000000-0000-0000-0000-000000000001",
+            ma_danh_muc: existing.ma_danh_muc || (cates && cates[0]?.ma_danh_muc) || "",
             gia_goc: existing.gia_goc || "",
             gia_ban: existing.gia_ban || "",
             so_luong_phat_hanh: existing.so_luong_phat_hanh || "",
@@ -232,7 +235,7 @@ export function VoucherFormPage() {
     setLoading(false);
     setToastMessage(
       isTamNgung
-        ? "Đã cập nhật thông tin Voucher thành công (Trạng thái giữ nguyên Tạm ngưng)!"
+        ? "Đã cập nhật thông tin Voucher thành công!"
         : isRejected
         ? "Đã khắc phục thông tin & Gửi lại yêu cầu duyệt thành công!"
         : isSubmitNow

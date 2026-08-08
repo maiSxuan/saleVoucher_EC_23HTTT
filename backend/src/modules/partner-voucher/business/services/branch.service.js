@@ -1,5 +1,6 @@
 const branchRepository = require("../../data/repositories/branch.repository");
 const branchRequestRepository = require("../../data/repositories/branch-request.repository");
+const auditLogService = require("../../../core-access/business/services/audit-log.service");
 
 class BranchService {
   async getBranchesByPartner(partnerId) {
@@ -11,7 +12,27 @@ class BranchService {
   }
 
   async createBranchRequest(payload) {
-    return await branchRequestRepository.create(payload);
+    const createdReq = await branchRequestRepository.create(payload);
+
+    try {
+      await auditLogService.log({
+        actorRole: "PARTNER",
+        action: payload.loai_yeu_cau === "Xoa" ? "REQUEST_DELETE_BRANCH" : "REQUEST_UPDATE_BRANCH",
+        targetType: "CHINHANH",
+        targetId: payload.ma_chi_nhanh || payload.ma_hs,
+        after: {
+          loai_yeu_cau: payload.loai_yeu_cau,
+          ten_chi_nhanh_moi: payload.ten_chi_nhanh_moi || payload.ten_chi_nhanh,
+          dia_chi_moi: payload.dia_chi_moi || payload.dia_chi,
+        },
+        result: "Thanh cong",
+        reason: "Đối tác gửi yêu cầu cập nhật/xóa chi nhánh",
+      });
+    } catch (e) {
+      console.warn("[BranchService] Log createBranchRequest failed:", e.message);
+    }
+
+    return createdReq;
   }
 
   async approveBranchRequest(requestId) {
@@ -52,7 +73,23 @@ class BranchService {
       }
     }
 
-    return await branchRequestRepository.updateStatus(requestId, "Da duyet");
+    const res = await branchRequestRepository.updateStatus(requestId, "Da duyet");
+
+    try {
+      await auditLogService.log({
+        actorRole: "ADMIN",
+        action: "APPROVE_BRANCH_REQUEST",
+        targetType: "CHINHANH",
+        targetId: req.ma_chi_nhanh,
+        after: { trang_thai: "Da duyet", loai_yeu_cau: req.loai_yeu_cau },
+        result: "Thanh cong",
+        reason: "Admin phê duyệt yêu cầu thay đổi thông tin chi nhánh",
+      });
+    } catch (e) {
+      console.warn("[BranchService] Log APPROVE_BRANCH_REQUEST failed:", e.message);
+    }
+
+    return res;
   }
 
   async rejectBranchRequest(requestId, adminNote = "") {
@@ -67,7 +104,23 @@ class BranchService {
       });
     }
 
-    return await branchRequestRepository.updateStatus(requestId, "Tu choi", adminNote);
+    const res = await branchRequestRepository.updateStatus(requestId, "Tu choi", adminNote);
+
+    try {
+      await auditLogService.log({
+        actorRole: "ADMIN",
+        action: "REJECT_BRANCH_REQUEST",
+        targetType: "CHINHANH",
+        targetId: req?.ma_chi_nhanh || requestId,
+        after: { trang_thai: "Tu choi", ly_do_tu_choi: adminNote },
+        result: "Thanh cong",
+        reason: adminNote || "Admin từ chối yêu cầu chi nhánh",
+      });
+    } catch (e) {
+      console.warn("[BranchService] Log REJECT_BRANCH_REQUEST failed:", e.message);
+    }
+
+    return res;
   }
 }
 

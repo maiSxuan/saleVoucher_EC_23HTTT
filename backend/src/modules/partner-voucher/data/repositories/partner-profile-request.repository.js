@@ -89,9 +89,10 @@ class PartnerProfileRequestRepository {
       sdt_nguoi_dai_dien_moi: payload.sdt_nguoi_dai_dien_moi || null,
       email_nguoi_dai_dien_moi: payload.email_nguoi_dai_dien_moi || null,
       cccd_moi: payload.cccd_moi || null,
+      ngay_sinh: payload.ngay_sinh || payload.ngay_sinh_moi || null,
+      gioi_tinh: payload.gioi_tinh || payload.gioi_tinh_moi || null,
       trang_thai: payload.trang_thai || "Cho duyet",
       ly_do_tu_choi: null,
-      nguoi_yeu_cau: payload.nguoi_yeu_cau || null,
       ngay_yeu_cau: new Date().toISOString(),
     };
 

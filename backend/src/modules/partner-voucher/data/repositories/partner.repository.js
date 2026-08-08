@@ -28,20 +28,30 @@ class PartnerRepository {
       const data = hosodnRes.data || [];
       const branchesData = chinhanhRes.data || [];
 
-      // Fetch pending branch change requests from store (Add, Edit, Delete)
+      // Fetch pending branch change requests and profile update requests
       const branchRequestRepo = require("./branch-request.repository");
-      const pendingStoreReqsMap = await branchRequestRepo.getAllPendingRequestsMap();
+      const partnerProfileRequestRepo = require("./partner-profile-request.repository");
 
-      // Group branches and count pending branch requests
+      const [pendingBranchReqsMap, pendingProfileReqsMap] = await Promise.all([
+        branchRequestRepo.getAllPendingRequestsMap(),
+        partnerProfileRequestRepo.getAllPendingRequestsMap(),
+      ]);
+
+      // Group branches and count pending requests (Branch + Profile)
       const branchesByPartner = new Map();
       const pendingReqsByPartner = new Map();
 
-      // 1. Fill count from store
-      for (const [hsId, count] of pendingStoreReqsMap.entries()) {
-        pendingReqsByPartner.set(hsId, count);
+      // 1. Fill count from branch store requests
+      for (const [hsId, count] of pendingBranchReqsMap.entries()) {
+        pendingReqsByPartner.set(hsId, (pendingReqsByPartner.get(hsId) || 0) + count);
       }
 
-      // 2. Add count from chinhanh table status if any
+      // 2. Fill count from profile update requests (SUC-PAR-04)
+      for (const [hsId, count] of pendingProfileReqsMap.entries()) {
+        pendingReqsByPartner.set(hsId, (pendingReqsByPartner.get(hsId) || 0) + count);
+      }
+
+      // 3. Add count from chinhanh table status if any
       for (const b of branchesData) {
         if (b.ma_hs) {
           if (!branchesByPartner.has(b.ma_hs)) branchesByPartner.set(b.ma_hs, []);
@@ -54,7 +64,7 @@ class PartnerRepository {
             b.trang_thai === "Cho duyet cap nhat" ||
             b.trang_thai === "Cho duyet huy"
           ) {
-            if (!pendingStoreReqsMap.has(b.ma_hs)) {
+            if (!pendingBranchReqsMap.has(b.ma_hs)) {
               pendingReqsByPartner.set(b.ma_hs, (pendingReqsByPartner.get(b.ma_hs) || 0) + 1);
             }
           }
@@ -417,7 +427,10 @@ class PartnerRepository {
         if (repData.email !== undefined) nguoidungUpdate.email = repData.email;
         if (repData.cccd !== undefined) nguoidungUpdate.cccd = repData.cccd || null;
         if (repData.ngay_sinh !== undefined) nguoidungUpdate.ngay_sinh = repData.ngay_sinh || null;
-        if (repData.gioi_tinh !== undefined) nguoidungUpdate.gioi_tinh = repData.gioi_tinh || "Khac";
+        if (repData.gioi_tinh !== undefined) {
+          const rawG = String(repData.gioi_tinh || "").trim();
+          nguoidungUpdate.gioi_tinh = (rawG === "Nữ" || rawG === "Nu" || rawG === "NU") ? "Nu" : (rawG === "Nam" || rawG === "NAM" ? "Nam" : "Khac");
+        }
 
         if (Object.keys(nguoidungUpdate).length > 0) {
           const { error: repError } = await supabase
