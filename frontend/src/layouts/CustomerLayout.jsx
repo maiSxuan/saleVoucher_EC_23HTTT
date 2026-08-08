@@ -112,29 +112,33 @@ export default function CustomerLayout() {
                   </span>
                   <ChevronDown size={11} />
                 </button>
-                <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-100 py-1 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50">
-                  <MenuLink
-                    icon={User}
-                    label="Hồ sơ"
-                    onClick={() => navigate("/customer/profile")}
-                  />
-                  <MenuLink
-                    icon={Package}
-                    label="Đơn hàng"
-                    onClick={() => navigate("/customer/orders")}
-                  />
-                  <MenuLink
-                    icon={Tag}
-                    label="Voucher của tôi"
-                    onClick={() => navigate("/customer/vouchers/my")}
-                  />
-                  <hr className="my-1 border-gray-100" />
-                  <MenuLink
-                    icon={LogOut}
-                    label="Đăng xuất"
-                    onClick={handleLogout}
-                    danger
-                  />
+
+                {/* ⚡ BỌC THÊM DIV NÀY: Dùng pt-1 để nối liền khoảng hở, không bao giờ bị đứt hover */}
+                <div className="absolute right-0 top-full pt-1 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50">
+                  <div className="w-40 bg-white rounded-lg shadow-lg border border-gray-100 py-1">
+                    <MenuLink
+                      icon={User}
+                      label="Hồ sơ"
+                      onClick={() => navigate("/customer/profile")}
+                    />
+                    <MenuLink
+                      icon={Package}
+                      label="Đơn hàng"
+                      onClick={() => navigate("/customer/orders")}
+                    />
+                    <MenuLink
+                      icon={Tag}
+                      label="Voucher của tôi"
+                      onClick={() => navigate("/customer/vouchers/my")}
+                    />
+                    <hr className="my-1 border-gray-100" />
+                    <MenuLink
+                      icon={LogOut}
+                      label="Đăng xuất"
+                      onClick={handleLogout}
+                      danger
+                    />
+                  </div>
                 </div>
               </div>
             ) : (
