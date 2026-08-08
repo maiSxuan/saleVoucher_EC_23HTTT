@@ -48,9 +48,57 @@ function loadAuthGmail() {
   };
 }
 
+// Cấu hình JWT (Access Token + Refresh Token)
+function loadJwt() {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error("JWT_SECRET chưa được cấu hình trong .env");
+
+  return {
+    secret,
+    refreshSecret:
+      process.env.JWT_REFRESH_SECRET || secret + "_refresh",
+    accessTokenExpiry: process.env.ACCESS_TOKEN_EXPIRY || "15m",
+    refreshTokenExpiry: process.env.REFRESH_TOKEN_EXPIRY || "7d",
+  };
+}
+
+// Cấu hình cổng thanh toán VNPay
+function loadVnpay() {
+  return {
+    tmnCode: process.env.VNP_TMN_CODE || "9FN7EYEX",
+    hashSecret: process.env.VNP_HASH_SECRET || "G57UKVRM4ANJCAAYTAOOBAW59I1IP4C2",
+    url: process.env.VNP_URL || "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html",
+    returnUrl: process.env.VNP_RETURN_URL || "http://localhost:5173/customer/checkout/return",
+  };
+}
+
+// Cấu hình cổng thanh toán PayPal
+function loadPaypal() {
+  return {
+    clientId: process.env.PAYPAL_CLIENT_ID || "Ae7buYUBnSKlVc8AoB60bGATOCUSNaakS4opi_mfk1d513cbiEh2MzSIV4SY17PXMbx1r8TTj5x8Z58k",
+    clientSecret: process.env.PAYPAL_CLIENT_SECRET || "ENRPftImPnKXKD7nafSAsm8oovI5kGQSfObuEOCw8mGwol5lpX2AP8tQ-vkQThJOyILDv4hUUhkCgqWT",
+    apiBase: process.env.PAYPAL_API_BASE || "https://api-m.sandbox.paypal.com",
+    returnUrl: process.env.PAYPAL_RETURN_URL || "http://localhost:5173/customer/checkout/return",
+    cancelUrl: process.env.PAYPAL_CANCEL_URL || "http://localhost:5173/customer/cart",
+  };
+}
+
+// Cấu hình tổng hợp các cổng thanh toán
+function loadPayment() {
+  return {
+    vnpay: loadVnpay(),
+    paypal: loadPaypal(),
+  };
+}
+
 module.exports = {
   loadEnvironment,
   loadDatabase,
   loadGmail,
   loadAuthGmail,
+  loadJwt,
+  loadVnpay,
+  loadPaypal,
+  loadPayment,
 };
+

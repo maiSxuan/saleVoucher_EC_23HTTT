@@ -11,6 +11,9 @@ const partnerRoutes = require("../modules/partner-voucher/presentation/routes/pa
 const branchRoutes = require("../modules/partner-voucher/presentation/routes/branch.routes");
 const voucherRoutes = require("../modules/partner-voucher/presentation/routes/voucher.routes");
 const staffRoutes = require("../modules/partner-voucher/presentation/routes/staff.routes");
+const partnerReportRoutes = require("../modules/partner-voucher/presentation/routes/partner-report.routes");
+const adminPartnerRoutes = require("../modules/partner-voucher/presentation/routes/admin-partner.routes");
+const adminVoucherRoutes = require("../modules/partner-voucher/presentation/routes/admin-voucher.routes");
 
 // Register content-feedback, core-access, customer-commerce modules
 contentFeedbackModule.registerModule(router);
@@ -22,5 +25,9 @@ router.use("/partners", partnerRoutes);
 router.use("/branches", branchRoutes);
 router.use("/vouchers", voucherRoutes);
 router.use("/staffs", staffRoutes);
+router.use("/reports", partnerReportRoutes);
+router.use("/admin", adminPartnerRoutes);
+router.use("/admin", adminVoucherRoutes);
 
 module.exports = router;
+

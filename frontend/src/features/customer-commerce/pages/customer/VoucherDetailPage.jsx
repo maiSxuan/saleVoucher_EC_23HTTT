@@ -8,8 +8,8 @@ import {
   CheckCircle,
   AlertCircle,
 } from "lucide-react";
-import { fetchVoucherDetail } from "../../api/catalogApi";
-import { addToCart } from "../../api/cartApi";
+import { fetchVoucherDetail } from "../../../../shared/api/catalogApi";
+import { addToCart } from "../../../../shared/api/cartApi";
 import { toast } from "sonner";
 
 const unavailableMsg = {
@@ -30,6 +30,7 @@ export default function VoucherDetailPage() {
   const [qty, setQty] = useState(1);
   const [addState, setAddState] = useState("idle"); // idle | checking | added | unavailable
   const [addErrorMsg, setAddErrorMsg] = useState("");
+  const [buyingNow, setBuyingNow] = useState(false);
 
   // Bước 2-3: hệ thống tiếp nhận yêu cầu và truy xuất thông tin chi tiết
   useEffect(() => {
@@ -83,18 +84,36 @@ export default function VoucherDetailPage() {
     setAddErrorMsg("");
     try {
       await addToCart(voucher.id, qty);
-      setAddState("added"); // Bước 8: sẵn sàng chuyển sang UC-CUS-09
+      setAddState("added");
       toast.success("Đã thêm voucher vào giỏ hàng!");
     } catch (err) {
-      // A6/E2: voucher không còn khả dụng hoặc lỗi khi kiểm tra
       setAddState("unavailable");
       setAddErrorMsg(err.message);
       toast.error("Lỗi không thể thêm voucher vào giỏ hàng.");
     }
   };
 
-  // const handleBuyNow = async () => {};
-
+  const handleBuyNow = async () => {
+    if (!localStorage.getItem("accessToken")) {
+      navigate("/login");
+      return;
+    }
+    if (!isAvailable) {
+      setAddState("unavailable");
+      return;
+    }
+    setBuyingNow(true);
+    try {
+      await addToCart(voucher.id, qty); // đảm bảo item có trong giỏ trước khi qua checkout
+      navigate("/customer/checkout", {
+        state: { selectedVoucherIds: [voucher.id] },
+      });
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setBuyingNow(false);
+    }
+  };
   return (
     <div>
       <button
@@ -275,8 +294,8 @@ export default function VoucherDetailPage() {
 
                   {/* Nút 2: Mua ngay - Style Nổi bật (Call to Action) */}
                   <button
-                    //   onClick={handleBuyNow}
-                    //   disabled={addState === "checking"}
+                    onClick={handleBuyNow}
+                    disabled={buyingNow || addState === "checking"}
                     className="flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white py-2.5 px-3 rounded-xl font-bold text-sm shadow-md hover:shadow-lg active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   >
                     <span>MUA NGAY</span>

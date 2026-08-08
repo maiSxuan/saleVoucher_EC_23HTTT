@@ -42,6 +42,30 @@ class CustomerController {
       res.status(e.status || 400).json({ success: false, message: e.message });
     }
   }
+
+  async updateProfile(req, res, next) {
+    try {
+      const result = await this.customerService.updateProfile(
+        req.user.id,
+        req.body,
+      );
+      res.json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async changePassword(req, res, next) {
+    try {
+      const result = await this.customerService.changePassword(
+        req.user.id,
+        req.body,
+      );
+      res.json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = CustomerController;

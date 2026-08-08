@@ -85,14 +85,14 @@ src/modules/core-access/
 
 Mỗi tầng chỉ chịu một nhóm trách nhiệm:
 
-| Tầng | Trách nhiệm chính | Không nên làm |
-|---|---|---|
-| Route | Khai báo URL, HTTP method và middleware | Không viết business rule |
-| Middleware | Kiểm tra điều kiện chung trước controller | Không truy vấn nghiệp vụ phức tạp |
-| Controller | Nhận request, gọi service, trả response | Không trực tiếp truy vấn database |
-| Service | Xử lý quy tắc nghiệp vụ | Không phụ thuộc chi tiết HTTP |
-| Repository | Đọc và ghi database | Không quyết định quyền hoặc nghiệp vụ |
-| Model/DTO | Mô tả cấu trúc dữ liệu | Không điều khiển luồng xử lý |
+| Tầng       | Trách nhiệm chính                         | Không nên làm                         |
+| ---------- | ----------------------------------------- | ------------------------------------- |
+| Route      | Khai báo URL, HTTP method và middleware   | Không viết business rule              |
+| Middleware | Kiểm tra điều kiện chung trước controller | Không truy vấn nghiệp vụ phức tạp     |
+| Controller | Nhận request, gọi service, trả response   | Không trực tiếp truy vấn database     |
+| Service    | Xử lý quy tắc nghiệp vụ                   | Không phụ thuộc chi tiết HTTP         |
+| Repository | Đọc và ghi database                       | Không quyết định quyền hoặc nghiệp vụ |
+| Model/DTO  | Mô tả cấu trúc dữ liệu                    | Không điều khiển luồng xử lý          |
 
 Cách chia này giúp:
 
@@ -189,14 +189,14 @@ File này khai báo:
 
 ### Các dependency chính
 
-| Package | Mục đích |
-|---|---|
-| `express` | Xây dựng HTTP API |
-| `@supabase/supabase-js` | Kết nối Supabase/PostgreSQL |
-| `bcryptjs` | So sánh mật khẩu với password hash |
-| `jsonwebtoken` | Tạo và xác minh JWT |
-| `cors` | Cho phép frontend khác origin gọi backend |
-| `dotenv` | Đọc biến môi trường từ `.env` |
+| Package                 | Mục đích                                  |
+| ----------------------- | ----------------------------------------- |
+| `express`               | Xây dựng HTTP API                         |
+| `@supabase/supabase-js` | Kết nối Supabase/PostgreSQL               |
+| `bcryptjs`              | So sánh mật khẩu với password hash        |
+| `jsonwebtoken`          | Tạo và xác minh JWT                       |
+| `cors`                  | Cho phép frontend khác origin gọi backend |
+| `dotenv`                | Đọc biến môi trường từ `.env`             |
 
 ### Luồng chạy
 
@@ -337,12 +337,12 @@ Nó thực hiện hai nhiệm vụ:
 
 ```js
 function registerModule(app) {
-  app.use('/auth', authRoutes);
-  app.use('/', auditLogRoutes);
-  app.use('/', dashboardRoutes);
-  app.use('/', userRoutes);
-  app.use('/', issuedVoucherRoutes);
-  app.use('/', redemptionRoutes);
+  app.use("/auth", authRoutes);
+  app.use("/", auditLogRoutes);
+  app.use("/", dashboardRoutes);
+  app.use("/", userRoutes);
+  app.use("/", issuedVoucherRoutes);
+  app.use("/", redemptionRoutes);
 }
 ```
 
@@ -351,7 +351,7 @@ function registerModule(app) {
 Trong `core-access/index.js`:
 
 ```js
-app.use('/auth', authRoutes);
+app.use("/auth", authRoutes);
 ```
 
 Trong `auth.routes.js`:
@@ -369,7 +369,7 @@ POST /auth/login
 Với audit log:
 
 ```js
-app.use('/', auditLogRoutes);
+app.use("/", auditLogRoutes);
 ```
 
 và:
@@ -463,7 +463,7 @@ router.post("/login", controller.login.bind(controller));
 Đây là dạng dependency injection đơn giản:
 
 ```js
-new AuthController(authService)
+new AuthController(authService);
 ```
 
 Controller không tự tạo service ở bên trong. Điều này giúp:
@@ -477,7 +477,7 @@ Controller không tự tạo service ở bên trong. Điều này giúp:
 Khi truyền method như callback:
 
 ```js
-router.post('/login', controller.login);
+router.post("/login", controller.login);
 ```
 
 JavaScript có thể làm mất context `this`. Khi đó `this.authService` có thể là `undefined`.
@@ -485,7 +485,7 @@ JavaScript có thể làm mất context `this`. Khi đó `this.authService` có 
 Dùng:
 
 ```js
-controller.login.bind(controller)
+controller.login.bind(controller);
 ```
 
 đảm bảo bên trong `login()`, `this` vẫn là instance của `AuthController`.
@@ -524,13 +524,13 @@ async login(req, res, next) {
 Các lớp lỗi dùng thuộc tính:
 
 ```js
-error.statusCode
+error.statusCode;
 ```
 
 nhưng controller lại kiểm tra:
 
 ```js
-error.status
+error.status;
 ```
 
 Do đó:
@@ -599,7 +599,11 @@ Có hai lựa chọn hợp lệ:
 #### Cách 1: Validator middleware ở route
 
 ```js
-router.post('/login', validateLoginMiddleware, controller.login.bind(controller));
+router.post(
+  "/login",
+  validateLoginMiddleware,
+  controller.login.bind(controller),
+);
 ```
 
 #### Cách 2: Controller gọi validator
@@ -614,7 +618,7 @@ Không nên vừa có validator riêng nhưng lại để file không được d
 Validator cũng nên throw `ValidationError`, không nên throw `Error` thường:
 
 ```js
-throw new ValidationError('Email và mật khẩu là bắt buộc');
+throw new ValidationError("Email và mật khẩu là bắt buộc");
 ```
 
 ---
@@ -677,7 +681,7 @@ const result = await this.authService.login(payload);
 
 ```js
 if (!email || !password) {
-  throw new AppError('Email và mật khẩu là bắt buộc', 400, 'VALIDATION_ERROR');
+  throw new AppError("Email và mật khẩu là bắt buộc", 400, "VALIDATION_ERROR");
 }
 ```
 
@@ -686,7 +690,7 @@ Mục đích là dừng sớm nếu dữ liệu đầu vào không đủ.
 Nên dùng trực tiếp `ValidationError` để code rõ nghĩa hơn:
 
 ```js
-throw new ValidationError('Email và mật khẩu là bắt buộc');
+throw new ValidationError("Email và mật khẩu là bắt buộc");
 ```
 
 ### Bước 2: Tìm tài khoản
@@ -741,7 +745,10 @@ Tài khoản tồn tại nhưng Tạm khóa không được phép đăng nhập.
 ### Bước 5: Kiểm tra mật khẩu
 
 ```js
-if (account.mat_khau.startsWith('$2a$') || account.mat_khau.startsWith('$2b$')) {
+if (
+  account.mat_khau.startsWith("$2a$") ||
+  account.mat_khau.startsWith("$2b$")
+) {
   isMatch = await bcrypt.compare(password, account.mat_khau);
 } else {
   isMatch = password === account.mat_khau;
@@ -762,7 +769,7 @@ Nên bảo đảm tất cả tài khoản đều dùng bcrypt và loại bỏ fa
 
 ```js
 const dbVaiTro = account.nguoidung.vai_tro;
-const mappedRole = DB_TO_JWT[dbVaiTro] || 'CUSTOMER';
+const mappedRole = DB_TO_JWT[dbVaiTro] || "CUSTOMER";
 ```
 
 Database dùng tên vai trò theo nghiệp vụ tiếng Việt, còn JWT dùng role ngắn gọn.
@@ -785,7 +792,7 @@ Code an toàn hơn:
 const mappedRole = DB_TO_JWT[dbVaiTro];
 
 if (!mappedRole) {
-  throw new ForbiddenError('Vai trò tài khoản không hợp lệ');
+  throw new ForbiddenError("Vai trò tài khoản không hợp lệ");
 }
 ```
 
@@ -807,20 +814,20 @@ const userPayload = {
 
 JWT lưu các thông tin cần cho các request sau:
 
-| Field | Mục đích |
-|---|---|
-| `id` | ID người dùng nghiệp vụ |
-| `accountId` | ID tài khoản đăng nhập |
-| `role` | Role chuẩn dùng cho middleware |
-| `email` | Thông tin nhận diện |
-| `name` | Hiển thị tên người dùng |
-| `vai_tro_he_thong` | Role gốc trong database |
-| `ma_chi_nhanh` | Giới hạn dữ liệu theo chi nhánh nếu có |
+| Field              | Mục đích                               |
+| ------------------ | -------------------------------------- |
+| `id`               | ID người dùng nghiệp vụ                |
+| `accountId`        | ID tài khoản đăng nhập                 |
+| `role`             | Role chuẩn dùng cho middleware         |
+| `email`            | Thông tin nhận diện                    |
+| `name`             | Hiển thị tên người dùng                |
+| `vai_tro_he_thong` | Role gốc trong database                |
+| `ma_chi_nhanh`     | Giới hạn dữ liệu theo chi nhánh nếu có |
 
 ### Bước 8: Ký JWT
 
 ```js
-const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: '1d' });
+const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: "1d" });
 ```
 
 JWT có thời hạn một ngày.
@@ -836,14 +843,14 @@ Authorization: Bearer <token>
 Code hiện tại có fallback:
 
 ```js
-const JWT_SECRET = process.env.JWT_SECRET || 'saleVoucher_EC';
+const JWT_SECRET = process.env.JWT_SECRET;
 ```
 
 Không nên dùng secret mặc định trong production. Nếu `.env` thiếu, server nên dừng:
 
 ```js
 if (!process.env.JWT_SECRET) {
-  throw new Error('JWT_SECRET is required');
+  throw new Error("JWT_SECRET is required");
 }
 ```
 
@@ -872,14 +879,16 @@ Service trả dữ liệu thuần, không gọi `res.json()`. Đây là đúng t
 
 ```js
 const { data, error } = await supabase
-  .from('taikhoan')
-  .select(`
+  .from("taikhoan")
+  .select(
+    `
     *,
     nguoidung:ma_nguoi_dung (
       ma_nguoi_dung, ho_ten, email, sdt, vai_tro, trang_thai, ma_chi_nhanh
     )
-  `)
-  .eq('thong_tin_dang_nhap', loginInfo)
+  `,
+  )
+  .eq("thong_tin_dang_nhap", loginInfo)
   .single();
 ```
 
@@ -939,11 +948,11 @@ Là giá trị khớp với dữ liệu và CHECK constraint trong database.
 
 ```js
 const DB_ROLES = {
-  CUSTOMER: 'Khach hang',
-  PARTNER_OWNER: 'Nguoi dai dien',
-  PARTNER_STAFF_SALES: 'Nhan vien ban hang',
-  PARTNER_STAFF_VOUCHER: 'Nhan vien quan ly voucher',
-  ADMIN: 'Admin',
+  CUSTOMER: "Khach hang",
+  PARTNER_OWNER: "Nguoi dai dien",
+  PARTNER_STAFF_SALES: "Nhan vien ban hang",
+  PARTNER_STAFF_VOUCHER: "Nhan vien quan ly voucher",
+  ADMIN: "Admin",
 };
 ```
 
@@ -953,10 +962,10 @@ Là giá trị kỹ thuật ngắn gọn dùng trong token và middleware.
 
 ```js
 const JWT_ROLES = {
-  ADMIN: 'ADMIN',
-  PARTNER_OWNER: 'PARTNER_OWNER',
-  PARTNER_STAFF: 'PARTNER_STAFF',
-  CUSTOMER: 'CUSTOMER',
+  ADMIN: "ADMIN",
+  PARTNER_OWNER: "PARTNER_OWNER",
+  PARTNER_STAFF: "PARTNER_STAFF",
+  CUSTOMER: "CUSTOMER",
 };
 ```
 
@@ -1029,7 +1038,7 @@ if (!authHeader || !authHeader.startsWith('Bearer ')) {
 Nếu thiếu token hoặc sai định dạng, tạo lỗi 401.
 
 ```js
-const token = authHeader.split(' ')[1];
+const token = authHeader.split(" ")[1];
 ```
 
 Tách phần token ra khỏi chuỗi `Bearer ...`.
@@ -1051,17 +1060,17 @@ Nếu token hợp lệ:
 Sau bước này controller có thể dùng:
 
 ```js
-req.user.id
-req.user.accountId
-req.user.role
-req.user.ma_chi_nhanh
+req.user.id;
+req.user.accountId;
+req.user.role;
+req.user.ma_chi_nhanh;
 ```
 
 ### Token hết hạn và token không hợp lệ
 
 ```js
-if (error.name === 'TokenExpiredError') {
-  return next(new UnauthorizedError('Token đã hết hạn...'));
+if (error.name === "TokenExpiredError") {
+  return next(new UnauthorizedError("Token đã hết hạn..."));
 }
 ```
 
@@ -1088,16 +1097,13 @@ function authorizeMiddleware(...allowedRoles) {
 Ví dụ:
 
 ```js
-authorizeMiddleware(JWT_ROLES.ADMIN)
+authorizeMiddleware(JWT_ROLES.ADMIN);
 ```
 
 hoặc:
 
 ```js
-authorizeMiddleware(
-  JWT_ROLES.ADMIN,
-  JWT_ROLES.PARTNER_OWNER
-)
+authorizeMiddleware(JWT_ROLES.ADMIN, JWT_ROLES.PARTNER_OWNER);
 ```
 
 ### Kiểm tra chưa xác thực
@@ -1123,7 +1129,9 @@ Người dùng đã đăng nhập nhưng role không phù hợp sẽ nhận 403.
 ### Dữ liệu details
 
 ```js
-{ requiredRoles: allowedRoles }
+{
+  requiredRoles: allowedRoles;
+}
 ```
 
 Thông tin này đi vào `details` của response lỗi, giúp frontend hoặc developer biết endpoint yêu cầu role nào.
@@ -1136,10 +1144,10 @@ Thông tin này đi vào `details` của response lỗi, giúp frontend hoặc d
 
 ```js
 router.get(
-  '/admin/logs',
+  "/admin/logs",
   authenticateMiddleware,
   authorizeMiddleware(JWT_ROLES.ADMIN),
-  controller.list
+  controller.list,
 );
 ```
 
@@ -1147,10 +1155,10 @@ Sai:
 
 ```js
 router.get(
-  '/admin/logs',
+  "/admin/logs",
   authorizeMiddleware(JWT_ROLES.ADMIN),
   authenticateMiddleware,
-  controller.list
+  controller.list,
 );
 ```
 
@@ -1216,10 +1224,10 @@ Nếu dashboard chỉ dành cho Admin, nên là:
 
 ```js
 router.get(
-  '/dashboard',
+  "/dashboard",
   authenticateMiddleware,
   authorizeMiddleware(JWT_ROLES.ADMIN),
-  controller.getSummary.bind(controller)
+  controller.getSummary.bind(controller),
 );
 ```
 
@@ -1269,15 +1277,15 @@ Hàm nhận dữ liệu theo tên dễ hiểu ở business layer:
 
 ```js
 {
-  actorId,
-  actorRole,
-  action,
-  targetType,
-  targetId,
-  before,
-  after,
-  result,
-  reason
+  (actorId,
+    actorRole,
+    action,
+    targetType,
+    targetId,
+    before,
+    after,
+    result,
+    reason);
 }
 ```
 
@@ -1308,7 +1316,7 @@ Nhờ đó service khác không phải nhớ tên cột tiếng Việt của b�
 Mặc định:
 
 ```js
-strict = false
+strict = false;
 ```
 
 Nếu ghi log thất bại:
@@ -1359,8 +1367,8 @@ return {
     page,
     limit,
     total,
-    totalPages
-  }
+    totalPages,
+  },
 };
 ```
 
@@ -1372,7 +1380,7 @@ return {
 
 ```js
 const { data, error } = await supabase
-  .from('log_ht')
+  .from("log_ht")
   .insert([logData])
   .select()
   .single();
@@ -1426,10 +1434,10 @@ if (ketQua) ...
 
 ```js
 router.get(
-  '/admin/logs',
+  "/admin/logs",
   authenticateMiddleware,
   authorizeMiddleware(JWT_ROLES.ADMIN),
-  controller.list
+  controller.list,
 );
 ```
 
@@ -1448,14 +1456,7 @@ Route thể hiện rõ policy:
 Controller lấy query parameter:
 
 ```js
-const {
-  page,
-  limit,
-  maTkThucHien,
-  doiTuong,
-  hanhDong,
-  ketQua
-} = req.query;
+const { page, limit, maTkThucHien, doiTuong, hanhDong, ketQua } = req.query;
 ```
 
 Sau đó gọi service và trả response phân trang:
@@ -1465,7 +1466,7 @@ return paginatedResponse(
   res,
   result.logs,
   result.pagination,
-  'Lấy nhật ký hệ thống thành công'
+  "Lấy nhật ký hệ thống thành công",
 );
 ```
 
@@ -1518,7 +1519,7 @@ File này tạo một format thống nhất để frontend không phải xử l�
 ## Response thành công
 
 ```js
-successResponse(res, data, message, statusCode)
+successResponse(res, data, message, statusCode);
 ```
 
 Kết quả:
@@ -1534,7 +1535,7 @@ Kết quả:
 ## Response có phân trang
 
 ```js
-paginatedResponse(res, data, pagination, message)
+paginatedResponse(res, data, pagination, message);
 ```
 
 Kết quả:
@@ -1556,7 +1557,7 @@ Kết quả:
 ## Response lỗi
 
 ```js
-errorResponse(res, message, statusCode, errorCode, details)
+errorResponse(res, message, statusCode, errorCode, details);
 ```
 
 Kết quả:
@@ -1581,7 +1582,7 @@ throw new ValidationError(...)
 hoặc:
 
 ```js
-next(error)
+next(error);
 ```
 
 để `errorMiddleware` xử lý tập trung.
@@ -1649,7 +1650,12 @@ Exception handler gồm hai phần:
 
 ```js
 class AppError extends Error {
-  constructor(message, statusCode = 500, errorCode = 'INTERNAL_ERROR', details = null) {
+  constructor(
+    message,
+    statusCode = 500,
+    errorCode = "INTERNAL_ERROR",
+    details = null,
+  ) {
     super(message);
     this.statusCode = statusCode;
     this.errorCode = errorCode;
@@ -1660,12 +1666,12 @@ class AppError extends Error {
 
 ### Các field quan trọng
 
-| Field | Ý nghĩa |
-|---|---|
-| `message` | Thông báo cho người gọi API |
-| `statusCode` | HTTP status code |
-| `errorCode` | Mã lỗi ổn định cho frontend |
-| `details` | Thông tin chi tiết tùy chọn |
+| Field        | Ý nghĩa                     |
+| ------------ | --------------------------- |
+| `message`    | Thông báo cho người gọi API |
+| `statusCode` | HTTP status code            |
+| `errorCode`  | Mã lỗi ổn định cho frontend |
+| `details`    | Thông tin chi tiết tùy chọn |
 
 ### Vì sao cần `errorCode` ngoài HTTP status?
 
@@ -1746,12 +1752,12 @@ Các subclass như `UnauthorizedError` và `ForbiddenError` đều là `AppError
 ### Xử lý lỗi không mong đợi
 
 ```js
-console.error('[UNHANDLED ERROR]', err);
+console.error("[UNHANDLED ERROR]", err);
 
 return res.status(500).json({
   success: false,
-  message: 'Lỗi hệ thống. Vui lòng thử lại sau.',
-  errorCode: 'INTERNAL_ERROR',
+  message: "Lỗi hệ thống. Vui lòng thử lại sau.",
+  errorCode: "INTERNAL_ERROR",
   ...(isDev ? { stack: err.stack } : {}),
 });
 ```
@@ -1943,8 +1949,8 @@ RPC đặt toàn bộ logic trong một lần gọi database nên bảo đảm t
 Trong source hiện tại chưa có service nào import hoặc gọi:
 
 ```js
-withSupabaseTransaction
-withRpcTransaction
+withSupabaseTransaction;
+withRpcTransaction;
 ```
 
 Do đó task transaction hiện đã có helper/configuration, nhưng chưa được áp dụng vào use case cụ thể.
@@ -1984,78 +1990,78 @@ if (status === ORDER_STATUS.DA_THANH_TOAN)
 
 ### `roles.js`
 
-| Nhóm | Giá trị |
-|---|---|
-| DB roles | Khách hàng, đại diện đối tác, nhân viên, Admin |
+| Nhóm      | Giá trị                                               |
+| --------- | ----------------------------------------------------- |
+| DB roles  | Khách hàng, đại diện đối tác, nhân viên, Admin        |
 | JWT roles | `ADMIN`, `PARTNER_OWNER`, `PARTNER_STAFF`, `CUSTOMER` |
-| Mapping | DB role → JWT role |
+| Mapping   | DB role → JWT role                                    |
 
 ### `log-result.js`
 
-| Constant | Database value |
-|---|---|
-| `THANH_CONG` | `Thanh cong` |
-| `THAT_BAI` | `That bai` |
+| Constant     | Database value |
+| ------------ | -------------- |
+| `THANH_CONG` | `Thanh cong`   |
+| `THAT_BAI`   | `That bai`     |
 
 ### `order-status.js`
 
-| Constant | Database value |
-|---|---|
-| `CHO_THANH_TOAN` | `Cho thanh toan` |
-| `DA_THANH_TOAN` | `Da thanh toan` |
-| `DA_HUY` | `Da huy` |
-| `CHO_HOAN_TIEN` | `Cho hoan tien` |
-| `DA_HOAN_TIEN` | `Da hoan tien` |
+| Constant                | Database value          |
+| ----------------------- | ----------------------- |
+| `CHO_THANH_TOAN`        | `Cho thanh toan`        |
+| `DA_THANH_TOAN`         | `Da thanh toan`         |
+| `DA_HUY`                | `Da huy`                |
+| `CHO_HOAN_TIEN`         | `Cho hoan tien`         |
+| `DA_HOAN_TIEN`          | `Da hoan tien`          |
 | `HUY_YEU_CAU_HOAN_TIEN` | `Huy yeu cau hoan tien` |
 
 ### `payment-status.js`
 
-| Constant | Database value |
-|---|---|
-| `DANG_XU_LY` | `Dang xu ly` |
-| `THANH_CONG` | `Thanh cong` |
-| `THAT_BAI` | `That bai` |
+| Constant     | Database value |
+| ------------ | -------------- |
+| `DANG_XU_LY` | `Dang xu ly`   |
+| `THANH_CONG` | `Thanh cong`   |
+| `THAT_BAI`   | `That bai`     |
 
 ### `voucher-status.js`
 
-| Constant | Database value |
-|---|---|
-| `NHAP` | `Nhap` |
-| `CHO_DUYET` | `Cho duyet` |
-| `DANG_BAN` | `Dang ban` |
-| `TU_CHOI` | `Tu choi` |
-| `TAM_NGUNG` | `Tam ngung` |
-| `NGUNG_BAN` | `Ngung ban` |
+| Constant    | Database value |
+| ----------- | -------------- |
+| `NHAP`      | `Nhap`         |
+| `CHO_DUYET` | `Cho duyet`    |
+| `DANG_BAN`  | `Dang ban`     |
+| `TU_CHOI`   | `Tu choi`      |
+| `TAM_NGUNG` | `Tam ngung`    |
+| `NGUNG_BAN` | `Ngung ban`    |
 
 ### `issued-voucher-status.js`
 
-| Constant | Database value |
-|---|---|
+| Constant       | Database value |
+| -------------- | -------------- |
 | `CHUA_SU_DUNG` | `Chua su dung` |
-| `DA_SU_DUNG` | `Da su dung` |
-| `HET_HAN` | `Het han` |
-| `LOI_SINH_MA` | `Loi sinh ma` |
-| `VO_HIEU_HOA` | `Vo hieu hoa` |
+| `DA_SU_DUNG`   | `Da su dung`   |
+| `HET_HAN`      | `Het han`      |
+| `LOI_SINH_MA`  | `Loi sinh ma`  |
+| `VO_HIEU_HOA`  | `Vo hieu hoa`  |
 
 ### `partner-status.js`
 
 `PARTNER_STATUS`:
 
-| Constant | Database value |
-|---|---|
-| `CHO_DUYET` | `Cho duyet` |
+| Constant         | Database value   |
+| ---------------- | ---------------- |
+| `CHO_DUYET`      | `Cho duyet`      |
 | `DANG_HOAT_DONG` | `Dang hoat dong` |
-| `TU_CHOI` | `Tu choi` |
-| `TAM_KHOA` | `Tam khoa` |
+| `TU_CHOI`        | `Tu choi`        |
+| `TAM_KHOA`       | `Tam khoa`       |
 
 `BRANCH_STATUS`:
 
-| Constant | Database value |
-|---|---|
-| `CHO_DUYET` | `Cho duyet` |
-| `DANG_HOAT_DONG` | `Dang hoat dong` |
-| `TU_CHOI` | `Tu choi` |
-| `TAM_NGUNG` | `Tam ngung hoat dong` |
+| Constant         | Database value        |
+| ---------------- | --------------------- |
+| `CHO_DUYET`      | `Cho duyet`           |
+| `DANG_HOAT_DONG` | `Dang hoat dong`      |
+| `TU_CHOI`        | `Tu choi`             |
+| `TAM_NGUNG`      | `Tam ngung hoat dong` |
 
 ---
 
@@ -2175,16 +2181,16 @@ Service nghiệp vụ
 
 # 14. Mức độ hoàn thành thực tế của từng task
 
-| Task | Mức độ hiện tại | Nhận xét |
-|---|---|---|
-| Đăng nhập dùng chung | Đã có luồng thật | Có Supabase, bcrypt, JWT và audit log |
-| Phân quyền theo vai trò | Đã có nền tảng và một ví dụ thật | Role mapping đã dùng; cần áp dụng thêm route |
-| Middleware kiểm tra quyền | Đã hoạt động | `GET /admin/logs` dùng đúng; các route khác chưa dùng |
-| Audit log service | Đã có đọc/ghi thật | Strict mode chưa được dùng trong nghiệp vụ |
-| Chuẩn response API | Đã có helper | Chưa áp dụng nhất quán trên controller |
-| Exception handler | Đã có cấu trúc tốt | `auth.controller.js` đang bypass handler |
-| Transaction | Mới là helper/hạ tầng | Chưa có use case nào gọi helper |
-| Enum và trạng thái dùng chung | Đã định nghĩa | Phần lớn status chưa được dùng trong service |
+| Task                          | Mức độ hiện tại                  | Nhận xét                                              |
+| ----------------------------- | -------------------------------- | ----------------------------------------------------- |
+| Đăng nhập dùng chung          | Đã có luồng thật                 | Có Supabase, bcrypt, JWT và audit log                 |
+| Phân quyền theo vai trò       | Đã có nền tảng và một ví dụ thật | Role mapping đã dùng; cần áp dụng thêm route          |
+| Middleware kiểm tra quyền     | Đã hoạt động                     | `GET /admin/logs` dùng đúng; các route khác chưa dùng |
+| Audit log service             | Đã có đọc/ghi thật               | Strict mode chưa được dùng trong nghiệp vụ            |
+| Chuẩn response API            | Đã có helper                     | Chưa áp dụng nhất quán trên controller                |
+| Exception handler             | Đã có cấu trúc tốt               | `auth.controller.js` đang bypass handler              |
+| Transaction                   | Mới là helper/hạ tầng            | Chưa có use case nào gọi helper                       |
+| Enum và trạng thái dùng chung | Đã định nghĩa                    | Phần lớn status chưa được dùng trong service          |
 
 ---
 
@@ -2214,7 +2220,7 @@ async login(req, res, next) {
 Cả `auth.service.js` và `authenticate.middleware.js` đều có:
 
 ```js
-process.env.JWT_SECRET || 'saleVoucher_EC'
+process.env.JWT_SECRET;
 ```
 
 Server nên từ chối khởi động nếu thiếu `JWT_SECRET`.
@@ -2251,7 +2257,7 @@ res.json({ success: true, data: result });
 bằng:
 
 ```js
-return successResponse(res, result, '...');
+return successResponse(res, result, "...");
 ```
 
 ### 7. Dùng validator và DTO thật
@@ -2304,9 +2310,9 @@ Login thất bại hiện ghi trực tiếp login identifier trong lý do. Cần
 
 ```js
 router.post(
-  '/login',
+  "/login",
   validateLoginMiddleware,
-  controller.login.bind(controller)
+  controller.login.bind(controller),
 );
 ```
 
@@ -2360,17 +2366,17 @@ async login({ email, password }) {
 
 ```js
 router.get(
-  '/admin/logs',
+  "/admin/logs",
   authenticateMiddleware,
   authorizeMiddleware(JWT_ROLES.ADMIN),
-  controller.list
+  controller.list,
 );
 ```
 
 ## Global exception flow
 
 ```js
-app.use('/', routes);
+app.use("/", routes);
 app.use(errorMiddleware);
 ```
 

@@ -32,12 +32,16 @@ import StaffManagementPage from "../features/partner-voucher/pages/partner/Staff
 import AuditLogPage from "../features/partner-voucher/pages/admin/AuditLogPage";
 
 // Customer Portal Pages & Layout
-import CustomerLayout from "../features/customer-commerce/layouts/CustomerLayout";
+import CustomerLayout from "../layouts/CustomerLayout";
 import VoucherSearchPage from "../features/customer-commerce/pages/customer/VoucherSearchPage";
 import VoucherDetailPage from "../features/customer-commerce/pages/customer/VoucherDetailPage";
 import CartPage from "../features/customer-commerce/pages/customer/CartPage";
-
-
+import CheckoutPage from "../features/customer-commerce/pages/customer/CheckoutPage";
+import PaymentResultPage from "../features/customer-commerce/pages/customer/PaymentResultPage";
+import MyOrdersPage from "../features/customer-commerce/pages/customer/MyOrdersPage";
+import ProfilePage from "../features/customer-commerce/pages/customer/ProfilePage";
+import MyVoucherPage from "../features/core-access/pages/customer/MyVoucherPage";
+import IssuedVoucherDetailPage from "../features/core-access/pages/customer/IssuedVoucherDetailPage";
 
 function PartnerHome() {
   try {
@@ -89,12 +93,10 @@ const router = createBrowserRouter([
     path: "/",
     element: <App />,
     children: [
-      // Mở ứng dụng tại trang đăng nhập
       { index: true, element: <Navigate to="/login" replace /> },
 
-      // CUSTOMER ROUTES
       {
-        path: "customer",
+        path: "/customer",
         element: <ProtectedRoute allowedRoles={["CUSTOMER"]} />,
         children: [
           {
@@ -104,6 +106,15 @@ const router = createBrowserRouter([
                 index: true,
                 element: <VoucherSearchPage />,
               },
+              // BR-CUS-07: Static routes trước dynamic routes
+              {
+                path: "vouchers/my",
+                element: <MyVoucherPage />,
+              },
+              {
+                path: "vouchers/issued/:issuedId",
+                element: <IssuedVoucherDetailPage />,
+              },
               {
                 path: "vouchers/:id",
                 element: <VoucherDetailPage />,
@@ -111,6 +122,22 @@ const router = createBrowserRouter([
               {
                 path: "cart",
                 element: <CartPage />,
+              },
+              {
+                path: "checkout",
+                element: <CheckoutPage />,
+              },
+              {
+                path: "checkout/return",
+                element: <PaymentResultPage />,
+              },
+              {
+                path: "orders",
+                element: <MyOrdersPage />,
+              },
+              {
+                path: "profile",
+                element: <ProfilePage />,
               },
             ],
           },
@@ -163,15 +190,16 @@ const router = createBrowserRouter([
           { path: "partners/:id", element: <PartnerDetailPage /> },
           { path: "vouchers", element: <VoucherApprovalListPage /> },
           { path: "vouchers/:id", element: <VoucherApprovalDetailPage /> },
-           { path: "users", element: <UserListPage /> },
-           { path: "logs", element: <AuditLogPage /> },
-           { path: "audit-logs", element: <Navigate to="/admin/logs" replace /> },
-           { path: "contents", element: <ContentListPage /> },
-         ],
-       },
-     ],
-   },
-
+          { path: "users", element: <UserListPage /> },
+          { path: "logs", element: <AuditLogPage /> },
+          {
+            path: "audit-logs",
+            element: <Navigate to="/admin/logs" replace />,
+          },
+        ],
+      },
+    ],
+  },
 
   // Fallback -> /login
   {

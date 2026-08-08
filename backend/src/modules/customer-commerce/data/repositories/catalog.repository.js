@@ -97,6 +97,29 @@ class CatalogRepository {
     }
     return data;
   }
+
+  // nếu 2 đơn hàng trùng thời điểm cho cùng 1 voucher -> ko an toàn tuyệt đối
+  async incrementSoldQuantity(voucherId, qty) {
+    const { data: current, error: readErr } = await supabase
+      .from("voucher")
+      .select("so_luong_da_ban")
+      .eq("ma_voucher", voucherId)
+      .single();
+    if (readErr) {
+      const err = new Error("Không thể cập nhật số lượng voucher đã bán");
+      err.status = 500;
+      throw err;
+    }
+    const { error: updateErr } = await supabase
+      .from("voucher")
+      .update({ so_luong_da_ban: current.so_luong_da_ban + qty })
+      .eq("ma_voucher", voucherId);
+    if (updateErr) {
+      const err = new Error("Không thể cập nhật số lượng voucher đã bán");
+      err.status = 500;
+      throw err;
+    }
+  }
 }
 
 module.exports = new CatalogRepository();

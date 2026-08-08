@@ -37,8 +37,27 @@ class UserRepository {
         .limit(2);
 
       if (prefixError) throw prefixError;
-      return prefixAccounts?.length === 1 ? prefixAccounts[0] : null;
+      if (prefixAccounts?.length === 1) return prefixAccounts[0];
 
+      // Hỗ trợ tìm tài khoản qua Email trong bảng NGUOIDUNG (UC-BUS-05)
+      const { data: userRecord, error: userError } = await supabase
+        .from('nguoidung')
+        .select('ma_nguoi_dung')
+        .or(`email.ilike.${cleanInfo},sdt.eq.${cleanInfo}`)
+        .limit(1)
+        .maybeSingle();
+
+      if (!userError && userRecord) {
+        const { data: accountByUser, error: accError } = await supabase
+          .from('taikhoan')
+          .select(accountSelection)
+          .eq('ma_nguoi_dung', userRecord.ma_nguoi_dung)
+          .maybeSingle();
+
+        if (!accError && accountByUser) return accountByUser;
+      }
+
+      return null;
     } catch (e) {
       console.error('[UserRepository] findAccountByLoginInfo error:', e.message);
       return null;
@@ -216,7 +235,7 @@ class UserRepository {
   // -----------------------------------------------------------------------
   async updateRole(userId, newRole, maChiNhanh = null, maHsdn = null) {
     const updateData = { vai_tro: newRole };
-    
+
     // Gán mã chi nhánh / đối tác theo đúng logic.
     // Nếu đổi sang Khách hàng / Admin thì set null cả 2.
     if (newRole === 'Nhan vien ban hang') {
@@ -240,6 +259,26 @@ class UserRepository {
     if (error) {
       console.error('[UserRepository] updateRole error:', error.message);
       throw new Error(`Cập nhật vai trò người dùng thất bại: ${error.message}`);
+    }
+    return data;
+  }
+
+  // -----------------------------------------------------------------------
+  // 6. CẬP NHẬT MẬT KHẨU (dùng trong UC-BUS-05 Quên mật khẩu)
+  //    accountId: ma_tk trong bảng TAIKHOAN
+  //    hashedPassword: mật khẩu đã được hash bằng bcrypt trước khi truyền vào
+  // -----------------------------------------------------------------------
+  async updatePassword(accountId, hashedPassword) {
+    const { data, error } = await supabase
+      .from('taikhoan')
+      .update({ mat_khau: hashedPassword })
+      .eq('ma_tk', accountId)
+      .select('ma_tk')
+      .single();
+
+    if (error) {
+      console.error('[UserRepository] updatePassword error:', error.message);
+      throw new Error(`Không thể cập nhật mật khẩu: ${error.message}`);
     }
     return data;
   }

@@ -1,6 +1,6 @@
 /**
- * Purpose: Controller cho dashboard quản trị.
- * Dùng để thống kê tổng quan về user, voucher, redemption.
+ * FILE: backend/src/modules/core-access/presentation/controllers/admin-dashboard.controller.js
+ * PURPOSE: Controller cho Admin Dashboard — trả về chỉ số tổng quan (BR_ADM_06).
  */
 class AdminDashboardController {
   constructor(adminDashboardService) {

@@ -15,7 +15,6 @@ import {
   ArrowRight,
   ArrowLeft,
   RefreshCw,
-  Sparkles,
   History,
   ShieldCheck,
   CreditCard,
@@ -35,11 +34,9 @@ import {
   verifyVoucherCode,
   redeemVoucherCode,
   fetchUsageHistory,
-  fetchSampleCodes,
   fetchBranches,
 } from '../../../../shared/api/voucherCodeApi';
 import QrScannerModal from '../../component/QrScannerModal';
-import QrCodeDisplay from '../../component/QRCodeDisplay';
 
 export default function PartnerVoucherLookupPage() {
   const navigate = useNavigate();
@@ -102,13 +99,11 @@ export default function PartnerVoucherLookupPage() {
   const [redemptionNote, setRedemptionNote] = useState('');
 
   // State Dữ liệu phụ & Tab
-  const [sampleCodes, setSampleCodes] = useState([]);
-  const [showSampleCodes, setShowSampleCodes] = useState(false);
   const [historyList, setHistoryList] = useState([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [activeViewTab, setActiveViewTab] = useState('lookup'); // 'lookup' | 'history'
 
-  // 3. Load chi nhánh & mã mẫu ban đầu
+  // 3. Load chi nhánh ban đầu
   useEffect(() => {
     async function initData() {
       setIsLoadingBranches(true);
@@ -126,15 +121,6 @@ export default function PartnerVoucherLookupPage() {
         console.warn('Lỗi lấy danh sách chi nhánh:', err);
       } finally {
         setIsLoadingBranches(false);
-      }
-
-      try {
-        const sampleRes = await fetchSampleCodes();
-        if (sampleRes?.data) {
-          setSampleCodes(sampleRes.data);
-        }
-      } catch (err) {
-        console.warn('Lỗi lấy danh sách mã mẫu:', err);
       }
     }
 
@@ -500,62 +486,6 @@ export default function PartnerVoucherLookupPage() {
                 )}
               </div>
 
-              {/* Box Gợi ý mã mẫu từ Database để test nhanh */}
-              {sampleCodes.length > 0 && (
-                <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
-                      <Sparkles className="w-4 h-4 text-amber-500" />
-                      <span>Mã mẫu kiểm thử (Nhấp để thử nhanh)</span>
-                    </div>
-                    <span className="text-[10px] text-slate-400 font-semibold">
-                      {sampleCodes.length} mã có sẵn
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 leading-relaxed">
-                    Bấm trực tiếp vào mã bên dưới để tự động điền và tra cứu ngay lập tức:
-                  </p>
-
-                  <div className="space-y-2">
-                    {sampleCodes.map((s) => (
-                      <button
-                        key={s.code}
-                        type="button"
-                        onClick={() => {
-                          setInputCode(s.code);
-                          handleVerify(s.code);
-                        }}
-                        className="w-full flex items-center justify-between p-2.5 bg-slate-50 hover:bg-emerald-50/70 border border-slate-200 hover:border-emerald-300 rounded-xl text-left transition-all group cursor-pointer"
-                      >
-                        <div className="min-w-0 pr-2">
-                          <div className="font-mono font-bold text-xs text-slate-800 group-hover:text-emerald-700">
-                            {s.code}
-                          </div>
-                          <div className="text-[11px] text-slate-500 truncate">
-                            {s.voucherName}
-                          </div>
-                        </div>
-                        <span
-                          className={`text-[10px] px-2 py-0.5 rounded-md font-bold shrink-0 ${
-                            s.status === 'Chua su dung'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : s.status === 'Da su dung'
-                              ? 'bg-slate-200 text-slate-600'
-                              : 'bg-rose-100 text-rose-700'
-                          }`}
-                        >
-                          {s.status === 'Chua su dung'
-                            ? 'Chưa dùng'
-                            : s.status === 'Da su dung'
-                            ? 'Đã dùng'
-                            : s.status}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* Instructions / Quick Policy Card */}
               <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 space-y-3">
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
@@ -783,17 +713,6 @@ export default function PartnerVoucherLookupPage() {
                       </div>
                     )}
                   </div>
-
-                  {/* QR Code thật đính kèm (collapsible view để đối soát chéo) */}
-                  {voucherData && (
-                    <div className="mt-4">
-                      <QrCodeDisplay
-                        value={voucherData.qrValue || `ECQR:${voucherData.code}`}
-                        title="Mã QR Code Thật (Dùng để kiểm thử quét Camera)"
-                        subtitle="Mã QR này sinh theo chuẩn ISO/IEC, có thể dùng camera điện thoại quét trực tiếp"
-                      />
-                    </div>
-                  )}
                 </div>
               )}
             </div>
