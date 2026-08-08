@@ -1,6 +1,42 @@
 const voucherRepository = require("../../data/repositories/voucher.repository");
 const voucherBranchRepository = require("../../data/repositories/voucher-branch.repository");
 const auditLogService = require("../../../core-access/business/services/audit-log.service");
+const supabase = require("../../../../config/supabase");
+
+async function uploadBase64ToSupabase(base64String, folder = "vouchers") {
+  if (!base64String || typeof base64String !== "string" || !base64String.startsWith("data:")) {
+    return base64String;
+  }
+  try {
+    const matches = base64String.match(/^data:(.+);base64,(.+)$/);
+    if (!matches) return base64String;
+
+    const contentType = matches[1];
+    const buffer = Buffer.from(matches[2], "base64");
+    let ext = "png";
+    if (contentType.includes("jpeg") || contentType.includes("jpg")) ext = "jpg";
+
+    const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+
+    const { data, error } = await supabase.storage
+      .from("partner-documents")
+      .upload(fileName, buffer, { contentType, upsert: true });
+
+    if (error) {
+      console.warn("[VoucherService] Supabase storage upload warning:", error.message);
+      return base64String;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from("partner-documents")
+      .getPublicUrl(fileName);
+
+    return publicUrlData.publicUrl;
+  } catch (err) {
+    console.warn("[VoucherService] Failed to upload Base64 to Supabase Storage:", err.message);
+    return base64String;
+  }
+}
 
 class VoucherService {
   async getVouchers(query) {
@@ -16,6 +52,9 @@ class VoucherService {
   }
 
   async createVoucher(payload) {
+    if (payload.hinh_anh_url && payload.hinh_anh_url.startsWith("data:")) {
+      payload.hinh_anh_url = await uploadBase64ToSupabase(payload.hinh_anh_url, "vouchers");
+    }
     const voucher = await voucherRepository.create(payload);
     if (payload.ma_chi_nhanh && Array.isArray(payload.ma_chi_nhanh)) {
       await voucherBranchRepository.setBranchesForVoucher(voucher.ma_voucher, payload.ma_chi_nhanh);
@@ -41,6 +80,9 @@ class VoucherService {
   }
 
   async updateVoucher(id, payload) {
+    if (payload.hinh_anh_url && payload.hinh_anh_url.startsWith("data:")) {
+      payload.hinh_anh_url = await uploadBase64ToSupabase(payload.hinh_anh_url, "vouchers");
+    }
     const updated = await voucherRepository.update(id, payload);
     if (payload.ma_chi_nhanh && Array.isArray(payload.ma_chi_nhanh)) {
       await voucherBranchRepository.setBranchesForVoucher(id, payload.ma_chi_nhanh);

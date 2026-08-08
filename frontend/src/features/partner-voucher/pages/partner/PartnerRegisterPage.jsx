@@ -88,6 +88,24 @@ export function PartnerRegisterPage() {
     }
   };
 
+  const handleLicenseFileUpload = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      setToastMessage("Dung lượng file vượt quá 10MB. Vui lòng chọn tệp nhỏ hơn.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const dataUrl = evt.target.result;
+      setFormData((prev) => ({ ...prev, giay_phep_kinh_doanh: dataUrl }));
+      setToastMessage(`Đã tải lên tệp "${file.name}" thành công!`);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const validateStep = (step) => {
     const newErrors = {};
 
@@ -578,12 +596,13 @@ export function PartnerRegisterPage() {
               <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-blue-500 transition-colors bg-slate-50">
                 <div className="text-3xl mb-2">📄</div>
                 <div className="text-sm font-semibold text-slate-800">Tải lên tài liệu pháp lý</div>
-                <div className="text-xs text-slate-500 mt-1">Kéo thả file vào đây hoặc bấm để chọn tệp</div>
+                <div className="text-xs text-slate-500 mt-1">Kéo thả file vào đây hoặc bấm để chọn tệp từ máy tính</div>
                 <input
                   type="file"
                   className="hidden"
                   id="license-upload"
-                  onChange={() => setToastMessage("Tải lên bản xem trước thành công")}
+                  accept="image/*,.pdf"
+                  onChange={handleLicenseFileUpload}
                 />
                 <label
                   htmlFor="license-upload"
@@ -594,13 +613,19 @@ export function PartnerRegisterPage() {
               </div>
 
               {formData.giay_phep_kinh_doanh && (
-                <div className="mt-4">
-                  <div className="text-xs font-semibold text-slate-700 mb-2">Xem trước bản ĐKKD:</div>
-                  <img
-                    src={formData.giay_phep_kinh_doanh}
-                    alt="Giấy phép kinh doanh"
-                    className="max-h-48 rounded-lg border border-slate-200 object-cover"
-                  />
+                <div className="mt-4 p-4 bg-white rounded-xl border border-slate-200">
+                  <div className="text-xs font-semibold text-slate-700 mb-2">Xem trước bản ĐKKD đã tải lên:</div>
+                  {formData.giay_phep_kinh_doanh.startsWith("data:application/pdf") ? (
+                    <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 text-xs font-semibold">
+                      <span>📄 Tệp PDF Giấy phép ĐKKD đã được chọn</span>
+                    </div>
+                  ) : (
+                    <img
+                      src={formData.giay_phep_kinh_doanh}
+                      alt="Giấy phép kinh doanh"
+                      className="max-h-48 rounded-lg border border-slate-200 object-contain bg-slate-50"
+                    />
+                  )}
                 </div>
               )}
             </div>

@@ -7,7 +7,7 @@ const { loadEnvironment } = require("./config/environment");
 
 const config = loadEnvironment();
 
-// Express Server Entry Point (Discontinue Voucher Ngung ban status added with confirmation modal & read-only lock)
+// Express Server Entry Point (Supabase Storage integration for partner-documents & voucher images)
 app.listen(config.port, () => {
   console.log(`Backend running on port ${config.port}...`);
 });

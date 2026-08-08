@@ -2,12 +2,49 @@ const partnerRepository = require("../../data/repositories/partner.repository");
 const branchRepository = require("../../data/repositories/branch.repository");
 const auditLogService = require("../../../core-access/business/services/audit-log.service");
 const { sendOtpEmail } = require("../../../../common/utils/mailer");
+const supabase = require("../../../../config/supabase");
 
 const pendingPartnerRegistrations = new Map(); // key: email -> { email, sdt, password, ho_ten, otp, expiresAt, attempts, isVerified }
 const OTP_TTL_MS = 5 * 60 * 1000;
 
 function genOtp() {
   return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+async function uploadBase64ToSupabase(base64String, folder = "licenses") {
+  if (!base64String || typeof base64String !== "string" || !base64String.startsWith("data:")) {
+    return base64String;
+  }
+  try {
+    const matches = base64String.match(/^data:(.+);base64,(.+)$/);
+    if (!matches) return base64String;
+
+    const contentType = matches[1];
+    const buffer = Buffer.from(matches[2], "base64");
+    let ext = "png";
+    if (contentType.includes("jpeg") || contentType.includes("jpg")) ext = "jpg";
+    else if (contentType.includes("pdf")) ext = "pdf";
+
+    const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+
+    const { data, error } = await supabase.storage
+      .from("partner-documents")
+      .upload(fileName, buffer, { contentType, upsert: true });
+
+    if (error) {
+      console.warn("[PartnerService] Supabase storage upload warning:", error.message);
+      return base64String;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from("partner-documents")
+      .getPublicUrl(fileName);
+
+    return publicUrlData.publicUrl;
+  } catch (err) {
+    console.warn("[PartnerService] Failed to upload Base64 to Supabase Storage:", err.message);
+    return base64String;
+  }
 }
 
 class PartnerService {
@@ -187,6 +224,9 @@ class PartnerService {
   }
 
   async createPartner(payload) {
+    if (payload.giay_phep_kinh_doanh && payload.giay_phep_kinh_doanh.startsWith("data:")) {
+      payload.giay_phep_kinh_doanh = await uploadBase64ToSupabase(payload.giay_phep_kinh_doanh, "licenses");
+    }
     const partner = await partnerRepository.create(payload);
     try {
       await auditLogService.log({
@@ -205,6 +245,9 @@ class PartnerService {
   }
 
   async updatePartner(id, payload) {
+    if (payload.giay_phep_kinh_doanh && payload.giay_phep_kinh_doanh.startsWith("data:")) {
+      payload.giay_phep_kinh_doanh = await uploadBase64ToSupabase(payload.giay_phep_kinh_doanh, "licenses");
+    }
     return await partnerRepository.update(id, payload);
   }
 
