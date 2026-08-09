@@ -51,7 +51,7 @@ export function BranchManagementPage() {
         const u = JSON.parse(storedUser);
         return u.ma_hsdn || u.ma_hs || u.id || u.ma_nguoi_dung;
       }
-    } catch (e) {}
+    } catch (e) { }
     return null;
   };
 
@@ -247,21 +247,19 @@ export function BranchManagementPage() {
         <div className="flex items-center gap-4 border-b border-gray-200">
           <button
             onClick={() => setActiveTab("official")}
-            className={`pb-3 text-sm font-bold border-b-2 transition-colors cursor-pointer ${
-              activeTab === "official"
+            className={`pb-3 text-sm font-bold border-b-2 transition-colors cursor-pointer ${activeTab === "official"
                 ? "border-blue-600 text-blue-600"
                 : "border-transparent text-gray-500 hover:text-gray-800"
-            }`}
+              }`}
           >
             Chi nhánh chính thức ({activeBranches.length})
           </button>
           <button
             onClick={() => setActiveTab("requests")}
-            className={`pb-3 text-sm font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
-              activeTab === "requests"
+            className={`pb-3 text-sm font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${activeTab === "requests"
                 ? "border-blue-600 text-blue-600"
                 : "border-transparent text-gray-500 hover:text-gray-800"
-            }`}
+              }`}
           >
             Yêu cầu thay đổi
             {partnerRequests.filter((r) => r.trang_thai === "Cho duyet" || r.trang_thai === "Cho xu ly").length > 0 ? (
@@ -384,8 +382,8 @@ export function BranchManagementPage() {
                               {req.loai_yeu_cau === "Them moi"
                                 ? "Thêm mới chi nhánh"
                                 : req.loai_yeu_cau === "Cap nhat"
-                                ? "Cập nhật thông tin chi nhánh"
-                                : "Yêu cầu xóa chi nhánh"}
+                                  ? "Cập nhật thông tin chi nhánh"
+                                  : "Yêu cầu xóa chi nhánh"}
                             </span>
                             <h4 className="font-bold text-gray-900 text-base">{req.ten_chi_nhanh}</h4>
                           </div>

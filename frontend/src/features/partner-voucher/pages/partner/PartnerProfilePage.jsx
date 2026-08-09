@@ -56,6 +56,7 @@ export function PartnerProfilePage() {
         ten_dn: data.ten_dn || "",
         ma_so_thue: data.ma_so_thue || "",
         dia_chi: data.dia_chi || "",
+        giay_phep_kinh_doanh: data.giay_phep_kinh_doanh || "",
         ho_ten: data.nguoi_dai_dien?.ho_ten || "",
         sdt: data.nguoi_dai_dien?.sdt || "",
         email: data.nguoi_dai_dien?.email || "",
@@ -75,33 +76,39 @@ export function PartnerProfilePage() {
     loadPartner();
   }, []);
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      setToastMessage("Dung lượng file vượt quá 10MB. Vui lòng chọn tệp nhỏ hơn.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const dataUrl = evt.target.result;
+      setFormData((prev) => ({ ...prev, giay_phep_kinh_doanh: dataUrl }));
+      setToastMessage(`Đã tải lên tệp "${file.name}" mới thành công!`);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSave = async () => {
     if (!partner?.ma_hs) return;
+    if (partner.trang_thai === "Cho duyet" || pendingProfileReq) {
+      setToastMessage("Hồ sơ đang ở trạng thái Chờ duyệt, tạm thời không thể chỉnh sửa.");
+      setIsEditing(false);
+      return;
+    }
     setSaving(true);
-
-    if (partner.trang_thai === "Cho duyet") {
-      // Direct registration edit for initial pending partner
-      await updatePartnerApi(partner.ma_hs, {
-        ten_dn: formData.ten_dn,
-        ma_so_thue: formData.ma_so_thue,
-        dia_chi: formData.dia_chi,
-        nguoi_dai_dien: {
-          ho_ten: formData.ho_ten,
-          sdt: formData.sdt,
-          email: formData.email,
-          cccd: formData.cccd,
-          ngay_sinh: formData.ngay_sinh,
-          gioi_tinh: formData.gioi_tinh,
-        },
-      });
-      setToastMessage("Đã cập nhật lại thông tin đăng ký ban đầu.");
-    } else {
-      // Active partner submits a profile update request to yeu_cau_cap_nhat_hosodn
+    try {
       await createPartnerProfileRequestApi({
         ma_hs: partner.ma_hs,
         ten_dn_moi: formData.ten_dn,
         ma_so_thue_moi: formData.ma_so_thue,
         dia_chi_moi: formData.dia_chi,
+        giay_phep_kinh_doanh_moi: formData.giay_phep_kinh_doanh,
         ho_ten_nguoi_dai_dien_moi: formData.ho_ten,
         sdt_nguoi_dai_dien_moi: formData.sdt,
         email_nguoi_dai_dien_moi: formData.email,
@@ -111,8 +118,9 @@ export function PartnerProfilePage() {
         trang_thai: "Cho duyet",
       });
       setToastMessage("Đã gửi Yêu cầu Cập nhật Hồ sơ Doanh nghiệp tới Quản trị viên!");
+    } catch (e) {
+      setToastMessage("Gửi yêu cầu thất bại: " + e.message);
     }
-
     setSaving(false);
     setIsEditing(false);
     await loadPartner();
@@ -136,6 +144,8 @@ export function PartnerProfilePage() {
 
   const isRejected = partner.trang_thai === "Tu choi";
   const isPending = partner.trang_thai === "Cho duyet";
+  const hasPendingReq = !!pendingProfileReq;
+  const canEdit = !isPending && !hasPendingReq && !isEditing;
 
   return (
     <PartnerLayout>
@@ -148,7 +158,7 @@ export function PartnerProfilePage() {
           </div>
           <div className="flex items-center gap-3">
             <Badge status={partner.trang_thai} />
-            {!isEditing && (
+            {canEdit && (
               <Button variant="secondary" onClick={() => setIsEditing(true)}>
                 Chỉnh sửa hồ sơ
               </Button>
@@ -180,7 +190,6 @@ export function PartnerProfilePage() {
         {pendingProfileReq && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-900 space-y-1.5 shadow-xs">
             <div className="flex items-center gap-2 font-bold text-amber-900">
-              <span>⏳</span>
               <span>Bạn có 1 Yêu cầu cập nhật hồ sơ doanh nghiệp đang chờ Quản trị viên duyệt</span>
             </div>
             <div className="text-gray-700 grid grid-cols-2 gap-1 pt-1 bg-white/70 p-2.5 rounded-lg border border-amber-100">
@@ -189,7 +198,6 @@ export function PartnerProfilePage() {
               {pendingProfileReq.ho_ten_nguoi_dai_dien_moi && <div>• Người đại diện mới: <strong>{pendingProfileReq.ho_ten_nguoi_dai_dien_moi}</strong></div>}
               {pendingProfileReq.sdt_nguoi_dai_dien_moi && <div>• SĐT mới: <strong>{pendingProfileReq.sdt_nguoi_dai_dien_moi}</strong></div>}
             </div>
-            <p className="text-[11px] text-amber-700 italic">📌 Trong thời gian chờ duyệt, các giao dịch kinh doanh vẫn áp dụng theo thông tin hồ sơ hiện tại.</p>
           </div>
         )}
 
@@ -197,7 +205,6 @@ export function PartnerProfilePage() {
         {isPending && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span>⏳</span>
               <span>Hồ sơ đối tác mới đăng ký đang ở trạng thái <strong>"Chờ duyệt"</strong>. Quản trị viên đang thẩm định thông tin của bạn.</span>
             </div>
           </div>
@@ -297,6 +304,42 @@ export function PartnerProfilePage() {
                     <option value="Nu">Nữ</option>
                     <option value="Khac">Khác</option>
                   </select>
+                </div>
+              </div>
+
+              <h4 className="font-semibold text-slate-900 pt-4 border-t border-slate-100 text-sm">Giấy Phép Đăng Ký Kinh Doanh & Tệp Pháp Lý</h4>
+
+              <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <label className="block text-xs font-semibold text-slate-700">Tải lên Giấy phép kinh doanh mới (Nếu muốn thay đổi)</label>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  {formData.giay_phep_kinh_doanh ? (
+                    <img
+                      src={formData.giay_phep_kinh_doanh}
+                      alt="Giấy phép xem trước"
+                      className="w-36 h-24 object-cover rounded-lg border border-slate-300 shadow-xs bg-white"
+                    />
+                  ) : (
+                    <div className="w-36 h-24 rounded-lg border-2 border-dashed border-slate-300 bg-white flex items-center justify-center text-xs text-slate-400">
+                      Chưa có tệp
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <input
+                      type="file"
+                      id="profile-license-upload-input"
+                      accept="image/*,application/pdf"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="profile-license-upload-input"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors cursor-pointer shadow-xs"
+                    >
+                      📁 Tải lên Giấy phép kinh doanh mới (Ảnh / PDF)
+                    </label>
+                    <p className="text-[11px] text-slate-500">Hỗ trợ các định dạng PNG, JPG, PDF (tối đa 10MB). Tệp mới sẽ được tự động lưu trữ trên hệ thống Supabase Storage.</p>
+                  </div>
                 </div>
               </div>
 

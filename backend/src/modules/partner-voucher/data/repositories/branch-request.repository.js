@@ -15,8 +15,8 @@ class BranchRequestRepository {
     try {
       const { data, error } = await supabase
         .from("yeu_cau_cap_nhat_chinhanh")
-        .select("*, chinhanh(ten_chi_nhanh, khu_vuc, dia_chi)")
-        .eq("ma_hs", partnerId)
+        .select("*, chinhanh!inner(ma_hs, ten_chi_nhanh, khu_vuc, dia_chi)")
+        .eq("chinhanh.ma_hs", partnerId)
         .order("ngay_yeu_cau", { ascending: false });
 
       if (!error && data) {
@@ -24,7 +24,7 @@ class BranchRequestRepository {
           results.push({
             ma_yeu_cau: r.ma_yc,
             ma_chi_nhanh: r.ma_chi_nhanh,
-            ma_hs: r.ma_hs,
+            ma_hs: r.chinhanh?.ma_hs || partnerId,
             loai_yeu_cau: r.loai_yeu_cau === "CAP_NHAT" ? "Cap nhat" : r.loai_yeu_cau === "XOA" ? "Xoá" : "Them moi",
             ten_chi_nhanh: r.chinhanh?.ten_chi_nhanh || r.ten_chi_nhanh_moi,
             khu_vuc: r.khu_vuc_moi || r.chinhanh?.khu_vuc,
@@ -36,6 +36,7 @@ class BranchRequestRepository {
             },
             trang_thai: r.trang_thai,
             ly_do_tu_choi: r.ly_do_tu_choi,
+            nguoi_duyet: r.nguoi_duyet,
             ngay_tao: r.ngay_yeu_cau,
           });
         });
@@ -225,13 +226,15 @@ class BranchRequestRepository {
   /**
    * Update request status in DB
    */
-  async updateStatus(reqId, trang_thai, adminNote = "") {
+  async updateStatus(reqId, trang_thai, adminNote = "", adminId = null) {
+    const finalAdminId = adminId || "00000000-0000-0000-0000-000000000001";
     try {
       const { data, error } = await supabase
         .from("yeu_cau_cap_nhat_chinhanh")
         .update({
           trang_thai,
           ly_do_tu_choi: adminNote || null,
+          nguoi_duyet: finalAdminId,
           ngay_duyet: new Date().toISOString(),
         })
         .eq("ma_yc", reqId)
@@ -243,7 +246,9 @@ class BranchRequestRepository {
         if (existing) {
           existing.trang_thai = trang_thai;
           existing.ghi_chu_admin = adminNote;
+          existing.nguoi_duyet = finalAdminId;
         }
+        return data;
       }
     } catch (e) {
       console.warn("[BranchRequestRepo] updateStatus DB exception:", e.message);
@@ -253,6 +258,7 @@ class BranchRequestRepository {
     if (req) {
       req.trang_thai = trang_thai;
       req.ghi_chu_admin = adminNote;
+      req.nguoi_duyet = finalAdminId;
       return req;
     }
     return null;
@@ -292,7 +298,7 @@ class BranchRequestRepository {
           map.set(item.ma_hs, (map.get(item.ma_hs) || 0) + 1);
         });
       }
-    } catch (e) {}
+    } catch (e) { }
 
     // Include memory store
     for (const req of BRANCH_REQUESTS_STORE.values()) {

@@ -6,7 +6,10 @@ import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
 import Badge from "../../../../shared/components/Badge";
 import Toast from "../../../../shared/components/Toast";
+import Modal from "../../../../shared/components/Modal";
 import { getVoucherByIdApi, getBranchesByPartnerApi, saveVoucherApi } from "../../../../shared/api/partnerApi";
+import { formatCategoryName } from "../../../../shared/utils/categoryFormatter";
+import { getVoucherPublicationStatus } from "../../../../shared/utils/publicationStatusHelper";
 
 export function VoucherDetailPage() {
   const { id } = useParams();
@@ -17,6 +20,7 @@ export function VoucherDetailPage() {
 
   const [toastMessage, setToastMessage] = useState("");
   const [stopSellingModal, setStopSellingModal] = useState(false);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
 
   const getLoggedInPartnerId = () => {
     try {
@@ -65,10 +69,16 @@ export function VoucherDetailPage() {
   const activeBranches = branches.filter((b) => (voucher.ma_chi_nhanh || []).includes(b.ma_chi_nhanh));
 
   const handleStatusChange = async (newStatus, msg) => {
+    const reviewStatus = ["Dang ban", "Tam ngung", "Ngung ban"].includes(newStatus)
+      ? "Da duyet"
+      : newStatus === "Cho duyet"
+      ? "Cho duyet"
+      : voucher.trang_thai_kiem_duyet || "Nhap";
+
     await saveVoucherApi({
       ma_voucher: voucher.ma_voucher,
       trang_thai: newStatus,
-      trang_thai_kiem_duyet: newStatus === "Cho duyet" ? "Cho duyet" : voucher.trang_thai_kiem_duyet,
+      trang_thai_kiem_duyet: reviewStatus,
     });
     setToastMessage(msg || "Đã cập nhật trạng thái Voucher thành công!");
     await loadData();
@@ -104,7 +114,10 @@ export function VoucherDetailPage() {
 
           {/* Action buttons strictly scoped to voucher status */}
           <div className="flex items-center gap-2">
-            <Badge status={voucher.trang_thai} />
+            {(() => {
+              const pubStatus = getVoucherPublicationStatus(voucher);
+              return <Badge status={pubStatus.key} text={pubStatus.label} />;
+            })()}
 
             {/* a. Trạng thái Nháp: Chỉnh sửa toàn bộ + Gửi duyệt */}
             {isNhap && (
@@ -117,9 +130,9 @@ export function VoucherDetailPage() {
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={() => handleStatusChange("Cho duyet", "Đã gửi yêu cầu xét duyệt Voucher!")}
+                  onClick={() => setShowSubmitModal(true)}
                 >
-                  Gửi duyệt
+                  ✓ Gửi duyệt
                 </Button>
               </>
             )}
@@ -190,13 +203,6 @@ export function VoucherDetailPage() {
                 <p className="text-xs text-rose-700 font-medium">
                   Lý do từ chối: <span className="italic font-normal">{voucher.ly_do_tu_choi || "Chưa đáp ứng điều kiện niêm yết giá hoặc chi nhánh."}</span>
                 </p>
-                <div className="pt-2">
-                  <Link to={`/partner/vouchers/${voucher.ma_voucher}/edit`}>
-                    <Button variant="danger" size="sm">
-                      Chỉnh sửa & Gửi lại
-                    </Button>
-                  </Link>
-                </div>
               </div>
             </div>
           </div>
@@ -211,9 +217,9 @@ export function VoucherDetailPage() {
               className="w-full h-full object-cover opacity-90"
             />
             <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-slate-950/80 to-transparent text-white">
-              <span className="px-2.5 py-1 bg-blue-600 text-xs font-bold rounded-full mb-2 inline-block">
+              {/* <span className="px-2.5 py-1 bg-blue-600 text-xs font-bold rounded-full mb-2 inline-block">
                 {voucher.ten_danh_muc || "Danh mục Voucher"}
-              </span>
+              </span> */}
               <h1 className="text-2xl font-bold">{voucher.ten_voucher}</h1>
               <p className="text-xs text-slate-300 mt-1">Mã hệ thống: {voucher.ma_voucher}</p>
             </div>
@@ -332,6 +338,32 @@ export function VoucherDetailPage() {
             </div>
           </div>
         )}
+
+        {/* Modal Submit Approval Confirmation */}
+        <Modal
+          isOpen={showSubmitModal}
+          onClose={() => setShowSubmitModal(false)}
+          onConfirm={async () => {
+            setShowSubmitModal(false);
+            await handleStatusChange("Cho duyet", "Đã gửi yêu cầu xét duyệt Voucher tới Quản trị viên thành công!");
+          }}
+          title="Xác nhận gửi duyệt Voucher"
+          confirmText="✓ Xác nhận Gửi duyệt"
+          cancelText="Hủy bỏ"
+          confirmVariant="primary"
+        >
+          <div className="space-y-3 text-left">
+            <p className="text-sm text-slate-700">
+              Bạn có chắc chắn muốn gửi chương trình Voucher <strong>"{voucher.ten_voucher}"</strong> cho Quản trị viên thẩm định và xét duyệt?
+            </p>
+            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 text-xs text-amber-800 space-y-1">
+              <div className="font-bold flex items-center gap-1">
+                <span>Lưu ý:</span>
+              </div>
+              <p>Sau khi gửi duyệt, thông tin Voucher sẽ chuyển sang trạng thái <strong>"Chờ duyệt"</strong>. Quản trị viên sẽ thẩm định trước khi cho phép mở bán chính thức.</p>
+            </div>
+          </div>
+        </Modal>
 
         <Toast message={toastMessage} onClose={() => setToastMessage("")} />
       </div>
