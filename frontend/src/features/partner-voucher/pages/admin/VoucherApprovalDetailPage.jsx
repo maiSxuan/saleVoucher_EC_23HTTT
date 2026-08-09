@@ -250,7 +250,7 @@ export function VoucherApprovalDetailPage({ voucherId, onNavigate }) {
                   alt={voucher.ten_voucher}
                   className="w-full h-64 object-cover hover:scale-105 transition-transform duration-300"
                   onError={(e) => {
-                    e.target.src = "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80";
+                    e.target.src = "";
                   }}
                 />
               </div>
@@ -269,7 +269,7 @@ export function VoucherApprovalDetailPage({ voucherId, onNavigate }) {
               </div>
               <div>
                 <p className="text-xs text-slate-400">Danh mục</p>
-                <p className="font-medium text-slate-900 mt-0.5">{voucher.ten_danh_muc || "Ẩm thực"}</p>
+                <p className="font-medium text-slate-900 mt-0.5">{voucher.ten_danh_muc || voucher.ma_danh_muc}</p>
               </div>
               <div className="col-span-2">
                 <p className="text-xs text-slate-400">Mô tả</p>
@@ -342,10 +342,6 @@ export function VoucherApprovalDetailPage({ voucherId, onNavigate }) {
                 <p className="font-medium text-slate-800 mt-0.5">
                   {soldCount} / {Math.max(0, quantity - soldCount)}
                 </p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400">Giới hạn sử dụng</p>
-                <p className="font-medium text-slate-800 mt-0.5">1 lần/người</p>
               </div>
             </div>
           </div>

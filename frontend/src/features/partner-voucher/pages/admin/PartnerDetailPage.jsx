@@ -539,7 +539,7 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
           {/* Pending Branch Requests Section */}
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs p-5 space-y-4">
             <h3 className="font-bold text-slate-900 text-base flex items-center justify-between border-b border-slate-100 pb-3">
-              <span>📋 Yêu cầu chi nhánh đang chờ xử lý</span>
+              <span>Yêu cầu chi nhánh đang chờ xử lý</span>
               <span className="text-xs px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full font-bold">
                 {branchRequests.filter((r) => r.trang_thai === "Cho duyet" || r.trang_thai === "Cho xu ly").length} yêu cầu
               </span>
@@ -621,7 +621,7 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
           {branchRequests.filter((r) => r.trang_thai !== "Cho duyet" && r.trang_thai !== "Cho xu ly").length > 0 && (
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs p-5 space-y-4">
               <h3 className="font-bold text-slate-700 text-sm border-b border-slate-100 pb-3">
-                📜 Lịch sử các yêu cầu chi nhánh đã xử lý ({branchRequests.filter((r) => r.trang_thai !== "Cho duyet" && r.trang_thai !== "Cho xu ly").length})
+                Lịch sử các yêu cầu chi nhánh đã xử lý ({branchRequests.filter((r) => r.trang_thai !== "Cho duyet" && r.trang_thai !== "Cho xu ly").length})
               </h3>
               <div className="divide-y divide-slate-100">
                 {branchRequests
