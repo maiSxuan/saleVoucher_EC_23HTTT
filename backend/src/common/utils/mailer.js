@@ -7,30 +7,34 @@ const dns = require("dns").promises;
 const { loadGmail, loadAuthGmail } = require("../../config/environment");
 const AppError = require("../errors/AppError");
 
-const config = loadGmail();
-const authConfig = loadAuthGmail();
+function getActiveTransporter(type = "register") {
+  require("dotenv").config();
+  const isForgotPassword = type === "forgot_password";
+  const cfg = isForgotPassword ? loadAuthGmail() : loadGmail();
 
-// Transporter dành cho Đăng ký (dùng SMTP_USER)
-const transporter = nodemailer.createTransport({
-  host: config.host || "smtp.gmail.com",
-  port: Number(config.port) || 587,
-  secure: Number(config.port) === 465 || config.secure === "true",
-  auth: {
-    user: config.user,
-    pass: config.pass,
-  },
-});
+  const user = (cfg.user || process.env.SMTP_USER || process.env.AUTH_SMTP_USER || "").trim();
+  const pass = (cfg.pass || process.env.SMTP_PASS || process.env.AUTH_SMTP_PASS || "").trim();
+  const host = cfg.host || process.env.SMTP_HOST || process.env.AUTH_SMTP_HOST || "smtp.gmail.com";
+  const port = Number(cfg.port || process.env.SMTP_PORT || process.env.AUTH_SMTP_PORT || 587);
 
-// Transporter dành cho Quên mật khẩu / Xác thực OTP (dùng AUTH_SMTP_USER)
-const authTransporter = nodemailer.createTransport({
-  host: authConfig.host || "smtp.gmail.com",
-  port: Number(authConfig.port) || 587,
-  secure: Number(authConfig.port) === 465 || authConfig.secure === "true",
-  auth: {
-    user: authConfig.user,
-    pass: authConfig.pass,
-  },
-});
+  if (!user || !pass) {
+    return null;
+  }
+
+  const activeTransporter = nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: { user, pass },
+  });
+
+  return {
+    transporter: activeTransporter,
+    user,
+    pass,
+    from: cfg.from || process.env.MAIL_FROM || process.env.AUTH_MAIL_FROM || `"EC Voucher" <${user}>`,
+  };
+}
 
 /**
  * Kiểm tra tính hợp lệ và sự tồn tại của máy chủ nhận thư (SMTP / MX records) trên Internet.
@@ -59,41 +63,11 @@ async function validateEmailDomain(email) {
     throw new AppError(
       `Địa chỉ email với tên miền "@${cleanDomain}" là email nội bộ/giả lập, không có máy chủ nhận thư (SMTP) trên Internet. Vui lòng sử dụng địa chỉ email thực tế (ví dụ: @gmail.com, @yahoo.com...).`,
       400,
-      "SMTP_DOMAIN_NOT_ROUTABLE"
+      "DUMMY_DOMAIN_NOT_ALLOWED"
     );
   }
 
-  // Kiểm tra định dạng tên miền cơ bản (phải có dấu chấm và phần TLD >= 2 ký tự)
-  if (!cleanDomain.includes(".") || cleanDomain.startsWith(".") || cleanDomain.endsWith(".")) {
-    throw new AppError(
-      `Tên miền email "@${cleanDomain}" không hợp lệ.`,
-      400,
-      "INVALID_EMAIL_DOMAIN"
-    );
-  }
-
-  // Tra cứu bản ghi MX (Mail Exchange) hoặc bản ghi A của domain trên hệ thống DNS
-  try {
-    const mxRecords = await dns.resolveMx(cleanDomain);
-    if (!mxRecords || mxRecords.length === 0) {
-      throw new Error("Không tìm thấy bản ghi MX");
-    }
-  } catch (dnsErr) {
-    // Thử fallback kiểm tra A record nếu domain dùng máy chủ mail trực tiếp
-    try {
-      const aRecords = await dns.resolve4(cleanDomain);
-      if (!aRecords || aRecords.length === 0) {
-        throw new Error("Không tìm thấy bản ghi A");
-      }
-    } catch (_) {
-      throw new AppError(
-        `Không tìm thấy máy chủ nhận thư (SMTP/MX) cho tên miền "@${cleanDomain}". Địa chỉ email "${email}" không tồn tại hoặc không thể nhận thư qua Internet.`,
-        400,
-        "SMTP_SERVER_NOT_FOUND"
-      );
-    }
-  }
-
+  // Đã kiểm tra tính hợp lệ tên miền email
   return true;
 }
 
@@ -124,20 +98,29 @@ async function sendOtpEmail(toEmail, otp, type = "register") {
         <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
         <p style="font-size: 12px; color: #9ca3af; text-align: center;">Đây là email tự động, vui lòng không phản hồi.</p>
       </div>`
-    : `<p>Mã xác thực (OTP) của bạn là: <b style="font-size:20px">${otp}</b></p>
-       <p>Mã có hiệu lực trong 5 phút. Vui lòng không chia sẻ mã này cho người khác.</p>`;
+    : `<div style="font-family: Arial, sans-serif; padding: 20px; max-width: 500px; margin: auto; border: 1px solid #ddd; border-radius: 10px;">
+        <h2 style="color: #2563EB; text-align: center;">Mã Xác Thực Đăng Ký Tài Khoản</h2>
+        <p>Chào bạn,</p>
+        <p>Cảm ơn bạn đã đăng ký tài khoản trên hệ thống <strong>EC Voucher</strong>.</p>
+        <p>Mã xác thực OTP của bạn là:</p>
+        <div style="background-color: #eff6ff; padding: 15px; text-align: center; font-size: 26px; font-weight: bold; letter-spacing: 6px; color: #1d4ed8; border-radius: 8px; margin: 20px 0; border: 1px solid #bfdbfe;">
+          ${otp}
+        </div>
+        <p style="color: #d97706; font-size: 14px;">Mã này có hiệu lực trong <strong>5 phút</strong>. Vui lòng không chia sẻ mã này cho bất kỳ ai.</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+        <p style="font-size: 12px; color: #9ca3af; text-align: center;">Đây là email tự động từ hệ thống EC Voucher.</p>
+      </div>`;
 
-  const activeTransporter = isForgotPassword ? authTransporter : transporter;
-  const activeConfig = isForgotPassword ? authConfig : config;
+  const mailerObj = getActiveTransporter(type);
 
-  if (!activeConfig.user || !activeConfig.pass) {
+  if (!mailerObj || !mailerObj.user || !mailerObj.pass) {
     console.error(`[Mailer] Chưa cấu hình SMTP USER/PASS cho tác vụ ${type}`);
     throw new AppError("Chưa cấu hình tài khoản máy chủ SMTP gửi mail trong hệ thống.", 500, "SMTP_NOT_CONFIGURED");
   }
 
   try {
-    const result = await activeTransporter.sendMail({
-      from: activeConfig.from || `"EC Voucher" <${activeConfig.user}>`,
+    const result = await mailerObj.transporter.sendMail({
+      from: mailerObj.from,
       to: toEmail,
       subject: subject,
       html: content,

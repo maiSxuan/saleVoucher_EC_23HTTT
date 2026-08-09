@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import PartnerLayout from "../../../../layouts/PartnerLayout";
 import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
@@ -15,6 +16,7 @@ export function VoucherDetailPage() {
   const [loading, setLoading] = useState(true);
 
   const [toastMessage, setToastMessage] = useState("");
+  const [stopSellingModal, setStopSellingModal] = useState(false);
 
   const getLoggedInPartnerId = () => {
     try {
@@ -75,6 +77,7 @@ export function VoucherDetailPage() {
   const isNhap = voucher.trang_thai === "Nhap";
   const isDangBan = voucher.trang_thai === "Dang ban";
   const isTamNgung = voucher.trang_thai === "Tam ngung";
+  const isNgungBan = voucher.trang_thai === "Ngung ban";
   const isRejected = voucher.trang_thai === "Tu choi" || voucher.trang_thai_kiem_duyet === "Tu choi";
 
   return (
@@ -82,12 +85,21 @@ export function VoucherDetailPage() {
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Top Breadcrumb & Action Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <Link to="/partner/vouchers" className="hover:underline">
-              Vouchers
-            </Link>
-            <span>/</span>
-            <span className="font-semibold text-slate-900">{voucher.ten_voucher}</span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+              title="Quay lại danh sách Voucher"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <Link to="/partner/vouchers" className="hover:underline font-semibold text-slate-700">
+                Danh sách Voucher
+              </Link>
+              <span>/</span>
+              <span className="font-bold text-slate-900 line-clamp-1">{voucher.ten_voucher}</span>
+            </div>
           </div>
 
           {/* Action buttons strictly scoped to voucher status */}
@@ -99,7 +111,7 @@ export function VoucherDetailPage() {
               <>
                 <Link to={`/partner/vouchers/${voucher.ma_voucher}/edit`}>
                   <Button variant="secondary" size="sm">
-                    ✏️ Chỉnh sửa toàn bộ thông tin
+                    Chỉnh sửa
                   </Button>
                 </Link>
                 <Button
@@ -107,28 +119,37 @@ export function VoucherDetailPage() {
                   size="sm"
                   onClick={() => handleStatusChange("Cho duyet", "Đã gửi yêu cầu xét duyệt Voucher!")}
                 >
-                  🚀 Gửi Admin xét duyệt
+                  Gửi duyệt
                 </Button>
               </>
             )}
 
-            {/* b. Trạng thái Đang bán: Chỉ xem, có nút Tạm ngưng (không được sửa) */}
+            {/* b. Trạng thái Đang bán: Có nút Tạm ngưng và nút Ngừng bán */}
             {isDangBan && (
-              <Button
-                variant="warning"
-                size="sm"
-                onClick={() => handleStatusChange("Tam ngung", "Đã tạm ngưng bán Voucher!")}
-              >
-                ⏸️ Tạm ngưng bán
-              </Button>
+              <>
+                <Button
+                  variant="warning"
+                  size="sm"
+                  onClick={() => handleStatusChange("Tam ngung", "Đã tạm ngưng bán Voucher!")}
+                >
+                  Tạm ngưng
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => setStopSellingModal(true)}
+                >
+                  Ngừng bán
+                </Button>
+              </>
             )}
 
-            {/* c. Trạng thái Tạm ngưng: Chỉnh sửa giới hạn + Mở bán lại */}
+            {/* c. Trạng thái Tạm ngưng: Chỉnh sửa giới hạn + Mở bán lại + Ngừng bán */}
             {isTamNgung && (
               <>
                 <Link to={`/partner/vouchers/${voucher.ma_voucher}/edit`}>
                   <Button variant="secondary" size="sm">
-                    ✏️ Chỉnh sửa (Giới hạn)
+                    Chỉnh sửa
                   </Button>
                 </Link>
                 <Button
@@ -136,7 +157,14 @@ export function VoucherDetailPage() {
                   size="sm"
                   onClick={() => handleStatusChange("Dang ban", "Đã mở bán lại Voucher!")}
                 >
-                  ▶️ Mở bán lại
+                  Mở bán lại
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => setStopSellingModal(true)}
+                >
+                  Ngừng bán
                 </Button>
               </>
             )}
@@ -145,7 +173,7 @@ export function VoucherDetailPage() {
             {isRejected && (
               <Link to={`/partner/vouchers/${voucher.ma_voucher}/edit`}>
                 <Button variant="danger" size="sm">
-                  ✏️ Khắc phục & Gửi lại
+                  Khắc phục & Gửi lại
                 </Button>
               </Link>
             )}
@@ -165,7 +193,7 @@ export function VoucherDetailPage() {
                 <div className="pt-2">
                   <Link to={`/partner/vouchers/${voucher.ma_voucher}/edit`}>
                     <Button variant="danger" size="sm">
-                      Chỉnh sửa thông tin & Gửi lại
+                      Chỉnh sửa & Gửi lại
                     </Button>
                   </Link>
                 </div>
@@ -251,6 +279,59 @@ export function VoucherDetailPage() {
             )}
           </Card>
         </div>
+
+        {/* Discontinue Alert Card if Ngung ban */}
+        {isNgungBan && (
+          <div className="bg-rose-50 border border-rose-200 rounded-xl p-5 shadow-xs">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">🚫</span>
+              <div className="space-y-1">
+                <h4 className="font-bold text-rose-900 text-sm">Voucher này đã ngừng bán vĩnh viễn</h4>
+                <p className="text-xs text-rose-700 font-medium">
+                  Chương trình Voucher đã chính thức chấm dứt phát hành
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Confirm Stop Selling (Ngừng bán) */}
+        {stopSellingModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" onClick={() => setStopSellingModal(false)} />
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4 text-slate-800">
+              <div className="flex items-center gap-3 text-rose-600">
+                <span className="text-2xl">⚠️</span>
+                <h3 className="font-bold text-slate-900 text-lg">Xác nhận NGỪNG BÁN Voucher</h3>
+              </div>
+
+              <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 text-xs text-rose-900 space-y-2">
+                <p className="font-bold">Chương trình Voucher: {voucher.ten_voucher}</p>
+                <p className="leading-relaxed">
+                  Khi xác nhận <strong>Ngừng bán</strong>, Voucher này sẽ bị đóng vĩnh viễn
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  onClick={() => setStopSellingModal(false)}
+                  className="px-4 py-2 text-xs font-semibold border border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  onClick={async () => {
+                    setStopSellingModal(false);
+                    await handleStatusChange("Ngung ban", "Voucher đã được chuyển sang trạng thái NGỪNG BÁN vĩnh viễn!");
+                  }}
+                  className="px-4 py-2 text-xs font-bold bg-rose-600 text-white rounded-xl hover:bg-rose-700 transition-colors cursor-pointer shadow-xs"
+                >
+                  Xác nhận Ngừng bán
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <Toast message={toastMessage} onClose={() => setToastMessage("")} />
       </div>
