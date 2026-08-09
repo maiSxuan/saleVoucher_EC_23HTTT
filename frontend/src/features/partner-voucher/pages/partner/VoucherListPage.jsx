@@ -6,16 +6,29 @@ import Badge from "../../../../shared/components/Badge";
 import Toast from "../../../../shared/components/Toast";
 import { getVouchersByPartnerApi, getCategoriesApi } from "../../../../shared/api/partnerApi";
 import { formatCategoryName } from "../../../../shared/utils/categoryFormatter";
+import { getVoucherPublicationStatus } from "../../../../shared/utils/publicationStatusHelper";
+
+const SESSION_KEY = "ec_partner_voucher_list_state_v1";
+
+const getSavedState = () => {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return null;
+};
 
 export function VoucherListPage() {
   const navigate = useNavigate();
-  const [vouchers, setVouchers] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const savedState = getSavedState();
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedStatusTab, setSelectedStatusTab] = useState("All");
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [vouchers, setVouchers] = useState(savedState?.cachedVouchers || []);
+  const [categories, setCategories] = useState(savedState?.cachedCategories || []);
+  const [loading, setLoading] = useState(!savedState?.cachedVouchers || savedState.cachedVouchers.length === 0);
+
+  const [searchQuery, setSearchQuery] = useState(savedState?.searchQuery || "");
+  const [selectedStatusTab, setSelectedStatusTab] = useState(savedState?.selectedStatusTab || "All");
+  const [selectedCategory, setSelectedCategory] = useState(savedState?.selectedCategory || "All");
   const [toastMessage, setToastMessage] = useState("");
 
   const statusTabs = [
@@ -40,12 +53,27 @@ export function VoucherListPage() {
   };
 
   const loadVouchers = async () => {
-    setLoading(true);
+    if (!savedState?.cachedVouchers) setLoading(true);
     const partnerId = getLoggedInPartnerId();
     const data = await getVouchersByPartnerApi(partnerId);
     setVouchers(data || []);
     setLoading(false);
   };
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        SESSION_KEY,
+        JSON.stringify({
+          searchQuery,
+          selectedStatusTab,
+          selectedCategory,
+          cachedVouchers: vouchers,
+          cachedCategories: categories,
+        })
+      );
+    } catch (e) {}
+  }, [searchQuery, selectedStatusTab, selectedCategory, vouchers, categories]);
 
   useEffect(() => {
     async function loadData() {
@@ -60,6 +88,9 @@ export function VoucherListPage() {
     setSearchQuery("");
     setSelectedStatusTab("All");
     setSelectedCategory("All");
+    try {
+      sessionStorage.removeItem(SESSION_KEY);
+    } catch (e) {}
   };
 
   const filteredVouchers = vouchers.filter((v) => {
@@ -83,27 +114,7 @@ export function VoucherListPage() {
   });
 
   const getPublicationStatusBadge = (v) => {
-    if (v.trang_thai === "Ngung ban") {
-      return { label: "Ngừng bán", color: "bg-rose-50 text-rose-700 border-rose-200", dot: "bg-rose-500" };
-    }
-    if (v.trang_thai === "Tam ngung" || v.trang_thai === "Tam an") {
-      return { label: "Tạm ngưng", color: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400" };
-    }
-    const isApproved = v.trang_thai === "Dang ban" || v.trang_thai === "Da duyet";
-    if (!isApproved) {
-      return { label: "Chưa công bố", color: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400" };
-    }
-
-    const now = new Date();
-    const start = v.tg_bat_dau_ban ? new Date(v.tg_bat_dau_ban) : now;
-    const end = v.tg_ket_thuc_ban ? new Date(v.tg_ket_thuc_ban) : new Date(Date.now() + 86400000 * 30);
-    const sold = Number(v.so_luong_da_ban) || 0;
-    const total = Number(v.so_luong_phat_hanh) || 0;
-
-    if (now > end) return { label: "Hết hạn", color: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400" };
-    if (sold >= total && total > 0) return { label: "Hết hàng", color: "bg-purple-50 text-purple-700 border-purple-200", dot: "bg-purple-500" };
-    if (now >= start) return { label: "Đang bán", color: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" };
-    return { label: "Chờ mở bán", color: "bg-blue-50 text-blue-700 border-blue-200", dot: "bg-blue-500" };
+    return getVoucherPublicationStatus(v);
   };
 
   const formatDate = (dateStr) => {

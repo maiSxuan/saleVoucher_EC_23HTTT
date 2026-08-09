@@ -58,7 +58,7 @@ class VoucherModel {
     // Derived review and publication status for UI presentation
     this.trang_thai_kiem_duyet =
       trang_thai_kiem_duyet ||
-      (trang_thai === "Dang ban" || trang_thai === "Tam ngung"
+      (trang_thai === "Dang ban" || trang_thai === "Tam ngung" || trang_thai === "Ngung ban"
         ? "Da duyet"
         : trang_thai === "Cho duyet"
         ? "Cho duyet"

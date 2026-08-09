@@ -4,6 +4,7 @@ import PartnerLayout from "../../../../layouts/PartnerLayout";
 import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
 import Toast from "../../../../shared/components/Toast";
+import Modal from "../../../../shared/components/Modal";
 import {
   getVoucherByIdApi,
   saveVoucherApi,
@@ -15,6 +16,8 @@ import { formatCategoryName } from "../../../../shared/utils/categoryFormatter";
 export function VoucherFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
 
   const getTodayDateTimeLocal = () => {
     const d = new Date();
@@ -47,9 +50,9 @@ export function VoucherFormPage() {
     so_luong_phat_hanh: "",
     tg_bat_dau_ban: getTodayDateTimeLocal(),
     tg_ket_thuc_ban: getFutureDateTimeLocal(30),
-    dieu_kien_ap_dung: "Áp dụng cho 01 người lớn. Vui lòng xuất trình mã QR trước khi sử dụng.",
+    dieu_kien_ap_dung: "Áp dụng cho mọi hoá đơn . Vui lòng xuất trình mã trước khi sử dụng.",
     chinh_sach_hoan_huy: "Không quy đổi thành tiền mặt. Hỗ trợ hoàn tiền nếu hủy trước 24h.",
-    hinh_anh_url: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80",
+    hinh_anh_url: "",
     ma_chi_nhanh: [],
   });
 
@@ -210,9 +213,7 @@ export function VoucherFormPage() {
     return Object.keys(errs).length === 0;
   };
 
-  const handleSave = async (isSubmitNow = false) => {
-    if (!validate()) return;
-
+  const executeSave = async (isSubmitNow = false) => {
     setLoading(true);
     const partnerId = getLoggedInPartnerId();
 
@@ -249,6 +250,15 @@ export function VoucherFormPage() {
     setTimeout(() => {
       navigate(`/partner/vouchers/${saved?.ma_voucher || id}`);
     }, 1000);
+  };
+
+  const handleSave = (isSubmitNow = false) => {
+    if (!validate()) return;
+    if (isSubmitNow || isRejected) {
+      setShowSubmitModal(true);
+    } else {
+      executeSave(false);
+    }
   };
 
   const discountPercent =
@@ -561,6 +571,33 @@ export function VoucherFormPage() {
   )}
 </div>
         </div>
+
+        {/* Modal Submit Approval Confirmation */}
+        <Modal
+          isOpen={showSubmitModal}
+          onClose={() => setShowSubmitModal(false)}
+          onConfirm={async () => {
+            setShowSubmitModal(false);
+            await executeSave(true);
+          }}
+          title="Xác nhận gửi duyệt Voucher"
+          confirmText="✓ Xác nhận Gửi duyệt"
+          cancelText="Hủy bỏ"
+          confirmVariant="primary"
+          loading={loading}
+        >
+          <div className="space-y-3 text-left">
+            <p className="text-sm text-slate-700">
+              Bạn có chắc chắn muốn gửi thông tin Voucher <strong>"{formData.ten_voucher || "chương trình này"}"</strong> cho Quản trị viên thẩm định và xét duyệt?
+            </p>
+            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 text-xs text-amber-800 space-y-1">
+              <div className="font-bold flex items-center gap-1">
+                <span>Lưu ý:</span>
+              </div>
+              <p>Sau khi gửi duyệt, thông tin Voucher sẽ ở trạng thái <strong>"Chờ duyệt"</strong>. Quản trị viên sẽ kiểm duyệt trước khi chính thức kích hoạt chương trình.</p>
+            </div>
+          </div>
+        </Modal>
 
         <Toast message={toastMessage} onClose={() => setToastMessage("")} />
       </div>
