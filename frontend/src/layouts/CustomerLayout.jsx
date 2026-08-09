@@ -108,7 +108,7 @@ export default function CustomerLayout() {
                     <User size={11} className="text-orange-500" />
                   </div>
                   <span className="hidden sm:block text-sm max-w-20 truncate">
-                    {user?.name}
+                    {typeof user?.name === 'object' && user?.name !== null ? user.name.name || user.name.ho_ten || 'User' : user?.name}
                   </span>
                   <ChevronDown size={11} />
                 </button>

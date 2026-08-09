@@ -43,9 +43,11 @@ function IssuedVoucherMini({ vm, onClick }) {
         </div>
         <div className="min-w-0">
           <p className="font-semibold text-slate-800 truncate text-sm">
-            {v.ten_voucher || "Voucher"}
+            {typeof v.ten_voucher === 'object' && v.ten_voucher !== null ? (v.ten_voucher.name || v.ten_voucher.ten_voucher || "Voucher") : (v.ten_voucher || "Voucher")}
           </p>
-          <p className="text-xs text-slate-500">{vm.partnerName || ""}</p>
+          <p className="text-xs text-slate-500">
+            {typeof vm.partnerName === 'object' && vm.partnerName !== null ? (vm.partnerName.name || vm.partnerName.ten_dn || "") : (vm.partnerName || "")}
+          </p>
         </div>
       </div>
 

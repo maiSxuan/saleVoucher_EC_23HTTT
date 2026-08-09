@@ -36,7 +36,13 @@ export function AdminLayout({ children }) {
   const userStr = localStorage.getItem('user');
   let currentUser = { name: 'Admin', email: '' };
   try {
-    currentUser = userStr ? JSON.parse(userStr) : currentUser;
+    const parsedUser = userStr ? JSON.parse(userStr) : null;
+    if (parsedUser) {
+      currentUser = { ...parsedUser };
+      if (typeof currentUser.name === 'object' && currentUser.name !== null) {
+        currentUser.name = currentUser.name.name || currentUser.name.ho_ten || JSON.stringify(currentUser.name);
+      }
+    }
   } catch {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('user');
