@@ -1311,6 +1311,40 @@ union all
 select 'LOG_HT', count(*) from LOG_HT
 order by bang;
 
+
+INSERT INTO yeu_cau_cap_nhat_hosodn (
+    ma_yc, ma_hs, ten_dn_moi, ma_so_thue_moi, dia_chi_moi, 
+    giay_phep_kinh_doanh_moi, ho_ten_nguoi_dai_dien_moi, sdt_nguoi_dai_dien_moi, 
+    email_nguoi_dai_dien_moi, cccd_moi, trang_thai, ly_do_tu_choi, 
+    ngay_yeu_cau, nguoi_duyet, ngay_duyet, ngay_sinh, gioi_tinh
+) VALUES 
+('186bf8be-5ad0-4399-881f-182830796376', '20000000-0000-0000-0000-000000000001', 'Cong ty TNHH Am Thuc Sai Gon', '0310000001', '12 Nguyen Hue, TP. Ho Chi Minh', NULL, 'Pham Hoang Anh Khoa', '0900000011', 'owner.amthuc@ec.local', '079088000011', 'Da duyet', NULL, '2026-08-07 14:52:38.38+00', NULL, '2026-08-07 15:03:46.336+00', NULL, NULL),
+('68d0511e-e249-4fd3-b0e7-5bb119afb794', '20000000-0000-0000-0000-000000000001', 'CÔNG TY ĐÃ DUYỆT TÊN MỚI 100%', NULL, '999 Đường Nguyễn Huệ, Q1, TPHCM', NULL, 'Trần Văn Đại Diện Mới', NULL, NULL, NULL, 'Da duyet', NULL, '2026-08-07 17:11:33.397+00', NULL, '2026-08-07 17:12:12.446+00', NULL, NULL),
+('f424e2dd-6508-47f1-924e-b133be0c8ccb', '20000000-0000-0000-0000-000000000001', 'Ẩm Thực An Nhiên', '0310000001', '999 Đường Nguyễn Huệ, Q1, TPHCM', NULL, 'Phạm Hoàng Mỹ Anh', '0900000011', 'owner.amthuc@ec.local', '079088000011', 'Da duyet', NULL, '2026-08-07 17:17:09.916+00', NULL, '2026-08-07 17:19:09.682+00', NULL, NULL),
+('a04d9b85-1499-4fa8-8b1f-a27199359860', '20000000-0000-0000-0000-000000000001', 'Ẩm Thực An Nhiên', '0310000001', '12 Đường Nguyễn Huệ, Q1, TPHCM', NULL, 'Phạm Hoàng Mỹ Ngọc', '0900000011', 'owner.amthuc@ec.local', '079088000011', 'Da duyet', NULL, '2026-08-08 04:58:52.996+00', NULL, '2026-08-08 05:02:37.879+00', NULL, NULL),
+('5d9df147-531a-47df-81ea-14b242910835', '20000000-0000-0000-0000-000000000001', 'Ẩm Thực An Nhiên', '0310000001', '12 Đường Nguyễn Huệ, Q1, TPHCM', NULL, 'Nguyễn Ngọc Linh', '0905670011', 'nnl.amthuc@ec.local', '07908800022', 'Da duyet', NULL, '2026-08-08 05:54:55.495+00', NULL, '2026-08-08 06:18:50.885+00', NULL, NULL),
+('fef1c61d-fc6b-48a1-9eb7-aae3f99aacdb', '20000000-0000-0000-0000-000000000001', 'CÔNG TY TEST CÓ NGÀY SINH & GIỚI TÍNH', NULL, NULL, NULL, 'Phạm Hoàng Mỹ Anh Mới', NULL, NULL, NULL, 'Da duyet', NULL, '2026-08-08 06:33:08.378+00', NULL, '2026-08-08 06:33:12.183+00', '1990-05-20', 'Nữ'),
+('a16b6b7b-1af6-42a5-a2a6-dc715ae1e3e2', '20000000-0000-0000-0000-000000000001', 'CÔNG TY TEST CÓ NGÀY SINH & GIỚI TÍNH 2026', NULL, NULL, NULL, 'Phạm Hoàng Mỹ Anh Mới', NULL, NULL, NULL, 'Da duyet', NULL, '2026-08-08 06:34:17.387+00', NULL, '2026-08-08 06:34:20.129+00', '1992-08-15', 'Nữ'),
+('5f8318cd-9b99-4d01-93d2-1b89bf097e6f', '20000000-0000-0000-0000-000000000001', 'Ẩm Thực An', '0310000001', '13 Đường Nguyễn Huệ, Q1, TPHCM', NULL, 'Phạm Hoàng Mỹ Ánh', '0905670000', 'nnln.amthuc@ec.local', '07908800011', 'Da duyet', NULL, '2026-08-08 06:37:49.785+00', NULL, '2026-08-08 06:40:45.152+00', '1977-08-15', 'Nam'),
+('4b69a2ee-5e39-4419-ab1c-0d29ab37a5b7', '20000000-0000-0000-0000-000000000001', 'Test Corp Schema Sync', NULL, NULL, NULL, 'Nguyen Van A', NULL, NULL, NULL, 'Da duyet', NULL, '2026-08-08 17:14:04.752+00', '00000000-0000-0000-0000-000000000001', '2026-08-08 17:14:05.793+00', NULL, NULL),
+('74dbf4a8-b5c6-4a57-8904-6900daad3033', '20000000-0000-0000-0000-000000000001', 'Test Corp Schema Sync', NULL, NULL, NULL, 'Nguyen Van A', NULL, NULL, NULL, 'Da duyet', NULL, '2026-08-08 17:14:24.041+00', '00000000-0000-0000-0000-000000000001', '2026-08-08 17:14:24.444+00', NULL, NULL),
+('ac0fed61-8f3b-4d6b-a8b1-91805ba16b9f', '5476275f-bfff-4b80-bcc2-aa178c40dee8', 'Công Ty Huy Hoạch AV', '0292992900', '100 Nguyễn Văn Linh', 'https://qsbnxxkqosnoomzgjtyp.supabase.co/storage/v1/object/public/partner-documents/licenses/1786254922699_m396x.jpg', 'Trần Kim Ngoc', '092929000', 'itnamemyidol@gmail.com', '029288188000', 'Tu choi', 'Thông tin hồ sơ mới không phù hợp quy định', '2026-08-09 05:55:23.933+00', '00000000-0000-0000-0000-000000000001', '2026-08-09 05:57:09.399+00', '1988-01-10', 'Nu'),
+('37b62d15-452f-4a01-92cb-c901e8741d5f', '5476275f-bfff-4b80-bcc2-aa178c40dee8', 'Công Ty Huy Hoạch AB', '0292992900', '100 Nguyễn Văn Linh', 'https://qsbnxxkqosnoomzgjtyp.supabase.co/storage/v1/object/public/partner-documents/licenses/1786255342146_ljpi04.jpg', 'Trần Kim Ngọc', '0929299000', 'itnamemyidol@gmail.com', '029288188000', 'Da duyet', NULL, '2026-08-09 06:02:23.87+00', '00000000-0000-0000-0000-000000000001', '2026-08-09 06:04:05.993+00', '1988-01-01', 'Nu'),
+('89047fc3-be6a-4143-bacf-6318718b0db5', '5476275f-bfff-4b80-bcc2-aa178c40dee8', 'Công Ty Huy Hoạch ABC', '0292992900', '100 Nguyễn Văn Linh', 'https://qsbnxxkqosnoomzgjtyp.supabase.co/storage/v1/object/public/partner-documents/licenses/1786255342146_ljpi04.jpg', 'Trần Kim Ngọc', '0929299000', 'itnn@gmail.com', '029288188000', 'Da duyet', NULL, '2026-08-09 06:49:24.215+00', '00000000-0000-0000-0000-000000000001', '2026-08-09 07:24:57.848+00', '1988-01-01', 'Nu');
+
+INSERT INTO yeu_cau_cap_nhat_chinhanh (
+    ma_yc, ma_chi_nhanh, loai_yeu_cau, ten_chi_nhanh_moi, khu_vuc_moi, 
+    dia_chi_moi, trang_thai, ly_do_tu_choi, ngay_yeu_cau, nguoi_duyet, ngay_duyet
+) VALUES 
+('fb525be5-2b44-426f-be27-bdefa7968a52', '8d450b42-3537-44fc-a54f-4b5457a98617', 'XOA', 'Ẩm Thực 32', 'Đà Nẵng', '56 Phố Đèn, Đà Nẵng', 'Da duyet', NULL, '2026-08-07 15:07:08.381+00', NULL, '2026-08-07 15:18:17.238+00'),
+('9499280f-c895-4662-98c9-fba5d4c7cb78', '30000000-0000-0000-0000-000000000001', 'CAP_NHAT', 'Am Thuc Sai Gon - Nguyen Hue', 'Hà Nội', '12 Nguyen Hue, TP. Ho Chi Minh', 'Tu choi', 'Thông tin địa chỉ chi nhánh không chính xác', '2026-08-07 15:06:30.459+00', NULL, '2026-08-07 15:19:39.042+00'),
+('663f2b39-231e-4c13-8c05-22b5ae39b8d3', 'd8bcac7d-8765-45fa-8a5d-241d51648481', 'CAP_NHAT', 'Chi Nhánh Đã Đổi Tên Mới 100%', 'Hà Nội', '999 Phố Huế, Hai Bà Trưng', 'Da duyet', NULL, '2026-08-07 17:16:04.908+00', NULL, '2026-08-07 17:16:06.486+00'),
+('69669056-59d3-4ce8-8c21-4beac8bf1852', 'd8bcac7d-8765-45fa-8a5d-241d51648481', 'CAP_NHAT', 'An Nhiên Tự Nhiên', 'Hà Nội', '999 Phố Huế, Hai Bà Trưng', 'Da duyet', NULL, '2026-08-07 17:17:56.955+00', NULL, '2026-08-07 17:19:00.359+00'),
+('62ff2704-d84f-49c0-a4bb-07f63ad07936', '53360c95-0f28-4479-a4f1-5ab28c4b60dc', 'CAP_NHAT', 'Chi nhánh Ẩm Thực Nguyễn Văn Linh', 'TP. Hồ Chí Minh', '999 Nguyen Van Linh, Q7', 'Da duyet', NULL, '2026-08-08 04:59:58.051+00', NULL, '2026-08-08 05:02:29.583+00'),
+('b21634e6-1f29-46eb-a90f-a76692a89064', 'ab0e5885-2b56-464f-9fb8-80bb1a86cb8d', 'CAP_NHAT', 'Ẩm Thực Ngọc', 'Hà Nội', '888 Le Van Luong, Q7', 'Da duyet', NULL, '2026-08-08 05:55:58.219+00', NULL, '2026-08-08 06:40:55.027+00'),
+('da056dbf-ae35-4279-a323-98fc0c0edf90', 'a41a76b2-493c-41dd-b067-afbbb629bef4', 'CAP_NHAT', 'Ẩm Thực Linh', 'Hà Nội', '123 Test Valid UUID Street', 'Da duyet', NULL, '2026-08-08 05:55:43.237+00', NULL, '2026-08-08 06:40:58.587+00'),
+('3aa52395-9435-4900-8654-184a0436ecec', '4c113305-e034-4498-a97f-89e1a74f1286', 'CAP_NHAT', 'Ẩm Thực Linh Nguyễn', 'TP. Hồ Chí Minh', '12 Linh Nguyên, Hồ Chí Minh', 'Da duyet', NULL, '2026-08-07 14:52:09.344+00', '00000000-0000-0000-0000-000000000001', '2026-08-08 17:14:24.644+00');
+
 -- =====================================================================
 -- 20. TÀI KHOẢN DEMO
 -- =====================================================================
