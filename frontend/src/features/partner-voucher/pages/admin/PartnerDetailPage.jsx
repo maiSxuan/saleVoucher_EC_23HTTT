@@ -391,11 +391,25 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
                     )}
 
                     {(pendingProfileReq.gioi_tinh || pendingProfileReq.gioi_tinh_moi) && (
-                      <div className="flex justify-between items-center py-1">
+                      <div className="flex justify-between items-center py-1 border-b border-gray-100">
                         <span className="text-gray-500">Giới tính đại diện:</span>
                         <span className="font-medium text-slate-900">
                           {partner.nguoi_dai_dien?.gioi_tinh || "Nam"} <span className="text-amber-600">➔</span> <span className="text-emerald-700">{pendingProfileReq.gioi_tinh || pendingProfileReq.gioi_tinh_moi}</span>
                         </span>
+                      </div>
+                    )}
+
+                    {pendingProfileReq.giay_phep_kinh_doanh_moi && (
+                      <div className="flex justify-between items-center py-1.5">
+                        <span className="text-gray-500 font-medium">Giấy phép kinh doanh mới:</span>
+                        <a
+                          href={pendingProfileReq.giay_phep_kinh_doanh_moi}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-bold text-blue-600 hover:underline flex items-center gap-1 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200"
+                        >
+                          🔗 Xem Giấy phép GPKD mới đề xuất
+                        </a>
                       </div>
                     )}
                   </div>
@@ -677,17 +691,21 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
         cancelText="Hủy"
       >
         <div className="space-y-3 text-left">
-          <label className="block text-xs font-semibold text-slate-700">Lý do từ chối *</label>
-          <select
-            value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
-            className="w-full px-3 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-rose-500 focus:outline-none bg-white"
-          >
-            <option value="Giấy phép kinh doanh không hợp lệ">Giấy phép kinh doanh không hợp lệ</option>
-            <option value="Thông tin doanh nghiệp không trùng khớp">Thông tin doanh nghiệp không trùng khớp</option>
-            <option value="Mã số thuế không tồn tại">Mã số thuế không tồn tại</option>
-          </select>
-        </div>
+  <label className="block text-xs font-semibold text-slate-700">Lý do từ chối *</label>
+  <input
+    type="text"
+    list="reject-reason-options"
+    value={rejectReason}
+    onChange={(e) => setRejectReason(e.target.value)}
+    placeholder="Chọn lý do có sẵn hoặc nhập lý do khác..."
+    className="w-full px-3 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-rose-500 focus:outline-none bg-white"
+  />
+  <datalist id="reject-reason-options">
+    <option value="Giấy phép kinh doanh không hợp lệ" />
+    <option value="Thông tin doanh nghiệp không trùng khớp" />
+    <option value="Mã số thuế không tồn tại" />
+  </datalist>
+</div>
       </Modal>
 
       {/* Modal Lock Confirmation */}

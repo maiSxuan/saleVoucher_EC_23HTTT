@@ -334,6 +334,15 @@ class PartnerService {
    */
   async createProfileRequest(payload) {
     const partnerProfileRequestRepo = require("../../data/repositories/partner-profile-request.repository");
+
+    if (payload.giay_phep_kinh_doanh_moi && payload.giay_phep_kinh_doanh_moi.startsWith("data:")) {
+      try {
+        payload.giay_phep_kinh_doanh_moi = await uploadBase64ToSupabase(payload.giay_phep_kinh_doanh_moi, "licenses");
+      } catch (e) {
+        console.warn("[PartnerService] Upload license file error:", e.message);
+      }
+    }
+
     const createdReq = await partnerProfileRequestRepo.create(payload);
 
     // Lấy thông tin đối tác hiện tại để log before/after

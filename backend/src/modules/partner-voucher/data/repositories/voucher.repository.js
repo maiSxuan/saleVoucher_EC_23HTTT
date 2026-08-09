@@ -432,9 +432,14 @@ class VoucherRepository {
 
   async updateStatus(id, trangThai, trangThaiKiemDuyet, lyDoTuChoi = "", isHidden = false) {
     const status = isHidden ? "Tam ngung" : trangThai;
+    let reviewStatus = trangThaiKiemDuyet;
+    if (!reviewStatus) {
+      reviewStatus = ["Dang ban", "Tam ngung", "Ngung ban"].includes(status) ? "Da duyet" : status;
+    }
+
     const payload = {
       trang_thai: status,
-      trang_thai_kiem_duyet: trangThaiKiemDuyet || status,
+      trang_thai_kiem_duyet: reviewStatus,
       trang_thai_cong_bo: isHidden ? "Bao luu" : (status === "Dang ban" ? "Hien thi" : "Bao luu"),
       ly_do_tu_choi: lyDoTuChoi || "",
     };

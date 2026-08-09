@@ -50,8 +50,8 @@ export function VoucherFormPage() {
     so_luong_phat_hanh: "",
     tg_bat_dau_ban: getTodayDateTimeLocal(),
     tg_ket_thuc_ban: getFutureDateTimeLocal(30),
-    dieu_kien_ap_dung: "Áp dụng cho mọi hoá đơn. Vui lòng xuất trình mã QR trước khi sử dụng.",
-    chinh_sach_hoan_huy: "Không quy đổi thành tiền mặt. Liên hệ để được hoàn trả.",
+    dieu_kien_ap_dung: "Áp dụng cho mọi hoá đơn . Vui lòng xuất trình mã trước khi sử dụng.",
+    chinh_sach_hoan_huy: "Không quy đổi thành tiền mặt. Hỗ trợ hoàn tiền nếu hủy trước 24h.",
     hinh_anh_url: "",
     ma_chi_nhanh: [],
   });

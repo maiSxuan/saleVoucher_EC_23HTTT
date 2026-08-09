@@ -9,9 +9,21 @@ import {
   rejectPartnerApi,
 } from "../../../../shared/api/partnerApi";
 
+const SESSION_KEY = "ec_admin_partner_management_list_state_v1";
+
+const getSavedState = () => {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return null;
+};
+
 export function PartnerManagementPage() {
-  const [partners, setPartners] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const savedState = getSavedState();
+
+  const [partners, setPartners] = useState(savedState?.cachedPartners || []);
+  const [loading, setLoading] = useState(!savedState?.cachedPartners || savedState.cachedPartners.length === 0);
   const [toastMessage, setToastMessage] = useState("");
 
   // Modals state
@@ -19,13 +31,13 @@ export function PartnerManagementPage() {
   const [rejectReason, setRejectReason] = useState("Giấy phép kinh doanh không hợp lệ");
 
   // Filters state matching Voucher Approval Page design
-  const [searchTenDn, setSearchTenDn] = useState("");
-  const [searchMst, setSearchMst] = useState("");
-  const [selectedStatusFilter, setSelectedStatusFilter] = useState("ALL");
-  const [filterPendingBranchReqs, setFilterPendingBranchReqs] = useState(false);
+  const [searchTenDn, setSearchTenDn] = useState(savedState?.searchTenDn || "");
+  const [searchMst, setSearchMst] = useState(savedState?.searchMst || "");
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState(savedState?.selectedStatusFilter || "ALL");
+  const [filterPendingBranchReqs, setFilterPendingBranchReqs] = useState(savedState?.filterPendingBranchReqs || false);
 
   const loadData = async () => {
-    setLoading(true);
+    if (!savedState?.cachedPartners) setLoading(true);
     try {
       const data = await getPartnersApi();
       setPartners(data || []);
@@ -37,6 +49,21 @@ export function PartnerManagementPage() {
   };
 
   useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        SESSION_KEY,
+        JSON.stringify({
+          searchTenDn,
+          searchMst,
+          selectedStatusFilter,
+          filterPendingBranchReqs,
+          cachedPartners: partners,
+        })
+      );
+    } catch (e) {}
+  }, [searchTenDn, searchMst, selectedStatusFilter, filterPendingBranchReqs, partners]);
+
+  useEffect(() => {
     loadData();
   }, []);
 
@@ -45,6 +72,9 @@ export function PartnerManagementPage() {
     setSearchMst("");
     setSelectedStatusFilter("ALL");
     setFilterPendingBranchReqs(false);
+    try {
+      sessionStorage.removeItem(SESSION_KEY);
+    } catch (e) {}
   };
 
   const handleApproveInline = async (partnerId) => {

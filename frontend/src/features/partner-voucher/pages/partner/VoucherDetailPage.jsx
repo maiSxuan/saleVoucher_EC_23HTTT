@@ -8,6 +8,8 @@ import Badge from "../../../../shared/components/Badge";
 import Toast from "../../../../shared/components/Toast";
 import Modal from "../../../../shared/components/Modal";
 import { getVoucherByIdApi, getBranchesByPartnerApi, saveVoucherApi } from "../../../../shared/api/partnerApi";
+import { formatCategoryName } from "../../../../shared/utils/categoryFormatter";
+import { getVoucherPublicationStatus } from "../../../../shared/utils/publicationStatusHelper";
 
 export function VoucherDetailPage() {
   const { id } = useParams();
@@ -67,10 +69,16 @@ export function VoucherDetailPage() {
   const activeBranches = branches.filter((b) => (voucher.ma_chi_nhanh || []).includes(b.ma_chi_nhanh));
 
   const handleStatusChange = async (newStatus, msg) => {
+    const reviewStatus = ["Dang ban", "Tam ngung", "Ngung ban"].includes(newStatus)
+      ? "Da duyet"
+      : newStatus === "Cho duyet"
+      ? "Cho duyet"
+      : voucher.trang_thai_kiem_duyet || "Nhap";
+
     await saveVoucherApi({
       ma_voucher: voucher.ma_voucher,
       trang_thai: newStatus,
-      trang_thai_kiem_duyet: newStatus === "Cho duyet" ? "Cho duyet" : voucher.trang_thai_kiem_duyet,
+      trang_thai_kiem_duyet: reviewStatus,
     });
     setToastMessage(msg || "Đã cập nhật trạng thái Voucher thành công!");
     await loadData();
@@ -106,7 +114,10 @@ export function VoucherDetailPage() {
 
           {/* Action buttons strictly scoped to voucher status */}
           <div className="flex items-center gap-2">
-            <Badge status={voucher.trang_thai} />
+            {(() => {
+              const pubStatus = getVoucherPublicationStatus(voucher);
+              return <Badge status={pubStatus.key} text={pubStatus.label} />;
+            })()}
 
             {/* a. Trạng thái Nháp: Chỉnh sửa toàn bộ + Gửi duyệt */}
             {isNhap && (
@@ -343,7 +354,7 @@ export function VoucherDetailPage() {
         >
           <div className="space-y-3 text-left">
             <p className="text-sm text-slate-700">
-              Bạn có chắc chắn muốn gửi chương trình Voucher <strong>"{voucher?.ten_voucher}"</strong> cho Quản trị viên thẩm định và xét duyệt?
+              Bạn có chắc chắn muốn gửi chương trình Voucher <strong>"{voucher.ten_voucher}"</strong> cho Quản trị viên thẩm định và xét duyệt?
             </p>
             <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 text-xs text-amber-800 space-y-1">
               <div className="font-bold flex items-center gap-1">

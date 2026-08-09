@@ -84,7 +84,6 @@ class PartnerProfileRequestRepository {
       ma_so_thue_moi: payload.ma_so_thue_moi || null,
       dia_chi_moi: payload.dia_chi_moi || null,
       giay_phep_kinh_doanh_moi: payload.giay_phep_kinh_doanh_moi || null,
-      id_nguoi_dai_dien_moi: payload.id_nguoi_dai_dien_moi || null,
       ho_ten_nguoi_dai_dien_moi: payload.ho_ten_nguoi_dai_dien_moi || null,
       sdt_nguoi_dai_dien_moi: payload.sdt_nguoi_dai_dien_moi || null,
       email_nguoi_dai_dien_moi: payload.email_nguoi_dai_dien_moi || null,
@@ -124,10 +123,11 @@ class PartnerProfileRequestRepository {
    * Update request status (Da duyet / Tu choi)
    */
   async updateStatus(reqId, trang_thai, ly_do_tu_choi = null, nguoi_duyet = null) {
+    const finalAdminId = nguoi_duyet || "00000000-0000-0000-0000-000000000001";
     const updateFields = {
       trang_thai,
       ly_do_tu_choi: ly_do_tu_choi || null,
-      nguoi_duyet: nguoi_duyet || null,
+      nguoi_duyet: finalAdminId,
       ngay_duyet: new Date().toISOString(),
     };
 
