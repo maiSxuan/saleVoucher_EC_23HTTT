@@ -288,9 +288,11 @@ export default function CartPage() {
                     }
                     className="text-sm font-semibold text-gray-900 hover:text-orange-600 text-left line-clamp-1"
                   >
-                    {item.name}
+                    {typeof item.name === 'object' && item.name !== null ? item.name.name : item.name}
                   </button>
-                  <p className="text-xs text-gray-400 mb-1">{item.partner}</p>
+                  <p className="text-xs text-gray-400 mb-1">
+                    {typeof item.partner === 'object' && item.partner !== null ? (item.partner.ten_dn || item.partner.name || "Đối tác") : item.partner}
+                  </p>
                   <p className="text-sm font-bold text-orange-600">
                     {item.salePrice.toLocaleString("vi-VN")}đ
                   </p>

@@ -87,7 +87,7 @@ export default function CheckoutPage() {
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 line-clamp-1">
-                      {item.name}
+                      {typeof item.name === 'object' && item.name !== null ? item.name.name : item.name}
                     </p>
                     <p className="text-xs text-gray-400">× {item.quantity}</p>
                   </div>
@@ -137,7 +137,7 @@ export default function CheckoutPage() {
                 className="flex justify-between text-sm mb-1.5"
               >
                 <span className="text-gray-500 truncate max-w-32">
-                  {item.name} ×{item.quantity}
+                  {typeof item.name === 'object' && item.name !== null ? item.name.name : item.name} ×{item.quantity}
                 </span>
                 <span>{item.subtotal.toLocaleString("vi-VN")}đ</span>
               </div>

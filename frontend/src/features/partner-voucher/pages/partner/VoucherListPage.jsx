@@ -243,7 +243,7 @@ export function VoucherListPage() {
                                 to={`/partner/vouchers/${v.ma_voucher}`}
                                 className="font-bold text-gray-900 hover:text-blue-600 line-clamp-1"
                               >
-                                {v.ten_voucher}
+                                {typeof v.ten_voucher === 'object' && v.ten_voucher !== null ? (v.ten_voucher.name || v.ten_voucher.ten_voucher || "Voucher") : v.ten_voucher}
                               </Link>
                               <div className="text-xs text-gray-400 mt-0.5">{formatCategoryName(v.ten_danh_muc || v.ma_danh_muc)}</div>
                             </div>
