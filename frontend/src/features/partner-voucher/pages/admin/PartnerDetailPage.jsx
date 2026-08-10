@@ -118,6 +118,10 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
     await loadPartnerData();
   };
 
+  // Modal state for Profile Request Reject
+  const [selectedProfileReqForReject, setSelectedProfileReqForReject] = useState(null);
+  const [profileRejectNote, setProfileRejectNote] = useState("Thông tin hồ sơ mới không phù hợp quy định");
+
   const handleApproveBranchReq = async (reqId) => {
     await approveBranchRequestApi(reqId);
     setToastMessage("Đã duyệt yêu cầu chi nhánh thành công!");
@@ -138,8 +142,11 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
     await loadPartnerData();
   };
 
-  const handleRejectProfileReq = async (reqId) => {
-    await rejectPartnerProfileRequestApi(reqId, "Thông tin hồ sơ mới không phù hợp quy định");
+  const handleRejectProfileReq = async () => {
+    if (!selectedProfileReqForReject) return;
+    const reqId = selectedProfileReqForReject.ma_yc || selectedProfileReqForReject.ma_req;
+    await rejectPartnerProfileRequestApi(reqId, profileRejectNote);
+    setSelectedProfileReqForReject(null);
     setToastMessage("Đã từ chối Yêu cầu Cập nhật Hồ sơ Doanh nghiệp.");
     await loadPartnerData();
   };
@@ -320,7 +327,7 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             {/* Pending Profile Update Request Comparison Card */}
-            {pendingProfileReq && (
+            {pendingProfileReq && (pendingProfileReq.trang_thai === "Cho duyet" || pendingProfileReq.trang_thai === "Cho xu ly") && (
               <div className="bg-amber-50/80 border-2 border-amber-300 rounded-xl p-5 shadow-xs space-y-4">
                 <div className="flex items-center justify-between border-b border-amber-200 pb-3">
                   <div className="flex items-center gap-2 text-amber-900 font-bold text-base">
@@ -417,7 +424,7 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
 
                 <div className="flex items-center justify-end gap-3 pt-2">
                   <button
-                    onClick={() => handleRejectProfileReq(pendingProfileReq.ma_yc || pendingProfileReq.ma_req)}
+                    onClick={() => setSelectedProfileReqForReject(pendingProfileReq)}
                     className="px-3.5 py-1.5 text-xs font-semibold border border-rose-300 text-rose-700 bg-white hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                   >
                     Từ chối đề xuất
@@ -767,6 +774,35 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
                 value={branchRejectNote}
                 onChange={(e) => setBranchRejectNote(e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-rose-500 focus:outline-none"
+              />
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Modal Profile Request Reject */}
+      {selectedProfileReqForReject && (
+        <Modal
+          isOpen={!!selectedProfileReqForReject}
+          onClose={() => setSelectedProfileReqForReject(null)}
+          onConfirm={handleRejectProfileReq}
+          title="Từ Chối Yêu Cầu Cập Nhật Hồ Sơ Doanh Nghiệp"
+          confirmText="Xác nhận từ chối"
+          confirmVariant="danger"
+          cancelText="Hủy bỏ"
+        >
+          <div className="space-y-3 text-left">
+            <p className="text-sm text-slate-700">
+              Bạn có chắc chắn muốn từ chối yêu cầu cập nhật hồ sơ doanh nghiệp cho <strong>"{partner?.ten_dn || "đối tác này"}"</strong>?
+            </p>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Ghi chú lý do từ chối *</label>
+              <textarea
+                rows={3}
+                value={profileRejectNote}
+                onChange={(e) => setProfileRejectNote(e.target.value)}
+                placeholder="Nhập cụ thể lý do từ chối để gửi thông báo cho đối tác..."
+                className="w-full px-3 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-rose-500 focus:outline-none bg-slate-50/50"
               />
             </div>
           </div>

@@ -85,6 +85,36 @@ class AuditLogRepository {
 
     return { logs: data, total: count };
   }
+
+  /**
+   * Lấy lý do từ chối mới nhất từ cột JSON du_lieu_sau của bảng log_ht theo doi_tuong và ma_doi_tuong
+   */
+  async getLatestRejectionReason(doiTuong, maDoiTuong) {
+    if (!doiTuong || !maDoiTuong) return null;
+    try {
+      const upperTarget = String(doiTuong).toUpperCase();
+      const lowerTarget = String(doiTuong).toLowerCase();
+
+      const { data, error } = await supabase
+        .from("log_ht")
+        .select("ly_do_thuc_hien, du_lieu_sau, thoi_diem_thuc_hien")
+        .or(`doi_tuong.eq.${upperTarget},doi_tuong.eq.${lowerTarget}`)
+        .or(`ma_doi_tuong.eq.${maDoiTuong},du_lieu_sau->>ma_doi_tuong_goc.eq.${maDoiTuong}`)
+        .or("hanh_dong.ilike.%REJECT%,hanh_dong.ilike.%TU_CHOI%")
+        .order("thoi_diem_thuc_hien", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && data) {
+        const reasonFromAfterJson = data.du_lieu_sau?.ly_do_tu_choi || data.du_lieu_sau?.ghi_chu_admin;
+        const reasonFromText = data.ly_do_thuc_hien;
+        return reasonFromAfterJson || reasonFromText || null;
+      }
+    } catch (e) {
+      console.warn("[AuditLogRepository] getLatestRejectionReason warning:", e.message);
+    }
+    return null;
+  }
 }
 
 module.exports = new AuditLogRepository();

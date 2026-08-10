@@ -7,7 +7,7 @@ const { loadEnvironment } = require("./config/environment");
 
 const config = loadEnvironment();
 
-// Express Server Entry Point (Preserve Da duyet review status when voucher status is changed to Ngung ban)
+// Express Server Entry Point (Filter findPendingByPartnerId by trang_thai Cho duyet)
 app.listen(config.port, () => {
   console.log(`Backend running on port ${config.port}...`);
 });

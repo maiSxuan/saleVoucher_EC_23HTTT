@@ -221,10 +221,10 @@ export function VoucherFormPage() {
     let targetStatus = "Nhap";
     if (isTamNgung) {
       targetStatus = "Tam ngung"; // Giữ nguyên trạng thái Tạm ngưng khi chỉnh sửa
-    } else if (isRejected || isSubmitNow) {
-      targetStatus = "Cho duyet";
-    } else if (id) {
-      targetStatus = voucherStatus || "Nhap";
+    } else if (isSubmitNow) {
+      targetStatus = "Cho duyet"; // Gửi duyệt
+    } else {
+      targetStatus = "Nhap"; // Lưu bản nháp
     }
 
     const targetKiemDuyet = isTamNgung ? "Da duyet" : targetStatus;
@@ -234,17 +234,17 @@ export function VoucherFormPage() {
       ma_hs: partnerId,
       trang_thai: targetStatus,
       trang_thai_kiem_duyet: targetKiemDuyet,
-      ly_do_tu_choi: targetStatus === "Cho duyet" ? "" : undefined,
+      ly_do_tu_choi: targetStatus === "Cho duyet" ? "" : formData.ly_do_tu_choi,
     });
 
     setLoading(false);
     setToastMessage(
       isTamNgung
         ? "Đã cập nhật thông tin Voucher thành công!"
-        : isRejected
-        ? "Đã khắc phục thông tin & Gửi lại yêu cầu duyệt thành công!"
         : isSubmitNow
-        ? "Tạo và Gửi duyệt Voucher thành công!"
+        ? isRejected
+          ? "Đã khắc phục thông tin & Gửi lại yêu cầu duyệt thành công!"
+          : "Tạo và Gửi duyệt Voucher thành công!"
         : "Lưu bản nháp thành công!"
     );
     setTimeout(() => {
@@ -254,7 +254,7 @@ export function VoucherFormPage() {
 
   const handleSave = (isSubmitNow = false) => {
     if (!validate()) return;
-    if (isSubmitNow || isRejected) {
+    if (isSubmitNow) {
       setShowSubmitModal(true);
     } else {
       executeSave(false);

@@ -317,12 +317,12 @@ export function BranchManagementPage() {
                           <Badge status={branch.trang_thai} size="sm" />
                           {pendingReq && pendingReq.loai_yeu_cau === "Cap nhat" && (
                             <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                              ● Chờ duyệt cập nhật
+                              Chờ duyệt cập nhật
                             </span>
                           )}
                           {pendingReq && pendingReq.loai_yeu_cau === "Xoá" && (
                             <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                              ● Chờ duyệt xóa
+                             Chờ duyệt xóa
                             </span>
                           )}
                         </div>
@@ -330,6 +330,11 @@ export function BranchManagementPage() {
                           <MapPin size={13} className="text-amber-500 shrink-0" />
                           {branch.dia_chi} ({branch.khu_vuc})
                         </p>
+                        {branch.trang_thai === "Tu choi" && branch.ly_do_tu_choi && (
+                          <div className="mt-1.5 p-2 bg-rose-50 border border-rose-200 rounded-md text-xs text-rose-700 font-medium">
+                            Lý do từ chối: {branch.ly_do_tu_choi}
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-2">
@@ -392,7 +397,7 @@ export function BranchManagementPage() {
 
                         {req.loai_yeu_cau === "Cap nhat" && req.du_lieu_de_xuat && (
                           <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs space-y-1 text-gray-800">
-                            <div className="font-bold text-amber-900">📌 Thông tin đề xuất mới đang chờ Admin duyệt:</div>
+                            <div className="font-bold text-amber-900">Thông tin đề xuất mới đang chờ Admin duyệt:</div>
                             <div>Tên chi nhánh: <strong>{req.du_lieu_de_xuat.ten_chi_nhanh}</strong></div>
                             <div>Địa chỉ đề xuất: <strong>{req.du_lieu_de_xuat.dia_chi} ({req.du_lieu_de_xuat.khu_vuc})</strong></div>
                           </div>
@@ -412,7 +417,7 @@ export function BranchManagementPage() {
             {partnerRequests.filter((r) => r.trang_thai !== "Cho duyet" && r.trang_thai !== "Cho xu ly").length > 0 && (
               <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-xs p-5 space-y-4">
                 <h3 className="font-bold text-gray-700 text-sm border-b border-gray-100 pb-3">
-                  📜 Lịch sử các yêu cầu đã xử lý ({partnerRequests.filter((r) => r.trang_thai !== "Cho duyet" && r.trang_thai !== "Cho xu ly").length})
+                Lịch sử các yêu cầu đã xử lý ({partnerRequests.filter((r) => r.trang_thai !== "Cho duyet" && r.trang_thai !== "Cho xu ly").length})
                 </h3>
                 <div className="divide-y divide-gray-100">
                   {partnerRequests
@@ -430,12 +435,12 @@ export function BranchManagementPage() {
                         </div>
 
                         <div className="text-gray-500">
-                          📍 {req.dia_chi} ({req.khu_vuc}) • 🕒 {new Date(req.ngay_tao).toLocaleString("vi-VN")}
+                          {req.dia_chi} ({req.khu_vuc}) • {new Date(req.ngay_tao).toLocaleString("vi-VN")}
                         </div>
 
-                        {req.ghi_chu_admin && (
-                          <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 font-medium">
-                            💬 Ghi chú từ Admin: {req.ghi_chu_admin}
+                        {(req.ly_do_tu_choi || req.ghi_chu_admin) && (
+                          <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-rose-800 font-medium">
+                            Lý do từ chối: {req.ly_do_tu_choi || req.ghi_chu_admin}
                           </div>
                         )}
                       </div>
@@ -572,7 +577,7 @@ export function BranchManagementPage() {
                 Gửi yêu cầu xóa chi nhánh <strong>"{selectedBranchForDelete.ten_chi_nhanh}"</strong> để quản trị viên duyệt?
               </p>
               <p className="text-xs text-slate-500 bg-gray-50 p-2.5 rounded-lg border border-gray-200">
-                📌 Chi nhánh vẫn hoạt động bình thường cho đến khi có kết quả duyệt từ quản trị viên.
+                Chi nhánh vẫn hoạt động bình thường cho đến khi có kết quả duyệt từ quản trị viên.
               </p>
             </div>
           </Modal>

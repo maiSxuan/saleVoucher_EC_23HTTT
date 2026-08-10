@@ -10,6 +10,7 @@ class BranchRequestRepository {
    */
   async findByPartnerId(partnerId) {
     const results = [];
+    const auditLogRepository = require("../../../core-access/data/repositories/audit-log.repository");
 
     // 1. Fetch update/delete requests from yeu_cau_cap_nhat_chinhanh
     try {
@@ -20,7 +21,11 @@ class BranchRequestRepository {
         .order("ngay_yeu_cau", { ascending: false });
 
       if (!error && data) {
-        data.forEach((r) => {
+        for (const r of data) {
+          let reason = r.ly_do_tu_choi;
+          if (!reason && r.trang_thai === "Tu choi") {
+            reason = await auditLogRepository.getLatestRejectionReason("CHINHANH", r.ma_chi_nhanh || r.ma_yc);
+          }
           results.push({
             ma_yeu_cau: r.ma_yc,
             ma_chi_nhanh: r.ma_chi_nhanh,
@@ -35,22 +40,29 @@ class BranchRequestRepository {
               dia_chi: r.dia_chi_moi,
             },
             trang_thai: r.trang_thai,
-            ly_do_tu_choi: r.ly_do_tu_choi,
+            ly_do_tu_choi: reason,
             nguoi_duyet: r.nguoi_duyet,
             ngay_tao: r.ngay_yeu_cau,
           });
-        });
+        }
       }
     } catch (e) {
       console.warn("[BranchRequestRepo] DB fetch warning:", e.message);
     }
 
-    // 2. Initial branch additions are stored directly in chinhanh table with trang_thai === 'Cho duyet'
+    // 2. Initial branch additions are stored directly in chinhanh table
     const dbBranches = await branchRepository.findByPartnerId(partnerId);
-    const pendingNewBranches = (dbBranches || []).filter((b) => b.trang_thai === "Cho duyet");
+    const nonActiveBranches = (dbBranches || []).filter(
+      (b) => b.trang_thai === "Cho duyet" || b.trang_thai === "Tu choi"
+    );
 
-    for (const b of pendingNewBranches) {
+    for (const b of nonActiveBranches) {
       if (!results.some((r) => r.ma_chi_nhanh === b.ma_chi_nhanh)) {
+        let reason = b.ly_do_tu_choi;
+        if (!reason && b.trang_thai === "Tu choi") {
+          reason = await auditLogRepository.getLatestRejectionReason("CHINHANH", b.ma_chi_nhanh);
+        }
+
         results.push({
           ma_yeu_cau: b.ma_chi_nhanh,
           ma_chi_nhanh: b.ma_chi_nhanh,
@@ -59,8 +71,9 @@ class BranchRequestRepository {
           khu_vuc: b.khu_vuc,
           dia_chi: b.dia_chi,
           loai_yeu_cau: "Them moi",
-          trang_thai: "Cho duyet",
-          ngay_tao: new Date().toISOString(),
+          trang_thai: b.trang_thai,
+          ly_do_tu_choi: reason,
+          ngay_tao: b.ngay_tao || new Date().toISOString(),
         });
       }
     }
@@ -68,6 +81,9 @@ class BranchRequestRepository {
     // Include any memory store fallbacks
     for (const req of BRANCH_REQUESTS_STORE.values()) {
       if (req.ma_hs === partnerId && !results.some((r) => r.ma_yeu_cau === req.ma_yeu_cau)) {
+        if (!req.ly_do_tu_choi && req.trang_thai === "Tu choi") {
+          req.ly_do_tu_choi = await auditLogRepository.getLatestRejectionReason("CHINHANH", req.ma_chi_nhanh || req.ma_yeu_cau);
+        }
         results.push(req);
       }
     }
@@ -228,6 +244,9 @@ class BranchRequestRepository {
    */
   async updateStatus(reqId, trang_thai, adminNote = "", adminId = null) {
     const finalAdminId = adminId || "00000000-0000-0000-0000-000000000001";
+    const auditLogService = require("../../../core-access/business/services/audit-log.service");
+
+    let resultData = null;
     try {
       const { data, error } = await supabase
         .from("yeu_cau_cap_nhat_chinhanh")
@@ -248,20 +267,39 @@ class BranchRequestRepository {
           existing.ghi_chu_admin = adminNote;
           existing.nguoi_duyet = finalAdminId;
         }
-        return data;
+        resultData = data;
       }
     } catch (e) {
       console.warn("[BranchRequestRepo] updateStatus DB exception:", e.message);
     }
 
-    const req = BRANCH_REQUESTS_STORE.get(reqId);
-    if (req) {
-      req.trang_thai = trang_thai;
-      req.ghi_chu_admin = adminNote;
-      req.nguoi_duyet = finalAdminId;
-      return req;
+    if (!resultData) {
+      const req = BRANCH_REQUESTS_STORE.get(reqId);
+      if (req) {
+        req.trang_thai = trang_thai;
+        req.ghi_chu_admin = adminNote;
+        req.nguoi_duyet = finalAdminId;
+        resultData = req;
+      }
     }
-    return null;
+
+    // Ghi audit log vào log_ht
+    try {
+      await auditLogService.log({
+        actorRole: "ADMIN",
+        actorId: finalAdminId,
+        action: trang_thai === "Tu choi" ? "REJECT_BRANCH_REQUEST" : "APPROVE_BRANCH_REQUEST",
+        targetType: "CHINHANH",
+        targetId: resultData?.ma_chi_nhanh || reqId,
+        after: { trang_thai, ly_do_tu_choi: adminNote },
+        result: "Thanh cong",
+        reason: adminNote || (trang_thai === "Tu choi" ? "Admin từ chối yêu cầu chi nhánh" : "Admin phê duyệt yêu cầu chi nhánh"),
+      });
+    } catch (e) {
+      console.warn("[BranchRequestRepo] Log branch update/reject failed:", e.message);
+    }
+
+    return resultData;
   }
 
   /**

@@ -27,6 +27,14 @@ export function VoucherApprovalListPage() {
   const [filterPartner, setFilterPartner] = useState(savedState?.filterPartner || "");
   const [filterReview, setFilterReview] = useState(savedState?.filterReview || "pending");
 
+  // Pagination state
+  const [page, setPage] = useState(savedState?.page || 1);
+  const limit = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchName, filterPartner, filterReview]);
+
   const loadData = async () => {
     if (!savedState?.cachedVouchers) setLoading(true);
     try {
@@ -90,6 +98,10 @@ export function VoucherApprovalListPage() {
 
   const partnerNames = [...new Set(partners.map((p) => p.ten_dn).filter(Boolean))];
 
+  const totalVouchers = filteredVouchers.length;
+  const totalPages = Math.ceil(totalVouchers / limit) || 1;
+  const paginatedVouchers = filteredVouchers.slice((page - 1) * limit, page * limit);
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-5">
       {/* Title */}
@@ -136,130 +148,156 @@ export function VoucherApprovalListPage() {
           </select>
         </div>
 
-        <div className="flex items-center justify-between pt-1 text-xs text-slate-500">
-          <span>{filteredVouchers.length} voucher</span>
-          <button
-            onClick={() => {
-              setSearchName("");
-              setFilterPartner("");
-              setFilterReview("pending");
-            }}
-            className="text-slate-500 hover:text-slate-800 flex items-center gap-1 font-medium cursor-pointer"
-          >
-            <X size={14} /> Đặt lại
-          </button>
-        </div>
+        {(searchName || filterPartner || filterReview !== "ALL") && (
+          <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span>Đang lọc ra {totalVouchers} kết quả</span>
+            <button
+              onClick={() => {
+                setSearchName("");
+                setFilterPartner("");
+                setFilterReview("ALL");
+              }}
+              className="flex items-center gap-1 text-rose-600 hover:text-rose-800 font-semibold cursor-pointer"
+            >
+              <X size={14} /> Xóa bộ lọc
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Table matching Prototype Code */}
+      {/* Main Table */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
         {loading ? (
           <div className="p-12 text-center text-slate-400">Đang tải danh sách voucher...</div>
         ) : filteredVouchers.length === 0 ? (
-          <div className="flex flex-col items-center py-16 text-slate-400">
-            <Tag size={40} className="mb-2 text-slate-300" />
-            <p className="text-sm">Không có voucher phù hợp</p>
-          </div>
+          <div className="p-12 text-center text-slate-400">Không tìm thấy voucher nào phù hợp.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  <th className="px-3.5 py-3">Tên voucher</th>
-                  <th className="px-3.5 py-3">Đối tác</th>
-                  <th className="px-3.5 py-3">Danh mục</th>
-                  <th className="px-3.5 py-3">Giá gốc</th>
-                  <th className="px-3.5 py-3">Giá bán</th>
-                  <th className="px-3.5 py-3">Thời gian bán</th>
-                  <th className="px-3.5 py-3 text-center">SL</th>
-                  <th className="px-3.5 py-3">Kiểm duyệt</th>
-                  <th className="px-3.5 py-3">Công bố</th>
-                  <th className="px-3.5 py-3 text-right"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-sm">
-                {filteredVouchers.map((v) => {
-                  const giaGoc = Number(v.gia_goc) || 0;
-                  const giaBan = Number(v.gia_ban) || 0;
-                  const isInvalidPrice = giaBan >= giaGoc;
+          <div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50/80 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="px-3.5 py-3">Tên voucher</th>
+                    <th className="px-3.5 py-3">Đối tác</th>
+                    <th className="px-3.5 py-3">Danh mục</th>
+                    <th className="px-3.5 py-3">Giá gốc</th>
+                    <th className="px-3.5 py-3">Giá bán</th>
+                    <th className="px-3.5 py-3">Thời gian bán</th>
+                    <th className="px-3.5 py-3 text-center">SL</th>
+                    <th className="px-3.5 py-3">Kiểm duyệt</th>
+                    <th className="px-3.5 py-3">Công bố</th>
+                    <th className="px-3.5 py-3 text-right"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-sm">
+                  {paginatedVouchers.map((v) => {
+                    const giaGoc = Number(v.gia_goc) || 0;
+                    const giaBan = Number(v.gia_ban) || 0;
+                    const isInvalidPrice = giaBan >= giaGoc;
 
-                  const rb = getReviewStatusBadge(v.trang_thai);
-                  const pb = getPublicationStatusBadge(v);
+                    const rb = getReviewStatusBadge(v.trang_thai);
+                    const pb = getPublicationStatusBadge(v);
 
-                  const startDate = v.tg_bat_dau_ban ? v.tg_bat_dau_ban.slice(0, 10) : "2025-08-01";
-                  const endDate = v.tg_ket_thuc_ban ? v.tg_ket_thuc_ban.slice(0, 10) : "2025-12-31";
+                    const startDate = v.tg_bat_dau_ban ? v.tg_bat_dau_ban.slice(0, 10) : "2025-08-01";
+                    const endDate = v.tg_ket_thuc_ban ? v.tg_ket_thuc_ban.slice(0, 10) : "2025-12-31";
 
-                  return (
-                    <tr key={v.ma_voucher} className="hover:bg-slate-50 transition-colors">
-                      {/* Tên voucher */}
-                      <td className="px-3.5 py-3.5 font-medium text-slate-900 max-w-xs">
-                        <div className="flex items-center gap-2">
-                          {isInvalidPrice && (
-                            <XCircle size={15} className="text-rose-500 shrink-0" title="Giá bán không hợp lệ" />
-                          )}
+                    return (
+                      <tr key={v.ma_voucher} className="hover:bg-slate-50 transition-colors">
+                        {/* Tên voucher */}
+                        <td className="px-3.5 py-3.5 font-medium text-slate-900 max-w-xs">
+                          <div className="flex items-center gap-2">
+                            {isInvalidPrice && (
+                              <XCircle size={15} className="text-rose-500 shrink-0" title="Giá bán không hợp lệ" />
+                            )}
+                            <Link
+                              to={`/admin/vouchers/${v.ma_voucher}`}
+                              className="hover:text-blue-600 truncate max-w-[180px] font-bold"
+                            >
+                              {v.ten_voucher}
+                            </Link>
+                          </div>
+                        </td>
+
+                        {/* Đối tác */}
+                        <td className="px-3.5 py-3.5 text-slate-600 truncate max-w-[120px]">
+                          {v.ten_dn || "Doanh nghiệp đối tác"}
+                        </td>
+
+                        {/* Danh mục */}
+                        <td className="px-3.5 py-3.5 text-slate-600">{formatCategoryName(v.ten_danh_muc)}</td>
+
+                        {/* Giá gốc */}
+                        <td className="px-3.5 py-3.5 font-medium text-slate-700">{giaGoc.toLocaleString("vi-VN")}đ</td>
+
+                        {/* Giá bán */}
+                        <td className={`px-3.5 py-3.5 font-bold ${isInvalidPrice ? "text-rose-600" : "text-emerald-600"}`}>
+                          {giaBan.toLocaleString("vi-VN")}đ
+                        </td>
+
+                        {/* Thời gian bán */}
+                        <td className="px-3.5 py-3.5 text-xs text-slate-600 font-mono whitespace-nowrap">
+                          {startDate} → {endDate}
+                        </td>
+
+                        {/* SL */}
+                        <td className="px-3.5 py-3.5 text-center text-slate-700 font-medium">{v.so_luong_phat_hanh || 0}</td>
+
+                        {/* Kiểm duyệt Badge */}
+                        <td className="px-3.5 py-3.5">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${rb.color}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${rb.dot}`} />
+                            {rb.label}
+                          </span>
+                        </td>
+
+                        {/* Công bố Badge */}
+                        <td className="px-3.5 py-3.5">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${pb.color}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${pb.dot}`} />
+                            {pb.label}
+                          </span>
+                        </td>
+
+                        {/* Action Link */}
+                        <td className="px-3.5 py-3.5 text-right whitespace-nowrap">
                           <Link
                             to={`/admin/vouchers/${v.ma_voucher}`}
-                            className="hover:text-blue-600 truncate max-w-[180px] font-bold"
+                            className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 font-semibold hover:bg-blue-50 px-2.5 py-1 rounded-lg transition-colors"
                           >
-                            {v.ten_voucher}
+                            <Eye size={14} /> Chi tiết
                           </Link>
-                        </div>
-                      </td>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-                      {/* Đối tác */}
-                      <td className="px-3.5 py-3.5 text-slate-600 truncate max-w-[120px]">
-                        {v.ten_dn || "Doanh nghiệp đối tác"}
-                      </td>
-
-                      {/* Danh mục */}
-                      <td className="px-3.5 py-3.5 text-slate-600">{formatCategoryName(v.ten_danh_muc)}</td>
-
-                      {/* Giá gốc */}
-                      <td className="px-3.5 py-3.5 font-medium text-slate-700">{giaGoc.toLocaleString("vi-VN")}đ</td>
-
-                      {/* Giá bán */}
-                      <td className={`px-3.5 py-3.5 font-bold ${isInvalidPrice ? "text-rose-600" : "text-emerald-600"}`}>
-                        {giaBan.toLocaleString("vi-VN")}đ
-                      </td>
-
-                      {/* Thời gian bán */}
-                      <td className="px-3.5 py-3.5 text-xs text-slate-600 font-mono whitespace-nowrap">
-                        {startDate} → {endDate}
-                      </td>
-
-                      {/* SL */}
-                      <td className="px-3.5 py-3.5 text-center text-slate-700 font-medium">{v.so_luong_phat_hanh || 0}</td>
-
-                      {/* Kiểm duyệt Badge */}
-                      <td className="px-3.5 py-3.5">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${rb.color}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${rb.dot}`} />
-                          {rb.label}
-                        </span>
-                      </td>
-
-                      {/* Công bố Badge */}
-                      <td className="px-3.5 py-3.5">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${pb.color}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${pb.dot}`} />
-                          {pb.label}
-                        </span>
-                      </td>
-
-                      {/* Action Link */}
-                      <td className="px-3.5 py-3.5 text-right whitespace-nowrap">
-                        <Link
-                          to={`/admin/vouchers/${v.ma_voucher}`}
-                          className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 font-semibold hover:bg-blue-50 px-2.5 py-1 rounded-lg transition-colors"
-                        >
-                          <Eye size={14} /> Chi tiết
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            {/* Phân trang */}
+            {totalVouchers > 0 && (
+              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50 text-sm">
+                <p className="text-xs text-gray-600">
+                  Trang {page} / {totalPages} (Tổng {totalVouchers} voucher)
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                    className="px-3 py-1 bg-white border border-gray-300 rounded text-xs font-medium text-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
+                    Trước
+                  </button>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages}
+                    className="px-3 py-1 bg-white border border-gray-300 rounded text-xs font-medium text-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
+                    Sau
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
