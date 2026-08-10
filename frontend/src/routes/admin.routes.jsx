@@ -8,6 +8,7 @@ import PartnerDetailPage from "../features/partner-voucher/pages/admin/PartnerDe
 import VoucherApprovalListPage from "../features/partner-voucher/pages/admin/VoucherApprovalListPage";
 import VoucherApprovalDetailPage from "../features/partner-voucher/pages/admin/VoucherApprovalDetailPage";
 import AuditLogPage from "../features/partner-voucher/pages/admin/AuditLogPage";
+import ContentListPage from "../features/content-feedback/pages/admin/ContentListPage";
 
 export const adminRoutes = [
   {
@@ -29,6 +30,10 @@ export const adminRoutes = [
   {
     path: "/admin/audit-logs",
     element: <AuditLogPage />,
+  },
+  {
+    path: "/admin/contents",
+    element: <ContentListPage />,
   },
   {
     path: "/admin",

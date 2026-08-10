@@ -30,8 +30,30 @@ async function createReview(req, res, next) {
   }
 }
 
+// Lấy đánh giá theo voucher id
+async function getReviewsByVoucher(req, res, next) {
+  try {
+    const result = await service.getReviewsByVoucherId(req.params.voucherId);
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Lấy đánh giá theo ma_voucher_mua (lần mua)
+async function getReviewByPurchaseId(req, res, next) {
+  try {
+    const result = await service.getReviewByPurchaseId(req.params.voucherPurchaseId);
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   getReviewList,
   getReviewById,
   createReview,
+  getReviewsByVoucher,
+  getReviewByPurchaseId,
 };

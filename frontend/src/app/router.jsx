@@ -16,6 +16,8 @@ import VoucherApprovalListPage from "../features/partner-voucher/pages/admin/Vou
 import VoucherApprovalDetailPage from "../features/partner-voucher/pages/admin/VoucherApprovalDetailPage";
 import UserListPage from "../features/core-access/pages/admin/UserListPage";
 import PartnerVoucherLookupPage from "../features/core-access/pages/partner/PartnerVoucherLookupPage";
+import ContentListPage from "../features/content-feedback/pages/admin/ContentListPage";
+import AdminComplaintsPage from "../features/content-feedback/pages/admin/AdminComplaintsPage";
 
 // Partner Portal Pages
 import PartnerRegisterPage from "../features/partner-voucher/pages/partner/PartnerRegisterPage";
@@ -38,6 +40,8 @@ import CartPage from "../features/customer-commerce/pages/customer/CartPage";
 import CheckoutPage from "../features/customer-commerce/pages/customer/CheckoutPage";
 import PaymentResultPage from "../features/customer-commerce/pages/customer/PaymentResultPage";
 import MyOrdersPage from "../features/customer-commerce/pages/customer/MyOrdersPage";
+import CustomerOrdersPage from "../features/order/pages/customer/CustomerOrdersPage";
+import AdminOrdersPage from "../features/order/pages/admin/AdminOrdersPage";
 import ProfilePage from "../features/customer-commerce/pages/customer/ProfilePage";
 import MyVoucherPage from "../features/core-access/pages/customer/MyVoucherPage";
 import IssuedVoucherDetailPage from "../features/core-access/pages/customer/IssuedVoucherDetailPage";
@@ -132,7 +136,7 @@ const router = createBrowserRouter([
               },
               {
                 path: "orders",
-                element: <MyOrdersPage />,
+                element: <CustomerOrdersPage />,
               },
               {
                 path: "profile",
@@ -189,12 +193,15 @@ const router = createBrowserRouter([
           { path: "partners/:id", element: <PartnerDetailPage /> },
           { path: "vouchers", element: <VoucherApprovalListPage /> },
           { path: "vouchers/:id", element: <VoucherApprovalDetailPage /> },
+          { path: "orders", element: <AdminOrdersPage /> },
           { path: "users", element: <UserListPage /> },
           { path: "logs", element: <AuditLogPage /> },
           {
             path: "audit-logs",
             element: <Navigate to="/admin/logs" replace />,
           },
+          { path: "contents", element: <ContentListPage /> },
+          { path: "complaints", element: <AdminComplaintsPage /> },
         ],
       },
     ],

@@ -26,3 +26,10 @@ export async function fetchVoucherDetail(id) {
   const json = await res.json();
   return json.data;
 }
+
+export async function fetchVoucherReviews(voucherId) {
+  const res = await fetch(`${BASE_URL}/review/voucher/${voucherId}`);
+  if (!res.ok) throw new Error("Không thể tải đánh giá voucher");
+  const json = await res.json();
+  return json.data || [];
+}
