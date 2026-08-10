@@ -498,3 +498,8 @@ Dashboard phải phản ánh dữ liệu tổng hợp chính xác tại thời �
 Không hiển thị dữ liệu không xác định hoặc chưa được hệ thống xác nhận.
 Các chỉ số hiển thị phải có nguồn dữ liệu rõ ràng từ các module tương ứng.
 
+NOTE: Khách hàng "Thanh toán hụt" (Bỏ dở giữa chừng): Nếu khách hàng được chuyển hướng sang trang VNPay, nhưng sau đó tắt trình duyệt, bấm nút Hủy, hoặc để quá hạn thanh toán mà không nhập mã OTP trả tiền, thì cổng thanh toán sẽ không ghi nhận thành công. Lúc này, trong payment.service.js (dòng 92), hệ thống được thiết kế chủ đích là giữ nguyên trạng thái đơn hàng là "Cho thanh toan" chứ không xóa đi (để khách hàng có thể thanh toán lại sau nếu muốn).
+
+=> Kết luận: 3 đơn hàng "Chờ thanh toán" ngày 6/8 mà bạn thấy trong ảnh chính là 3 lần bấm "Thanh toán" nhưng bỏ dở (không trả tiền) của tài khoản mytran trong quá trình test hệ thống. Hệ thống ghi nhận đúng lịch sử thao tác chứ không hề lưu sai tài khoản.
+
+Lưu ý thêm: Trong thực tế, để dọn dẹp các đơn "Chờ thanh toán" rác do khách hàng bỏ dở, các hệ thống thường sẽ có một tác vụ chạy ngầm (cron job) tự động chuyển trạng thái sang "Đã hủy" sau 15-30 phút không thanh toán. Nếu hiện tại hệ thống chưa có tính năng cron job này, các đơn "Chờ thanh toán" sẽ nằm đó mãi mãi.
