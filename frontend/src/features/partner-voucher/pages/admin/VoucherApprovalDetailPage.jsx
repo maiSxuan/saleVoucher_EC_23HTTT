@@ -9,12 +9,14 @@ import {
   DollarSign,
   MapPin,
   Info,
+  Image as ImageIcon,
 } from "lucide-react";
 import Toast from "../../../../shared/components/Toast";
 import {
   getVoucherByIdApi,
   approveVoucherApi,
   rejectVoucherApi,
+  getBranchesByPartnerApi,
 } from "../../../../shared/api/partnerApi";
 
 const rejectReasons = [
@@ -38,17 +40,17 @@ const checklistItems = [
   "Điều kiện sử dụng không mâu thuẫn",
 ];
 
-export function VoucherApprovalDetailPage() {
+export function VoucherApprovalDetailPage({ voucherId, onNavigate }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const [voucher, setVoucher] = useState(null);
+  const [branchesList, setBranchesList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState("");
 
   const [checklist, setChecklist] = useState({});
   const [approveModal, setApproveModal] = useState(false);
   const [rejectModal, setRejectModal] = useState(false);
-  const [hideAfterApprove, setHideAfterApprove] = useState(false);
 
   const [selectedRejectReason, setSelectedRejectReason] = useState(rejectReasons[0]);
   const [customRejectNote, setCustomRejectNote] = useState("");
@@ -56,8 +58,13 @@ export function VoucherApprovalDetailPage() {
   const loadVoucher = async () => {
     setLoading(true);
     try {
-      const data = await getVoucherByIdApi(id);
+      const vId = voucherId || id || "v-001";
+      const data = await getVoucherByIdApi(vId);
       setVoucher(data);
+      if (data?.ma_hs) {
+        const bData = await getBranchesByPartnerApi(data.ma_hs);
+        setBranchesList(bData || []);
+      }
     } catch (e) {
       console.error("Error loading voucher detail:", e);
     } finally {
@@ -67,7 +74,7 @@ export function VoucherApprovalDetailPage() {
 
   useEffect(() => {
     loadVoucher();
-  }, [id]);
+  }, [voucherId, id]);
 
   if (loading) {
     return <div className="p-12 text-center text-slate-500">Đang tải thông tin voucher...</div>;
@@ -109,6 +116,9 @@ export function VoucherApprovalDetailPage() {
   };
 
   const getPublicationStatusBadge = (v) => {
+    if (v.trang_thai === "Tam ngung" || v.trang_thai === "Tam an") {
+      return { label: "Tạm ngưng", color: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400" };
+    }
     const isApproved = v.trang_thai === "Dang ban" || v.trang_thai === "Da duyet";
     if (!isApproved) {
       return { label: "Chưa công bố", color: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400" };
@@ -124,6 +134,10 @@ export function VoucherApprovalDetailPage() {
   const rb = getReviewStatusBadge(voucher);
   const pb = getPublicationStatusBadge(voucher);
 
+  const applicableBranches = branchesList.filter((b) =>
+    (voucher.ma_chi_nhanh || []).includes(b.ma_chi_nhanh)
+  );
+
   const toggleCheck = (item) => {
     setChecklist((prev) => ({ ...prev, [item]: !prev[item] }));
   };
@@ -132,9 +146,9 @@ export function VoucherApprovalDetailPage() {
   const handleApprove = async () => {
     setLoading(true);
     try {
-      await approveVoucherApi(voucher.ma_voucher, hideAfterApprove);
+      await approveVoucherApi(voucher.ma_voucher, false);
       setApproveModal(false);
-      setToastMessage(`Voucher đã được phê duyệt. Trạng thái công bố: ${computePublicationStatus(hideAfterApprove)}`);
+      setToastMessage(`Voucher đã được phê duyệt thành công!`);
       await loadVoucher();
     } catch (e) {
       setToastMessage("Phê duyệt thất bại: " + e.message);
@@ -165,7 +179,13 @@ export function VoucherApprovalDetailPage() {
     <div className="p-6 max-w-6xl mx-auto space-y-4">
       {/* Back Button */}
       <button
-        onClick={() => navigate("/admin/vouchers")}
+        onClick={() => {
+          if (onNavigate) {
+            onNavigate("voucher-approval");
+          } else {
+            navigate("/admin/vouchers");
+          }
+        }}
         className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 font-medium transition-colors cursor-pointer"
       >
         <ArrowLeft size={16} /> Quay lại danh sách
@@ -218,6 +238,25 @@ export function VoucherApprovalDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Left Detail Sections */}
         <div className="lg:col-span-2 space-y-4">
+          {/* Section 0: Hình ảnh minh họa Voucher */}
+          {voucher.hinh_anh_url && (
+            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+              <h3 className="font-semibold text-slate-800 mb-3 flex items-center gap-2 border-b border-slate-100 pb-2">
+                <ImageIcon size={16} className="text-blue-600" /> Hình ảnh minh họa Voucher
+              </h3>
+              <div className="relative rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+                <img
+                  src={voucher.hinh_anh_url}
+                  alt={voucher.ten_voucher}
+                  className="w-full h-64 object-cover hover:scale-105 transition-transform duration-300"
+                  onError={(e) => {
+                    e.target.src = "";
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
           {/* Section 1: Thông tin nhận diện */}
           <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
             <h3 className="font-semibold text-slate-800 mb-3 flex items-center gap-2 border-b border-slate-100 pb-2">
@@ -230,16 +269,21 @@ export function VoucherApprovalDetailPage() {
               </div>
               <div>
                 <p className="text-xs text-slate-400">Danh mục</p>
-                <p className="font-medium text-slate-900 mt-0.5">{voucher.ten_danh_muc || "Ẩm thực"}</p>
+                <p className="font-medium text-slate-900 mt-0.5">{voucher.ten_danh_muc || voucher.ma_danh_muc}</p>
               </div>
               <div className="col-span-2">
                 <p className="text-xs text-slate-400">Mô tả</p>
                 <p className="text-slate-700 mt-0.5">{voucher.mo_ta || "Chưa có mô tả chi tiết."}</p>
               </div>
               <div>
-                <p className="text-xs text-slate-400">Đối tác phát hành</p>
-                <p className="font-bold text-blue-600 mt-0.5">{voucher.ten_dn || "Pizza Hut Vietnam"}</p>
+                <p className="text-xs text-slate-400">Chính sách hoàn hủy</p>
+                <p className="text-slate-700 mt-0.5">{voucher.chinh_sach_hoan_huy || "Chưa có chính sách."}</p>
               </div>
+              <div>
+                <p className="text-xs text-slate-400">Đối tác phát hành</p>
+                <p className="font-bold text-blue-600 mt-0.5">{voucher.ten_dn || "Doanh nghiệp đối tác"}</p>
+              </div>
+
               <div>
                 <p className="text-xs text-slate-400">Điều kiện sử dụng</p>
                 <p className="text-slate-700 mt-0.5">{voucher.dieu_kien_ap_dung || "Áp dụng toàn hệ thống."}</p>
@@ -299,28 +343,32 @@ export function VoucherApprovalDetailPage() {
                   {soldCount} / {Math.max(0, quantity - soldCount)}
                 </p>
               </div>
-              <div>
-                <p className="text-xs text-slate-400">Giới hạn sử dụng</p>
-                <p className="font-medium text-slate-800 mt-0.5">1 lần/người</p>
-              </div>
             </div>
           </div>
 
           {/* Section 4: Phạm vi áp dụng */}
           <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
             <h3 className="font-semibold text-slate-800 mb-3 flex items-center gap-2 border-b border-slate-100 pb-2">
-              <MapPin size={16} className="text-amber-600" /> Phạm vi áp dụng
+              <MapPin size={16} className="text-amber-600" /> Phạm vi chi nhánh áp dụng ({applicableBranches.length})
             </h3>
-            <div className="space-y-2 text-sm text-slate-700">
-              <div className="flex items-center gap-2">
-                <CheckCircle size={14} className="text-emerald-500 shrink-0" />
-                <span>Chi nhánh Nguyễn Huệ - 12 Nguyễn Huệ, Q1, TP.HCM</span>
+            {applicableBranches.length > 0 ? (
+              <div className="space-y-2.5 text-sm text-slate-700">
+                {applicableBranches.map((b) => (
+                  <div key={b.ma_chi_nhanh} className="flex items-start gap-2.5 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                    <CheckCircle size={15} className="text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-slate-900">{b.ten_chi_nhanh}</span>
+                      <p className="text-xs text-slate-500 mt-0.5">📍 {b.dia_chi} ({b.khu_vuc})</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle size={14} className="text-emerald-500 shrink-0" />
-                <span>Chi nhánh Võ Văn Tần - 120 Võ Văn Tần, Q3, TP.HCM</span>
+            ) : (
+              <div className="text-xs text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-200 italic">
+                Áp dụng cho các chi nhánh thuộc doanh nghiệp {voucher.ten_dn || "đối tác"}.
               </div>
-            </div>
+            )
+            }
           </div>
         </div>
 
@@ -357,9 +405,8 @@ export function VoucherApprovalDetailPage() {
               </div>
               <div className="mt-2 bg-slate-200 rounded-full h-1.5 overflow-hidden">
                 <div
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    checkedCount === checklistItems.length ? "bg-emerald-500" : "bg-amber-500"
-                  }`}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${checkedCount === checklistItems.length ? "bg-emerald-500" : "bg-amber-500"
+                    }`}
                   style={{ width: `${(checkedCount / checklistItems.length) * 100}%` }}
                 />
               </div>
@@ -392,7 +439,7 @@ export function VoucherApprovalDetailPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Đối tác:</span>
-                <span className="font-semibold text-slate-800">{voucher.ten_dn || "Pizza Hut Vietnam"}</span>
+                <span className="font-semibold text-slate-800">{voucher.ten_dn || "Doanh nghiệp đối tác"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Giá bán:</span>
@@ -408,21 +455,11 @@ export function VoucherApprovalDetailPage() {
               </div>
               <div className="flex justify-between items-center pt-1 border-t border-slate-200">
                 <span className="text-slate-400">Trạng thái công bố dự kiến:</span>
-                <span className="text-blue-600 font-bold">{computePublicationStatus(hideAfterApprove)}</span>
+                <span className="text-blue-600 font-bold">{computePublicationStatus(false)}</span>
               </div>
             </div>
 
-            <label className="flex items-center gap-2 text-xs text-slate-700 font-medium cursor-pointer">
-              <input
-                type="checkbox"
-                checked={hideAfterApprove}
-                onChange={(e) => setHideAfterApprove(e.target.checked)}
-                className="rounded text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer"
-              />
-              <span>Tạm ẩn sau khi phê duyệt</span>
-            </label>
-
-            {!hideAfterApprove && computePublicationStatus(false) === "Chờ mở bán" && (
+            {computePublicationStatus(false) === "Chờ mở bán" && (
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-800">
                 <strong>Lưu ý:</strong> Hệ thống sẽ tự động công bố voucher khi đến thời gian bán ({startDate}) nếu vẫn còn đủ điều kiện.
               </div>

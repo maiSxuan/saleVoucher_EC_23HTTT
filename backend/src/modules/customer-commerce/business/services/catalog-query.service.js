@@ -5,23 +5,53 @@ const catalogRepository = require("../../data/repositories/catalog.repository");
 const { computeAvailability } = require("./voucher-aivailability.util");
 const NotFoundError = require("../../../../common/errors/NotFoundError");
 
+const CATEGORY_ACCENT_MAP = {
+  "An uong": "Ẩm Thực & Nhà Hàng",
+  "Lam dep": "Làm Đẹp & Spa",
+  "Giai tri": "Giải Trí & Vui Chơi",
+  "Du lich": "Du Lịch & Khách Sạn",
+  "Giao duc": "Giáo Dục & Khóa Học",
+  "Mua sam": "Mua Sắm & Bán Lẻ",
+};
+
+function formatCat(name) {
+  if (!name) return "Khác";
+  return CATEGORY_ACCENT_MAP[name] || name;
+}
+
 function mapVoucher(v) {
-  const originalPrice = Number(v.gia_goc);
+  const originalPrice = Number(v.gia_goc) || 0;
   const discountAmount = Number(v.gia_tri_giam) || 0;
-  const partner = v.voucher_cn?.[0]?.chinhanh?.hosodn?.ten_dn || "Đối tác";
-  const branches = [
-    ...new Set(
-      (v.voucher_cn || [])
-        .map((vc) => vc.chinhanh?.ten_chi_nhanh)
-        .filter(Boolean),
-    ),
-  ];
+
+  // Lấy danh sách chi nhánh
+  const branches = (v.voucher_cn || [])
+    .map((item) => item.chinhanh)
+    .filter(Boolean)
+    .map((b) => ({
+      id: b.ma_chi_nhanh,
+      name: b.ten_chi_nhanh,
+      address: b.dia_chi,
+      region: b.khu_vuc,
+      status: b.trang_thai,
+    }));
+
+  // Lấy thông tin đối tác
+  const firstBranch = (v.voucher_cn || [])[0]?.chinhanh;
+  const hosodn = firstBranch?.hosodn;
+  const partner = hosodn
+    ? {
+        id: hosodn.ma_hs,
+        name: hosodn.ten_dn,
+        taxCode: hosodn.ma_so_thue,
+        address: hosodn.dia_chi,
+      }
+    : null;
 
   return {
     id: v.ma_voucher,
     name: v.ten_voucher,
     description: v.mo_ta,
-    category: v.danh_muc?.ten_danh_muc || "Khác",
+    category: formatCat(v.danh_muc?.ten_danh_muc),
     partner,
     branches,
     image: v.hinh_anh_url || "https://placehold.co/800x400?text=Voucher",
@@ -45,7 +75,7 @@ class CatalogQueryService {
 
   async listCategories() {
     const categories = await catalogRepository.findAllCategories();
-    return categories.map((c) => ({ id: c.ma_danh_muc, name: c.ten_danh_muc }));
+    return categories.map((c) => ({ id: c.ma_danh_muc, name: formatCat(c.ten_danh_muc) }));
   }
 
   async getVoucherDetail(id) {

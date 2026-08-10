@@ -43,6 +43,33 @@ class PartnerController {
     }
   }
 
+  async requestRegisterOtp(req, res, next) {
+    try {
+      const result = await this.partnerService.requestRegisterOtp(req.body);
+      res.status(200).json({ success: true, ...result });
+    } catch (error) {
+      res.status(error.status || 400).json({ success: false, message: error.message });
+    }
+  }
+
+  async verifyRegisterOtp(req, res, next) {
+    try {
+      const result = await this.partnerService.verifyRegisterOtp(req.body);
+      res.status(200).json({ success: true, ...result });
+    } catch (error) {
+      res.status(error.status || 400).json({ success: false, message: error.message });
+    }
+  }
+
+  async resendRegisterOtp(req, res, next) {
+    try {
+      const result = await this.partnerService.resendRegisterOtp(req.body);
+      res.status(200).json({ success: true, ...result });
+    } catch (error) {
+      res.status(error.status || 400).json({ success: false, message: error.message });
+    }
+  }
+
   async create(req, res, next) {
     try {
       const result = await this.partnerService.createPartner(req.body);
@@ -81,10 +108,47 @@ class PartnerController {
 
   async lock(req, res, next) {
     try {
-      const result = await this.partnerService.lockUnlockPartner(req.params.id, req.body.isLocking, req.body.reason);
+      const isLocking = req.body.isLocking !== undefined ? req.body.isLocking : (req.body.isLocked !== undefined ? req.body.isLocked : true);
+      const result = await this.partnerService.lockUnlockPartner(req.params.id, isLocking, req.body.reason);
       res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
+    }
+  }
+
+  async createProfileRequest(req, res, next) {
+    try {
+      const result = await this.partnerService.createProfileRequest(req.body);
+      res.status(201).json({ success: true, data: result });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async getPendingProfileRequest(req, res, next) {
+    try {
+      const result = await this.partnerService.getPendingProfileRequest(req.params.partnerId);
+      res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async approveProfileRequest(req, res, next) {
+    try {
+      const result = await this.partnerService.approveProfileRequest(req.params.reqId, req.body.adminId);
+      res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async rejectProfileRequest(req, res, next) {
+    try {
+      const result = await this.partnerService.rejectProfileRequest(req.params.reqId, req.body.reason, req.body.adminId);
+      res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
     }
   }
 }

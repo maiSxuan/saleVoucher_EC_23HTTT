@@ -38,10 +38,10 @@ function registerModule(app) {
   app.use('/', dashboardRoutes);
   // User/Profile: GET /profile
   app.use('/', userRoutes);
-  // Issued Voucher: POST /issue
-  app.use('/', issuedVoucherRoutes);
-  // Redemption: POST /verify
+  // Redemption: POST /verify, /redeem, GET /usage-history, /sample-codes, /branches
   app.use('/', redemptionRoutes);
+  // Issued Voucher: GET /vouchers/my, /order/:orderId, /issued/:issuedId, POST /issue
+  app.use('/', issuedVoucherRoutes);
 }
 
 module.exports = {

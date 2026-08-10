@@ -55,20 +55,30 @@ export function PartnerLayout({ children }) {
     normStatus === "active";
   const isProfilePage = location.pathname === "/partner/profile";
 
-  const userName =
+  let userName =
     currentUser?.name ||
     currentUser?.ho_ten ||
     currentUser?.thong_tin_dang_nhap ||
     currentUser?.email ||
     "Đối tác";
+
+  if (typeof userName === "object" && userName !== null) {
+    userName = userName.name || userName.ho_ten || JSON.stringify(userName);
+  }
+
   const userEmail = currentUser?.email || "";
-  const userRole =
+  
+  let userRole =
     currentUser?.vai_tro_he_thong ||
     (currentUser?.role === "PARTNER_STAFF"
       ? "Nhân viên bán hàng"
       : currentUser?.role === "PARTNER_OWNER"
         ? "Người đại diện"
         : "Đối tác");
+
+  if (typeof userRole === "object" && userRole !== null) {
+    userRole = userRole.name || userRole.ten_vai_tro || JSON.stringify(userRole);
+  }
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken");

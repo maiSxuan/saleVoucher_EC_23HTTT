@@ -25,7 +25,11 @@ class CatalogRepository {
         danh_muc:danh_muc ( ten_danh_muc ),
         voucher_cn (
           chinhanh (
+            ma_chi_nhanh,
             ten_chi_nhanh,
+            dia_chi,
+            khu_vuc,
+            trang_thai,
             hosodn ( ten_dn )
           )
         )
@@ -79,7 +83,14 @@ class CatalogRepository {
         hinh_anh_url,
         danh_muc:danh_muc ( ten_danh_muc ),
         voucher_cn (
-          chinhanh ( ten_chi_nhanh, hosodn ( ten_dn ) )
+          chinhanh (
+            ma_chi_nhanh,
+            ten_chi_nhanh,
+            dia_chi,
+            khu_vuc,
+            trang_thai,
+            hosodn ( ma_hs, ten_dn, ma_so_thue, dia_chi )
+          )
         )
         `,
       )
@@ -96,6 +107,29 @@ class CatalogRepository {
       );
     }
     return data;
+  }
+
+  // nếu 2 đơn hàng trùng thời điểm cho cùng 1 voucher -> ko an toàn tuyệt đối
+  async incrementSoldQuantity(voucherId, qty) {
+    const { data: current, error: readErr } = await supabase
+      .from("voucher")
+      .select("so_luong_da_ban")
+      .eq("ma_voucher", voucherId)
+      .single();
+    if (readErr) {
+      const err = new Error("Không thể cập nhật số lượng voucher đã bán");
+      err.status = 500;
+      throw err;
+    }
+    const { error: updateErr } = await supabase
+      .from("voucher")
+      .update({ so_luong_da_ban: current.so_luong_da_ban + qty })
+      .eq("ma_voucher", voucherId);
+    if (updateErr) {
+      const err = new Error("Không thể cập nhật số lượng voucher đã bán");
+      err.status = 500;
+      throw err;
+    }
   }
 }
 

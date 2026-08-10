@@ -7,9 +7,10 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
+  Store,
 } from "lucide-react";
-import { fetchVoucherDetail } from "../../api/catalogApi";
-import { addToCart } from "../../api/cartApi";
+import { fetchVoucherDetail } from "../../../../shared/api/catalogApi";
+import { addToCart } from "../../../../shared/api/cartApi";
 import { toast } from "sonner";
 
 const unavailableMsg = {
@@ -19,6 +20,16 @@ const unavailableMsg = {
   stopped: "Voucher đã ngừng bán.",
   scheduled: "Voucher chưa đến thời gian bán.",
 };
+
+function getBranchName(branch) {
+  if (typeof branch === "string") return branch;
+  return branch?.name || branch?.ten_chi_nhanh || "Chi nhánh";
+}
+
+function getBranchKey(branch, index) {
+  if (typeof branch === "string") return `${branch}-${index}`;
+  return `${branch?.id || branch?.ma_chi_nhanh || getBranchName(branch)}-${index}`;
+}
 
 export default function VoucherDetailPage() {
   const { id } = useParams();
@@ -30,6 +41,7 @@ export default function VoucherDetailPage() {
   const [qty, setQty] = useState(1);
   const [addState, setAddState] = useState("idle"); // idle | checking | added | unavailable
   const [addErrorMsg, setAddErrorMsg] = useState("");
+  const [buyingNow, setBuyingNow] = useState(false);
 
   // Bước 2-3: hệ thống tiếp nhận yêu cầu và truy xuất thông tin chi tiết
   useEffect(() => {
@@ -64,6 +76,7 @@ export default function VoucherDetailPage() {
   if (!voucher) return null;
 
   const isAvailable = voucher.availability === "selling";
+  const branches = Array.isArray(voucher.branches) ? voucher.branches : [];
   const remaining = voucher.totalQty - voucher.soldQty;
   const discountPct = Math.round(
     (1 - voucher.salePrice / voucher.originalPrice) * 100,
@@ -83,18 +96,36 @@ export default function VoucherDetailPage() {
     setAddErrorMsg("");
     try {
       await addToCart(voucher.id, qty);
-      setAddState("added"); // Bước 8: sẵn sàng chuyển sang UC-CUS-09
+      setAddState("added");
       toast.success("Đã thêm voucher vào giỏ hàng!");
     } catch (err) {
-      // A6/E2: voucher không còn khả dụng hoặc lỗi khi kiểm tra
       setAddState("unavailable");
       setAddErrorMsg(err.message);
       toast.error("Lỗi không thể thêm voucher vào giỏ hàng.");
     }
   };
 
-  // const handleBuyNow = async () => {};
-
+  const handleBuyNow = async () => {
+    if (!localStorage.getItem("accessToken")) {
+      navigate("/login");
+      return;
+    }
+    if (!isAvailable) {
+      setAddState("unavailable");
+      return;
+    }
+    setBuyingNow(true);
+    try {
+      await addToCart(voucher.id, qty); // đảm bảo item có trong giỏ trước khi qua checkout
+      navigate("/customer/checkout", {
+        state: { selectedVoucherIds: [voucher.id] },
+      });
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setBuyingNow(false);
+    }
+  };
   return (
     <div>
       <button
@@ -127,9 +158,18 @@ export default function VoucherDetailPage() {
           </div>
 
           <div className="bg-white rounded-xl border border-gray-100 p-4 space-y-3">
-            <p className="text-xs text-orange-600 font-medium">
-              {voucher.partner} · {voucher.category}
-            </p>
+            <div className="md:w-1/2 flex flex-col pt-2">
+              {/* Tag Category + Tên đối tác */}
+              <div className="flex items-center gap-3 mb-3">
+                <span className="bg-orange-100 text-orange-700 px-3 py-1 text-sm font-semibold rounded-full shadow-sm">
+                  {voucher.category}
+                </span>
+                <span className="text-sm font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <Store size={16} />
+                  {typeof voucher.partner === 'object' && voucher.partner !== null ? (voucher.partner.ten_dn || voucher.partner.name || "Đối tác") : (voucher.partner || "Đối tác")}
+                </span>
+              </div>
+            </div>
             <h1 className="text-xl font-bold text-gray-900">{voucher.name}</h1>
 
             <div className="flex items-end gap-3">
@@ -161,19 +201,19 @@ export default function VoucherDetailPage() {
               </p>
             </div>
 
-            {voucher.branches.length > 0 && (
+            {branches.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">
                   Chi nhánh áp dụng
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {voucher.branches.map((b) => (
+                  {branches.map((branch, index) => (
                     <span
-                      key={b}
+                      key={getBranchKey(branch, index)}
                       className="flex items-center gap-1 text-xs bg-gray-50 border border-gray-100 px-2 py-0.5 rounded"
                     >
                       <MapPin size={10} className="text-gray-400" />
-                      {b}
+                      {getBranchName(branch)}
                     </span>
                   ))}
                 </div>
@@ -275,8 +315,8 @@ export default function VoucherDetailPage() {
 
                   {/* Nút 2: Mua ngay - Style Nổi bật (Call to Action) */}
                   <button
-                    //   onClick={handleBuyNow}
-                    //   disabled={addState === "checking"}
+                    onClick={handleBuyNow}
+                    disabled={buyingNow || addState === "checking"}
                     className="flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white py-2.5 px-3 rounded-xl font-bold text-sm shadow-md hover:shadow-lg active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   >
                     <span>MUA NGAY</span>

@@ -22,7 +22,6 @@ export async function fetchCart() {
 }
 
 export async function addToCart(voucherId, quantity) {
-  const token = localStorage.getItem("accessToken");
   const res = await fetch(`${BASE_URL}/cart/items`, {
     method: "POST",
     headers: authHeaders(),

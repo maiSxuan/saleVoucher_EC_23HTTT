@@ -2,19 +2,33 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, X, Tag, XCircle, Eye } from "lucide-react";
 import { getVouchersApi, getPartnersApi } from "../../../../shared/api/partnerApi";
+import { formatCategoryName } from "../../../../shared/utils/categoryFormatter";
+import { getVoucherPublicationStatus } from "../../../../shared/utils/publicationStatusHelper";
+
+const SESSION_KEY = "ec_admin_voucher_approval_list_state_v1";
+
+const getSavedState = () => {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return null;
+};
 
 export function VoucherApprovalListPage() {
-  const [vouchers, setVouchers] = useState([]);
-  const [partners, setPartners] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const savedState = getSavedState();
+
+  const [vouchers, setVouchers] = useState(savedState?.cachedVouchers || []);
+  const [partners, setPartners] = useState(savedState?.cachedPartners || []);
+  const [loading, setLoading] = useState(!savedState?.cachedVouchers || savedState.cachedVouchers.length === 0);
 
   // Filters state matching prototype code
-  const [searchName, setSearchName] = useState("");
-  const [filterPartner, setFilterPartner] = useState("");
-  const [filterReview, setFilterReview] = useState("pending");
+  const [searchName, setSearchName] = useState(savedState?.searchName || "");
+  const [filterPartner, setFilterPartner] = useState(savedState?.filterPartner || "");
+  const [filterReview, setFilterReview] = useState(savedState?.filterReview || "pending");
 
   const loadData = async () => {
-    setLoading(true);
+    if (!savedState?.cachedVouchers) setLoading(true);
     try {
       const [vData, pData] = await Promise.all([getVouchersApi(), getPartnersApi()]);
       setVouchers(vData || []);
@@ -25,6 +39,21 @@ export function VoucherApprovalListPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        SESSION_KEY,
+        JSON.stringify({
+          searchName,
+          filterPartner,
+          filterReview,
+          cachedVouchers: vouchers,
+          cachedPartners: partners,
+        })
+      );
+    } catch (e) {}
+  }, [searchName, filterPartner, filterReview, vouchers, partners]);
 
   useEffect(() => {
     loadData();
@@ -41,21 +70,7 @@ export function VoucherApprovalListPage() {
   };
 
   const getPublicationStatusBadge = (v) => {
-    const isApproved = v.trang_thai === "Dang ban" || v.trang_thai === "Da duyet" || v.reviewStatus === "approved";
-    if (!isApproved) {
-      return { label: "Chưa công bố", color: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400" };
-    }
-
-    const now = new Date();
-    const start = v.tg_bat_dau_ban ? new Date(v.tg_bat_dau_ban) : now;
-    const end = v.tg_ket_thuc_ban ? new Date(v.tg_ket_thuc_ban) : new Date(Date.now() + 86400000 * 30);
-    const sold = Number(v.so_luong_da_ban) || 0;
-    const total = Number(v.so_luong_phat_hanh) || 0;
-
-    if (now > end) return { label: "Hết hạn", color: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400" };
-    if (sold >= total && total > 0) return { label: "Hết hàng", color: "bg-purple-50 text-purple-700 border-purple-200", dot: "bg-purple-500" };
-    if (now >= start) return { label: "Đang bán", color: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" };
-    return { label: "Chờ mở bán", color: "bg-blue-50 text-blue-700 border-blue-200", dot: "bg-blue-500" };
+    return getVoucherPublicationStatus(v);
   };
 
   const filteredVouchers = vouchers.filter((v) => {
@@ -193,11 +208,11 @@ export function VoucherApprovalListPage() {
 
                       {/* Đối tác */}
                       <td className="px-3.5 py-3.5 text-slate-600 truncate max-w-[120px]">
-                        {v.ten_dn || "Pizza Hut Vietnam"}
+                        {v.ten_dn || "Doanh nghiệp đối tác"}
                       </td>
 
                       {/* Danh mục */}
-                      <td className="px-3.5 py-3.5 text-slate-600">{v.ten_danh_muc || "Ẩm thực"}</td>
+                      <td className="px-3.5 py-3.5 text-slate-600">{formatCategoryName(v.ten_danh_muc)}</td>
 
                       {/* Giá gốc */}
                       <td className="px-3.5 py-3.5 font-medium text-slate-700">{giaGoc.toLocaleString("vi-VN")}đ</td>

@@ -28,17 +28,45 @@ class PartnerRepository {
       const data = hosodnRes.data || [];
       const branchesData = chinhanhRes.data || [];
 
-      // Group branches and count pending branch requests in O(N) memory
+      // Fetch pending branch change requests and profile update requests
+      const branchRequestRepo = require("./branch-request.repository");
+      const partnerProfileRequestRepo = require("./partner-profile-request.repository");
+
+      const [pendingBranchReqsMap, pendingProfileReqsMap] = await Promise.all([
+        branchRequestRepo.getAllPendingRequestsMap(),
+        partnerProfileRequestRepo.getAllPendingRequestsMap(),
+      ]);
+
+      // Group branches and count pending requests (Branch + Profile)
       const branchesByPartner = new Map();
       const pendingReqsByPartner = new Map();
 
+      // 1. Fill count from branch store requests
+      for (const [hsId, count] of pendingBranchReqsMap.entries()) {
+        pendingReqsByPartner.set(hsId, (pendingReqsByPartner.get(hsId) || 0) + count);
+      }
+
+      // 2. Fill count from profile update requests (SUC-PAR-04)
+      for (const [hsId, count] of pendingProfileReqsMap.entries()) {
+        pendingReqsByPartner.set(hsId, (pendingReqsByPartner.get(hsId) || 0) + count);
+      }
+
+      // 3. Add count from chinhanh table status if any
       for (const b of branchesData) {
         if (b.ma_hs) {
           if (!branchesByPartner.has(b.ma_hs)) branchesByPartner.set(b.ma_hs, []);
           branchesByPartner.get(b.ma_hs).push(b);
 
-          if (b.trang_thai === "Cho duyet" || b.trang_thai === "Cho xu ly" || b.trang_thai === "Chờ xử lý") {
-            pendingReqsByPartner.set(b.ma_hs, (pendingReqsByPartner.get(b.ma_hs) || 0) + 1);
+          if (
+            b.trang_thai === "Cho duyet" ||
+            b.trang_thai === "Cho xu ly" ||
+            b.trang_thai === "Chờ xử lý" ||
+            b.trang_thai === "Cho duyet cap nhat" ||
+            b.trang_thai === "Cho duyet huy"
+          ) {
+            if (!pendingBranchReqsMap.has(b.ma_hs)) {
+              pendingReqsByPartner.set(b.ma_hs, (pendingReqsByPartner.get(b.ma_hs) || 0) + 1);
+            }
           }
         }
       }
@@ -59,7 +87,11 @@ class PartnerRepository {
       return uniquePartners.map((item) => {
         const rep = item.nguoidung || item.nguoi_dai_dien || {};
         const pBranches = branchesByPartner.get(item.ma_hs) || item.branches || [];
-        const pendingBranchReqCount = pendingReqsByPartner.get(item.ma_hs) || (item.trang_thai === "Cho duyet" ? 1 : 0);
+        
+        // Active partner OR pending partner: Count all pending branch requests
+        const branchPendingCount = pendingReqsByPartner.get(item.ma_hs) || 0;
+        const registrationPendingCount = item.trang_thai === "Cho duyet" ? 1 : 0;
+        const totalPendingReqs = branchPendingCount + registrationPendingCount;
 
         return new PartnerModel({
           ma_hs: item.ma_hs,
@@ -72,7 +104,7 @@ class PartnerRepository {
           id_nguoi_dai_dien: item.id_nguoi_dai_dien,
           ly_do_tu_choi: item.ly_do_tu_choi || "",
           branches: pBranches,
-          pending_branch_requests: pendingBranchReqCount,
+          pending_branch_requests: totalPendingReqs,
           nguoi_dai_dien: {
             ho_ten: rep.ho_ten || "Chưa cập nhật",
             sdt: rep.sdt || "",
@@ -163,6 +195,17 @@ class PartnerRepository {
       const data = REGISTERED_PARTNERS.get(id);
       return data ? new PartnerModel(data) : null;
     }
+  }
+
+  async checkAccountExists(email) {
+    const cleanEmail = (email || "").trim().toLowerCase();
+    if (!cleanEmail) return false;
+    const { data } = await supabase
+      .from("taikhoan")
+      .select("ma_tk")
+      .eq("thong_tin_dang_nhap", cleanEmail)
+      .maybeSingle();
+    return !!data;
   }
 
   async createAccount({ email, password, ho_ten, sdt }) {
@@ -384,7 +427,10 @@ class PartnerRepository {
         if (repData.email !== undefined) nguoidungUpdate.email = repData.email;
         if (repData.cccd !== undefined) nguoidungUpdate.cccd = repData.cccd || null;
         if (repData.ngay_sinh !== undefined) nguoidungUpdate.ngay_sinh = repData.ngay_sinh || null;
-        if (repData.gioi_tinh !== undefined) nguoidungUpdate.gioi_tinh = repData.gioi_tinh || "Khac";
+        if (repData.gioi_tinh !== undefined) {
+          const rawG = String(repData.gioi_tinh || "").trim();
+          nguoidungUpdate.gioi_tinh = (rawG === "Nữ" || rawG === "Nu" || rawG === "NU") ? "Nu" : (rawG === "Nam" || rawG === "NAM" ? "Nam" : "Khac");
+        }
 
         if (Object.keys(nguoidungUpdate).length > 0) {
           const { error: repError } = await supabase

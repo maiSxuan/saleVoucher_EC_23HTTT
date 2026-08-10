@@ -26,10 +26,10 @@ export default function VoucherCard({ voucher: v, onClick }) {
       <div className="p-4 flex flex-col flex-1 justify-between">
         <div>
           <p className="text-xs text-orange-600 font-semibold uppercase tracking-wider mb-1">
-            {v.partner}
+            {typeof v.partner === 'object' && v.partner !== null ? (v.partner.ten_dn || v.partner.name || "Đối tác") : (v.partner || "Đối tác")}
           </p>
           <p className="text-base font-bold text-gray-900 line-clamp-2 mb-3 group-hover:text-orange-600 transition-colors">
-            {v.name}
+            {typeof v.name === 'object' && v.name !== null ? v.name.name : v.name}
           </p>
         </div>
 

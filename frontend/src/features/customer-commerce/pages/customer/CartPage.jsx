@@ -12,7 +12,7 @@ import {
   fetchCart,
   updateCartItemQuantity,
   removeCartItems,
-} from "../../api/cartApi";
+} from "../../../../shared/api/cartApi";
 
 export default function CartPage() {
   const navigate = useNavigate();
@@ -218,8 +218,8 @@ export default function CartPage() {
             className="w-4 h-4 accent-orange-500 rounded cursor-pointer"
           />
           <h1 className="text-base font-bold text-gray-900 flex items-center gap-2">
-            <ShoppingCart size={18} /> Chọn tất cả ({selectedIds.length}/
-            {validItems.length} voucher)
+            <ShoppingCart size={17} /> Chọn tất cả ({selectedIds.length}/
+            {validItems.length} voucher hợp lệ)
           </h1>
         </div>
 
@@ -288,9 +288,11 @@ export default function CartPage() {
                     }
                     className="text-sm font-semibold text-gray-900 hover:text-orange-600 text-left line-clamp-1"
                   >
-                    {item.name}
+                    {typeof item.name === 'object' && item.name !== null ? item.name.name : item.name}
                   </button>
-                  <p className="text-xs text-gray-400 mb-1">{item.partner}</p>
+                  <p className="text-xs text-gray-400 mb-1">
+                    {typeof item.partner === 'object' && item.partner !== null ? (item.partner.ten_dn || item.partner.name || "Đối tác") : item.partner}
+                  </p>
                   <p className="text-sm font-bold text-orange-600">
                     {item.salePrice.toLocaleString("vi-VN")}đ
                   </p>
@@ -390,7 +392,7 @@ export default function CartPage() {
                 "Đang kiểm tra..."
               ) : (
                 <>
-                  <span>Tiến hành đặt mua ({selectedIds.length})</span>
+                  <span>Tiến hành đặt mua</span>
                   <ArrowRight size={16} />
                 </>
               )}

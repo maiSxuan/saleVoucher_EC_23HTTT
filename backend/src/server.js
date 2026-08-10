@@ -7,6 +7,7 @@ const { loadEnvironment } = require("./config/environment");
 
 const config = loadEnvironment();
 
+// Express Server Entry Point (Preserve Da duyet review status when voucher status is changed to Ngung ban)
 app.listen(config.port, () => {
   console.log(`Backend running on port ${config.port}...`);
 });

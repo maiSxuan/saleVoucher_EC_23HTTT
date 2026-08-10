@@ -30,6 +30,7 @@ export function StaffManagementPage() {
     ho_ten: "",
     email: "",
     sdt: "",
+    mat_khau: "123456",
     ngay_sinh: "",
     gioi_tinh: "Nam",
     cccd: "",
@@ -219,7 +220,6 @@ export function StaffManagementPage() {
               <option value="All">Tất cả trạng thái</option>
               <option value="Dang hoat dong">Đang hoạt động</option>
               <option value="Tam khoa">Tạm khóa</option>
-              <option value="Tam ngung">Tạm ngưng</option>
             </select>
           </div>
 
@@ -313,13 +313,6 @@ export function StaffManagementPage() {
                           >
                             {staff.trang_thai === "Dang hoat dong" ? <Lock size={15} /> : <Unlock size={15} />}
                           </button>
-                          <button
-                            onClick={() => handleDelete(staff.ma_nv)}
-                            className="p-1.5 text-gray-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                            title="Xóa nhân viên"
-                          >
-                            <Trash2 size={15} />
-                          </button>
                         </div>
                       </td>
                     </tr>
@@ -367,6 +360,19 @@ export function StaffManagementPage() {
                     onChange={(e) => setForm({ ...form, sdt: e.target.value })}
                   />
                 </div>
+
+                {!editing && (
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Mật khẩu khởi tạo *</label>
+                    <input
+                      type="password"
+                      className="w-full border rounded-lg px-3.5 py-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
+                      placeholder="Nhập mật khẩu (Mặc định: 123456)"
+                      value={form.mat_khau || "123456"}
+                      onChange={(e) => setForm({ ...form, mat_khau: e.target.value })}
+                    />
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">Ngày sinh</label>
