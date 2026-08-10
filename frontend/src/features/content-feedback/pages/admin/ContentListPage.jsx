@@ -58,13 +58,11 @@ export default function ContentListPage() {
       loai: activeType, 
       tieu_de: formData.title, 
       noi_dung: formData.content, 
-      trang_thai: 'Dang hien thi', // Gán trạng thái mặc định
-      matk_admin: 'UUID_ADMIN_EXAMPLE' // Cần thay bằng adminId thực tế
+      trang_thai: 'Dang hien thi', 
+      matk_admin: 'UUID_ADMIN_EXAMPLE' 
     });
-    setConfirmCreate(false);
     setIsFormOpen(false);
-    setNewTitle('');
-    toast.success('Đã tạo nội dung mới.');
+    toast.success('Đã tạo nội dung mới thành công.');
   };
 
   const handleUpdate = async (formData) => {

@@ -1,4 +1,5 @@
 const repository = require("../../data/repositories/feedback.repository");
+const accountRepository = require("../../data/repositories/account.repository");
 const validator = require("../../presentation/validators/feedback.validator");
 const dto = require("../../presentation/dtos/feedback.dto");
 
@@ -19,12 +20,31 @@ async function createFeedback(payload) {
   // Validate dữ liệu
   validator.validateCreateFeedback(payload);
   
-  const saved = await repository.create(payload);
+  // Kiểm tra xem lần mua này đã được gửi khiếu nại chưa
+  const existing = await repository.findByVoucherPurchaseId(payload.ma_voucher_mua);
+  if (existing) {
+    throw new Error("Bạn đã gửi phản ánh/khiếu nại cho lần mua voucher này rồi. Mỗi lần mua chỉ được gửi khiếu nại 1 lần.");
+  }
+  
+  const dbPayload = {
+    noi_dung: payload.noi_dung,
+    ma_voucher_mua: payload.ma_voucher_mua,
+    ma_tk_xuly: null // Ban đầu chưa có người xử lý, admin/staff sẽ cập nhật sau
+  };
+  
+  const saved = await repository.create(dbPayload);
   return dto.buildFeedbackDto(saved);
+}
+
+// Lấy khiếu nại theo ma_voucher_mua
+async function getFeedbackByPurchaseId(voucherPurchaseId) {
+  const item = await repository.findByVoucherPurchaseId(voucherPurchaseId);
+  return dto.buildFeedbackDto(item);
 }
 
 module.exports = {
   getFeedbackList,
   getFeedbackById,
   createFeedback,
+  getFeedbackByPurchaseId,
 };

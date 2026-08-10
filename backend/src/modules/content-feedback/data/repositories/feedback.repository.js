@@ -21,8 +21,20 @@ async function create(payload) {
   return data[0];
 }
 
+// Lấy khiếu nại theo ma_voucher_mua (lần mua cụ thể)
+async function findByVoucherPurchaseId(voucherPurchaseId) {
+  const { data, error } = await supabase
+    .from('khieunai')
+    .select('*')
+    .eq('ma_voucher_mua', voucherPurchaseId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 module.exports = {
   findAll,
   findById,
   create,
+  findByVoucherPurchaseId,
 };

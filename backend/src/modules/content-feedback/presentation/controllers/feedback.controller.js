@@ -30,8 +30,19 @@ async function createFeedback(req, res, next) {
   }
 }
 
+// Lấy khiếu nại theo ma_voucher_mua (lần mua)
+async function getFeedbackByPurchaseId(req, res, next) {
+  try {
+    const result = await service.getFeedbackByPurchaseId(req.params.voucherPurchaseId);
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   getFeedbackList,
   getFeedbackById,
   createFeedback,
+  getFeedbackByPurchaseId,
 };

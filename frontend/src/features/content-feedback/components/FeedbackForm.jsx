@@ -6,9 +6,11 @@ export default function FeedbackForm({ onSubmit, onCancel }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // TODO: ma_tk_xuly currently hardcoded for a dummy admin. 
-    // In production, this should be handled by backend automatically based on role.
-    onSubmit({ noi_dung: content, ma_tk_xuly: '00000000-0000-0000-0000-000000000000' });
+    if (!content.trim()) {
+      alert("Vui lòng nhập nội dung khiếu nại.");
+      return;
+    }
+    onSubmit({ noi_dung: content });
   };
 
   return (

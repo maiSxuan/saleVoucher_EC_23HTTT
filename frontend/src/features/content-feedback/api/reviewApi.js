@@ -20,4 +20,10 @@ export const reviewApi = {
     if (!response.ok) throw new Error("Failed to create review");
     return response.json();
   },
+  getByPurchaseId: async (voucherPurchaseId) => {
+    const response = await fetch(`${API_BASE}/review/purchase/${voucherPurchaseId}`);
+    if (!response.ok) throw new Error("Failed to fetch review by purchase id");
+    const json = await response.json();
+    return json.data;
+  },
 };

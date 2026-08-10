@@ -1,5 +1,13 @@
 const API_BASE = "http://localhost:3001/api";
 
+function getHeaders() {
+  const token = localStorage.getItem("accessToken") || localStorage.getItem("ec_auth_token") || "";
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {})
+  };
+}
+
 export const contentApi = {
   list: async (type) => {
     const url = type ? `${API_BASE}/content?loai=${type}` : `${API_BASE}/content`;
@@ -15,7 +23,7 @@ export const contentApi = {
   create: async (data) => {
     const response = await fetch(`${API_BASE}/content`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getHeaders(),
       body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error("Failed to create content");
@@ -24,7 +32,7 @@ export const contentApi = {
   update: async (id, data) => {
     const response = await fetch(`${API_BASE}/content/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: getHeaders(),
       body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error("Failed to update content");
@@ -33,6 +41,7 @@ export const contentApi = {
   delete: async (id) => {
     const response = await fetch(`${API_BASE}/content/${id}`, {
       method: "DELETE",
+      headers: getHeaders(),
     });
     if (!response.ok) throw new Error("Failed to delete content");
     return response.json();

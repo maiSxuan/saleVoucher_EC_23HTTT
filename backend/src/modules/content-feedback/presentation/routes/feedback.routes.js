@@ -3,6 +3,7 @@ const router = express.Router();
 const controller = require("../controllers/feedback.controller");
 
 router.get("/", controller.getFeedbackList);
+router.get("/purchase/:voucherPurchaseId", controller.getFeedbackByPurchaseId);
 router.get("/:id", controller.getFeedbackById);
 router.post("/", controller.createFeedback);
 

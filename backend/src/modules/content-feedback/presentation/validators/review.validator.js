@@ -4,7 +4,7 @@ function validateCreateReview(data) {
   }
 
   // Kiểm tra các trường bắt buộc
-  const requiredFields = ['diem', 'ma_voucher_mua', 'ma_tk_danhgia'];
+  const requiredFields = ['diem', 'ma_voucher_mua', 'ma_nguoi_dung'];
   for (const field of requiredFields) {
     if (!data[field]) {
       throw new Error(`Thiếu trường bắt buộc: ${field}`);

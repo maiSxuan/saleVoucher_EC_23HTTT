@@ -196,6 +196,7 @@ const router = createBrowserRouter([
             path: "audit-logs",
             element: <Navigate to="/admin/logs" replace />,
           },
+          { path: "contents", element: <ContentListPage /> },
         ],
       },
     ],

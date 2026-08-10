@@ -4,7 +4,7 @@ function validateCreateFeedback(data) {
   }
 
   // Kiểm tra các trường bắt buộc
-  const requiredFields = ['noi_dung', 'ma_voucher_mua', 'ma_tk_xuly'];
+  const requiredFields = ['noi_dung', 'ma_voucher_mua'];
   for (const field of requiredFields) {
     if (!data[field]) {
       throw new Error(`Thiếu trường bắt buộc: ${field}`);

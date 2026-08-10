@@ -10,11 +10,17 @@ export default function ReviewForm({ onSubmit, onCancel }) {
     const userStr = localStorage.getItem('user');
     const user = userStr ? JSON.parse(userStr) : null;
     
-    // Sử dụng ma_nguoi_dung từ user hoặc fallback
-    const userId = user?.ma_nguoi_dung || 'USER_ID_MOCK';
+    // Sử dụng ma_tk (dùng cho khóa ngoại bảng danhgia) hoặc ma_nguoi_dung
+    const userId = user?.ma_nguoi_dung || user?.id;
     
-    onSubmit({ diem: rating, noi_dung: comment, ma_tk_danhgia: userId });
+    if (!userId) {
+      alert("Không tìm thấy thông tin tài khoản.");
+      return;
+    }
+    
+    onSubmit({ diem: rating, noi_dung: comment, ma_nguoi_dung: userId });
   };
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">

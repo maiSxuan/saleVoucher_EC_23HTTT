@@ -7,8 +7,9 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
+  Star,
 } from "lucide-react";
-import { fetchVoucherDetail } from "../../../../shared/api/catalogApi";
+import { fetchVoucherDetail, fetchVoucherReviews } from "../../../../shared/api/catalogApi";
 import { addToCart } from "../../../../shared/api/cartApi";
 import { toast } from "sonner";
 
@@ -31,6 +32,8 @@ export default function VoucherDetailPage() {
   const [addState, setAddState] = useState("idle"); // idle | checking | added | unavailable
   const [addErrorMsg, setAddErrorMsg] = useState("");
   const [buyingNow, setBuyingNow] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
 
   // Bước 2-3: hệ thống tiếp nhận yêu cầu và truy xuất thông tin chi tiết
   useEffect(() => {
@@ -49,6 +52,20 @@ export default function VoucherDetailPage() {
           setErrorMsg("Không thể tải thông tin voucher. Vui lòng thử lại sau."),
       ) // E1
       .finally(() => !ignore && setLoading(false));
+
+    // Fetch reviews
+    setLoadingReviews(true);
+    fetchVoucherReviews(id)
+      .then((res) => {
+        if (!ignore) setReviews(res || []);
+      })
+      .catch(() => {
+        if (!ignore) setReviews([]);
+      })
+      .finally(() => {
+        if (!ignore) setLoadingReviews(false);
+      });
+
     return () => {
       ignore = true;
     };
@@ -233,6 +250,71 @@ export default function VoucherDetailPage() {
               )}
             </div>
           )}
+
+          {/* Vùng đọc dữ liệu review cho từng voucher */}
+          <div className="bg-white rounded-xl border border-gray-100 p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
+                <Star size={16} className="text-yellow-500 fill-yellow-500" />
+                Đánh giá từ khách hàng ({reviews.length})
+              </h3>
+              {reviews.length > 0 && (
+                <span className="text-xs text-gray-500">
+                  Trung bình:{" "}
+                  <strong className="text-orange-600 font-bold">
+                    {(
+                      reviews.reduce((acc, r) => acc + (r.rating || 0), 0) /
+                      reviews.length
+                    ).toFixed(1)}{" "}
+                    / 5
+                  </strong>
+                </span>
+              )}
+            </div>
+
+            {loadingReviews ? (
+              <p className="text-xs text-gray-400 py-3 text-center">
+                Đang tải đánh giá...
+              </p>
+            ) : reviews.length === 0 ? (
+              <p className="text-xs text-gray-400 py-4 text-center">
+                Chưa có đánh giá nào cho voucher này.
+              </p>
+            ) : (
+              <div className="space-y-3 divide-y divide-gray-100">
+                {reviews.map((rev, idx) => (
+                  <div key={rev.id || idx} className={idx > 0 ? "pt-3" : ""}>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            size={12}
+                            className={
+                              star <= (rev.rating || 5)
+                                ? "text-yellow-500 fill-yellow-500"
+                                : "text-gray-300"
+                            }
+                          />
+                        ))}
+                        <span className="text-xs font-semibold text-gray-700 ml-1">
+                          {rev.rating} sao
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-gray-400">
+                        {rev.createdAt
+                          ? new Date(rev.createdAt).toLocaleDateString("vi-VN")
+                          : ""}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1">
+                      {rev.comment || "Không có nội dung."}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="lg:col-span-1">

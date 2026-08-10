@@ -20,4 +20,10 @@ export const feedbackApi = {
     if (!response.ok) throw new Error("Failed to create feedback");
     return response.json();
   },
+  getByPurchaseId: async (voucherPurchaseId) => {
+    const response = await fetch(`${API_BASE}/feedback/purchase/${voucherPurchaseId}`);
+    if (!response.ok) throw new Error("Failed to fetch feedback by purchase id");
+    const json = await response.json();
+    return json.data;
+  },
 };
