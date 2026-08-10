@@ -56,8 +56,9 @@ class PartnerProfileRequestRepository {
         .from("yeu_cau_cap_nhat_hosodn")
         .select("*")
         .eq("ma_hs", partnerId)
-        .eq("trang_thai", "Cho duyet")
+        .or("trang_thai.eq.Cho duyet,trang_thai.eq.Cho xu ly")
         .order("ngay_yeu_cau", { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (!error && data) {
@@ -67,11 +68,10 @@ class PartnerProfileRequestRepository {
       console.warn("[PartnerProfileRequestRepo] findPendingByPartnerId warning:", e.message);
     }
 
-    return (
-      Array.from(PROFILE_REQUESTS_STORE.values()).find(
-        (r) => r.ma_hs === partnerId && (r.trang_thai === "Cho duyet" || r.trang_thai === "Cho xu ly")
-      ) || null
+    const memoryReq = Array.from(PROFILE_REQUESTS_STORE.values()).find(
+      (r) => r.ma_hs === partnerId && (r.trang_thai === "Cho duyet" || r.trang_thai === "Cho xu ly")
     );
+    return memoryReq || null;
   }
 
   /**

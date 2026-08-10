@@ -170,6 +170,13 @@ class PartnerRepository {
         .select("*")
         .eq("ma_hs", maHs);
 
+      let lyDoTuChoi = fallbackData?.ly_do_tu_choi;
+      const status = fallbackData?.trang_thai || "Cho duyet";
+      if (!lyDoTuChoi && status === "Tu choi") {
+        const auditLogRepository = require("../../../core-access/data/repositories/audit-log.repository");
+        lyDoTuChoi = await auditLogRepository.getLatestRejectionReason("HOSODN", maHs);
+      }
+
       return new PartnerModel({
         ma_hs: maHs,
         ten_dn: fallbackData?.ten_dn || "Doanh nghiệp mới",
@@ -177,9 +184,9 @@ class PartnerRepository {
         dia_chi: fallbackData?.dia_chi || "Chưa cập nhật",
         giay_phep_kinh_doanh: fallbackData?.giay_phep_kinh_doanh || "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80",
         ngay_tao: fallbackData?.ngay_tao || new Date().toISOString(),
-        trang_thai: fallbackData?.trang_thai || "Cho duyet",
+        trang_thai: status,
         id_nguoi_dai_dien: fallbackData?.id_nguoi_dai_dien || repUser?.ma_nguoi_dung || id,
-        ly_do_tu_choi: fallbackData?.ly_do_tu_choi || "",
+        ly_do_tu_choi: lyDoTuChoi || "",
         branches: branches || fallbackData?.branches || [],
         nguoi_dai_dien: {
           ho_ten: repUser?.ho_ten || fallbackData?.nguoi_dai_dien?.ho_ten || "",

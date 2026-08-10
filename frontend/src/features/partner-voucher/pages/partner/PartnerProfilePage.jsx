@@ -187,7 +187,7 @@ export function PartnerProfilePage() {
         )}
 
         {/* Pending Profile Update Request Banner */}
-        {pendingProfileReq && (
+        {pendingProfileReq && (pendingProfileReq.trang_thai === "Cho duyet" || pendingProfileReq.trang_thai === "Cho xu ly") && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-900 space-y-1.5 shadow-xs">
             <div className="flex items-center gap-2 font-bold text-amber-900">
               <span>Bạn có 1 Yêu cầu cập nhật hồ sơ doanh nghiệp đang chờ Quản trị viên duyệt</span>
@@ -197,6 +197,26 @@ export function PartnerProfilePage() {
               {pendingProfileReq.dia_chi_moi && <div>• Địa chỉ trụ sở mới: <strong>{pendingProfileReq.dia_chi_moi}</strong></div>}
               {pendingProfileReq.ho_ten_nguoi_dai_dien_moi && <div>• Người đại diện mới: <strong>{pendingProfileReq.ho_ten_nguoi_dai_dien_moi}</strong></div>}
               {pendingProfileReq.sdt_nguoi_dai_dien_moi && <div>• SĐT mới: <strong>{pendingProfileReq.sdt_nguoi_dai_dien_moi}</strong></div>}
+            </div>
+          </div>
+        )}
+
+        {/* Rejected Profile Update Request Banner */}
+        {pendingProfileReq && pendingProfileReq.trang_thai === "Tu choi" && (
+          <div className="bg-rose-50 border border-rose-200 rounded-xl p-5 shadow-xs">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">⚠️</span>
+              <div className="space-y-1">
+                <h4 className="font-bold text-rose-900 text-sm">Yêu cầu cập nhật hồ sơ doanh nghiệp gần đây đã bị từ chối</h4>
+                <p className="text-xs text-rose-700 font-medium">
+                  Lý do từ chối: <span className="italic font-normal">{pendingProfileReq.ly_do_tu_choi || "Thông tin đề xuất mới chưa phù hợp quy định."}</span>
+                </p>
+                <div className="pt-2">
+                  <Button variant="danger" size="sm" onClick={() => setIsEditing(true)}>
+                    Khắc phục thông tin & Gửi lại đề xuất mới
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         )}

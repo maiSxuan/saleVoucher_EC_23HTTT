@@ -36,6 +36,14 @@ export function PartnerManagementPage() {
   const [selectedStatusFilter, setSelectedStatusFilter] = useState(savedState?.selectedStatusFilter || "ALL");
   const [filterPendingBranchReqs, setFilterPendingBranchReqs] = useState(savedState?.filterPendingBranchReqs || false);
 
+  // Pagination state
+  const [page, setPage] = useState(savedState?.page || 1);
+  const limit = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTenDn, searchMst, selectedStatusFilter, filterPendingBranchReqs]);
+
   const loadData = async () => {
     if (!savedState?.cachedPartners) setLoading(true);
     try {
@@ -135,6 +143,10 @@ export function PartnerManagementPage() {
     return matchesTenDn && matchesMst && matchesStatus && matchesBranchReqFilter;
   });
 
+  const totalPartners = filteredPartners.length;
+  const totalPages = Math.ceil(totalPartners / limit) || 1;
+  const paginatedPartners = filteredPartners.slice((page - 1) * limit, page * limit);
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-5">
       {/* Title */}
@@ -143,7 +155,7 @@ export function PartnerManagementPage() {
         <p className="text-sm text-gray-500 mt-1">Kiểm tra, duyệt và quản lý hồ sơ đối tác do doanh nghiệp gửi.</p>
       </div>
 
-      {/* Filters matching Duyệt voucher page 100% */}
+      {/* Filters matching Voucher Approval Page design */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <div className="relative">
@@ -153,7 +165,7 @@ export function PartnerManagementPage() {
               placeholder="Tên doanh nghiệp..."
               value={searchTenDn}
               onChange={(e) => setSearchTenDn(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50"
             />
           </div>
 
@@ -164,43 +176,45 @@ export function PartnerManagementPage() {
               placeholder="Mã số thuế..."
               value={searchMst}
               onChange={(e) => setSearchMst(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50"
             />
           </div>
 
           <select
             value={selectedStatusFilter}
             onChange={(e) => setSelectedStatusFilter(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700 font-medium"
           >
-            <option value="ALL">Tất cả trạng thái</option>
+            <option value="ALL">Tất cả trạng thái hồ sơ</option>
             <option value="Cho duyet">Chờ duyệt</option>
-            <option value="Da duyet">Đã duyệt</option>
+            <option value="Da duyet">Đang hoạt động</option>
             <option value="Tu choi">Bị từ chối</option>
-            <option value="Tam khoa">Bị khóa</option>
+            <option value="Tam khoa">Tạm khóa</option>
           </select>
 
-          <label className="flex items-center gap-2 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 cursor-pointer bg-white">
+          <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors select-none">
             <input
               type="checkbox"
               id="pending-branch-reqs"
               checked={filterPendingBranchReqs}
               onChange={(e) => setFilterPendingBranchReqs(e.target.checked)}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
             />
-            <span className="text-xs text-gray-600 truncate">Yêu cầu chờ xử lý</span>
+            <span>Có yêu cầu chi nhánh chờ duyệt</span>
           </label>
         </div>
 
-        <div className="flex items-center justify-between mt-3">
-          <p className="text-sm text-gray-500">{filteredPartners.length} đối tác</p>
-          <button
-            onClick={handleResetFilters}
-            className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1 cursor-pointer"
-          >
-            <X size={14} /> Đặt lại
-          </button>
-        </div>
+        {(searchTenDn || searchMst || selectedStatusFilter !== "ALL" || filterPendingBranchReqs) && (
+          <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+            <span>Đang lọc ra {totalPartners} kết quả</span>
+            <button
+              onClick={handleResetFilters}
+              className="flex items-center gap-1 text-rose-600 hover:text-rose-800 font-semibold cursor-pointer"
+            >
+              <X size={14} /> Xóa bộ lọc
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Partner Table matching Voucher Approval Page */}
@@ -213,95 +227,122 @@ export function PartnerManagementPage() {
             <p className="text-sm">Không tìm thấy đối tác nào phù hợp</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  <th className="px-3.5 py-3">Tên doanh nghiệp</th>
-                  <th className="px-3.5 py-3">Mã số thuế</th>
-                  <th className="px-3.5 py-3">Người đại diện</th>
-                  <th className="px-3.5 py-3 text-center">Chi nhánh</th>
-                  <th className="px-3.5 py-3">Trạng thái hồ sơ</th>
-                  <th className="px-3.5 py-3">Yêu cầu chờ</th>
-                  <th className="px-3.5 py-3 text-right">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-sm">
-                {filteredPartners.map((partner) => {
-                  const pendingReqs = Number(partner.pending_branch_requests) || 0;
-                  const branchCount = partner.branches?.length || 0;
-                  const sb = getPartnerStatusBadge(partner.trang_thai);
+          <div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50/80 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="px-3.5 py-3">Doanh nghiệp</th>
+                    <th className="px-3.5 py-3">MST</th>
+                    <th className="px-3.5 py-3">Người đại diện</th>
+                    <th className="px-3.5 py-3 text-center">Chi nhánh</th>
+                    <th className="px-3.5 py-3">Trạng thái hồ sơ</th>
+                    <th className="px-3.5 py-3">Yêu cầu chờ</th>
+                    <th className="px-3.5 py-3 text-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-sm">
+                  {paginatedPartners.map((partner) => {
+                    const pendingReqs = Number(partner.pending_branch_requests) || 0;
+                    const branchCount = partner.branches?.length || 0;
+                    const sb = getPartnerStatusBadge(partner.trang_thai);
 
-                  return (
-                    <tr key={partner.ma_hs} className="hover:bg-slate-50 transition-colors">
-                      {/* Tên doanh nghiệp with Building Icon */}
-                      <td className="px-3.5 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0 border border-blue-100">
-                            <Building2 size={16} />
-                          </div>
-                          <div>
-                            <Link
-                              to={`/admin/partners/${partner.ma_hs}`}
-                              className="font-bold text-slate-900 hover:text-blue-600 transition-colors line-clamp-1"
-                            >
-                              {partner.ten_dn}
-                            </Link>
-                            <div className="text-xs text-slate-400">
-                              Đăng ký: {partner.ngay_tao ? partner.ngay_tao.slice(0, 10) : "2025-10-21"}
+                    return (
+                      <tr key={partner.ma_hs} className="hover:bg-slate-50 transition-colors">
+                        {/* Tên doanh nghiệp with Building Icon */}
+                        <td className="px-3.5 py-3.5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0 border border-blue-100">
+                              <Building2 size={16} />
+                            </div>
+                            <div>
+                              <Link
+                                to={`/admin/partners/${partner.ma_hs}`}
+                                className="font-bold text-slate-900 hover:text-blue-600 transition-colors line-clamp-1"
+                              >
+                                {partner.ten_dn}
+                              </Link>
+                              <div className="text-xs text-slate-400">
+                                Đăng ký: {partner.ngay_tao ? partner.ngay_tao.slice(0, 10) : "2025-10-21"}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
+                        </td>
 
-                      {/* Mã số thuế */}
-                      <td className="px-3.5 py-3.5 font-mono text-xs text-slate-700 font-medium">
-                        {partner.ma_so_thue || "---"}
-                      </td>
+                        {/* Mã số thuế */}
+                        <td className="px-3.5 py-3.5 font-mono text-xs text-slate-700 font-medium">
+                          {partner.ma_so_thue || "---"}
+                        </td>
 
-                      {/* Người đại diện */}
-                      <td className="px-3.5 py-3.5">
-                        <div className="font-medium text-slate-800">{partner.nguoi_dai_dien?.ho_ten || "---"}</div>
-                        <div className="text-xs text-slate-400">{partner.nguoi_dai_dien?.sdt || partner.nguoi_dai_dien?.email || ""}</div>
-                      </td>
+                        {/* Người đại diện */}
+                        <td className="px-3.5 py-3.5">
+                          <div className="font-medium text-slate-800">{partner.nguoi_dai_dien?.ho_ten || "---"}</div>
+                          <div className="text-xs text-slate-400">{partner.nguoi_dai_dien?.sdt || partner.nguoi_dai_dien?.email || ""}</div>
+                        </td>
 
-                      {/* Chi nhánh */}
-                      <td className="px-3.5 py-3.5 text-center font-semibold text-slate-700">{branchCount}</td>
+                        {/* Chi nhánh */}
+                        <td className="px-3.5 py-3.5 text-center font-semibold text-slate-700">{branchCount}</td>
 
-                      {/* Trạng thái hồ sơ */}
-                      <td className="px-3.5 py-3.5">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${sb.color}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${sb.dot}`} />
-                          {sb.label}
-                        </span>
-                      </td>
-
-                      {/* Yêu cầu chờ */}
-                      <td className="px-3.5 py-3.5">
-                        {pendingReqs > 0 ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-semibold">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                            {pendingReqs} yêu cầu
+                        {/* Trạng thái hồ sơ */}
+                        <td className="px-3.5 py-3.5">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${sb.color}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${sb.dot}`} />
+                            {sb.label}
                           </span>
-                        ) : (
-                          <span className="text-slate-300 font-medium">—</span>
-                        )}
-                      </td>
+                        </td>
 
-                      {/* Action Link: Only Chi tiết */}
-                      <td className="px-3.5 py-3.5 text-right whitespace-nowrap">
-                        <Link
-                          to={`/admin/partners/${partner.ma_hs}`}
-                          className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 font-semibold hover:bg-blue-50 px-2.5 py-1 rounded-lg transition-colors"
-                        >
-                          <Eye size={14} /> Chi tiết
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        {/* Yêu cầu chờ */}
+                        <td className="px-3.5 py-3.5">
+                          {pendingReqs > 0 ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-semibold">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                              {pendingReqs} yêu cầu
+                            </span>
+                          ) : (
+                            <span className="text-slate-300 font-medium">—</span>
+                          )}
+                        </td>
+
+                        {/* Action Link: Only Chi tiết */}
+                        <td className="px-3.5 py-3.5 text-right whitespace-nowrap">
+                          <Link
+                            to={`/admin/partners/${partner.ma_hs}`}
+                            className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 font-semibold hover:bg-blue-50 px-2.5 py-1 rounded-lg transition-colors"
+                          >
+                            <Eye size={14} /> Chi tiết
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Phân trang */}
+            {totalPartners > 0 && (
+              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50 text-sm">
+                <p className="text-xs text-gray-600">
+                  Trang {page} / {totalPages} (Tổng {totalPartners} đối tác)
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                    className="px-3 py-1 bg-white border border-gray-300 rounded text-xs font-medium text-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
+                    Trước
+                  </button>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages}
+                    className="px-3 py-1 bg-white border border-gray-300 rounded text-xs font-medium text-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
+                    Sau
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -242,8 +242,16 @@ class VoucherRepository {
       const targetHs = data.ma_hs || voucherToHsMap.get(data.ma_voucher);
       const resolvedTenDn = data.ten_dn || partnerMap.get(targetHs) || "";
 
+      let lyDoTuChoi = data.ly_do_tu_choi;
+      if (!lyDoTuChoi && (data.trang_thai === "Tu choi" || data.trang_thai_kiem_duyet === "Tu choi")) {
+        const auditLogRepository = require("../../../core-access/data/repositories/audit-log.repository");
+        lyDoTuChoi = await auditLogRepository.getLatestRejectionReason("VOUCHER", data.ma_voucher);
+      }
+
       return new VoucherModel({
         ...data,
+        ma_hs: targetHs || data.ma_hs || "",
+        ly_do_tu_choi: lyDoTuChoi || data.ly_do_tu_choi || "",
         ten_dn: resolvedTenDn,
         gia_ban: data.gia_goc - (data.gia_tri_giam || 0),
         ten_danh_muc: data.danh_muc?.ten_danh_muc || "",
