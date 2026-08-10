@@ -32,9 +32,22 @@ async function findByVoucherPurchaseId(voucherPurchaseId) {
   return data;
 }
 
+// Cập nhật trạng thái và tài khoản xử lý khiếu nại
+async function updateStatusAndHandler(id, status, handlerId) {
+  const { data, error } = await supabase
+    .from('khieunai')
+    .update({ trang_thai: status, ma_tk_xuly: handlerId })
+    .eq('ma_khieu_nai', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 module.exports = {
   findAll,
   findById,
   create,
   findByVoucherPurchaseId,
+  updateStatusAndHandler,
 };

@@ -26,4 +26,20 @@ export const feedbackApi = {
     const json = await response.json();
     return json.data;
   },
+  updateStatus: async (id, { status }) => {
+    const token = localStorage.getItem("accessToken") || localStorage.getItem("ec_auth_token") || "";
+    const response = await fetch(`${API_BASE}/feedback/${id}/status`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ status }),
+    });
+    if (!response.ok) {
+      const json = await response.json().catch(() => null);
+      throw new Error(json?.message || "Failed to update complaint status");
+    }
+    return response.json();
+  },
 };

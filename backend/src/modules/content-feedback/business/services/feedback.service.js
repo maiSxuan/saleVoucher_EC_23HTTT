@@ -42,9 +42,32 @@ async function getFeedbackByPurchaseId(voucherPurchaseId) {
   return dto.buildFeedbackDto(item);
 }
 
+// Cập nhật trạng thái khiếu nại (Admin)
+async function updateComplaintStatus(id, newStatus, adminAccountId) {
+  const allowedStatuses = ['Dang xu ly', 'Da xu ly', 'Tu choi'];
+  if (!allowedStatuses.includes(newStatus)) {
+    throw new Error(`Trạng thái không hợp lệ. Chỉ chấp nhận: ${allowedStatuses.join(', ')}`);
+  }
+
+  const current = await repository.findById(id);
+  if (!current) {
+    const err = new Error("Không tìm thấy khiếu nại");
+    err.status = 404;
+    throw err;
+  }
+
+  if (current.trang_thai === 'Da xu ly' || current.trang_thai === 'Tu choi') {
+    throw new Error("Khiếu nại này đã xử lý hoặc từ chối, không thể thay đổi trạng thái nữa.");
+  }
+
+  const updated = await repository.updateStatusAndHandler(id, newStatus, adminAccountId);
+  return dto.buildFeedbackDto(updated);
+}
+
 module.exports = {
   getFeedbackList,
   getFeedbackById,
   createFeedback,
   getFeedbackByPurchaseId,
+  updateComplaintStatus,
 };

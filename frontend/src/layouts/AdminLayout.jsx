@@ -13,16 +13,20 @@ import {
   X,                // Icon đóng sidebar mobile
   Bell,             // Icon thông báo
   LayoutGrid,       // Icon quản lý nội dung
+  ShoppingCart,     // Icon quản lý đơn hàng
+  MessageSquare,    // Icon xử lý khiếu nại
 } from 'lucide-react';
 
-// Danh sách menu sidebar hợp nhất cho Admin Portal — 5 tính năng cốt lõi
+// Danh sách menu sidebar hợp nhất cho Admin Portal
 const NAV_ITEMS = [
   { path: '/admin/overview', label: 'Tổng quan', icon: LayoutDashboard },
   { path: '/admin/partners', label: 'Quản lý đối tác', icon: Building2 },
   { path: '/admin/vouchers', label: 'Duyệt voucher', icon: Ticket },
+  { path: '/admin/orders', label: 'Quản lý đơn hàng', icon: ShoppingCart },
   { path: '/admin/users', label: 'Quản lý người dùng', icon: Users },
   { path: '/admin/logs', label: 'Nhật ký hệ thống', icon: ScrollText },
   { path: '/admin/contents', label: 'Quản lý nội dung', icon: LayoutGrid },
+  { path: '/admin/complaints', label: 'Xử lý khiếu nại', icon: MessageSquare },
 ];
 
 export function AdminLayout({ children }) {

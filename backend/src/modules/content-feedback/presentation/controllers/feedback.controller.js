@@ -40,9 +40,23 @@ async function getFeedbackByPurchaseId(req, res, next) {
   }
 }
 
+// Cập nhật trạng thái khiếu nại (Admin)
+async function updateComplaintStatus(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const adminAccountId = req.user?.accountId || req.user?.id;
+    const result = await service.updateComplaintStatus(id, status, adminAccountId);
+    res.status(200).json({ success: true, data: result, message: "Cập nhật trạng thái khiếu nại thành công" });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   getFeedbackList,
   getFeedbackById,
   createFeedback,
   getFeedbackByPurchaseId,
+  updateComplaintStatus,
 };
