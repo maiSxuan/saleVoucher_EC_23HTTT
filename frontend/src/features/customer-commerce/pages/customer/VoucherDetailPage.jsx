@@ -8,6 +8,7 @@ import {
   CheckCircle,
   AlertCircle,
   Store,
+  Star,
 } from "lucide-react";
 import { fetchVoucherDetail, fetchVoucherReviews } from "../../../../shared/api/catalogApi";
 import { addToCart } from "../../../../shared/api/cartApi";
