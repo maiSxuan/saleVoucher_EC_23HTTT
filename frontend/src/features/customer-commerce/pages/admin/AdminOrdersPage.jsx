@@ -10,7 +10,7 @@ import {
   confirmOrderRefund,
   rejectOrderRefund,
   reissueOrderCode,
-} from "../../api/orderApi";
+} from "../../../../shared/api/orderApi";
 
 const ORDER_STATUS_CONFIG = {
   'Cho thanh toan': { label: 'Chờ thanh toán', variant: 'amber', dot: true },
@@ -72,19 +72,20 @@ function getOrderStatusBadge(status) {
 
 function getPaymentStatusBadge(status) {
   switch (status) {
-    case 'success': return { label: 'Thành công', variant: 'green' };
-    case 'failed': return { label: 'Thất bại', variant: 'red' };
-    case 'refunded_sim': return { label: 'Đã hoàn tiền (mô phỏng)', variant: 'blue' };
+    case 'Thanh cong': return { label: 'Thành công', variant: 'green' };
+    case 'That bai': return { label: 'Thất bại', variant: 'red' };
+    case 'Dang xu ly': return { label: 'Đang xử lý', variant: 'amber' };
     default: return { label: 'Chờ', variant: 'amber' };
   }
 }
 
 function getVoucherCodeStatusBadge(status) {
   switch (status) {
-    case 'issued': return { label: 'Đã phát hành', variant: 'blue', dot: true };
-    case 'used': return { label: 'Đã sử dụng', variant: 'green', dot: true };
-    case 'generation_error': return { label: 'Lỗi sinh mã', variant: 'red', dot: true };
-    case 'disabled': return { label: 'Vô hiệu hóa', variant: 'gray' };
+    case 'Chua su dung': return { label: 'Chưa sử dụng', variant: 'blue', dot: true };
+    case 'Da su dung': return { label: 'Đã sử dụng', variant: 'green', dot: true };
+    case 'Loi sinh ma': return { label: 'Lỗi sinh mã', variant: 'red', dot: true };
+    case 'Vo hieu hoa': return { label: 'Vô hiệu hóa', variant: 'gray' };
+    case 'Het han': return { label: 'Hết hạn', variant: 'gray' };
     default: return { label: 'Chưa phát hành', variant: 'amber' };
   }
 }
@@ -226,9 +227,9 @@ export default function AdminOrdersPage() {
     const order = selectedOrder;
     if (!order) return <div>Không tìm thấy đơn hàng</div>;
 
-    const hasInconsistency = order.paymentStatus === 'success' && order.voucherCodeStatus === 'generation_error';
+    const hasInconsistency = order.paymentStatus === 'Thanh cong' && order.voucherCodeStatus === 'Loi sinh ma';
     const canRefund = order.orderStatus === 'Cho hoan tien';
-    const canReissue = order.paymentStatus === 'success' && (order.voucherCodeStatus === 'generation_error' || order.voucherCodeStatus === 'not_issued');
+    const canReissue = order.paymentStatus === 'Thanh cong' && (order.voucherCodeStatus === 'Loi sinh ma' || order.voucherCodeStatus === 'not_issued');
 
     return (
       <div className="max-w-6xl mx-auto p-4 sm:p-6">
@@ -492,7 +493,7 @@ export default function AdminOrdersPage() {
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button onClick={() => setPaymentStatusModal(false)} className="px-4 py-2 border rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">Hủy</button>
-                <button onClick={() => handleUpdatePaymentStatus('success')} className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700">Xác nhận thành công & Phát mã</button>
+                <button onClick={() => handleUpdatePaymentStatus('Thanh cong')} className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700">Xác nhận thành công & Phát mã</button>
               </div>
             </div>
           </div>
@@ -552,7 +553,7 @@ export default function AdminOrdersPage() {
               <tbody className="divide-y divide-gray-100 text-sm">
                 {orders.map(o => {
                   const ob = getOrderStatusBadge(o.orderStatus);
-                  const hasIssue = o.voucherCodeStatus === 'generation_error' || o.orderStatus === 'Cho hoan tien';
+                  const hasIssue = o.voucherCodeStatus === 'Loi sinh ma' || o.orderStatus === 'Cho hoan tien';
                   return (
                     <tr key={o.id} onClick={() => loadDetail(o.id)} className={`hover:bg-blue-50/50 cursor-pointer transition-colors ${hasIssue ? 'bg-amber-50/50' : ''}`}>
                       <td className="px-4 py-3.5">

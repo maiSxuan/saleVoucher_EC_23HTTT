@@ -5,8 +5,6 @@ const router = express.Router();
 const contentFeedbackModule = require("../modules/content-feedback");
 const coreAccessModule = require("../modules/core-access");
 const customerCommerceModule = require("../modules/customer-commerce");
-const orderModule = require("../modules/order");
-const categoryModule = require("../modules/category");
 
 // Khai báo các route partner-voucher
 const partnerRoutes = require("../modules/partner-voucher/presentation/routes/partner.routes");
@@ -21,8 +19,6 @@ const adminVoucherRoutes = require("../modules/partner-voucher/presentation/rout
 contentFeedbackModule.registerModule(router);
 coreAccessModule.registerModule(router);
 customerCommerceModule.registerModule(router);
-orderModule.registerModule(router);
-categoryModule.registerModule(router);
 
 // Register partner-voucher routes (App.js mounts under /api -> /api/partners, etc.)
 router.use("/partners", partnerRoutes);

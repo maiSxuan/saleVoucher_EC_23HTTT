@@ -12,6 +12,7 @@ const customerRoutes = require("./presentation/routes/customer.routes");
 const catalogRoutes = require("./presentation/routes/catalog.routes");
 const cartRoutes = require("./presentation/routes/cart.routes");
 const orderRoutes = require("./presentation/routes/order.routes");
+const adminOrderRoutes = require("./presentation/routes/admin-order.routes");
 const paymentRoutes = require("./presentation/routes/payment.routes");
 
 function registerModule(app) {
@@ -19,6 +20,7 @@ function registerModule(app) {
   if (catalogRoutes) app.use("/catalog", catalogRoutes);
   if (cartRoutes) app.use("/cart", cartRoutes);
   if (orderRoutes) app.use("/orders", orderRoutes);
+  if (adminOrderRoutes) app.use("/admin/orders", adminOrderRoutes);
   if (paymentRoutes) app.use("/payment", paymentRoutes);
 }
 

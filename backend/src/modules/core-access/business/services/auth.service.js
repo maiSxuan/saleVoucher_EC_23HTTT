@@ -4,7 +4,7 @@
  * Ghi audit log sau mỗi lần login thành công hoặc thất bại.
  *
  * JWT Flow:
- *  - Login → sinh accessToken (15m) + refreshToken (7d)
+ *  - Login → sinh accessToken (1440m) + refreshToken (7d)
  *  - refreshToken lưu trong refreshTokenStore (in-memory Map)
  *  - POST /auth/refresh → verify refreshToken → cấp accessToken mới
  *  - POST /auth/logout  → revoke refreshToken khỏi store

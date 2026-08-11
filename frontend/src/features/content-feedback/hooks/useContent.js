@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { contentApi } from '../api/contentApi';
+import { categoryApi } from '../../../shared/api/categoryApi';
 
 export function useContent() {
   const [data, setData] = useState(null);
@@ -13,7 +14,7 @@ export function useContent() {
       else setLoading(true);
       const [contentRes, catRes] = await Promise.all([
         contentApi.list().catch(() => ({ data: [] })),
-        contentApi.listCategories().catch(() => ({ data: [] }))
+        categoryApi.fetchCategories().catch(() => ({ data: [] }))
       ]);
       const contents = contentRes.data || [];
       const categories = catRes.data || [];
@@ -32,7 +33,7 @@ export function useContent() {
 
   const create = async (item) => {
     if (item.type === 'danh_muc' || item.loai === 'danh_muc') {
-      await contentApi.createCategory({ ten_danh_muc: item.title || item.tieu_de, mo_ta: item.content || item.noi_dung });
+      await categoryApi.createCategory({ ten_danh_muc: item.title || item.tieu_de, mo_ta: item.content || item.noi_dung });
     } else {
       await contentApi.create(item);
     }
@@ -41,7 +42,7 @@ export function useContent() {
 
   const update = async (id, item) => {
     if (item.type === 'danh_muc' || item.loai === 'danh_muc') {
-      await contentApi.updateCategory(id, { ten_danh_muc: item.title || item.tieu_de, mo_ta: item.content || item.noi_dung });
+      await categoryApi.updateCategory(id, { ten_danh_muc: item.title || item.tieu_de, mo_ta: item.content || item.noi_dung });
     } else {
       await contentApi.update(id, item);
     }
@@ -50,7 +51,7 @@ export function useContent() {
 
   const remove = async (id, itemType) => {
     if (itemType === 'danh_muc') {
-      await contentApi.deleteCategory(id);
+      await categoryApi.deleteCategory(id);
     } else {
       await contentApi.delete(id);
     }

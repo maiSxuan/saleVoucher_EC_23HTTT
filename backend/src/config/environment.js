@@ -57,7 +57,7 @@ function loadJwt() {
     secret,
     refreshSecret:
       process.env.JWT_REFRESH_SECRET || secret + "_refresh",
-    accessTokenExpiry: process.env.ACCESS_TOKEN_EXPIRY || "15m",
+    accessTokenExpiry: process.env.ACCESS_TOKEN_EXPIRY || "1440m",
     refreshTokenExpiry: process.env.REFRESH_TOKEN_EXPIRY || "7d",
   };
 }
