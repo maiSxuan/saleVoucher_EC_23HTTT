@@ -11,8 +11,13 @@ export function useContent() {
     try {
       if (background) setIsUpdating(true);
       else setLoading(true);
-      const result = await contentApi.list();
-      setData(result.data);
+      const [contentRes, catRes] = await Promise.all([
+        contentApi.list().catch(() => ({ data: [] })),
+        contentApi.listCategories().catch(() => ({ data: [] }))
+      ]);
+      const contents = contentRes.data || [];
+      const categories = catRes.data || [];
+      setData([...contents, ...categories]);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -26,17 +31,29 @@ export function useContent() {
   }, [fetchList]);
 
   const create = async (item) => {
-    await contentApi.create(item);
+    if (item.type === 'danh_muc' || item.loai === 'danh_muc') {
+      await contentApi.createCategory({ ten_danh_muc: item.title || item.tieu_de, mo_ta: item.content || item.noi_dung });
+    } else {
+      await contentApi.create(item);
+    }
     await fetchList(true); // Background update
   };
 
   const update = async (id, item) => {
-    await contentApi.update(id, item);
+    if (item.type === 'danh_muc' || item.loai === 'danh_muc') {
+      await contentApi.updateCategory(id, { ten_danh_muc: item.title || item.tieu_de, mo_ta: item.content || item.noi_dung });
+    } else {
+      await contentApi.update(id, item);
+    }
     await fetchList(true); // Background update
   };
 
-  const remove = async (id) => {
-    await contentApi.delete(id);
+  const remove = async (id, itemType) => {
+    if (itemType === 'danh_muc') {
+      await contentApi.deleteCategory(id);
+    } else {
+      await contentApi.delete(id);
+    }
     await fetchList(true); // Background update
   };
 
