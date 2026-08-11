@@ -443,6 +443,66 @@ create table NOIDUNG (
 );
 -- [FIX] Doi noi_dung -> NOIDUNG cho nhat quan
 create index idx_noi_dung_id_admin on NOIDUNG(matk_admin);
+
+CREATE TABLE IF NOT EXISTS public.yeu_cau_cap_nhat_hosodn (
+    ma_yc UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ma_hs UUID NOT NULL REFERENCES public.hosodn(ma_hs) ON DELETE CASCADE,
+    
+    -- 1. Thông tin Hồ sơ Doanh nghiệp đề xuất mới
+    ten_dn_moi TEXT NULL,
+    ma_so_thue_moi TEXT NULL,
+    dia_chi_moi TEXT NULL,
+    giay_phep_kinh_doanh_moi TEXT NULL,
+    
+    -- 2. Thông tin Người đại diện đề xuất mới (ghi vào NGUOIDUNG khi duyệt)
+    ho_ten_nguoi_dai_dien_moi TEXT NULL,
+    sdt_nguoi_dai_dien_moi TEXT NULL,
+    email_nguoi_dai_dien_moi TEXT NULL,
+    cccd_moi TEXT NULL,
+    
+    -- 3. Quản lý Trạng thái & Vết phê duyệt
+    trang_thai VARCHAR(50) NOT NULL DEFAULT 'Cho duyet', -- 'Cho duyet', 'Da duyet', 'Tu choi'
+    ly_do_tu_choi TEXT NULL,
+    ngay_yeu_cau TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    nguoi_duyet UUID NULL REFERENCES public.nguoidung(ma_nguoi_dung),
+    ngay_duyet TIMESTAMPTZ NULL
+);
+
+-- Index truy vấn nhanh
+CREATE INDEX IF NOT EXISTS idx_yc_hoso_ma_hs ON public.yeu_cau_cap_nhat_hosodn(ma_hs);
+CREATE INDEX IF NOT EXISTS idx_yc_hoso_trang_thai ON public.yeu_cau_cap_nhat_hosodn(trang_thai);
+
+
+
+
+CREATE TABLE IF NOT EXISTS public.yeu_cau_cap_nhat_chinhanh (
+    ma_yc UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ma_chi_nhanh UUID NULL REFERENCES public.chinhanh(ma_chi_nhanh) ON DELETE CASCADE, -- NULL nếu là yêu cầu THEM_MOI
+    
+    loai_yeu_cau VARCHAR(50) NOT NULL, -- 'THEM_MOI', 'CAP_NHAT', 'XOA'
+    
+    -- Thông tin Chi nhánh đề xuất mới (ghi/sửa/xóa vào CHINHANH khi duyệt)
+    ten_chi_nhanh_moi TEXT NULL,
+    khu_vuc_moi TEXT NULL,
+    dia_chi_moi TEXT NULL,
+    
+    -- Quản lý Trạng thái & Vết phê duyệt
+    trang_thai VARCHAR(50) NOT NULL DEFAULT 'Cho duyet', -- 'Cho duyet', 'Da duyet', 'Tu choi'
+    ly_do_tu_choi TEXT NULL,
+    ngay_yeu_cau TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    nguoi_duyet UUID NULL REFERENCES public.nguoidung(ma_nguoi_dung),
+    ngay_duyet TIMESTAMPTZ NULL
+);
+
+-- Index truy vấn nhanh
+CREATE INDEX IF NOT EXISTS idx_yc_cn_ma_hs ON public.yeu_cau_cap_nhat_chinhanh(ma_hs);
+CREATE INDEX IF NOT EXISTS idx_yc_cn_trang_thai ON public.yeu_cau_cap_nhat_chinhanh(trang_thai);
+
+
+
+alter table yeu_cau_cap_nhat_hosodn add ngay_sinh date;
+
+alter table yeu_cau_cap_nhat_hosodn add gioi_tinh text;
 -- =====================================================================
 -- RANG BUOC LIEN BANG BO SUNG (xu ly bang TRIGGER)
 -- =====================================================================

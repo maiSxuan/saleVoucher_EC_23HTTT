@@ -391,7 +391,23 @@ class MockDataStore {
 
   // Partners
   getPartners() {
-    return this.getData().partners || [];
+    const data = this.getData();
+    const partners = data.partners || [];
+    const profileRequests = data.profileRequests || [];
+    const branchRequests = data.branchRequests || [];
+
+    return partners.map((p) => {
+      let count = 0;
+      if (p.trang_thai === "Cho duyet") count += 1;
+
+      const pendingProf = profileRequests.filter((r) => r.ma_hs === p.ma_hs && r.trang_thai === "Cho duyet").length;
+      const pendingBranch = branchRequests.filter((r) => r.ma_hs === p.ma_hs && r.trang_thai === "Cho duyet").length;
+
+      return {
+        ...p,
+        pending_branch_requests: count + pendingProf + pendingBranch,
+      };
+    });
   }
 
   getPartnerById(id) {
@@ -400,19 +416,19 @@ class MockDataStore {
 
   getStaffs() {
     return this.getData().staffs || [];
-}
+  }
 
-getStaffsByPartner(partnerId) {
+  getStaffsByPartner(partnerId) {
     return this.getStaffs().filter(
-        staff => staff.ma_hs === partnerId
+      staff => staff.ma_hs === partnerId
     );
-}
+  }
 
-getStaffById(id) {
+  getStaffById(id) {
     return this.getStaffs().find(
-        staff => staff.ma_nv === id
+      staff => staff.ma_nv === id
     );
-}
+  }
 
   updatePartnerProfile(partnerId, updatedFields) {
     const data = this.getData();
@@ -576,6 +592,24 @@ getStaffById(id) {
             sdt: req.sdt,
             gio_mo_cua: req.gio_mo_cua,
           });
+        } else if (req.loai_yeu_cau === "Cap nhat" && req.ma_chi_nhanh) {
+          const branch = partner.branches.find((b) => b.ma_chi_nhanh === req.ma_chi_nhanh);
+          if (branch) {
+            const updatePayload = req.du_lieu_de_xuat || {
+              ten_chi_nhanh: req.ten_chi_nhanh,
+              khu_vuc: req.khu_vuc,
+              dia_chi: req.dia_chi,
+            };
+            branch.ten_chi_nhanh = updatePayload.ten_chi_nhanh;
+            branch.khu_vuc = updatePayload.khu_vuc;
+            branch.dia_chi = updatePayload.dia_chi;
+            branch.trang_thai = "Dang hoat dong";
+          }
+        } else if (req.loai_yeu_cau === "Xoá" && req.ma_chi_nhanh) {
+          const branch = partner.branches.find((b) => b.ma_chi_nhanh === req.ma_chi_nhanh);
+          if (branch) {
+            branch.trang_thai = "Tam ngung hoat dong";
+          }
         }
       }
       this.saveData(data);
@@ -619,21 +653,24 @@ getStaffById(id) {
       if (idx !== -1) {
         const existing = data.vouchers[idx];
         const isSubmitNow = voucherForm.isSubmit;
-        const newStatus = isSubmitNow ? "Cho duyet" : existing.trang_thai;
-        const newKiemDuyet = isSubmitNow ? "Cho duyet" : existing.trang_thai_kiem_duyet;
+        const newStatus = voucherForm.trang_thai || (isSubmitNow ? "Cho duyet" : existing.trang_thai);
+        const newKiemDuyet = voucherForm.trang_thai_kiem_duyet || (isSubmitNow ? "Cho duyet" : existing.trang_thai_kiem_duyet);
 
         data.vouchers[idx] = {
           ...existing,
           ...voucherForm,
+          gia_goc: Number(voucherForm.gia_goc || existing.gia_goc),
+          gia_ban: Number(voucherForm.gia_ban || existing.gia_ban),
+          so_luong_phat_hanh: Number(voucherForm.so_luong_phat_hanh || existing.so_luong_phat_hanh),
           ten_danh_muc: category ? category.ten_danh_muc : existing.ten_danh_muc,
           trang_thai: newStatus,
           trang_thai_kiem_duyet: newKiemDuyet,
-          ly_do_tu_choi: isSubmitNow ? "" : existing.ly_do_tu_choi,
+          ly_do_tu_choi: newStatus === "Cho duyet" ? "" : existing.ly_do_tu_choi,
           lich_su_duyet: [
             ...(existing.lich_su_duyet || []),
             {
               ngay: dateStr,
-              hanh_dong: isSubmitNow ? "Gửi lại duyệt" : "Cập nhật thông tin",
+              hanh_dong: newStatus === "Cho duyet" ? "Gửi lại duyệt" : "Cập nhật thông tin",
               nguoi_thuc_hien: "Đối tác",
             },
           ],
@@ -786,6 +823,88 @@ getStaffById(id) {
 
   getAuditLogs() {
     return this.getData().auditLogs || [];
+  }
+
+  // Profile Update Requests (yeu_cau_cap_nhat_hosodn)
+  createProfileRequest(payload) {
+    const data = this.getData();
+    if (!data.profileRequests) data.profileRequests = [];
+
+    const newReq = {
+      ma_yc: `yc-profile-${Date.now()}`,
+      ma_hs: payload.ma_hs,
+      ten_dn_moi: payload.ten_dn_moi || null,
+      ma_so_thue_moi: payload.ma_so_thue_moi || null,
+      dia_chi_moi: payload.dia_chi_moi || null,
+      giay_phep_kinh_doanh_moi: payload.giay_phep_kinh_doanh_moi || null,
+      id_nguoi_dai_dien_moi: payload.id_nguoi_dai_dien_moi || null,
+      ho_ten_nguoi_dai_dien_moi: payload.ho_ten_nguoi_dai_dien_moi || null,
+      sdt_nguoi_dai_dien_moi: payload.sdt_nguoi_dai_dien_moi || null,
+      email_nguoi_dai_dien_moi: payload.email_nguoi_dai_dien_moi || null,
+      cccd_moi: payload.cccd_moi || null,
+      ngay_sinh: payload.ngay_sinh || payload.ngay_sinh_moi || null,
+      gioi_tinh: payload.gioi_tinh || payload.gioi_tinh_moi || null,
+      trang_thai: "Cho duyet",
+      ngay_yeu_cau: new Date().toISOString(),
+    };
+
+    data.profileRequests.unshift(newReq);
+    this.saveData(data);
+    return newReq;
+  }
+
+  getPendingProfileRequest(partnerId) {
+    const data = this.getData();
+    const list = data.profileRequests || [];
+    return list.find((r) => r.ma_hs === partnerId && r.trang_thai === "Cho duyet") || null;
+  }
+
+  approveProfileRequest(reqId, adminId = null) {
+    const data = this.getData();
+    const list = data.profileRequests || [];
+    const req = list.find((r) => r.ma_yc === reqId);
+    if (!req) return null;
+
+    req.trang_thai = "Da duyet";
+    req.ngay_duyet = new Date().toISOString();
+    req.nguoi_duyet = adminId;
+
+    // Apply changes to partner record
+    const partner = data.partners.find(
+      (p) => p.ma_hs === req.ma_hs || p.id === req.ma_hs || p.id_nguoi_dai_dien === req.ma_hs
+    );
+    if (partner) {
+      if (req.ten_dn_moi) partner.ten_dn = req.ten_dn_moi;
+      if (req.ma_so_thue_moi) partner.ma_so_thue = req.ma_so_thue_moi;
+      if (req.dia_chi_moi) partner.dia_chi = req.dia_chi_moi;
+      if (req.giay_phep_kinh_doanh_moi) partner.giay_phep_kinh_doanh = req.giay_phep_kinh_doanh_moi;
+
+      if (!partner.nguoi_dai_dien) partner.nguoi_dai_dien = {};
+      if (req.ho_ten_nguoi_dai_dien_moi) partner.nguoi_dai_dien.ho_ten = req.ho_ten_nguoi_dai_dien_moi;
+      if (req.sdt_nguoi_dai_dien_moi) partner.nguoi_dai_dien.sdt = req.sdt_nguoi_dai_dien_moi;
+      if (req.email_nguoi_dai_dien_moi) partner.nguoi_dai_dien.email = req.email_nguoi_dai_dien_moi;
+      if (req.cccd_moi) partner.nguoi_dai_dien.cccd = req.cccd_moi;
+      if (req.ngay_sinh || req.ngay_sinh_moi) partner.nguoi_dai_dien.ngay_sinh = req.ngay_sinh || req.ngay_sinh_moi;
+      if (req.gioi_tinh || req.gioi_tinh_moi) partner.nguoi_dai_dien.gioi_tinh = req.gioi_tinh || req.gioi_tinh_moi;
+    }
+
+    this.saveData(data);
+    return req;
+  }
+
+  rejectProfileRequest(reqId, reason = "", adminId = null) {
+    const data = this.getData();
+    const list = data.profileRequests || [];
+    const req = list.find((r) => r.ma_yc === reqId);
+    if (!req) return null;
+
+    req.trang_thai = "Tu choi";
+    req.ly_do_tu_choi = reason;
+    req.ngay_duyet = new Date().toISOString();
+    req.nguoi_duyet = adminId;
+
+    this.saveData(data);
+    return req;
   }
 }
 

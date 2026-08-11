@@ -7,6 +7,7 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
+  Store,
   Star,
 } from "lucide-react";
 import { fetchVoucherDetail, fetchVoucherReviews } from "../../../../shared/api/catalogApi";
@@ -20,6 +21,16 @@ const unavailableMsg = {
   stopped: "Voucher đã ngừng bán.",
   scheduled: "Voucher chưa đến thời gian bán.",
 };
+
+function getBranchName(branch) {
+  if (typeof branch === "string") return branch;
+  return branch?.name || branch?.ten_chi_nhanh || "Chi nhánh";
+}
+
+function getBranchKey(branch, index) {
+  if (typeof branch === "string") return `${branch}-${index}`;
+  return `${branch?.id || branch?.ma_chi_nhanh || getBranchName(branch)}-${index}`;
+}
 
 export default function VoucherDetailPage() {
   const { id } = useParams();
@@ -82,6 +93,7 @@ export default function VoucherDetailPage() {
   if (!voucher) return null;
 
   const isAvailable = voucher.availability === "selling";
+  const branches = Array.isArray(voucher.branches) ? voucher.branches : [];
   const remaining = voucher.totalQty - voucher.soldQty;
   const discountPct = Math.round(
     (1 - voucher.salePrice / voucher.originalPrice) * 100,
@@ -163,9 +175,18 @@ export default function VoucherDetailPage() {
           </div>
 
           <div className="bg-white rounded-xl border border-gray-100 p-4 space-y-3">
-            <p className="text-xs text-orange-600 font-medium">
-              {voucher.partner} · {voucher.category}
-            </p>
+            <div className="md:w-1/2 flex flex-col pt-2">
+              {/* Tag Category + Tên đối tác */}
+              <div className="flex items-center gap-3 mb-3">
+                <span className="bg-orange-100 text-orange-700 px-3 py-1 text-sm font-semibold rounded-full shadow-sm">
+                  {voucher.category}
+                </span>
+                <span className="text-sm font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <Store size={16} />
+                  {typeof voucher.partner === 'object' && voucher.partner !== null ? (voucher.partner.ten_dn || voucher.partner.name || "Đối tác") : (voucher.partner || "Đối tác")}
+                </span>
+              </div>
+            </div>
             <h1 className="text-xl font-bold text-gray-900">{voucher.name}</h1>
 
             <div className="flex items-end gap-3">
@@ -197,19 +218,19 @@ export default function VoucherDetailPage() {
               </p>
             </div>
 
-            {voucher.branches.length > 0 && (
+            {branches.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">
                   Chi nhánh áp dụng
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {voucher.branches.map((b) => (
+                  {branches.map((branch, index) => (
                     <span
-                      key={b}
+                      key={getBranchKey(branch, index)}
                       className="flex items-center gap-1 text-xs bg-gray-50 border border-gray-100 px-2 py-0.5 rounded"
                     >
                       <MapPin size={10} className="text-gray-400" />
-                      {b}
+                      {getBranchName(branch)}
                     </span>
                   ))}
                 </div>

@@ -146,7 +146,6 @@ class UserRepository {
       .from('donhang')
       .select('*')
       .eq('ma_tk_dat', tkData.ma_tk)
-      .eq('trang_thai', 'Hoan thanh')
       .order('ngay_dat', { ascending: false });
     if (error) throw new Error(`Lỗi lấy lịch sử đơn hàng: ${error.message}`);
     return data || [];

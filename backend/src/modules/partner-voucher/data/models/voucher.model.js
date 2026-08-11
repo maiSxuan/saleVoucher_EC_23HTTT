@@ -13,7 +13,7 @@ class VoucherModel {
     so_luong_phat_hanh = 0,
     tg_bat_dau_ban,
     tg_ket_thuc_ban,
-    trang_thai = "Nhap", // 'Nhap', 'Cho duyet', 'Dang ban', 'Tu choi', 'Tam ngung', 'Ngung ban'
+    trang_thai = "Nhap", // 'Nhap', 'Cho duyet', 'Dang ban', 'Tu choi', 'Tam ngung'
     chinh_sach_hoan_huy = "",
     hinh_anh_url = "",
     so_luong_da_ban = 0,
@@ -25,6 +25,8 @@ class VoucherModel {
     ten_dn = "",
     ma_chi_nhanh = [],
     ly_do_tu_choi = "",
+    trang_thai_kiem_duyet,
+    trang_thai_cong_bo,
     ngay_tao,
     lich_su_duyet = [],
   }) {
@@ -52,6 +54,21 @@ class VoucherModel {
     this.ly_do_tu_choi = ly_do_tu_choi;
     this.ngay_tao = ngay_tao || new Date().toISOString();
     this.lich_su_duyet = lich_su_duyet;
+
+    // Derived review and publication status for UI presentation
+    this.trang_thai_kiem_duyet =
+      trang_thai_kiem_duyet ||
+      (trang_thai === "Dang ban" || trang_thai === "Tam ngung" || trang_thai === "Ngung ban"
+        ? "Da duyet"
+        : trang_thai === "Cho duyet"
+        ? "Cho duyet"
+        : trang_thai === "Tu choi"
+        ? "Tu choi"
+        : "Nhap");
+
+    this.trang_thai_cong_bo =
+      trang_thai_cong_bo ||
+      (trang_thai === "Dang ban" ? "Hien thi" : trang_thai === "Tam ngung" ? "Bao luu" : "Bao luu");
   }
 }
 

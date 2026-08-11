@@ -43,10 +43,14 @@ export default function VoucherSearchPage() {
     return vouchers
       .filter((v) => {
         const kw = searchValue.trim().toLowerCase();
+        const partnerStr = typeof v.partner === 'object' && v.partner !== null 
+          ? (v.partner.ten_dn || v.partner.name || "")
+          : (v.partner || "");
+
         const matchSearch =
           !kw ||
-          v.name.toLowerCase().includes(kw) ||
-          v.partner.toLowerCase().includes(kw);
+          (v.name || "").toLowerCase().includes(kw) ||
+          partnerStr.toLowerCase().includes(kw);
         const matchCat =
           activeCategory === "Tất cả" || v.category === activeCategory;
         let matchPrice = true;

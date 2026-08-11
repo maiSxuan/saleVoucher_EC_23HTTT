@@ -1,10 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
 import Toast from "../../../../shared/components/Toast";
 import Modal from "../../../../shared/components/Modal";
-import { registerPartnerAccountApi, registerPartnerProfileApi } from "../../../../shared/api/partnerApi";
+import {
+  registerPartnerAccountApi,
+  registerPartnerProfileApi,
+  checkTaxCodeApi,
+  requestPartnerOtpApi,
+  verifyPartnerOtpApi,
+  resendPartnerOtpApi,
+} from "../../../../shared/api/partnerApi";
+import { VIETNAM_PROVINCES } from "../../../../shared/constants/vietnamProvinces";
 
 export function PartnerRegisterPage() {
   const navigate = useNavigate();
@@ -13,6 +21,24 @@ export function PartnerRegisterPage() {
   const [toastMessage, setToastMessage] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [createdUser, setCreatedUser] = useState(null);
+
+  // OTP Verification Modal states
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpValue, setOtpValue] = useState("");
+  const [otpCountdown, setOtpCountdown] = useState(60);
+  const [otpError, setOtpError] = useState("");
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [demoOtpHint, setDemoOtpHint] = useState("");
+
+  useEffect(() => {
+    let timer;
+    if (showOtpModal && otpCountdown > 0) {
+      timer = setInterval(() => {
+        setOtpCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [showOtpModal, otpCountdown]);
 
   const [formData, setFormData] = useState({
     // Step 1: Account Creation
@@ -32,6 +58,8 @@ export function PartnerRegisterPage() {
     sdt: "",
     email: "",
     cccd: "",
+    ngay_sinh: "1990-01-01",
+    gioi_tinh: "Nam",
 
     // Step 4: Business License
     giay_phep_kinh_doanh: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80",
@@ -40,7 +68,6 @@ export function PartnerRegisterPage() {
     ten_chi_nhanh: "",
     khu_vuc: "TP. Hồ Chí Minh",
     dia_chi_cn: "",
-    sdt_cn: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -61,13 +88,36 @@ export function PartnerRegisterPage() {
     }
   };
 
+  const handleLicenseFileUpload = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      setToastMessage("Dung lượng file vượt quá 10MB. Vui lòng chọn tệp nhỏ hơn.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const dataUrl = evt.target.result;
+      setFormData((prev) => ({ ...prev, giay_phep_kinh_doanh: dataUrl }));
+      setToastMessage(`Đã tải lên tệp "${file.name}" thành công!`);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const validateStep = (step) => {
     const newErrors = {};
+
+    const phoneRegex = /^0\d{9}$/;
+    const taxRegex = /^\d{10}(\d{3})?$/;
+    const cccdRegex = /^\d{9}(\d{3})?$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (step === 1) {
       if (!formData.account_email.trim()) {
         newErrors.account_email = "Email không được để trống";
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.account_email)) {
+      } else if (!emailRegex.test(formData.account_email.trim())) {
         newErrors.account_email = "Email không đúng định dạng";
       }
       if (!formData.account_password) {
@@ -81,16 +131,43 @@ export function PartnerRegisterPage() {
       if (!formData.account_ho_ten.trim()) {
         newErrors.account_ho_ten = "Họ tên không được để trống";
       }
+      if (!formData.account_sdt.trim()) {
+        newErrors.account_sdt = "Số điện thoại không được để trống";
+      } else if (!phoneRegex.test(formData.account_sdt.trim())) {
+        newErrors.account_sdt = "Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0";
+      }
     } else if (step === 2) {
       if (!formData.ten_dn.trim()) newErrors.ten_dn = "Tên doanh nghiệp không được để trống";
-      if (!formData.ma_so_thue.trim()) newErrors.ma_so_thue = "Mã số thuế không được để trống";
+      if (!formData.ma_so_thue.trim()) {
+        newErrors.ma_so_thue = "Mã số thuế không được để trống";
+      } else if (!taxRegex.test(formData.ma_so_thue.trim())) {
+        newErrors.ma_so_thue = "Mã số thuế phải gồm 10 hoặc 13 chữ số";
+      }
       if (!formData.dia_chi.trim()) newErrors.dia_chi = "Địa chỉ kinh doanh không được để trống";
     } else if (step === 3) {
       if (!formData.ho_ten.trim()) newErrors.ho_ten = "Họ tên người đại diện không được để trống";
-      if (!formData.sdt.trim()) newErrors.sdt = "Số điện thoại liên hệ không được để trống";
-      if (!formData.email.trim()) newErrors.email = "Email liên hệ không được để trống";
+      if (!formData.sdt.trim()) {
+        newErrors.sdt = "Số điện thoại liên hệ không được để trống";
+      } else if (!phoneRegex.test(formData.sdt.trim())) {
+        newErrors.sdt = "Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0";
+      }
+      if (!formData.email.trim()) {
+        newErrors.email = "Email liên hệ không được để trống";
+      } else if (!emailRegex.test(formData.email.trim())) {
+        newErrors.email = "Email liên hệ không đúng định dạng";
+      }
+      if (!formData.cccd.trim()) {
+        newErrors.cccd = "Số CCCD/CMND không được để trống";
+      } else if (!cccdRegex.test(formData.cccd.trim())) {
+        newErrors.cccd = "Số CCCD/CMND phải gồm 9 hoặc 12 chữ số";
+      }
+      if (!formData.ngay_sinh) newErrors.ngay_sinh = "Ngày sinh người đại diện không được để trống";
+      if (!formData.gioi_tinh) newErrors.gioi_tinh = "Giới tính không được để trống";
+    } else if (step === 4) {
+      if (!formData.giay_phep_kinh_doanh) newErrors.giay_phep_kinh_doanh = "Giấy phép kinh doanh không được để trống";
     } else if (step === 5) {
       if (!formData.ten_chi_nhanh.trim()) newErrors.ten_chi_nhanh = "Tên chi nhánh không được để trống";
+      if (!formData.khu_vuc) newErrors.khu_vuc = "Khu vực chi nhánh không được để trống";
       if (!formData.dia_chi_cn.trim()) newErrors.dia_chi_cn = "Địa chỉ chi nhánh không được để trống";
     }
 
@@ -101,37 +178,42 @@ export function PartnerRegisterPage() {
   const handleNext = async () => {
     if (!validateStep(currentStep)) return;
 
-    // Step 1: Create Account
+    // Step 1: Request OTP Verification
     if (currentStep === 1 && !createdUser) {
       setLoading(true);
       try {
-        const userAccount = await registerPartnerAccountApi({
+        const res = await requestPartnerOtpApi({
           email: formData.account_email,
+          sdt: formData.account_sdt,
           password: formData.account_password,
           ho_ten: formData.account_ho_ten,
-          sdt: formData.account_sdt,
         });
 
-        setCreatedUser(userAccount);
-        localStorage.setItem("user", JSON.stringify(userAccount));
-        localStorage.setItem("accessToken", "demo-partner-token");
-
-        // Prefill Step 3 fields with account data
-        setFormData((prev) => ({
-          ...prev,
-          ho_ten: prev.ho_ten || userAccount.ho_ten,
-          email: prev.email || userAccount.email,
-          sdt: prev.sdt || userAccount.sdt,
-        }));
-
-        setToastMessage("Tạo tài khoản thành công! Vui lòng hoàn tất thông tin hồ sơ doanh nghiệp.");
-        setCurrentStep(2);
+        setDemoOtpHint(res.demoOtp || "");
+        setOtpCountdown(60);
+        setOtpError("");
+        setOtpValue("");
+        setShowOtpModal(true);
+        setToastMessage("Mã OTP đã được gửi đến email của bạn. Vui lòng kiểm tra và xác nhận!");
       } catch (err) {
         setErrors((prev) => ({ ...prev, account_email: err.message }));
       } finally {
         setLoading(false);
       }
       return;
+    }
+
+    // Step 2: Check Tax Code Uniqueness immediately
+    if (currentStep === 2) {
+      setLoading(true);
+      try {
+        await checkTaxCodeApi(formData.ma_so_thue);
+      } catch (err) {
+        setErrors((prev) => ({ ...prev, ma_so_thue: err.message }));
+        setLoading(false);
+        return;
+      }
+      setLoading(false);
     }
 
     setCurrentStep((prev) => Math.min(prev + 1, 6));
@@ -154,17 +236,71 @@ export function PartnerRegisterPage() {
         sdt: formData.sdt,
         email: formData.email,
         cccd: formData.cccd,
+        ngay_sinh: formData.ngay_sinh,
+        gioi_tinh: formData.gioi_tinh,
         ten_chi_nhanh: formData.ten_chi_nhanh,
         khu_vuc: formData.khu_vuc,
         dia_chi_cn: formData.dia_chi_cn,
         sdt_cn: formData.sdt_cn,
       });
 
+      setToastMessage("Hồ sơ đối tác đã được tạo thành công! Trạng thái đang Chờ duyệt.");
       setShowSuccessModal(true);
     } catch (err) {
-      setToastMessage(err.message || "Gửi hồ sơ thất bại. Vui lòng thử lại.");
+      setToastMessage("Đăng ký thất bại: " + err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otpValue || otpValue.length < 6) {
+      setOtpError("Vui lòng nhập đủ 6 chữ số mã OTP.");
+      return;
+    }
+    setOtpLoading(true);
+    setOtpError("");
+    try {
+      const res = await verifyPartnerOtpApi({
+        email: formData.account_email,
+        otp: otpValue,
+      });
+
+      const userAccount = res.userAccount;
+      setCreatedUser(userAccount);
+      localStorage.setItem("user", JSON.stringify(userAccount));
+      localStorage.setItem("accessToken", "demo-partner-token");
+
+      // Prefill Step 3 fields with account data
+      setFormData((prev) => ({
+        ...prev,
+        ho_ten: prev.ho_ten || userAccount.ho_ten,
+        email: prev.email || userAccount.email,
+        sdt: prev.sdt || userAccount.sdt,
+      }));
+
+      setShowOtpModal(false);
+      setToastMessage("Xác thực tài khoản thành công! Vui lòng hoàn tất thông tin hồ sơ doanh nghiệp.");
+      setCurrentStep(2);
+    } catch (err) {
+      setOtpError(err.message || "Xác thực mã OTP thất bại.");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setOtpLoading(true);
+    setOtpError("");
+    try {
+      const res = await resendPartnerOtpApi({ email: formData.account_email });
+      setDemoOtpHint(res.demoOtp || "");
+      setOtpCountdown(60);
+      setToastMessage("Đã gửi lại mã OTP thành công! Vui lòng kiểm tra hòm thư.");
+    } catch (err) {
+      setOtpError(err.message || "Gửi lại mã OTP thất bại.");
+    } finally {
+      setOtpLoading(false);
     }
   };
 
@@ -286,7 +422,9 @@ export function PartnerRegisterPage() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Số điện thoại liên hệ</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Số điện thoại liên hệ <span className="text-rose-500">*</span>
+                  </label>
                   <input
                     type="text"
                     disabled={!!createdUser}
@@ -295,6 +433,7 @@ export function PartnerRegisterPage() {
                     placeholder=""
                     className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-50"
                   />
+                  {errors.account_sdt && <p className="text-xs text-rose-600 mt-1">{errors.account_sdt}</p>}
                 </div>
               </div>
             </div>
@@ -398,15 +537,46 @@ export function PartnerRegisterPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Số CCCD / Hộ chiếu</label>
-                <input
-                  type="text"
-                  value={formData.cccd}
-                  onChange={(e) => handleInputChange("cccd", e.target.value)}
-                  placeholder="079090123456"
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Số CCCD / CMND <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.cccd}
+                    onChange={(e) => handleInputChange("cccd", e.target.value)}
+                    placeholder="079090123456"
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                  {errors.cccd && <p className="text-xs text-rose-600 mt-1">{errors.cccd}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Ngày sinh <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.ngay_sinh}
+                    onChange={(e) => handleInputChange("ngay_sinh", e.target.value)}
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                  {errors.ngay_sinh && <p className="text-xs text-rose-600 mt-1">{errors.ngay_sinh}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Giới tính</label>
+                  <select
+                    value={formData.gioi_tinh}
+                    onChange={(e) => handleInputChange("gioi_tinh", e.target.value)}
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                  >
+                    <option value="Nam">Nam</option>
+                    <option value="Nu">Nữ</option>
+                    <option value="Khac">Khác</option>
+                  </select>
+                </div>
               </div>
             </div>
           )}
@@ -424,12 +594,13 @@ export function PartnerRegisterPage() {
               <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-blue-500 transition-colors bg-slate-50">
                 <div className="text-3xl mb-2">📄</div>
                 <div className="text-sm font-semibold text-slate-800">Tải lên tài liệu pháp lý</div>
-                <div className="text-xs text-slate-500 mt-1">Kéo thả file vào đây hoặc bấm để chọn tệp</div>
+                <div className="text-xs text-slate-500 mt-1">Kéo thả file vào đây hoặc bấm để chọn tệp từ máy tính</div>
                 <input
                   type="file"
                   className="hidden"
                   id="license-upload"
-                  onChange={() => setToastMessage("Tải lên bản xem trước thành công")}
+                  accept="image/*,.pdf"
+                  onChange={handleLicenseFileUpload}
                 />
                 <label
                   htmlFor="license-upload"
@@ -440,13 +611,19 @@ export function PartnerRegisterPage() {
               </div>
 
               {formData.giay_phep_kinh_doanh && (
-                <div className="mt-4">
-                  <div className="text-xs font-semibold text-slate-700 mb-2">Xem trước bản ĐKKD:</div>
-                  <img
-                    src={formData.giay_phep_kinh_doanh}
-                    alt="Giấy phép kinh doanh"
-                    className="max-h-48 rounded-lg border border-slate-200 object-cover"
-                  />
+                <div className="mt-4 p-4 bg-white rounded-xl border border-slate-200">
+                  <div className="text-xs font-semibold text-slate-700 mb-2">Xem trước bản ĐKKD đã tải lên:</div>
+                  {formData.giay_phep_kinh_doanh.startsWith("data:application/pdf") ? (
+                    <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 text-xs font-semibold">
+                      <span>📄 Tệp PDF Giấy phép ĐKKD đã được chọn</span>
+                    </div>
+                  ) : (
+                    <img
+                      src={formData.giay_phep_kinh_doanh}
+                      alt="Giấy phép kinh doanh"
+                      className="max-h-48 rounded-lg border border-slate-200 object-contain bg-slate-50"
+                    />
+                  )}
                 </div>
               )}
             </div>
@@ -476,31 +653,22 @@ export function PartnerRegisterPage() {
                 {errors.ten_chi_nhanh && <p className="text-xs text-rose-600 mt-1">{errors.ten_chi_nhanh}</p>}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Tỉnh / Thành Phố</label>
-                  <select
-                    value={formData.khu_vuc}
-                    onChange={(e) => handleInputChange("khu_vuc", e.target.value)}
-                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  >
-                    <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
-                    <option value="Hà Nội">Hà Nội</option>
-                    <option value="Đà Nẵng">Đà Nẵng</option>
-                    <option value="Cần Thơ">Cần Thơ</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">SĐT chi nhánh</label>
-                  <input
-                    type="text"
-                    value={formData.sdt_cn}
-                    onChange={(e) => handleInputChange("sdt_cn", e.target.value)}
-                    placeholder="02838221122"
-                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Tỉnh / Thành Phố <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={formData.khu_vuc}
+                  onChange={(e) => handleInputChange("khu_vuc", e.target.value)}
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                >
+                  {VIETNAM_PROVINCES.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+                {errors.khu_vuc && <p className="text-xs text-rose-600 mt-1">{errors.khu_vuc}</p>}
               </div>
 
               <div>
@@ -542,9 +710,15 @@ export function PartnerRegisterPage() {
                   <span className="font-semibold text-slate-900">{formData.ho_ten || "Chưa nhập"}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 border-b border-slate-200 pb-2">
-                  <span className="text-slate-500">SĐT / Email:</span>
+                  <span className="text-slate-500">SĐT / Email người đại diện:</span>
                   <span className="font-semibold text-slate-900">
                     {formData.sdt} - {formData.email}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 border-b border-slate-200 pb-2">
+                  <span className="text-slate-500">CCCD / Ngày sinh / Giới tính:</span>
+                  <span className="font-semibold text-slate-900">
+                    {formData.cccd || "Chưa nhập"} | {formData.ngay_sinh || "Chưa nhập"} | {formData.gioi_tinh === "Nu" ? "Nữ" : formData.gioi_tinh === "Nam" ? "Nam" : "Khác"}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -581,6 +755,83 @@ export function PartnerRegisterPage() {
             )}
           </div>
         </Card>
+
+        {/* Modal Xác Thực Mã OTP */}
+        {showOtpModal && (
+          <Modal
+            isOpen={showOtpModal}
+            onClose={() => setShowOtpModal(false)}
+            title="Xác Thực Tài Khoản Đăng Ký Đối Tác"
+            confirmText="Xác nhận mã OTP"
+            confirmVariant="primary"
+            onConfirm={handleVerifyOtp}
+            cancelText="Hủy"
+          >
+            <div className="space-y-4 text-left">
+              <p className="text-sm text-slate-700">
+                Mã xác thực 6 chữ số đã được gửi đến email:{" "}
+                <strong className="text-blue-600 font-mono">{formData.account_email}</strong>
+              </p>
+
+              {/* {demoOtpHint && (
+                <div className="p-2.5 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800 flex items-center justify-between">
+                  <span>💡 Mã OTP gợi ý thử nghiệm:</span>
+                  <span className="font-mono font-bold text-sm bg-white px-2 py-0.5 rounded border border-blue-300">
+                    {demoOtpHint}
+                  </span>
+                </div>
+              )} */}
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Nhập mã OTP 6 chữ số *
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={otpValue}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "");
+                    setOtpValue(val);
+                    if (otpError) setOtpError("");
+                  }}
+                  placeholder="000000"
+                  className="w-full text-center font-mono tracking-widest text-2xl font-bold py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-50"
+                  autoFocus
+                />
+              </div>
+
+              {otpError && (
+                <p className="text-xs text-rose-600 font-medium bg-rose-50 p-2 rounded border border-rose-200">
+                  {otpError}
+                </p>
+              )}
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs text-slate-500">
+                <span>
+                  {otpCountdown > 0 ? (
+                    <>Mã hết hạn sau: <strong className="text-slate-900 font-mono">00:{otpCountdown < 10 ? `0${otpCountdown}` : otpCountdown}</strong></>
+                  ) : (
+                    <span className="text-rose-600 font-medium">Mã OTP đã hết hạn</span>
+                  )}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={otpCountdown > 0 || otpLoading}
+                  className={`font-semibold transition-colors cursor-pointer ${
+                    otpCountdown > 0 || otpLoading
+                      ? "text-slate-300 cursor-not-allowed"
+                      : "text-blue-600 hover:text-blue-800 hover:underline"
+                  }`}
+                >
+                  Gửi lại mã OTP
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )}
 
         {/* Success Modal */}
         <Modal

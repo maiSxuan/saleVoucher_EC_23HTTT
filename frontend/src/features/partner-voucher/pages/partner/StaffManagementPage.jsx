@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { Plus, Search, X, Users, Edit, Lock, Unlock, Trash2 } from "lucide-react";
 import PartnerLayout from "../../../../layouts/PartnerLayout";
-import Card from "../../../../shared/components/Card";
-import Button from "../../../../shared/components/Button";
 import Badge from "../../../../shared/components/Badge";
 import Toast from "../../../../shared/components/Toast";
+import Button from "../../../../shared/components/Button";
 import {
   getStaffsByPartnerApi,
   createStaffApi,
@@ -30,6 +30,7 @@ export function StaffManagementPage() {
     ho_ten: "",
     email: "",
     sdt: "",
+    mat_khau: "123456",
     ngay_sinh: "",
     gioi_tinh: "Nam",
     cccd: "",
@@ -76,6 +77,12 @@ export function StaffManagementPage() {
 
   const roles = ["All", "Nhân viên chi nhánh", "Quản lý vận hành"];
   const statuses = ["All", "Dang hoat dong", "Tam khoa", "Tam ngung"];
+
+  const handleResetFilters = () => {
+    setSearchQuery("");
+    setRoleFilter("All");
+    setStatusFilter("All");
+  };
 
   const filteredStaffs = useMemo(() => {
     return staffs.filter((s) => {
@@ -166,118 +173,146 @@ export function StaffManagementPage() {
 
   return (
     <PartnerLayout>
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="p-6 max-w-7xl mx-auto space-y-5">
+        {/* Title & Action Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold">Nhân viên</h2>
-            <p className="text-slate-500 mt-1">Quản lý tài khoản nhân viên của doanh nghiệp.</p>
+            <h1 className="text-2xl font-bold text-gray-900">Quản lý nhân viên</h1>
+            <p className="text-sm text-gray-500 mt-1">Quản lý tài khoản nhân viên của doanh nghiệp.</p>
           </div>
-          <Button variant="success" icon="➕" onClick={handleAdd}>
-            Thêm nhân viên
-          </Button>
+          <button
+            onClick={handleAdd}
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer shadow-xs"
+          >
+            <Plus size={16} /> Thêm nhân viên
+          </button>
         </div>
 
-        <Card padding={false} className="p-4">
-          <div className="flex gap-4 flex-wrap">
-            <input
-              className="flex-1 border rounded-lg px-4 py-2 text-sm"
-              placeholder="Tìm tên, email, SĐT, CCCD..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+        {/* Filters Bar matching prototype */}
+        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="relative">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Tìm tên, email, SĐT, CCCD..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
 
             <select
-              className="border rounded-lg px-3 py-2 text-sm"
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             >
-              {roles.map((r) => (
-                <option key={r}>{r}</option>
-              ))}
+              <option value="All">Tất cả vai trò</option>
+              <option value="Nhân viên chi nhánh">Nhân viên chi nhánh</option>
+              <option value="Quản lý vận hành">Quản lý vận hành</option>
             </select>
 
             <select
-              className="border rounded-lg px-3 py-2 text-sm"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             >
-              {statuses.map((s) => (
-                <option key={s}>{s}</option>
-              ))}
+              <option value="All">Tất cả trạng thái</option>
+              <option value="Dang hoat dong">Đang hoạt động</option>
+              <option value="Tam khoa">Tạm khóa</option>
             </select>
           </div>
-        </Card>
 
-        <Card padding={false}>
+          <div className="flex items-center justify-between mt-3">
+            <p className="text-sm text-gray-500">{filteredStaffs.length} nhân viên</p>
+            <button
+              onClick={handleResetFilters}
+              className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1 cursor-pointer"
+            >
+              <X size={14} /> Đặt lại
+            </button>
+          </div>
+        </div>
+
+        {/* Staff Table */}
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-xs">
           {loading ? (
-            <div className="p-12 text-center text-slate-400">Đang tải danh sách nhân viên...</div>
+            <div className="p-12 text-center text-gray-400">Đang tải danh sách nhân viên...</div>
           ) : filteredStaffs.length === 0 ? (
-            <div className="p-12 text-center text-slate-400">Không có nhân viên nào.</div>
+            <div className="flex flex-col items-center py-16 text-gray-400">
+              <Users size={40} className="mb-2 text-gray-300" />
+              <p className="text-sm">Không có nhân viên nào phù hợp.</p>
+            </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-sm">
+              <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 text-xs uppercase text-slate-500 border-b">
-                    <th className="px-4 py-3 text-left">Nhân viên</th>
-                    <th className="px-4 py-3 text-left">Thông tin cá nhân</th>
-                    <th className="px-4 py-3 text-left">Vai trò</th>
-                    <th className="px-4 py-3 text-left">Chi nhánh phụ trách</th>
-                    <th className="px-4 py-3 text-left">Trạng thái</th>
+                  <tr className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3">Nhân viên</th>
+                    <th className="px-4 py-3">Thông tin cá nhân</th>
+                    <th className="px-4 py-3">Vai trò</th>
+                    <th className="px-4 py-3">Chi nhánh phụ trách</th>
+                    <th className="px-4 py-3">Trạng thái</th>
                     <th className="px-4 py-3 text-right">Thao tác</th>
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-gray-100 text-sm">
                   {filteredStaffs.map((staff) => (
-                    <tr key={staff.ma_nv} className="hover:bg-slate-50">
-                      <td className="px-4 py-4">
+                    <tr key={staff.ma_nv} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-base font-bold text-blue-700 shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-base font-bold text-blue-700 shrink-0 border border-blue-200">
                             {staff.ho_ten?.charAt(0) || "N"}
                           </div>
                           <div>
-                            <div className="font-semibold text-slate-900">{staff.ho_ten}</div>
-                            <div className="text-xs text-slate-500">{staff.email || "Chưa có email"}</div>
-                            <div className="text-xs text-slate-400">{staff.sdt || "Chưa có SĐT"}</div>
+                            <div className="font-bold text-gray-900">{staff.ho_ten}</div>
+                            <div className="text-xs text-gray-500">{staff.email || "Chưa có email"}</div>
+                            <div className="text-xs text-gray-400 font-mono">{staff.sdt || "Chưa có SĐT"}</div>
                           </div>
                         </div>
                       </td>
 
-                      <td className="px-4 py-4 text-xs space-y-0.5 text-slate-600">
-                        <div><span className="font-medium text-slate-700">Giới tính:</span> {staff.gioi_tinh === "Nu" ? "Nữ" : staff.gioi_tinh === "Nam" ? "Nam" : "Khác"}</div>
-                        <div><span className="font-medium text-slate-700">Ngày sinh:</span> {staff.ngay_sinh ? staff.ngay_sinh.slice(0, 10) : "Chưa cập nhật"}</div>
-                        <div><span className="font-medium text-slate-700">CCCD:</span> {staff.cccd || "Chưa cập nhật"}</div>
+                      <td className="px-4 py-3.5 text-xs space-y-0.5 text-gray-600">
+                        <div><span className="font-medium text-gray-700">Giới tính:</span> {staff.gioi_tinh === "Nu" ? "Nữ" : staff.gioi_tinh === "Nam" ? "Nam" : "Khác"}</div>
+                        <div><span className="font-medium text-gray-700">Ngày sinh:</span> {staff.ngay_sinh ? staff.ngay_sinh.slice(0, 10) : "Chưa cập nhật"}</div>
+                        <div><span className="font-medium text-gray-700">CCCD:</span> {staff.cccd || "Chưa cập nhật"}</div>
                       </td>
 
-                      <td className="px-4 py-4 font-medium text-slate-800">{staff.vai_tro}</td>
+                      <td className="px-4 py-3.5 font-medium text-gray-800">{staff.vai_tro}</td>
 
-                      <td className="px-4 py-4">
+                      <td className="px-4 py-3.5">
                         {staff.vai_tro === "Nhân viên chi nhánh" ? (
                           !staff.chi_nhanh_phu_trach || staff.chi_nhanh_phu_trach.length === 0 ? (
-                            <span className="text-slate-400 italic">Chưa phân công</span>
+                            <span className="text-gray-400 italic">Chưa phân công</span>
                           ) : (
-                            <span className="font-medium text-slate-800">{staff.chi_nhanh_phu_trach.join(", ")}</span>
+                            <span className="font-medium text-gray-800">{staff.chi_nhanh_phu_trach.join(", ")}</span>
                           )
                         ) : (
-                          <span className="text-slate-400 italic">Tất cả chi nhánh (Quản lý)</span>
+                          <span className="text-gray-400 italic">Tất cả chi nhánh (Quản lý)</span>
                         )}
                       </td>
 
-                      <td className="px-4 py-4">
+                      <td className="px-4 py-3.5">
                         <Badge status={staff.trang_thai} size="sm" />
                       </td>
 
-                      <td className="px-4 py-4">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => handleEdit(staff)}>
-                            ✏️
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleLock(staff)}>
-                            {staff.trang_thai === "Dang hoat dong" ? "🔒" : "🔓"}
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(staff.ma_nv)}>
-                            🗑️
-                          </Button>
+                      <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => handleEdit(staff)}
+                            className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                            title="Sửa nhân viên"
+                          >
+                            <Edit size={15} />
+                          </button>
+                          <button
+                            onClick={() => handleLock(staff)}
+                            className="p-1.5 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
+                            title={staff.trang_thai === "Dang hoat dong" ? "Khóa tài khoản" : "Mở khóa tài khoản"}
+                          >
+                            {staff.trang_thai === "Dang hoat dong" ? <Lock size={15} /> : <Unlock size={15} />}
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -286,18 +321,18 @@ export function StaffManagementPage() {
               </table>
             </div>
           )}
-        </Card>
+        </div>
 
         {showModal && (
-          <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white rounded-xl w-full max-w-xl p-6 shadow-xl space-y-4">
-              <h3 className="text-xl font-bold">{editing ? "Chỉnh sửa nhân viên" : "Thêm nhân viên mới"}</h3>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white rounded-2xl w-full max-w-xl p-6 shadow-xl space-y-4 text-gray-800">
+              <h3 className="text-xl font-bold text-gray-900">{editing ? "Chỉnh sửa nhân viên" : "Thêm nhân viên mới"}</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Họ và tên *</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Họ và tên *</label>
                   <input
-                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full border rounded-lg px-3.5 py-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     placeholder="Nguyễn Văn A"
                     value={form.ho_ten}
                     onChange={(e) => setForm({ ...form, ho_ten: e.target.value })}
@@ -305,10 +340,10 @@ export function StaffManagementPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Email *</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Email *</label>
                   <input
                     type="email"
-                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full border rounded-lg px-3.5 py-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     placeholder="email@domain.com"
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -316,30 +351,43 @@ export function StaffManagementPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Số điện thoại *</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Số điện thoại *</label>
                   <input
                     type="text"
-                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full border rounded-lg px-3.5 py-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     placeholder="0901234567"
                     value={form.sdt}
                     onChange={(e) => setForm({ ...form, sdt: e.target.value })}
                   />
                 </div>
 
+                {!editing && (
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Mật khẩu khởi tạo *</label>
+                    <input
+                      type="password"
+                      className="w-full border rounded-lg px-3.5 py-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
+                      placeholder="Nhập mật khẩu (Mặc định: 123456)"
+                      value={form.mat_khau || "123456"}
+                      onChange={(e) => setForm({ ...form, mat_khau: e.target.value })}
+                    />
+                  </div>
+                )}
+
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Ngày sinh</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Ngày sinh</label>
                   <input
                     type="date"
-                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full border rounded-lg px-3.5 py-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     value={form.ngay_sinh}
                     onChange={(e) => setForm({ ...form, ngay_sinh: e.target.value })}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Giới tính</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Giới tính</label>
                   <select
-                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                    className="w-full border rounded-lg px-3.5 py-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
                     value={form.gioi_tinh}
                     onChange={(e) => setForm({ ...form, gioi_tinh: e.target.value })}
                   >
@@ -350,10 +398,10 @@ export function StaffManagementPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Số CCCD / CMND</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Số CCCD / CMND</label>
                   <input
                     type="text"
-                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full border rounded-lg px-3.5 py-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     placeholder="079098000000"
                     value={form.cccd}
                     onChange={(e) => setForm({ ...form, cccd: e.target.value })}
@@ -361,9 +409,9 @@ export function StaffManagementPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Vai trò *</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Vai trò *</label>
                   <select
-                    className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                    className="w-full border rounded-lg px-3.5 py-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
                     value={form.vai_tro}
                     onChange={(e) => handleRoleChange(e.target.value)}
                   >
@@ -374,9 +422,9 @@ export function StaffManagementPage() {
 
                 {form.vai_tro === "Nhân viên chi nhánh" && (
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Chi nhánh phụ trách *</label>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Chi nhánh phụ trách *</label>
                     <select
-                      className="w-full border rounded-lg px-3.5 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                      className="w-full border rounded-lg px-3.5 py-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
                       value={form.ma_chi_nhanh}
                       onChange={(e) => setForm({ ...form, ma_chi_nhanh: e.target.value })}
                     >
@@ -394,19 +442,22 @@ export function StaffManagementPage() {
                 )}
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-                <Button
-                  variant="secondary"
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                <button
                   onClick={() => {
                     setShowModal(false);
                     setForm(emptyForm);
                   }}
+                  className="px-4 py-2 text-xs font-semibold border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   Hủy
-                </Button>
-                <Button variant="primary" onClick={handleSave}>
-                  {editing ? "💾 Cập nhật" : "➕ Thêm nhân viên"}
-                </Button>
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="px-4 py-2 text-xs font-bold bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors cursor-pointer shadow-xs"
+                >
+                  {editing ? "Cập nhật" : "Thêm nhân viên"}
+                </button>
               </div>
             </div>
           </div>

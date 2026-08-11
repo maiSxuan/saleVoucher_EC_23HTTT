@@ -23,6 +23,82 @@ export async function registerPartnerAccountApi(accountData) {
 }
 
 /**
+ * Request OTP for partner registration account verification
+ */
+export async function requestPartnerOtpApi(data) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/partners/register/request-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json.message || "Yêu cầu gửi mã OTP thất bại.");
+    }
+    return json;
+  } catch (e) {
+    throw e;
+  }
+}
+
+/**
+ * Verify OTP for partner registration
+ */
+export async function verifyPartnerOtpApi(data) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/partners/register/verify-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json.message || "Xác thực mã OTP thất bại.");
+    }
+    return json;
+  } catch (e) {
+    throw e;
+  }
+}
+
+/**
+ * Resend OTP for partner registration
+ */
+export async function resendPartnerOtpApi(data) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/partners/register/resend-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json.message || "Gửi lại mã OTP thất bại.");
+    }
+    return json;
+  } catch (e) {
+    throw e;
+  }
+}
+
+/**
+ * Check if tax code (ma_so_thue) is unique
+ */
+export async function checkTaxCodeApi(mst) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/partners/check-tax-code?mst=${encodeURIComponent(mst)}`);
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json.message || "Mã số thuế này đã được đăng ký trên hệ thống.");
+    }
+    return true;
+  } catch (e) {
+    throw e;
+  }
+}
+
+/**
  * Register partner business profile (Step 6)
  */
 export async function registerPartnerProfileApi(partnerData) {
@@ -166,7 +242,7 @@ export async function lockPartnerApi(partnerId, isLocked = true) {
   } catch (e) {
     console.warn("Backend API unavailable, using mockStore fallback:", e.message);
   }
-  return mockStore.lockPartner(partnerId, isLocked);
+  return mockStore.lockUnlockPartner(partnerId, isLocked);
 }
 
 /**
@@ -220,6 +296,42 @@ export async function createBranchRequestApi(requestData) {
     console.warn("Backend API unavailable, using mockStore fallback:", e.message);
   }
   return mockStore.createBranchRequest(requestData);
+}
+
+/**
+ * Approve branch change request (Admin action)
+ */
+export async function approveBranchRequestApi(requestId) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/branches/requests/${requestId}/approve`, {
+      method: "POST",
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) return json.data;
+    }
+  } catch (e) {
+    console.warn("Backend API unavailable:", e.message);
+  }
+}
+
+/**
+ * Reject branch change request (Admin action)
+ */
+export async function rejectBranchRequestApi(requestId, adminNote = "") {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/branches/requests/${requestId}/reject`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminNote }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) return json.data;
+    }
+  } catch (e) {
+    console.warn("Backend API unavailable:", e.message);
+  }
 }
 
 /**
@@ -332,7 +444,7 @@ export async function rejectVoucherApi(voucherId, reason = "") {
   } catch (e) {
     console.warn("Backend API unavailable, using mockStore fallback:", e.message);
   }
-  return mockStore.rejectPartner(voucherId, reason);
+  return mockStore.rejectVoucher(voucherId, reason);
 }
 
 /**
@@ -402,6 +514,70 @@ export async function deleteStaffApi(staffId) {
 
 export async function getAuditLogsApi() {
   return mockStore.getAuditLogs();
+}
+
+export async function createPartnerProfileRequestApi(payload) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/partners/profile-requests`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) return json.data;
+    }
+  } catch (e) {
+    console.warn("Backend API error for createPartnerProfileRequestApi:", e.message);
+  }
+  return mockStore.createProfileRequest(payload);
+}
+
+export async function getPendingPartnerProfileRequestApi(partnerId) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/partners/${partnerId}/profile-requests`);
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) return json.data;
+    }
+  } catch (e) {
+    console.warn("Backend API error for getPendingPartnerProfileRequestApi:", e.message);
+  }
+  return mockStore.getPendingProfileRequest(partnerId);
+}
+
+export async function approvePartnerProfileRequestApi(reqId, adminId) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/partners/profile-requests/${reqId}/approve`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminId }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) return json.data;
+    }
+  } catch (e) {
+    console.warn("Backend API error for approvePartnerProfileRequestApi:", e.message);
+  }
+  return mockStore.approveProfileRequest(reqId, adminId);
+}
+
+export async function rejectPartnerProfileRequestApi(reqId, reason, adminId) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/partners/profile-requests/${reqId}/reject`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason, adminId }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) return json.data;
+    }
+  } catch (e) {
+    console.warn("Backend API error for rejectPartnerProfileRequestApi:", e.message);
+  }
+  return mockStore.rejectProfileRequest(reqId, reason, adminId);
 }
 
 /**
