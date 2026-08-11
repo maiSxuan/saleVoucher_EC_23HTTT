@@ -576,7 +576,7 @@ export default function PartnerVoucherLookupPage() {
                         </span>
                       </div>
 
-                      <span className="font-mono text-xs font-extrabold px-3 py-1 bg-black/20 backdrop-blur-xs rounded-lg tracking-wider">
+                      <span className="font-mono text-xs font-extrabold px-3 py-1 bg-black/20 backdrop-blur-xs rounded-lg tracking-wider truncate max-w-[150px] sm:max-w-xs">
                         {verificationResult.code}
                       </span>
                     </div>
@@ -708,7 +708,7 @@ export default function PartnerVoucherLookupPage() {
                         )}
                       </div>
                     ) : (
-                      <div className="p-8 text-center text-xs text-rose-600 font-medium">
+                      <div className="p-8 text-center text-xs text-rose-600 font-medium break-words whitespace-pre-wrap">
                         {verificationResult.message}
                       </div>
                     )}
