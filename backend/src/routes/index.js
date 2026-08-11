@@ -6,6 +6,7 @@ const contentFeedbackModule = require("../modules/content-feedback");
 const coreAccessModule = require("../modules/core-access");
 const customerCommerceModule = require("../modules/customer-commerce");
 const orderModule = require("../modules/order");
+const categoryModule = require("../modules/category");
 
 // Khai báo các route partner-voucher
 const partnerRoutes = require("../modules/partner-voucher/presentation/routes/partner.routes");
@@ -16,11 +17,12 @@ const partnerReportRoutes = require("../modules/partner-voucher/presentation/rou
 const adminPartnerRoutes = require("../modules/partner-voucher/presentation/routes/admin-partner.routes");
 const adminVoucherRoutes = require("../modules/partner-voucher/presentation/routes/admin-voucher.routes");
 
-// Register content-feedback, core-access, customer-commerce, order modules
+// Register modules
 contentFeedbackModule.registerModule(router);
 coreAccessModule.registerModule(router);
 customerCommerceModule.registerModule(router);
 orderModule.registerModule(router);
+categoryModule.registerModule(router);
 
 // Register partner-voucher routes (App.js mounts under /api -> /api/partners, etc.)
 router.use("/partners", partnerRoutes);
@@ -32,4 +34,3 @@ router.use("/admin", adminPartnerRoutes);
 router.use("/admin", adminVoucherRoutes);
 
 module.exports = router;
-
