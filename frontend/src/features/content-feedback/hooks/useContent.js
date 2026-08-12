@@ -17,7 +17,7 @@ export function useContent() {
         categoryApi.fetchCategories().catch(() => ({ data: [] }))
       ]);
       const contents = contentRes.data || [];
-      const categories = catRes.data || [];
+      const categories = (catRes.data || []).map(c => ({ ...c, type: 'danh_muc' }));
       setData([...contents, ...categories]);
     } catch (err) {
       setError(err.message);

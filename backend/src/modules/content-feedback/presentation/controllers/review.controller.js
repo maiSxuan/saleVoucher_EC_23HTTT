@@ -30,6 +30,16 @@ async function createReview(req, res, next) {
   }
 }
 
+// Xóa đánh giá
+async function deleteReview(req, res, next) {
+  try {
+    await service.deleteReview(req.params.id);
+    res.status(200).json({ success: true, message: "Deleted successfully" });
+  } catch (error) {
+    next(error);
+  }
+}
+
 // Lấy đánh giá theo voucher id
 async function getReviewsByVoucher(req, res, next) {
   try {
@@ -54,6 +64,7 @@ module.exports = {
   getReviewList,
   getReviewById,
   createReview,
+  deleteReview,
   getReviewsByVoucher,
   getReviewByPurchaseId,
 };

@@ -21,6 +21,13 @@ async function create(payload) {
   return data[0];
 }
 
+// Xóa đánh giá
+async function remove(id) {
+  const { error } = await supabase.from('danhgia').delete().eq('ma_danh_gia', id);
+  if (error) throw error;
+  return true;
+}
+
 // Lấy đánh giá theo voucher id
 async function findByVoucherId(voucherId) {
   const { data: voucherMuas, error: vmError } = await supabase
@@ -57,6 +64,7 @@ module.exports = {
   findAll,
   findById,
   create,
+  remove,
   findByVoucherId,
   findByVoucherPurchaseId,
 };
