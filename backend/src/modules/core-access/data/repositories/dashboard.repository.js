@@ -160,7 +160,25 @@ class DashboardRepository {
         yearlyMap.set(yearKey, curYear);
       }
 
-      const daily = Array.from(dailyMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+      const sortedDailyKeys = Array.from(dailyMap.keys()).sort();
+      let daily = [];
+      if (sortedDailyKeys.length > 0) {
+        const minDate = new Date(sortedDailyKeys[0]);
+        const maxDate = new Date(sortedDailyKeys[sortedDailyKeys.length - 1]);
+        const curr = new Date(minDate);
+        while (curr <= maxDate) {
+          const dayKey = curr.toISOString().slice(0, 10);
+          const dayLabel = `${String(curr.getDate()).padStart(2, '0')}/${String(curr.getMonth() + 1).padStart(2, '0')}`;
+          const dayFullLabel = `${String(curr.getDate()).padStart(2, '0')}/${String(curr.getMonth() + 1).padStart(2, '0')}/${curr.getFullYear()}`;
+          if (dailyMap.has(dayKey)) {
+            daily.push(dailyMap.get(dayKey));
+          } else {
+            daily.push({ date: dayKey, label: dayLabel, fullLabel: dayFullLabel, revenue: 0, count: 0 });
+          }
+          curr.setDate(curr.getDate() + 1);
+        }
+      }
+
       const monthly = Array.from(monthlyMap.values()).sort((a, b) => a.date.localeCompare(b.date));
       const yearly = Array.from(yearlyMap.values()).sort((a, b) => a.date.localeCompare(b.date));
 

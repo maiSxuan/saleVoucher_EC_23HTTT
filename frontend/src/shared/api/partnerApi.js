@@ -596,3 +596,21 @@ export async function getPartnerReportApi(params = {}) {
   }
   return null;
 }
+
+export async function changePartnerPasswordApi(partnerId, { oldPassword, newPassword, confirmPassword }) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/partners/${partnerId}/change-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ oldPassword, newPassword, confirmPassword }),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json.message || "Đổi mật khẩu thất bại.");
+    }
+    return json;
+  } catch (e) {
+    console.warn("Backend API error for changePartnerPasswordApi:", e.message);
+    throw e;
+  }
+}

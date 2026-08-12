@@ -189,6 +189,41 @@ class StaffRepository {
       console.error("[StaffRepository] update error:", error.message);
       throw new Error(`Cập nhật nhân viên thất bại: ${error.message}`);
     }
+
+    // Đồng bộ thông tin đăng nhập trong bảng `taikhoan`
+    const newLoginIdentifier = payload.email || payload.sdt;
+    if (newLoginIdentifier || payload.mat_khau) {
+      try {
+        const { data: existingAcc } = await supabase
+          .from("taikhoan")
+          .select("ma_tk")
+          .eq("ma_nguoi_dung", id)
+          .maybeSingle();
+
+        const accFields = {};
+        if (newLoginIdentifier) {
+          accFields.thong_tin_dang_nhap = newLoginIdentifier.trim().toLowerCase();
+        }
+        if (payload.mat_khau) {
+          accFields.mat_khau = await bcrypt.hash(payload.mat_khau, 10);
+        }
+
+        if (existingAcc) {
+          await supabase.from("taikhoan").update(accFields).eq("ma_tk", existingAcc.ma_tk);
+        } else if (newLoginIdentifier) {
+          const rawPassword = payload.mat_khau || "123456";
+          const hashedPassword = await bcrypt.hash(rawPassword, 10);
+          await supabase.from("taikhoan").insert({
+            thong_tin_dang_nhap: newLoginIdentifier.trim().toLowerCase(),
+            mat_khau: hashedPassword,
+            ma_nguoi_dung: id,
+          });
+        }
+      } catch (accErr) {
+        console.warn("[StaffRepository] sync taikhoan warning:", accErr.message);
+      }
+    }
+
     return this.findById(id);
   }
 

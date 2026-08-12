@@ -599,20 +599,41 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
                       </div>
 
                       {req.loai_yeu_cau === "Cap nhat" && req.du_lieu_de_xuat && (
-                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs space-y-1.5 text-slate-800">
+                        <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-lg text-xs space-y-2 text-slate-800">
                           <div className="font-bold text-amber-900 flex items-center gap-1">
-                            <Info size={14} /> Thông tin đề xuất cập nhật mới (Đang chờ duyệt):
+                            <Info size={14} /> Thông tin đề xuất cập nhật chi nhánh mới (Đang chờ duyệt):
                           </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div><strong>Tên đề xuất:</strong> {req.du_lieu_de_xuat.ten_chi_nhanh}</div>
-                            <div><strong>Khu vực đề xuất:</strong> {req.du_lieu_de_xuat.khu_vuc}</div>
-                            <div className="col-span-2"><strong>Địa chỉ đề xuất:</strong> {req.du_lieu_de_xuat.dia_chi}</div>
+                          <div className="bg-white p-2.5 rounded border border-amber-100 space-y-1.5 font-medium">
+                            {req.du_lieu_de_xuat.ten_chi_nhanh && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-gray-500">Tên chi nhánh:</span>
+                                <span>
+                                  {req.thong_tin_hien_tai?.ten_chi_nhanh || "Hiện tại"} <span className="text-amber-600">➔</span> <strong className="text-emerald-700">{req.du_lieu_de_xuat.ten_chi_nhanh}</strong>
+                                </span>
+                              </div>
+                            )}
+                            {req.du_lieu_de_xuat.khu_vuc && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-gray-500">Khu vực:</span>
+                                <span>
+                                  {req.thong_tin_hien_tai?.khu_vuc || "Hiện tại"} <span className="text-amber-600">➔</span> <strong className="text-emerald-700">{req.du_lieu_de_xuat.khu_vuc}</strong>
+                                </span>
+                              </div>
+                            )}
+                            {req.du_lieu_de_xuat.dia_chi && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-gray-500">Địa chỉ:</span>
+                                <span>
+                                  {req.thong_tin_hien_tai?.dia_chi || "Hiện tại"} <span className="text-amber-600">➔</span> <strong className="text-emerald-700">{req.du_lieu_de_xuat.dia_chi}</strong>
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}
 
                       <div className="text-xs text-slate-600 grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                        <div><strong>Địa chỉ:</strong> {req.dia_chi} ({req.khu_vuc})</div>
+                        <div><strong>Địa chỉ hiện tại:</strong> {req.dia_chi} ({req.khu_vuc})</div>
                         <div><strong>Thời gian gửi:</strong> {new Date(req.ngay_tao).toLocaleString("vi-VN")}</div>
                       </div>
 

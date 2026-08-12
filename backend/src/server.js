@@ -7,7 +7,7 @@ const { loadEnvironment } = require("./config/environment");
 
 const config = loadEnvironment();
 
-// Express Server Entry Point (Filter findPendingByPartnerId by trang_thai Cho duyet)
+// Express Server Entry Point (Fix yeu_cau_cap_nhat_chinhanh DB insert error)
 app.listen(config.port, () => {
   console.log(`Backend running on port ${config.port}...`);
 });

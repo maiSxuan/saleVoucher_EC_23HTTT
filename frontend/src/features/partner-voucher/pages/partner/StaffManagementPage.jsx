@@ -137,24 +137,45 @@ export function StaffManagementPage() {
   };
 
   const handleSave = async () => {
-    if (editing) {
-      await updateStaffApi(form.ma_nv, {
-        ...form,
-        ma_hs: partnerId,
-        ma_chi_nhanh: form.vai_tro === "Nhân viên chi nhánh" ? form.ma_chi_nhanh : null,
-      });
-      setToastMessage("Cập nhật thông tin nhân viên thành công.");
-    } else {
-      await createStaffApi({
-        ...form,
-        ma_hs: partnerId,
-        ma_chi_nhanh: form.vai_tro === "Nhân viên chi nhánh" ? form.ma_chi_nhanh : null,
-      });
-      setToastMessage("Thêm nhân viên mới thành công.");
+    if (!form.ho_ten.trim()) {
+      setToastMessage("Vui lòng nhập họ và tên nhân viên.");
+      return;
+    }
+    if (!form.sdt || !/^\d{10}$/.test(form.sdt.trim())) {
+      setToastMessage("Số điện thoại phải bao gồm đúng 10 chữ số.");
+      return;
+    }
+    if (form.cccd && !/^\d{12}$/.test(form.cccd.trim())) {
+      setToastMessage("Số CCCD phải bao gồm đúng 12 chữ số.");
+      return;
+    }
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      setToastMessage("Địa chỉ email không đúng định dạng.");
+      return;
     }
 
-    await reload();
-    setShowModal(false);
+    try {
+      if (editing) {
+        await updateStaffApi(form.ma_nv, {
+          ...form,
+          ma_hs: partnerId,
+          ma_chi_nhanh: form.vai_tro === "Nhân viên chi nhánh" ? form.ma_chi_nhanh : null,
+        });
+        setToastMessage("Cập nhật thông tin nhân viên thành công.");
+      } else {
+        await createStaffApi({
+          ...form,
+          ma_hs: partnerId,
+          ma_chi_nhanh: form.vai_tro === "Nhân viên chi nhánh" ? form.ma_chi_nhanh : null,
+        });
+        setToastMessage("Thêm nhân viên mới thành công.");
+      }
+
+      await reload();
+      setShowModal(false);
+    } catch (e) {
+      setToastMessage("Lỗi lưu nhân viên: " + e.message);
+    }
   };
 
   const handleDelete = async (id) => {

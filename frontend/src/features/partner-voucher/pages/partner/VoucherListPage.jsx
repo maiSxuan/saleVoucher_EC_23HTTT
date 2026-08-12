@@ -31,6 +31,14 @@ export function VoucherListPage() {
   const [selectedCategory, setSelectedCategory] = useState(savedState?.selectedCategory || "All");
   const [toastMessage, setToastMessage] = useState("");
 
+  // Pagination state
+  const [page, setPage] = useState(savedState?.page || 1);
+  const limit = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, selectedStatusTab, selectedCategory]);
+
   const statusTabs = [
     { key: "All", label: "Tất cả" },
     { key: "Nhap", label: "Bản nháp" },
@@ -113,6 +121,10 @@ export function VoucherListPage() {
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
+  const totalVouchers = filteredVouchers.length;
+  const totalPages = Math.ceil(totalVouchers / limit) || 1;
+  const paginatedVouchers = filteredVouchers.slice((page - 1) * limit, page * limit);
+
   const getPublicationStatusBadge = (v) => {
     return getVoucherPublicationStatus(v);
   };
@@ -133,12 +145,12 @@ export function VoucherListPage() {
 
   return (
     <PartnerLayout>
-      <div className="p-6 max-w-7xl mx-auto space-y-5">
+      <div className="p-6 max-w-7xl mx-auto space-y-6">
         {/* Title & Action Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Danh sách voucher</h1>
-            <p className="text-sm text-gray-500 mt-1">Quản lý toàn bộ danh mục Voucher, trạng thái duyệt và tình hình bán hàng.</p>
+            <h1 className="text-2xl font-bold text-gray-900">Quản lý Voucher</h1>
+            <p className="text-sm text-gray-500 mt-1">Danh sách tất cả các chương trình ưu đãi của bạn.</p>
           </div>
           <button
             onClick={() => navigate("/partner/vouchers/new")}
@@ -148,83 +160,91 @@ export function VoucherListPage() {
           </button>
         </div>
 
+        {/* Status Filter Tabs */}
+        <div className="flex items-center gap-2 border-b border-gray-200 overflow-x-auto pb-1">
+          {statusTabs.map((tab) => {
+            const count =
+              tab.key === "All"
+                ? vouchers.length
+                : vouchers.filter((v) => v.trang_thai === tab.key || v.trang_thai_kiem_duyet === tab.key).length;
+            const isActive = selectedStatusTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setSelectedStatusTab(tab.key)}
+                className={`flex items-center gap-1.5 px-3 py-2 text-sm font-semibold border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
+                  isActive
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-800"
+                }`}
+              >
+                {tab.label}
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                    isActive ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-600"
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
         {/* Filters Bar */}
-<div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
-  {/* Status Tabs */}
-  <div className="flex items-center gap-2 overflow-x-auto pb-1">
-    {statusTabs.map((tab) => {
-      const count =
-        tab.key === "All"
-          ? vouchers.length
-          : vouchers.filter((v) => v.trang_thai === tab.key || v.trang_thai_kiem_duyet === tab.key).length;
-      return (
-        <button
-          key={tab.key}
-          onClick={() => setSelectedStatusTab(tab.key)}
-          className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
-            selectedStatusTab === tab.key
-              ? "bg-blue-600 text-white shadow-sm"
-              : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-          }`}
-        >
-          {tab.label} <span className={selectedStatusTab === tab.key ? "opacity-80" : "opacity-60"}>({count})</span>
-        </button>
-      );
-    })}
-  </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3 shadow-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="relative">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Tìm tên Voucher..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700"
+            >
+              <option value="All">Tất cả danh mục</option>
+              {categories.map((c) => {
+                const catVal = c.ma_danh_muc || c.id || c.ten_danh_muc;
+                return (
+                  <option key={catVal} value={catVal}>
+                    {formatCategoryName(c.ten_danh_muc)}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+          {(searchQuery || selectedStatusTab !== "All" || selectedCategory !== "All") && (
+            <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-xs text-gray-500">
+              <span>Đang lọc ra {totalVouchers} kết quả</span>
+              <button
+                onClick={handleResetFilters}
+                className="flex items-center gap-1 text-rose-600 hover:text-rose-800 font-semibold cursor-pointer"
+              >
+                <X size={14} /> Xóa bộ lọc
+              </button>
+            </div>
+          )}
+        </div>
 
-  {/* Search & Category Select Grid */}
-  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-gray-100">
-    <div className="relative sm:col-span-2">
-      <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-      <input
-        type="text"
-        placeholder="Tìm kiếm Voucher theo tên..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        className="w-full h-11 pl-10 pr-3.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-      />
-    </div>
-
-    <select
-      value={selectedCategory}
-      onChange={(e) => setSelectedCategory(e.target.value)}
-      className="w-full h-11 border border-gray-200 rounded-xl px-3.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-    >
-      <option value="All">Tất cả danh mục</option>
-      {categories.map((c) => {
-        const catVal = c.ma_danh_muc || c.id || c.ten_danh_muc;
-        return (
-          <option key={catVal} value={catVal}>
-            {formatCategoryName(c.ten_danh_muc)}
-          </option>
-        );
-      })}
-    </select>
-  </div>
-
-  {/* Filter Footer */}
-  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-    <p className="text-sm text-gray-500">{filteredVouchers.length} voucher</p>
-    <button
-      onClick={handleResetFilters}
-      className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1 cursor-pointer"
-    >
-      <X size={14} /> Đặt lại
-    </button>
-  </div>
-</div>
         {/* Voucher Table */}
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-xs">
           {loading ? (
             <div className="p-12 text-center text-gray-400">Đang tải danh sách voucher...</div>
-          ) : filteredVouchers.length === 0 ? (
+          ) : paginatedVouchers.length === 0 ? (
             <div className="flex flex-col items-center py-16 text-gray-400">
               <Tag size={40} className="mb-2 text-gray-300" />
               <p className="text-sm">Không tìm thấy Voucher nào phù hợp với bộ lọc.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div>
+              <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -238,7 +258,7 @@ export function VoucherListPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-sm">
-                  {filteredVouchers.map((v) => {
+                  {paginatedVouchers.map((v) => {
                     return (
                       <tr key={v.ma_voucher} className="hover:bg-gray-50 transition-colors">
                         {/* Column 1: Image & Title */}
@@ -324,8 +344,34 @@ export function VoucherListPage() {
                 </tbody>
               </table>
             </div>
-          )}
-        </div>
+
+            {/* Phân trang */}
+            {totalVouchers > 0 && (
+              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50 text-sm">
+                <p className="text-xs text-gray-600">
+                  Trang {page} / {totalPages} (Tổng {totalVouchers} voucher)
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                    className="px-3 py-1 bg-white border border-gray-300 rounded text-xs font-medium text-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
+                    Trước
+                  </button>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages}
+                    className="px-3 py-1 bg-white border border-gray-300 rounded text-xs font-medium text-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
+                    Sau
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
         <Toast message={toastMessage} onClose={() => setToastMessage("")} />
       </div>
