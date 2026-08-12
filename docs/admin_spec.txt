@@ -1,0 +1,789 @@
+Tên UC
+Tra cứu và kiểm tra đơn hàng
+Use Case ID 
+UC-ADM-04
+Actor
+Quản trị viên
+Độ ưu tiên
+Cao 
+Trigger 
+Quản trị viên chọn chức năng Quản lý đơn hàng. 
+Mô tả
+Hệ thống cho phép Quản trị viên tra cứu danh sách đơn hàng, xem thông tin chi tiết và đối chiếu trạng thái đơn hàng, thanh toán, voucher code, lịch sử phát hành/gửi mã, yêu cầu hủy và khiếu nại liên quan.
+Use case này chỉ thực hiện chức năng tra cứu và kiểm tra, không trực tiếp thay đổi trạng thái nghiệp vụ của đơn hàng.
+Tiền điều kiện
+Quản trị viên đã đăng nhập.
+Phiên đăng nhập còn hiệu lực.
+Tài khoản có quyền truy cập chức năng Quản lý đơn hàng.
+Hệ thống có quyền truy xuất dữ liệu đơn hàng.
+Hậu điều kiện
+Trường hợp tra cứu thành công
+Hệ thống hiển thị danh sách hoặc chi tiết đơn hàng.
+Hệ thống hiển thị các dữ liệu liên quan nếu tồn tại.
+Không có trạng thái nghiệp vụ nào bị thay đổi.
+Trường hợp không tìm thấy dữ liệu
+Không có dữ liệu bị thay đổi.
+Hệ thống giữ nguyên điều kiện tra cứu để Admin chỉnh sửa.
+Luồng cơ bản
+Quản trị viên chọn Quản lý đơn hàng.
+Hệ thống kiểm tra phiên đăng nhập và quyền truy cập.
+Hệ thống truy xuất danh sách đơn hàng.
+Hệ thống hiển thị danh sách đơn hàng: Mã đơn hàng, khách hàng, Voucher, Đối tác, Trạng thái đơn hàng, Trạng thái thanh toán, Trạng thái voucher code.
+Quản trị viên nhập hoặc chọn điều kiện tra cứu.
+Hệ thống tìm các đơn hàng phù hợp.
+Hệ thống hiển thị kết quả.
+Quản trị viên chọn một đơn hàng.
+Hệ thống truy xuất chi tiết đơn hàng.
+Hệ thống hiển thị: Mã đơn hàng, Khách hàng, Voucher, Đối tác, Tổng tiền, Phương thức thanh toán, Trạng thái đơn hàng, Trạng thái thanh toán, Trạng thái voucher code.
+Hệ thống hiển thị riêng: Lịch sử thanh toán, Lịch sử sinh voucher code, Lịch sử gửi voucher code, Yêu cầu hủy nếu có, Hoàn tiền nếu có, Khiếu nại nếu có.
+Quản trị viên kiểm tra thông tin.
+Nếu không có vấn đề cần xử lý, Quản trị viên kết thúc kiểm tra.
+Hệ thống giữ nguyên dữ liệu.
+Hệ thống ghi nhật ký kiểm tra đơn hàng.
+Use Case kết thúc.
+Luồng thay thế
+A8 — Không tìm thấy đơn hàng
+Hệ thống không tìm thấy đơn phù hợp.
+Hệ thống hiển thị:
+“Không có dữ liệu đơn hàng phù hợp.”
+Hệ thống giữ nguyên bộ lọc.
+Quản trị viên thay đổi điều kiện.
+Quay lại bước 6
+Luồng ngoại lệ 
+E1 — Không có quyền truy cập
+Hệ thống phát hiện tài khoản không có quyền.
+Hệ thống không truy xuất dữ liệu đơn hàng.
+Hệ thống hiển thị: “Bạn không có quyền truy cập chức năng này.”
+E2 — Không thể truy xuất dữ liệu
+Hệ thống không thể tải danh sách hoặc chi tiết đơn hàng.
+Hệ thống không thay đổi dữ liệu.
+Hệ thống hiển thị: “Không thể tải dữ liệu đơn hàng. Vui lòng thử lại.”
+Yêu cầu phi chức năng
+NFR-01 — Hiệu năng
+Hệ thống phải phản hồi trong thời gian hợp lý khi:
+Tải danh sách đơn hàng.
+Tìm kiếm và lọc đơn hàng.
+Mở thông tin chi tiết đơn hàng.
+Tải lịch sử thanh toán.
+Tải lịch sử phát hành và gửi voucher code.
+Tải yêu cầu hủy, thông tin hoàn tiền và khiếu nại liên quan.
+Việc tìm kiếm hoặc áp dụng bộ lọc không được làm gián đoạn toàn bộ giao diện quản trị.
+Trong thời gian truy xuất dữ liệu, hệ thống phải hiển thị trạng thái đang tải.
+Hệ thống không được tự động gửi lại yêu cầu tra cứu nhiều lần khi người dùng thao tác liên tiếp.
+NFR-02 — Bảo mật
+Chỉ tài khoản có quyền Quản trị viên mới được truy cập chức năng tra cứu đơn hàng.
+Hệ thống phải kiểm tra quyền trước khi hiển thị:
+Thông tin khách hàng.
+Thông tin thanh toán.
+Voucher code.
+Khiếu nại.
+Thông tin hoàn tiền.
+Voucher code không được hiển thị cho tài khoản không có quyền phù hợp.
+Việc ẩn dữ liệu trên giao diện không được thay thế cho kiểm tra quyền tại backend.
+NFR-03 — Tính ổn định và toàn vẹn dữ liệu
+Use case tra cứu không được tự động thay đổi:
+Trạng thái đơn hàng.
+Trạng thái thanh toán.
+Trạng thái hoàn tiền.
+Trạng thái voucher code.
+Trạng thái khiếu nại.
+Nếu không thể tải một phần dữ liệu liên quan, hệ thống không được hiển thị dữ liệu sai như thể đã tải đầy đủ.
+Lỗi tra cứu không được làm thay đổi dữ liệu hiện có.
+Tải lại giao diện không được kích hoạt bất kỳ thao tác cập nhật nghiệp vụ nào.
+NFR-05 — Khả năng sử dụng
+Giao diện phải phân biệt rõ:
+Trạng thái đơn hàng.
+Trạng thái thanh toán.
+Trạng thái hoàn tiền.
+Trạng thái voucher code.
+Trạng thái yêu cầu hủy.
+Trạng thái khiếu nại.
+Các khu vực lịch sử phải được tách riêng:
+Lịch sử thanh toán.
+Lịch sử phát hành/gửi voucher code.
+Lịch sử hoàn tiền.
+Lịch sử xử lý khiếu nại.
+Bộ lọc phải có nhãn rõ ràng và giữ nguyên dữ liệu khi không tìm thấy kết quả.
+Hệ thống phải hiển thị thông báo rõ ràng khi không có đơn hàng phù hợp.
+Giao diện phải hỗ trợ màn hình laptop và thiết bị di động.
+NFR-06 — Khả năng kiểm toán
+Việc truy cập hoặc kiểm tra chi tiết đơn hàng có thể được ghi nhận vào nhật ký quản trị theo yêu cầu hệ thống.
+Nhật ký tối thiểu gồm:
+Quản trị viên thực hiện.
+Thời gian.
+Mã đơn hàng.
+Loại thao tác.
+Việc chỉ tra cứu không được ghi nhận như một thao tác thay đổi trạng thái
+
+
+Tên UC
+Xử lý yêu cầu hủy đơn đã thanh toán
+Use case ID
+UC-ADM-05
+Actor
+Quản trị viên
+Độ ưu tiên
+Cao 
+Trigger 
+Quản trị viên mở một yêu cầu hủy đơn đang chờ xử lý. 
+Mô tả
+Hệ thống cho phép Quản trị viên kiểm tra yêu cầu hủy của khách hàng đối với đơn hàng đã thanh toán thành công và quyết định chấp nhận hoặc từ chối dựa trên chính sách của voucher hoặc chính sách sàn.
+Đơn hàng chưa thanh toán thành công do khách hàng tự hủy và không thuộc use case này.
+Nếu yêu cầu hủy được chấp nhận, hệ thống chuyển đơn sang Chờ hoàn tiền, tạo bản ghi hoàn tiền Chờ xử lý và chuyển sang UC-ADM-06.
+Tiền điều kiện
+Quản trị viên đã đăng nhập và có quyền.
+Đơn hàng tồn tại.
+Thanh toán của đơn đã Thành công.
+Khách hàng đã gửi yêu cầu hủy.
+Yêu cầu hủy đang ở trạng thái Chờ xử lý.
+Đơn hàng chưa được hoàn tiền thành công trước đó.
+Hệ thống có thông tin chính sách hủy/hoàn tiền của voucher hoặc chính sách sàn.
+Hậu điều kiện
+Trường hợp chấp nhận
+Yêu cầu hủy → Đã chấp nhận.
+Đơn hàng → Chờ hoàn tiền.
+Hoàn tiền → Chờ xử lý.
+Bản ghi hoàn tiền liên kết đúng đơn hàng.
+Hệ thống ghi lý do.
+Hệ thống ghi nhật ký.
+Đơn có thể được xử lý tại UC-ADM-06.
+Trường hợp từ chối
+Yêu cầu hủy → Đã từ chối.
+Đơn hàng giữ nguyên.
+Thanh toán giữ nguyên.
+Voucher code giữ nguyên.
+Không đụng tới hoàn tiền.
+Lý do từ chối được lưu.
+Hệ thống ghi nhật ký.
+Luồng cơ bản
+Quản trị viên mở yêu cầu hủy.
+Hệ thống hiển thị: Nội dung yêu cầu, Lý do khách hàng yêu cầu hủy, Đơn hàng, Thanh toán, Voucher code, Lịch sử phát hành/gửi mã, Chính sách hủy/hoàn tiền.
+Quản trị viên kiểm tra: Đơn đã thanh toán thành công, Voucher code chưa được sử dụng hoặc chưa tồn tại mã hợp lệ, Đơn chưa hoàn tiền, Yêu cầu đáp ứng chính sách hủy.
+Quản trị viên xác định yêu cầu đủ điều kiện.
+Quản trị viên chọn Chấp nhận yêu cầu hủy.
+Hệ thống hiển thị hộp thoại xác nhận.
+Hệ thống yêu cầu nhập Lý do chấp nhận hủy.
+Quản trị viên nhập lý do.
+Quản trị viên xác nhận.
+Hệ thống cập nhật yêu cầu hủy → Đã chấp nhận.
+Hệ thống cập nhật đơn hàng → Chờ hoàn tiền.
+Hệ thống ngăn tiếp tục phát hành voucher code mới cho đơn hàng.
+Hệ thống tạo bản ghi hoàn tiền gồm: Đơn hàng,Thanh toán gốc, Số tiền hoàn, Nguồn phát sinh = Yêu cầu hủy.
+Lý do hoàn tiền, Trạng thái = Chờ xử lý.
+Hệ thống ghi nhật ký.
+Hệ thống hiển thị: “Yêu cầu hủy đã được chấp nhận. Đơn hàng đang chờ hoàn tiền.”
+Use Case kết thúc
+Sau đó Admin có thể thực hiện UC-ADM-06 — Thực hiện hoàn tiền qua cổng thanh toán Sandbox.
+Luồng thay thế
+A1 — Yêu cầu hủy không đủ điều kiện
+Xảy ra khi:
+Voucher code đã sử dụng.
+Quá thời hạn được phép hủy.
+Khách hàng chỉ đổi ý nhưng chính sách sàn không cho phép.
+Các điều kiện khác theo chính sách không được đáp ứng.
+Flow:
+Quản trị viên xác định yêu cầu không đủ điều kiện.
+Quản trị viên chọn Từ chối yêu cầu hủy.
+Hệ thống yêu cầu nhập Lý do từ chối hủy.
+Quản trị viên nhập lý do.
+Quản trị viên xác nhận.
+Hệ thống cập nhật yêu cầu → Đã từ chối.
+Hệ thống giữ nguyên: Đơn hàng, Thanh toán, Voucher code.
+Hệ thống không tạo bản ghi hoàn tiền.
+Hệ thống gửi thông báo kết quả cho khách hàng.
+Hệ thống ghi nhật ký.
+Hệ thống hiển thị: “Yêu cầu hủy đơn đã bị từ chối.”
+Luồng ngoại lệ
+E1 — Không thể cập nhật yêu cầu hủy
+Không thay đổi đơn hàng và không tạo hoàn tiền.
+E2 — Không thể cập nhật đơn hàng sang Chờ hoàn tiền
+Không tạo bản ghi hoàn tiền và không thông báo chấp nhận thành công.
+E3 — Không thể tạo bản ghi hoàn tiền
+Hệ thống không hoàn tất thao tác chấp nhận.
+Không để dữ liệu ở trạng thái cập nhật một phần.
+Hệ thống hiển thị: “Không thể tạo yêu cầu hoàn tiền.”
+E4 — Không thể ghi nhật ký
+Nếu nhật ký bắt buộc, toàn bộ thao tác không được xác nhận thành công.
+Yêu cầu phi chức năng
+NFR-01 — Hiệu năng
+Hệ thống phải phản hồi trong thời gian hợp lý khi:
+Mở yêu cầu hủy.
+Tải thông tin đơn hàng và thanh toán.
+Kiểm tra voucher code.
+Tải chính sách hủy/hoàn tiền.
+Chấp nhận hoặc từ chối yêu cầu hủy.
+Trong thời gian xử lý, hệ thống phải hiển thị trạng thái đang thực hiện.
+Sau khi Quản trị viên xác nhận, hệ thống phải vô hiệu hóa nút thao tác cho đến khi yêu cầu hoàn tất để tránh xử lý lặp.
+NFR-02 — Bảo mật
+Chỉ Quản trị viên có quyền phù hợp mới được xử lý yêu cầu hủy.
+Hệ thống phải kiểm tra lại quyền trước khi:
+Chấp nhận yêu cầu hủy.
+Từ chối yêu cầu hủy.
+Quản trị viên không được thay đổi trực tiếp trạng thái đơn hàng bằng dropdown hoặc thao tác ngoài luồng nghiệp vụ.
+Hệ thống không được cho phép khách hàng hoặc đối tác thực hiện thao tác phê duyệt yêu cầu hủy.
+NFR-03 — Tính ổn định và toàn vẹn dữ liệu
+Đơn chưa thanh toán thành công không thuộc use case này và do khách hàng tự hủy.
+Việc khách hàng gửi yêu cầu hủy không tự động làm thay đổi trạng thái đơn hàng.
+Chỉ sau khi Quản trị viên chấp nhận yêu cầu hủy:
+Yêu cầu hủy mới chuyển thành Đã chấp nhận.
+Đơn hàng mới chuyển thành Chờ hoàn tiền.
+Hệ thống mới tạo bản ghi trong bảng HOANTIEN với trạng thái Chờ xử lý.
+Nếu yêu cầu bị từ chối:
+Đơn hàng giữ nguyên.
+Thanh toán giữ nguyên.
+Voucher code giữ nguyên.
+Không tạo bản ghi hoàn tiền.
+Voucher code đã sử dụng không được phép chuyển đơn sang quy trình hoàn tiền.
+Khi đơn hàng đã chuyển sang Chờ hoàn tiền, voucher code của đơn không được phép sử dụng trong thời gian chờ refund.
+Nếu không thể đồng thời:
+Cập nhật yêu cầu hủy.
+Cập nhật đơn hàng.
+Tạo bản ghi hoàn tiền.
+ thì hệ thống không được để dữ liệu ở trạng thái cập nhật một phần.
+Hệ thống không được hiển thị thông báo thành công nếu dữ liệu chưa được lưu hoàn tất.
+NFR-05 — Khả năng sử dụng
+Giao diện phải hiển thị rõ:
+Lý do khách yêu cầu hủy.
+Trạng thái đơn hàng.
+Trạng thái thanh toán.
+Trạng thái voucher code.
+Chính sách hủy/hoàn tiền.
+Phải có hai hành động rõ ràng:
+Chấp nhận yêu cầu hủy.
+Từ chối yêu cầu hủy.
+Cả hai thao tác phải có hộp thoại xác nhận.
+Khi chấp nhận, hệ thống phải yêu cầu Lý do chấp nhận hủy.
+Khi từ chối, hệ thống phải yêu cầu Lý do từ chối hủy.
+Sau khi xử lý, giao diện phải hiển thị trạng thái mới của yêu cầu.
+Không hiển thị chức năng xử lý hủy Admin đối với đơn chưa thanh toán thành công.
+NFR-06 — Khả năng kiểm toán
+Các thao tác sau phải được ghi nhật ký:
+Chấp nhận yêu cầu hủy.
+Từ chối yêu cầu hủy.
+Chuyển đơn hàng sang Chờ hoàn tiền.
+Tạo bản ghi hoàn tiền.
+Nhật ký phải gồm:
+Người thực hiện.
+Thời gian.
+Mã đơn hàng.
+Mã yêu cầu hủy.
+Quyết định xử lý.
+Lý do.
+Trạng thái yêu cầu trước/sau.
+Trạng thái đơn hàng trước/sau.
+Kết quả.
+Thao tác thất bại không được ghi nhận là thành công
+
+
+Tên UC
+Thực hiện hoàn tiền qua cổng thanh toán Sandbox
+Use Case ID 
+UC-ADM-06
+Actor
+Quản trị viên
+Độ ưu tiên
+Cao
+Trigger 
+Quản trị viên chọn Xử lý hoàn tiền trên bản ghi hoàn tiền đang chờ xử lý.
+Mô tả
+Hệ thống cho phép Quản trị viên thực hiện hoàn tiền đối với một yêu cầu đã được chấp nhận về mặt nghiệp vụ.
+Hệ thống xác định cổng thanh toán ban đầu và gửi yêu cầu refund đến:
+VNPay Sandbox nếu giao dịch gốc sử dụng VNPay.
+PayPal Sandbox nếu giao dịch gốc sử dụng PayPal.
+Use case này không thực hiện xét duyệt lại điều kiện hoàn tiền.
+Tiền điều kiện
+Quản trị viên đã đăng nhập và có quyền.
+Đơn hàng đang Chờ hoàn tiền.
+Có bản ghi hoàn tiền liên kết với đơn.
+Hoàn tiền đang Chờ xử lý.
+Thanh toán gốc đã Thành công.
+Có mã giao dịch thanh toán gốc.
+Xác định được cổng thanh toán.
+Cổng thuộc VNPay Sandbox hoặc PayPal Sandbox.
+Chưa tồn tại giao dịch hoàn tiền thành công trước đó.
+Không có voucher code hoặc voucher code chưa được sử dụng.
+Hậu điều kiện
+Hoàn tiền thành công
+Trạng thái Hoàn tiền = Thành công.
+Trạng thái Đơn hàng = Đã hoàn tiền.
+Voucher code chưa sử dụng → Vô hiệu hóa.
+Giao dịch hoàn tiền Sandbox được lưu.
+Nếu nguồn hoàn tiền là khiếu nại: Khiếu nại → Đã giải quyết.
+Nhật ký được ghi nhận.
+Luồng cơ bản
+Quản trị viên mở bản ghi hoàn tiền.
+Hệ thống hiển thị: Mã đơn, Khách hàng, Tổng tiền, Số tiền hoàn, Cổng thanh toán, Mã giao dịch gốc, Thời gian thanh toán, Lý do hoàn tiền, nguồn yêu cầu hoàn tiền, Trạng thái voucher code.
+Hệ thống kiểm tra kỹ thuật: 
+Đơn vẫn Chờ hoàn tiền.
+Hoàn tiền chưa thành công (trạng thái chờ xử lí)
+Giao dịch gốc tồn tại.
+Cổng thanh toán hợp lệ.
+Quản trị viên chọn Hoàn tiền.
+Hệ thống hiển thị hộp thoại xác nhận:
+Cổng thanh toán.
+Mã giao dịch.
+Số tiền hoàn.
+Lý do.
+Quản trị viên xác nhận.
+Hệ thống cập nhật trạng thái hoàn tiền = Đang xử lý.
+Hệ thống khóa thao tác gửi lại cùng yêu cầu.
+Hệ thống xác định cổng thanh toán.
+Hệ thống gửi yêu cầu refund đến VNPay Sandbox hoặc PayPal Sandbox.
+Cổng Sandbox xử lý giao dịch.
+Cổng Sandbox trả kết quả thành công.
+Hệ thống lưu:
+Cổng thanh toán.
+Mã giao dịch thanh toán gốc.
+Mã giao dịch hoàn tiền.
+Số tiền.
+Thời gian.
+Mã phản hồi.
+Kết quả.
+Hệ thống cập nhật: 
+trạng thái hoàn tiền = Thành công
+Trạng thái đơn hàng = Đã hoàn tiền
+Nếu voucher code tồn tại và chưa sử dụng: trạng thái vouhcer code = Vô hiệu hóa
+Nếu hoàn tiền xuất phát từ khiếu nại: trạng thái khiếu nại = Đã giải quyết
+Hệ thống ghi nhật ký: Admin thực hiện, Thời gian, Đơn hàng, Cổng thanh toán, Transaction gốc, Transaction refund, Số tiền, Lý do, Kết quả, Trạng thái trước/sau.
+Hệ thống hiển thị: “Hoàn tiền thành công qua VNPay/PayPal Sandbox.”
+Use Case kết thúc.
+Luồng ngoại lệ
+E1 — Không kết nối được Sandbox trước khi gửi yêu cầu
+Không xác nhận hoàn tiền thành công.
+Trạng thái đơn hàng giữ Chờ hoàn tiền.
+Trạng thái thanh toán giữ Thành công.
+Hoàn tiền được ghi nhận thất bại hoặc quay về trạng thái cho phép thử lại.
+Hệ thống hiển thị: “Không thể kết nối đến cổng thanh toán. Vui lòng thử lại.”
+E2 — Sandbox từ chối refund
+Cổng trả kết quả thất bại.
+Trạng thái hoàn tiền = Thất bại.
+Trạng thái đơn hàng = Chờ hoàn tiền.
+Khiếu nại liên quan tiếp tục Đang xử lý.
+Hệ thống lưu mã lỗi.
+Hệ thống ghi nhật ký.
+Hiển thị: “Hoàn tiền không thành công. Cổng thanh toán đã từ chối yêu cầu.”
+E3 — Không xác định được kết quả refund
+Áp dụng khi yêu cầu có thể đã gửi nhưng hệ thống không nhận được kết quả cuối cùng.
+Hệ thống không được coi giao dịch là thành công hoặc thất bại.
+Trạng thái hoàn tiền = Cần kiểm tra.
+Đơn tiếp tục Chờ hoàn tiền.
+Hệ thống khóa thao tác refund lại.
+Hệ thống phải kiểm tra trạng thái giao dịch với cổng trước khi cho phép thao tác tiếp.
+Hiển thị: “Chưa xác định được kết quả hoàn tiền. Vui lòng kiểm tra trạng thái giao dịch.”
+E4 — Giao dịch đã được hoàn tiền trước đó
+Không gọi hoàn tiền lần nữa.
+Hệ thống hiển thị giao dịch refund đã tồn tại.
+Ghi nhật ký kiểm tra.
+E5 — Không tìm thấy giao dịch thanh toán gốc
+Không gọi Sandbox.
+Đơn giữ Chờ hoàn tiền.
+Hiển thị: “Không tìm thấy giao dịch thanh toán gốc.”
+E6 — Sandbox báo thành công nhưng hệ thống không cập nhật được dữ liệu nội bộ
+Không gửi lại hoàn tiền lần nữa.
+Hệ thống giữ thông tin giao dịch refund Sandbox đã nhận được.
+Trạng thái hoàn tiền = Cần kiểm tra 
+Hệ thống ghi lỗi đồng bộ.
+Hệ thống yêu cầu đối soát trạng thái trước khi cho phép thao tác tiếp.
+Không được tự động gọi refund lại.
+Yêu cầu phi chức năng
+NFR-01 — Hiệu năng
+Hệ thống phải phản hồi hợp lý khi:
+Tải thông tin hoàn tiền.
+Truy xuất giao dịch thanh toán gốc.
+Gửi yêu cầu refund đến VNPay Sandbox hoặc PayPal Sandbox.
+Tiếp nhận và xử lý kết quả trả về.
+Trong thời gian gọi cổng Sandbox, hệ thống phải hiển thị: “Đang xử lý hoàn tiền…”
+Hệ thống phải vô hiệu hóa nút hoàn tiền sau khi yêu cầu đã được gửi để ngăn gửi lặp.
+Hệ thống phải có cơ chế xử lý timeout mà không làm treo toàn bộ giao diện quản trị.
+NFR-02 — Bảo mật
+Chỉ Quản trị viên có quyền xử lý hoàn tiền mới được thực hiện refund.
+Hệ thống phải kiểm tra lại quyền ngay trước khi gọi cổng thanh toán.
+Thông tin giao dịch Sandbox phải được bảo vệ.
+Thông tin bí mật dùng để kết nối VNPay/PayPal không được lưu hoặc hiển thị trên frontend.
+Hệ thống không được cho phép người dùng thay đổi tùy ý:
+Mã giao dịch thanh toán gốc.
+Cổng thanh toán.
+Số tiền hoàn đã được xác định từ giao dịch.
+Giao dịch thanh toán qua VNPay phải hoàn qua VNPay Sandbox.
+Giao dịch thanh toán qua PayPal phải hoàn qua PayPal Sandbox.
+NFR-03 — Tính ổn định và toàn vẹn dữ liệu
+Use case này chỉ xử lý các bản ghi HOANTIEN đã được tạo từ một quyết định nghiệp vụ hợp lệ.
+Use case không thực hiện xét duyệt lại yêu cầu hoàn tiền.
+Hệ thống phải ngăn refund nhiều lần cho cùng một giao dịch.
+Trước khi gọi Sandbox phải kiểm tra:
+Đơn hàng đang Chờ hoàn tiền.
+Bản ghi hoàn tiền chưa Thành công.
+Giao dịch thanh toán gốc tồn tại.
+Khi bắt đầu gửi refund: HOANTIEN.TrangThai = Đang xử lý.
+Chỉ khi cổng Sandbox xác nhận refund thành công mới được cập nhật:
+HOANTIEN.TrangThai = Thành công
+THANHTOAN.TrangThai = Đã hoàn tiền mô phỏng
+DONHANG.TrangThai = Đã hoàn tiền
+Nếu voucher code tồn tại và chưa sử dụng, sau refund thành công: VOUCHER_CODE.TrangThai = Vô hiệu hóa.
+Nếu hoàn tiền xuất phát từ khiếu nại, chỉ sau refund thành công: KHIEUNAI.TrangThai = Đã giải quyết.
+Nếu Sandbox trả kết quả thất bại:
+HOANTIEN.TrangThai = Thất bại.
+Đơn hàng vẫn Chờ hoàn tiền.
+Thanh toán không được cập nhật thành đã hoàn tiền.
+Timeout hoặc mất kết nối sau khi đã gửi yêu cầu không được tự động coi là thất bại.
+Khi kết quả không xác định:
+HOANTIEN.TrangThai = Cần kiểm tra.
+Không được gửi lại refund trước khi kiểm tra kết quả.
+Nếu Sandbox đã refund thành công nhưng hệ thống lỗi khi cập nhật DB, hệ thống không được gọi refund lần thứ hai.
+Không được để dữ liệu nội bộ mâu thuẫn với kết quả từ cổng Sandbox.
+NFR-05 — Khả năng sử dụng
+Giao diện hoàn tiền phải hiển thị rõ:
+Mã đơn hàng.
+Cổng thanh toán.
+Mã giao dịch gốc.
+Số tiền đã thanh toán.
+Số tiền hoàn.
+Lý do hoàn tiền.
+Trạng thái hoàn tiền.
+Nút thao tác nên hiển thị theo đúng cổng:
+Hoàn tiền qua VNPay Sandbox.
+Hoàn tiền qua PayPal Sandbox.
+Trước khi refund phải có hộp thoại xác nhận.
+Giao diện phải cảnh báo voucher code sẽ không còn khả năng sử dụng sau khi hoàn tiền thành công.
+Sau xử lý phải hiển thị rõ một trong các kết quả:
+Hoàn tiền thành công.
+Hoàn tiền thất bại.
+Cần kiểm tra kết quả.
+Không hiển thị nút Từ chối hoàn tiền trong use case này.
+NFR-06 — Khả năng kiểm toán
+Mỗi lần gửi yêu cầu refund phải được ghi nhận.
+Nhật ký phải gồm:
+Quản trị viên.
+Thời gian.
+Mã đơn hàng.
+Mã hoàn tiền.
+Cổng thanh toán.
+Môi trường Sandbox.
+Mã giao dịch thanh toán gốc.
+Mã giao dịch refund nếu có.
+Số tiền hoàn.
+Lý do.
+Mã phản hồi.
+Kết quả.
+Trạng thái trước/sau.
+Trường hợp timeout hoặc chưa xác định kết quả phải được ghi đúng là Cần kiểm tra, không ghi Thất bại.
+Nếu cổng đã hoàn tiền thành công nhưng hệ thống nội bộ chưa đồng bộ, nhật ký phải lưu đủ thông tin để đối soát.
+Không được ghi giao dịch thất bại thành hoàn tiền thành công.
+
+
+Tên UC
+Xử lý khiếu nại đơn hàng và voucher code 
+Use Case ID 
+UC-ADM-07
+Actor
+Quản trị viên
+Độ ưu tiên
+Cao 
+Trigger 
+Quản trị viên mở một khiếu nại của khách hàng đang chờ xử lý. 
+Mô tả
+Hệ thống cho phép Quản trị viên kiểm tra khiếu nại liên quan đến đơn hàng hoặc voucher code và lựa chọn phương án:
+Gửi lại voucher code hiện tại.
+Cấp lại voucher code mới.
+Chấp nhận khiếu nại và chuyển sang hoàn tiền.
+Từ chối khiếu nại.
+Việc mở khiếu nại không tự động thay đổi trạng thái đơn hàng, thanh toán hoặc voucher code.
+Tiền điều kiện
+Quản trị viên đã đăng nhập và có quyền.
+Khiếu nại tồn tại.
+Khiếu nại liên kết với đúng khách hàng và đơn hàng.
+Đơn hàng tồn tại.
+Hệ thống truy xuất được: Thanh toán, Voucher code, Lịch sử phát hành, Lịch sử gửi mã, Thông tin voucher.
+Hậu điều kiện
+1. Trường hợp khiếu nại đang được kiểm tra nhưng chưa có kết quả xử lý
+Trạng thái khiếu nại được cập nhật từ Mới thành Đang xử lý.
+Trạng thái đơn hàng không thay đổi.
+Trạng thái thanh toán không thay đổi.
+Trạng thái voucher code không thay đổi.
+Chưa tạo bản ghi trong bảng HOANTIEN.
+Hệ thống lưu thông tin về việc Quản trị viên đã tiếp nhận/xử lý khiếu nại.
+Hệ thống ghi nhật ký hoạt động.
+2. Trường hợp gửi lại voucher code hiện tại thành công
+Voucher code hiện tại được giữ nguyên.
+Hệ thống không sinh voucher code mới.
+Hệ thống gửi lại voucher code hiện tại cho khách hàng.
+Kết quả gửi được ghi nhận vào lịch sử gửi voucher code.
+Trạng thái khiếu nại được cập nhật thành Đã xử lý.
+Trạng thái đơn hàng không thay đổi.
+Trạng thái thanh toán không thay đổi.
+Trạng thái voucher code không thay đổi.
+Không tạo bản ghi trong bảng HOANTIEN.
+Hệ thống ghi nhật ký hoạt động.
+3. Trường hợp cấp lại voucher code mới thành công
+Nếu voucher code cũ tồn tại nhưng không còn hợp lệ, mã cũ được cập nhật thành Vô hiệu hóa.
+Hệ thống sinh voucher code mới.
+Voucher code mới được liên kết với đúng:
+Đơn hàng.
+Khách hàng.
+Voucher sản phẩm.
+Hệ thống gửi voucher code mới cho khách hàng.
+Lịch sử phát hành và gửi voucher code được cập nhật.
+Trạng thái khiếu nại được cập nhật thành Đã xử lý.
+Trạng thái đơn hàng không thay đổi.
+Trạng thái thanh toán không thay đổi.
+Không tạo bản ghi trong bảng HOANTIEN.
+Hệ thống ghi nhật ký hoạt động, bao gồm mã cũ và mã mới.
+4. Trường hợp khiếu nại được chấp nhận và chuyển sang hoàn tiền
+Khiếu nại được xác định là hợp lệ và đủ điều kiện hoàn tiền.
+Trạng thái khiếu nại tiếp tục được giữ ở Đang xử lý.
+Trạng thái đơn hàng được cập nhật thành Chờ hoàn tiền.
+Hệ thống tạo một bản ghi mới trong bảng HOANTIEN.
+Bản ghi HOANTIEN được liên kết với giao dịch thanh toán của đơn hàng.
+Trạng thái bản ghi hoàn tiền được thiết lập thành:
+Chờ xử lý.
+Bản ghi hoàn tiền lưu tối thiểu:
+Số tiền hoàn.
+Lý do hoàn tiền.
+Phương thức/cổng thanh toán.
+Thông tin giao dịch thanh toán gốc.
+Nguồn phát sinh hoàn tiền = Khiếu nại.
+Khiếu nại được liên kết với quá trình hoàn tiền tương ứng.
+Trạng thái thanh toán chưa thay đổi tại thời điểm này.
+Voucher code chưa chuyển thành Vô hiệu hóa chỉ vì Admin chấp nhận khiếu nại, nhưng hệ thống không cho phép voucher code của đơn đang Chờ hoàn tiền tiếp tục được sử dụng.
+Khiếu nại chưa được cập nhật thành Đã xử lý.
+Hệ thống ghi nhật ký hoạt động.
+Đơn hàng có thể tiếp tục được xử lý tại UC-ADM-04.3 — Thực hiện hoàn tiền qua cổng thanh toán Sandbox.
+Khi VNPay Sandbox hoặc PayPal Sandbox xác nhận hoàn tiền thành công ở UC-ADM-04.3 thì mới cập nhật:
+HOANTIEN.TrangThai = Thành công
+DONHANG.TrangThai = Đã hoàn tiền
+VOUCHER_CODE.TrangThai = Vô hiệu hóa nếu có mã chưa sử dụng
+KHIEUNAI.TrangThai = Đã xử lý
+5. Trường hợp khiếu nại bị từ chối
+Trạng thái khiếu nại được cập nhật thành Từ chối.
+Hệ thống lưu lý do từ chối khiếu nại.
+Trạng thái đơn hàng không thay đổi.
+Trạng thái thanh toán không thay đổi.
+Trạng thái voucher code không thay đổi.
+Không tạo bản ghi trong bảng HOANTIEN.
+Hệ thống gửi thông báo kết quả xử lý cho khách hàng.
+Hệ thống ghi nhật ký hoạt động gồm:
+Quản trị viên thực hiện.
+Thời gian.
+Mã khiếu nại.
+Mã đơn hàng.
+Lý do từ chối.
+Trạng thái trước.
+Trạng thái sau.
+Kết quả xử lý.
+6. Trường hợp xử lý khiếu nại không thành công do lỗi hệ thống
+Hệ thống không được ghi nhận khiếu nại là Đã xử lý hoặc Từ chối nếu thao tác tương ứng chưa hoàn tất.
+Không được để dữ liệu ở trạng thái cập nhật một phần.
+Trạng thái đơn hàng, thanh toán và voucher code phải giữ ở trạng thái nhất quán trước lỗi.
+Nếu thao tác chuyển sang hoàn tiền thất bại trước khi tạo hoàn chỉnh bản ghi HOANTIEN, hệ thống không được xem khiếu nại là đã chuyển sang hoàn tiền.
+Hệ thống ghi nhận lỗi để phục vụ kiểm tra và truy vết.
+Luồng cơ bản
+Quản trị viên mở khiếu nại.
+Hệ thống hiển thị: Mã khiếu nại, Khách hàng, Đơn hàng ,Loại khiếu nại, Nội dung, Thời gian gửi, Trạng thái khiếu nại, Thanh toán, Voucher code, Lịch sử sinh/gửi mã.
+Hệ thống cập nhật khiếu nại từ Mới → Đang xử lý.
+Quản trị viên kiểm tra nguyên nhân.
+Quản trị viên lựa chọn phương án xử lý thích hợp.
+Luồng thay thế
+A1 — Khách chưa nhận mã nhưng code hiện tại hợp lệ
+Điều kiện:
+Thanh toán thành công.
+Code tồn tại.
+Code hợp lệ.
+Code chưa sử dụng.
+Lần gửi trước thất bại hoặc khách chưa nhận được.
+Flow:
+Quản trị viên chọn Gửi lại mã.
+Hệ thống hiển thị xác nhận.
+Quản trị viên xác nhận.
+Hệ thống gửi lại chính code hiện tại.
+Không sinh code mới.
+Hệ thống cập nhật lịch sử gửi.
+Nếu gửi thành công: Khiếu nại → Đã xử lý.
+Đơn hàng và thanh toán giữ nguyên.
+Hệ thống ghi nhật ký.
+Hiển thị: “Đã gửi lại voucher code cho khách hàng.”
+A2 — Không có code hợp lệ hoặc lỗi sinh mã
+Điều kiện:
+Thanh toán thành công.
+Không có code hợp lệ hoặc code Lỗi sinh mã.
+Flow:
+Quản trị viên chọn Cấp lại mã mới.
+Hệ thống hiển thị xác nhận.
+Quản trị viên xác nhận.
+Nếu mã cũ tồn tại nhưng không còn hợp lệ, hệ thống vô hiệu hóa mã cũ.
+Hệ thống sinh code mới.
+Hệ thống liên kết code mới với: Đơn hàng, Khách hàng, Voucher, Hệ thống gửi mã mới, Hệ thống cập nhật lịch sử
+Nếu thành công:
+Khiếu nại → Đã xử lí.
+Đơn hàng và thanh toán giữ nguyên.
+Hệ thống ghi nhật ký.
+Hiển thị: “Cấp lại voucher code thành công.”
+A3 — Khiếu nại hợp lệ và đủ điều kiện hoàn tiền
+Xảy ra khi:
+Thanh toán thành công.
+Khiếu nại được xác minh hợp lệ.
+Voucher code chưa sử dụng.
+Không thể giải quyết hợp lý bằng gửi lại mã.
+Không thể giải quyết hợp lý bằng cấp lại mã.
+Nguyên nhân thuộc trường hợp được hoàn tiền theo chính sách.
+Ví dụ:
+Đối tác không còn cung cấp dịch vụ.
+Đối tác từ chối voucher hợp lệ và không thể khắc phục.
+Voucher không thể sử dụng đúng quyền lợi đã công bố.
+Hệ thống không thể cung cấp voucher hợp lệ sau khi đã thử xử lý.
+Flow:
+Quản trị viên xác định khiếu nại đủ điều kiện hoàn tiền.
+Quản trị viên chọn Chấp nhận khiếu nại và hoàn tiền.
+Hệ thống hiển thị hộp thoại xác nhận.
+Hệ thống yêu cầu nhập lý do.
+Quản trị viên nhập lý do.
+Quản trị viên xác nhận.
+Hệ thống giữ: trạng thái khiếu nại = Đang xử lý.
+Hệ thống cập nhật: trạng thái đơn hàng = Chờ hoàn tiền.
+Hệ thống tạo bản ghi hoàn tiền: Đơn hàng, Thanh toán gốc, Khiếu nại liên quan, Nguồn = Khiếu nại, Số tiền, Lý do, trạng thái hoàn tiền  = Chờ xử lý.
+Hệ thống ghi nhật ký.
+Hệ thống hiển thị: “Khiếu nại đã được chấp nhận và chuyển sang xử lý hoàn tiền.”
+Use Case kết thúc, sau đó thực hiện UC-ADM-06. Khiếu nại chưa được chuyển thành Đã giải quyết ở bước này, chỉ khi hoàn tiền Sandbox thành công:
+Trạng thái hoàn tiền = Thành công
+Trạng thái đơn hàng = Đã hoàn tiền
+Trạng thái khiếu nại = Đã xử lí
+Trạng thái voucherCode= Vô hiệu hóa (nếu có)
+A4 — Khiếu nại không hợp lệ
+Xảy ra khi:
+Voucher đã sử dụng.
+Voucher hết hạn đúng chính sách.
+Khách sử dụng sai chi nhánh.
+Không đáp ứng điều kiện voucher.
+Không phát hiện lỗi hệ thống hoặc đối tác.
+Khiếu nại không thuộc chính sách hỗ trợ.
+Flow:
+Quản trị viên chọn Từ chối khiếu nại.
+Hệ thống yêu cầu nhập lý do.
+Quản trị viên nhập lý do.
+Quản trị viên xác nhận.
+Hệ thống cập nhật: trạng thái khiếu nại = Từ chối.
+Hệ thống giữ nguyên: Đơn hàng, Thanh toán, Voucher code, Không tạo bản ghi hoàn tiền.
+Hệ thống gửi thông báo cho khách hàng.
+Hệ thống ghi nhật ký.
+Hiển thị: “Khiếu nại đã bị từ chối.”
+Luồng ngoại lệ
+E1 — Không thể gửi lại code
+Giữ code hiện tại.
+Không tạo code mới.
+Khiếu nại tiếp tục Đang xử lý.
+E2 — Không thể sinh code mới
+Không cập nhật khiếu nại thành Đã xử lí.
+Không thay đổi đơn hàng/thanh toán.
+E3 — Sinh code thành công nhưng gửi thất bại
+Giữ code mới.
+Không sinh thêm code khác.
+Ghi lịch sử gửi thất bại.
+Khiếu nại tiếp tục Đang xử lý.
+E4 — Không thể cập nhật khiếu nại
+Không thông báo xử lý thành công.
+Không ghi trạng thái mới nếu dữ liệu chưa được lưu.
+E5 — Không thể tạo bản ghi hoàn tiền
+Áp dụng A3:
+Không cập nhật đơn sang Chờ hoàn tiền nếu toàn bộ thao tác không thể hoàn tất nhất quán.
+Khiếu nại tiếp tục Đang xử lý.
+Hiển thị: “Không thể chuyển khiếu nại sang xử lý hoàn tiền.”
+Yêu cầu phi chức năng
+NFR-01 — Hiệu năng
+Hệ thống phải phản hồi hợp lý khi:
+Tải nội dung khiếu nại.
+Tải thông tin đơn hàng.
+Tải thanh toán.
+Tải voucher code.
+Tải lịch sử sinh/gửi mã.
+Gửi lại voucher code.
+Cấp lại voucher code.
+Chuyển khiếu nại sang hoàn tiền.
+Trong thời gian xử lý, hệ thống phải hiển thị trạng thái đang thực hiện.
+Hệ thống phải ngăn Quản trị viên thực hiện lặp cùng một thao tác khi yêu cầu trước chưa hoàn tất.
+NFR-02 — Bảo mật
+Chỉ Quản trị viên có quyền mới được xem và xử lý khiếu nại.
+Hệ thống phải kiểm tra lại quyền trước khi:
+Gửi lại voucher code.
+Cấp lại voucher code.
+Chấp nhận khiếu nại để hoàn tiền.
+Từ chối khiếu nại.
+Voucher code chỉ được hiển thị cho tài khoản quản trị có quyền phù hợp.
+Khiếu nại chỉ được xử lý nếu liên kết đúng với khách hàng và đơn hàng tương ứng.
+Hệ thống không được cho phép thay đổi trực tiếp trạng thái khiếu nại ngoài các hành động nghiệp vụ được định nghĩa.
+NFR-03 — Tính ổn định và toàn vẹn dữ liệu
+Việc tiếp nhận khiếu nại không tự động thay đổi:
+Đơn hàng.
+Thanh toán.
+Voucher code.
+Khi bắt đầu xử lý, khiếu nại có thể được cập nhật:
+Mới tiếp nhận → Đang xử lý.
+Nếu khách chỉ chưa nhận được mã nhưng mã hiện tại hợp lệ:
+Phải gửi lại mã hiện tại.
+Không được sinh code mới.
+Nếu không có mã hợp lệ hoặc mã Lỗi sinh mã:
+Có thể cấp code mới.
+Nếu mã cũ tồn tại và không còn hợp lệ, mã cũ phải được vô hiệu hóa.
+Không được tồn tại đồng thời hai voucher code hợp lệ có khả năng sử dụng cho cùng một quyền lợi nếu nghiệp vụ chỉ cho phép một mã.
+Sinh code mới thành công nhưng gửi thất bại không được tự động sinh thêm code khác.
+Khiếu nại chỉ được cập nhật Đã giải quyết khi phương án xử lý hoàn tất thành công.
+Khi khiếu nại được chấp nhận để hoàn tiền:
+Khiếu nại tiếp tục Đang xử lý.
+Đơn hàng → Chờ hoàn tiền.
+Hệ thống tạo một bản ghi trong HOANTIEN → Chờ xử lý.
+Khiếu nại chuyển sang hoàn tiền chỉ được Đã giải quyết sau khi UC-ADM-06 refund thành công.
+Nếu khiếu nại bị từ chối:
+Đơn hàng giữ nguyên.
+Thanh toán giữ nguyên.
+Voucher code giữ nguyên.
+Không tạo bản ghi hoàn tiền.
+Không để thao tác cập nhật một phần nếu xử lý thất bại.
+NFR-05 — Khả năng sử dụng
+Giao diện phải hiển thị:
+Mã khiếu nại.
+Loại khiếu nại.
+Nội dung.
+Khách hàng.
+Đơn hàng.
+Trạng thái khiếu nại.
+Thanh toán.
+Voucher code.
+Lịch sử sinh/gửi mã.
+Các hành động phải phân biệt rõ:
+Gửi lại mã.
+Cấp lại mã mới.
+Chấp nhận khiếu nại và hoàn tiền.
+Từ chối khiếu nại.
+Các thao tác thay đổi dữ liệu phải có xác nhận.
+Khi từ chối khiếu nại phải bắt buộc nhập Lý do từ chối.
+Khi chuyển sang hoàn tiền phải bắt buộc nhập Lý do hoàn tiền.
+Hệ thống phải hiển thị rõ kết quả:
+Gửi lại mã thành công.
+Cấp lại mã thành công.
+Khiếu nại chuyển sang hoàn tiền.
+Khiếu nại bị từ chối.
+Thao tác thất bại.
+Giao diện phải phân biệt Đang xử lý và Đã xử lí.
+NFR-06 — Khả năng kiểm toán
+Các thao tác sau phải được lưu nhật ký:
+Bắt đầu xử lý khiếu nại.
+Gửi lại voucher code.
+Cấp lại voucher code.
+Vô hiệu hóa code cũ.
+Chuyển khiếu nại sang hoàn tiền.
+Từ chối khiếu nại.
+Nhật ký phải gồm:
+Quản trị viên.
+Thời gian.
+Mã khiếu nại.
+Mã đơn hàng.
+Loại thao tác.
+Lý do.
+Trạng thái khiếu nại trước/sau.
+Trạng thái voucher code trước/sau nếu có.
+Mã cũ/mã mới khi cấp lại code.
+Kết quả.
+Khi chuyển sang hoàn tiền, nhật ký phải thể hiện liên kết giữa:
+Khiếu nại.
+Đơn hàng.
+Bản ghi HOANTIEN.
+Thao tác gửi/cấp lại mã thất bại không được ghi là khiếu nại đã xử lí
+
