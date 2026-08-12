@@ -10,7 +10,7 @@ export function useReview() {
     try {
       setLoading(true);
       const result = await reviewApi.list();
-      setData(result.data);
+      setData(result.data.map(r => ({ ...r, type: 'danh_gia' })));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -27,5 +27,10 @@ export function useReview() {
     await fetchList(); // Refetch list
   };
 
-  return { data, loading, error, create, refetch: fetchList };
+  const remove = async (id) => {
+    await reviewApi.delete(id);
+    await fetchList();
+  };
+
+  return { data, loading, error, create, remove, refetch: fetchList };
 }

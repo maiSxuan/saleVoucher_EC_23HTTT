@@ -14,19 +14,31 @@ export default function ContentTable({ items, onEdit, onHide, onShow, onStop, on
       <tbody className="divide-y">
         {items.map(item => (
           <tr key={item.id} className="hover:bg-gray-50">
-            <td className="px-4 py-3 text-sm font-medium">{item.title}</td>
+            <td className="px-4 py-3 text-sm font-medium">
+              {item.type === 'danh_gia' ? (
+                <div className="flex items-center gap-1.5 font-semibold text-amber-600">
+                  <span>★</span> {item.title} ({item.rating}/5 sao)
+                </div>
+              ) : (
+                item.title
+              )}
+            </td>
             <td className="px-4 py-3 text-sm text-gray-500 truncate max-w-xs">{item.content || item.description}</td>
             <td className="px-4 py-3">
               {item.type === 'danh_muc' ? (
                 <span className="px-2 py-0.5 text-xs rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">Hoạt động</span>
+              ) : item.type === 'danh_gia' ? (
+                <span className="px-2 py-0.5 text-xs rounded-full bg-rose-50 text-rose-700 border border-rose-200">Đánh giá</span>
               ) : (
                 <StatusBadge {...getContentStatusBadge(item.status)} />
               )}
             </td>
             <td className="px-4 py-3">
               <div className="flex items-center gap-1">
-                <button onClick={() => onEdit(item)} className="p-1.5 text-gray-400 hover:text-blue-600" title="Chỉnh sửa"><Edit2 size={14} /></button>
-                {item.type === 'danh_muc' ? (
+                {item.type !== 'danh_gia' && item.type !== 'danh_muc' && (
+                  <button onClick={() => onEdit(item)} className="p-1.5 text-gray-400 hover:text-blue-600" title="Chỉnh sửa"><Edit2 size={14} /></button>
+                )}
+                {item.type === 'danh_muc' || item.type === 'danh_gia' ? (
                   <button onClick={() => onDelete && onDelete(item)} className="p-1.5 text-gray-400 hover:text-red-600" title="Xóa"><Trash2 size={14} /></button>
                 ) : (
                   <>

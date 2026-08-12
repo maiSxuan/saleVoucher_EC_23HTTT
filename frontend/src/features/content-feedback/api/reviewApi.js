@@ -20,6 +20,18 @@ export const reviewApi = {
     if (!response.ok) throw new Error("Failed to create review");
     return response.json();
   },
+  delete: async (id) => {
+    const token = localStorage.getItem("accessToken") || localStorage.getItem("ec_auth_token") || "";
+    const response = await fetch(`${API_BASE}/review/${id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    if (!response.ok) throw new Error("Failed to delete review");
+    return response.json();
+  },
   getByPurchaseId: async (voucherPurchaseId) => {
     const response = await fetch(`${API_BASE}/review/purchase/${voucherPurchaseId}`);
     if (!response.ok) throw new Error("Failed to fetch review by purchase id");

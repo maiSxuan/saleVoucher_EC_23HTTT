@@ -28,6 +28,10 @@ export default function AdminComplaintsPage() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [updatingId, setUpdatingId] = useState(null);
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
   const loadComplaints = useCallback(async () => {
     try {
       setLoading(true);
@@ -44,6 +48,11 @@ export default function AdminComplaintsPage() {
   useEffect(() => {
     loadComplaints();
   }, [loadComplaints]);
+
+  // Reset to page 1 on filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStatus]);
 
   const handleUpdateStatus = async (id, newStatus) => {
     try {
@@ -62,6 +71,9 @@ export default function AdminComplaintsPage() {
     if (filterStatus === "all") return true;
     return c.status === filterStatus;
   });
+
+  const totalPages = Math.ceil(filtered.length / pageSize) || 1;
+  const paginatedComplaints = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -129,7 +141,7 @@ export default function AdminComplaintsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-sm">
-                {filtered.map(c => {
+                {paginatedComplaints.map(c => {
                   const isLocked = c.status === 'Da xu ly' || c.status === 'Tu choi';
                   return (
                     <tr key={c.id} className="hover:bg-gray-50/50 transition-colors">
@@ -182,6 +194,44 @@ export default function AdminComplaintsPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Footer */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 bg-white border-t border-gray-200">
+              <div className="text-xs text-gray-500">
+                Hiển thị {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, filtered.length)} trên tổng số {filtered.length} kết quả
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-medium text-gray-600 disabled:opacity-40 hover:bg-gray-50"
+                >
+                  Trước
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-8 h-8 rounded-lg text-xs font-semibold ${
+                      currentPage === page
+                        ? 'bg-orange-500 text-white shadow-xs'
+                        : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-medium text-gray-600 disabled:opacity-40 hover:bg-gray-50"
+                >
+                  Sau
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

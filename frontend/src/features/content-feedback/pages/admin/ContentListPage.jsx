@@ -51,11 +51,6 @@ export default function ContentListPage() {
     return acc;
   }, {});
 
-  const handleStatusChange = async (item, newStatus) => {
-    await update(item.id, { ...item, trang_thai: newStatus });
-    toast.success(`Đã cập nhật trạng thái thành công.`);
-  };
-
   const handleCreate = async (formData) => {
     if (activeType === 'danh_muc') {
       await create({
@@ -112,9 +107,9 @@ export default function ContentListPage() {
 
   const doDelete = async () => {
     if (!deleteModal) return;
-    await remove(deleteModal.id, 'danh_muc');
+    await remove(deleteModal.id, deleteModal.type);
     setDeleteModal(null);
-    toast.success('Đã xóa danh mục thành công.');
+    toast.success('Đã xóa thành công.');
   };
 
   return (
@@ -201,8 +196,8 @@ export default function ContentListPage() {
           open={!!deleteModal}
           onClose={() => setDeleteModal(null)}
           onConfirm={doDelete}
-          title="Xóa danh mục"
-          description={`Bạn có chắc chắn muốn xóa danh mục "${deleteModal?.title}"?`}
+          title="Xác nhận xóa"
+          description={`Bạn có chắc chắn muốn xóa "${deleteModal?.title || 'mục này'}"?`}
           confirmLabel="Xóa"
           confirmVariant="danger"
         />

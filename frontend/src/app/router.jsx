@@ -18,6 +18,7 @@ import UserListPage from "../features/core-access/pages/admin/UserListPage";
 import PartnerVoucherLookupPage from "../features/core-access/pages/partner/PartnerVoucherLookupPage";
 import ContentListPage from "../features/content-feedback/pages/admin/ContentListPage";
 import AdminComplaintsPage from "../features/content-feedback/pages/admin/AdminComplaintsPage";
+import AdminReviewsPage from "../features/content-feedback/pages/admin/AdminReviewsPage";
 
 // Partner Portal Pages
 import PartnerRegisterPage from "../features/partner-voucher/pages/partner/PartnerRegisterPage";
@@ -202,6 +203,7 @@ const router = createBrowserRouter([
           },
           { path: "contents", element: <ContentListPage /> },
           { path: "complaints", element: <AdminComplaintsPage /> },
+          { path: "reviews", element: <AdminReviewsPage /> },
         ],
       },
     ],
