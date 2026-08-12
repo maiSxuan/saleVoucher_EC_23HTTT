@@ -251,8 +251,8 @@ export function VoucherListPage() {
                     <th className="py-3.5 px-4">Voucher</th>
                     <th className="py-3.5 px-4">Trạng thái duyệt</th>
                     <th className="py-3.5 px-4">Trạng thái công bố</th>
-                    <th className="py-3.5 px-4">Giá bán / Giá gốc</th>
-                    <th className="py-3.5 px-4">Đã bán / Tồn kho</th>
+                    <th className="py-3.5 px-4">Giá bán</th>
+                    <th className="py-3.5 px-4">Đã bán</th>
                     <th className="py-3.5 px-4">Thời gian bán</th>
                     <th className="py-3.5 px-4 text-right">Thao tác</th>
                   </tr>
