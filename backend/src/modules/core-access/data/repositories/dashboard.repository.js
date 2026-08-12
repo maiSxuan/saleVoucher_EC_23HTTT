@@ -90,18 +90,45 @@ class DashboardRepository {
   }
 
   /**
-   * Đơn hàng chờ xử lí (Cho hoan tien, Loi sinh ma, Loi thanh toan)
+   * Đơn hàng chờ xử lý (hoàn tiền, yêu cầu hủy hoặc lỗi sinh voucher code)
    */
   async countPendingOrders() {
     try {
-      const { count, error } = await supabase
-        .from('donhang')
-        .select('*', { count: 'exact', head: true })
-        .in('trang_thai', ['Cho hoan tien', 'Loi sinh ma', 'Loi thanh toan']);
-      if (error) throw error;
-      return count || 0;
+      const [refunds, failedCodes, cancelRequests] = await Promise.all([
+        supabase.from('donhang').select('ma_dh').eq('trang_thai', 'Cho hoan tien'),
+        supabase.from('voucher_mua').select('ma_dh').eq('trang_thai', 'Loi sinh ma'),
+        supabase.from('yeucauhuy').select('ma_dh').eq('trang_thai', 'Cho xu ly'),
+      ]);
+      if (refunds.error) throw refunds.error;
+      if (failedCodes.error) throw failedCodes.error;
+      if (cancelRequests.error) throw cancelRequests.error;
+      return new Set([
+        ...(refunds.data || []).map((item) => item.ma_dh),
+        ...(failedCodes.data || []).map((item) => item.ma_dh),
+        ...(cancelRequests.data || []).map((item) => item.ma_dh),
+      ]).size;
     } catch (err) {
       console.warn('[DashboardRepository] countPendingOrders error:', err.message);
+      return 0;
+    }
+  }
+
+  /**
+   * Đơn hàng đang khiếu nại (Đếm số đơn hàng có khiếu nại ở trạng thái Moi, Dang xu ly)
+   */
+  async countComplaintOrders() {
+    try {
+      const { data, error } = await supabase
+        .from('khieunai')
+        .select('voucher_mua!inner(ma_dh)')
+        .in('trang_thai', ['Moi', 'Dang xu ly']);
+      
+      if (error) throw error;
+      
+      const distinctOrders = new Set(data.map(item => item.voucher_mua.ma_dh));
+      return distinctOrders.size;
+    } catch (err) {
+      console.warn('[DashboardRepository] countComplaintOrders error:', err.message);
       return 0;
     }
   }
@@ -113,8 +140,9 @@ class DashboardRepository {
     try {
       const { data, error } = await supabase
         .from('thanhtoan')
-        .select('so_tien, thoi_gian_tt')
+        .select('so_tien, thoi_gian_tt, donhang!inner(trang_thai)')
         .eq('trang_thai', 'Thanh cong')
+        .in('donhang.trang_thai', ['Da thanh toan', 'Cho hoan tien'])
         .order('thoi_gian_tt', { ascending: true });
       if (error) throw error;
       if (!data || data.length === 0) {
@@ -257,7 +285,7 @@ class DashboardRepository {
         supabase.from('chinhanh').select('ma_chi_nhanh, ten_chi_nhanh, trang_thai, ma_hs').eq('trang_thai', 'Cho duyet').limit(5),
         supabase.from('voucher').select('ma_voucher, ten_voucher, tg_bat_dau_ban, trang_thai').eq('trang_thai', 'Cho duyet').order('tg_bat_dau_ban', { ascending: false }).limit(5),
         supabase.from('donhang').select('ma_dh, ngay_dat, nguoi_nhan, tong_tien, trang_thai').eq('trang_thai', 'Cho hoan tien').order('ngay_dat', { ascending: false }).limit(5),
-        supabase.from('donhang').select('ma_dh, ngay_dat, nguoi_nhan, tong_tien, trang_thai').eq('trang_thai', 'Loi sinh ma').order('ngay_dat', { ascending: false }).limit(5),
+        supabase.from('voucher_mua').select('ma_voucher_mua, trang_thai, thoi_gian_sinh_ma, donhang:ma_dh(ma_dh, ngay_dat, nguoi_nhan, tong_tien, trang_thai)').eq('trang_thai', 'Loi sinh ma').order('thoi_gian_sinh_ma', { ascending: false }).limit(5),
       ]);
 
       const pendingPartners = partnersRes.status === 'fulfilled' && partnersRes.value.data ? partnersRes.value.data.map(p => ({
@@ -294,14 +322,14 @@ class DashboardRepository {
         status: d.trang_thai,
       })) : [];
 
-      const failedGenOrders = failedGenRes.status === 'fulfilled' && failedGenRes.value.data ? failedGenRes.value.data.map(d => ({
-        id: d.ma_dh,
-        orderCode: `ORD${String(d.ma_dh).slice(0, 4).toUpperCase()}`,
-        customerName: d.nguoi_nhan || 'Khách hàng',
-        date: d.ngay_dat,
-        amount: d.tong_tien,
+      const failedGenOrders = failedGenRes.status === 'fulfilled' && failedGenRes.value.data ? failedGenRes.value.data.map(item => ({
+        id: item.donhang?.ma_dh || item.ma_voucher_mua,
+        orderCode: `ORD${String(item.donhang?.ma_dh || '').slice(0, 4).toUpperCase()}`,
+        customerName: item.donhang?.nguoi_nhan || 'Khách hàng',
+        date: item.thoi_gian_sinh_ma || item.donhang?.ngay_dat,
+        amount: item.donhang?.tong_tien || 0,
         type: 'failed_gen_order',
-        status: d.trang_thai,
+        status: item.trang_thai,
       })) : [];
 
       const totalPending = pendingPartners.length + pendingBranches.length + pendingVouchers.length + refundOrders.length + failedGenOrders.length;
@@ -338,6 +366,7 @@ class DashboardRepository {
       activeVouchersResult,
       pendingVouchersResult,
       pendingOrdersResult,
+      complaintOrdersResult,
       revenueResult,
       partnerDistributionResult,
       workQueueResult,
@@ -348,6 +377,7 @@ class DashboardRepository {
       this.countActiveVouchers(),
       this.countPendingVouchers(),
       this.countPendingOrders(),
+      this.countComplaintOrders(),
       this.getRevenueTimeline(),
       this.getPartnerStatusDistribution(),
       this.getPendingWorkQueue(),
@@ -364,6 +394,7 @@ class DashboardRepository {
       activeVouchers: activeVouchersResult.status === 'fulfilled' ? activeVouchersResult.value : null,
       pendingVouchers: pendingVouchersResult.status === 'fulfilled' ? pendingVouchersResult.value : null,
       pendingOrders: pendingOrdersResult.status === 'fulfilled' ? pendingOrdersResult.value : null,
+      complaintOrders: complaintOrdersResult.status === 'fulfilled' ? complaintOrdersResult.value : null,
       totalRevenue: rev.totalRevenue,
       revenueTimeline: {
         daily: rev.daily || [],

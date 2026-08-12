@@ -123,6 +123,18 @@ export default function CustomerOrdersPage() {
   const [reviewText, setReviewText] = useState("");
   const [feedbackText, setFeedbackText] = useState("");
 
+  useEffect(() => {
+    if (showReviewModal && selectedVoucherMuaId && selectedOrder) {
+      const code = selectedOrder.codes.find(c => (c.id || c.voucherMuaId) === selectedVoucherMuaId);
+      if (code && code.hasReviewed && code.reviewDetails) {
+        setReviewRating(code.reviewDetails.rating);
+        setReviewText(code.reviewDetails.content);
+      } else {
+        setReviewRating(5);
+        setReviewText("");
+      }
+    }
+  }, [showReviewModal, selectedVoucherMuaId, selectedOrder]);
   const handleCancelOrder = async () => {
     if (!cancelReason.trim()) {
       toast.error("Vui lòng nhập lý do hủy đơn/hoàn tiền.");
@@ -203,11 +215,27 @@ export default function CustomerOrdersPage() {
         diem: reviewRating,
         noiDung: reviewText,
       });
-      toast.success("Đánh giá đã được ghi nhận thành công.");
+      toast.success("Đánh giá đã được ghi nhận thành công.", { duration: 2000 });
+      setSelectedOrder(prev => {
+        const newCodes = prev.codes.map(c => {
+          if ((c.id || c.voucherMuaId) === selectedVoucherMuaId) {
+            return {
+              ...c,
+              hasReviewed: true,
+              reviewDetails: {
+                rating: reviewRating,
+                content: reviewText
+              }
+            };
+          }
+          return c;
+        });
+        return { ...prev, codes: newCodes };
+      });
       setShowReviewModal(false);
       setReviewText("");
     } catch (e) {
-      toast.error(e.message || "Không thể gửi đánh giá");
+      toast.error(e.message || "Không thể gửi đánh giá", { duration: 2000 });
     }
   };
 
@@ -372,6 +400,41 @@ export default function CustomerOrdersPage() {
                       )}
                     </div>
                   </div>
+                  {/* Status Badges */}
+                  <div className="mt-3 flex gap-2 flex-wrap">
+                    {codeObj.hasReviewed && (
+                      <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 text-[10px] px-2.5 py-1 rounded-md font-semibold border border-green-100">
+                        <Star size={12} className="fill-green-700" /> Đã đánh giá
+                      </span>
+                    )}
+                    {codeObj.hasComplained && (
+                      <span className={`inline-flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-md font-semibold border ${
+                        codeObj.complaintStatus === 'Đã giải quyết' 
+                          ? 'bg-blue-50 text-blue-700 border-blue-100'
+                          : 'bg-red-50 text-red-700 border-red-100'
+                      }`}>
+                        <MessageSquare size={12} /> Khiếu nại: {codeObj.complaintStatus}
+                      </span>
+                    )}
+                  </div>
+                  {codeObj.hasReviewed && codeObj.reviewDetails && (
+                    <div className="mt-3 bg-white p-3 rounded-lg border border-gray-100 shadow-xs">
+                      <div className="flex items-center gap-1 mb-1.5">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            size={12}
+                            className={
+                              i < codeObj.reviewDetails.rating
+                                ? "text-yellow-400 fill-yellow-400"
+                                : "text-gray-200"
+                            }
+                          />
+                        ))}
+                      </div>
+                      <p className="text-xs text-gray-700 italic">"{codeObj.reviewDetails.content}"</p>
+                    </div>
+                  )}
                   {codeObj.usedBranch && (
                     <p className="text-xs text-gray-500 mt-2 font-medium">
                       Đã sử dụng tại chi nhánh:{" "}
@@ -386,8 +449,77 @@ export default function CustomerOrdersPage() {
           </div>
         )}
 
-        {/* Admin/System Cancel/Refund Reason */}
-        {order.cancelReason && (
+        {/* Progress Tracker for Cancel / Refund / Complaints */}
+        {(order.cancelRequests?.length > 0 || order.refunds?.length > 0 || order.complaints?.length > 0) && (
+          <div className="bg-white rounded-xl border border-gray-100 p-4 mb-4 shadow-xs">
+            <h3 className="font-semibold text-gray-900 text-sm mb-4">Tiến trình xử lý Yêu cầu & Hỗ trợ</h3>
+            <div className="relative border-l-2 border-gray-100 ml-3 space-y-6">
+              {/* Request Phase */}
+              {order.cancelRequests?.map(cr => (
+                <div key={cr.id} className="relative pl-5">
+                  <div className="absolute w-3 h-3 bg-orange-500 rounded-full -left-[7px] top-1.5 border-2 border-white ring-4 ring-orange-50" />
+                  <div className="flex justify-between items-start mb-1">
+                    <p className="text-sm font-semibold text-gray-800">Khách hàng yêu cầu hủy đơn</p>
+                    <span className="text-xs text-gray-500">{new Date(cr.requestedAt).toLocaleString('vi-VN')}</span>
+                  </div>
+                  <p className="text-xs text-gray-600 mb-1">Lý do: {cr.reason}</p>
+                  <p className="text-xs font-medium text-orange-600">Trạng thái: {cr.status}</p>
+                  {cr.status === 'Da tu choi' && cr.rejectReason && (
+                    <div className="mt-2 p-2.5 bg-red-50 border border-red-100 rounded-lg">
+                      <p className="text-xs text-red-700 font-semibold">Admin từ chối</p>
+                      <p className="text-xs text-red-600">Lý do: {cr.rejectReason}</p>
+                    </div>
+                  )}
+                  {cr.status === 'Da chap nhan' && (cr.approvalReason || cr.processingReason) && (
+                    <div className="mt-2 p-2.5 bg-green-50 border border-green-100 rounded-lg">
+                      <p className="text-xs text-green-700 font-semibold">Admin đã chấp nhận</p>
+                      <p className="text-xs text-green-600">Lý do: {cr.approvalReason || cr.processingReason}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+              
+              {/* Refund Phase */}
+              {order.refunds?.map(rf => (
+                <div key={rf.id} className="relative pl-5">
+                  <div className={`absolute w-3 h-3 rounded-full -left-[7px] top-1.5 border-2 border-white ring-4 ${
+                    rf.status === 'Thành công' ? 'bg-green-500 ring-green-50' : 
+                    rf.status === 'Thất bại' ? 'bg-red-500 ring-red-50' : 
+                    'bg-blue-500 ring-blue-50'
+                  }`} />
+                  <div className="flex justify-between items-start mb-1">
+                    <p className="text-sm font-semibold text-gray-800">Xử lý hoàn tiền ({rf.gateway})</p>
+                    <span className="text-xs text-gray-500">{new Date(rf.processedAt || Date.now()).toLocaleString('vi-VN')}</span>
+                  </div>
+                  <p className="text-xs text-gray-600 mb-1">Số tiền: <span className="font-semibold text-gray-800">{rf.amount.toLocaleString('vi-VN')}đ</span></p>
+                  <p className="text-xs text-gray-600 mb-1">Ghi chú: {rf.reason}</p>
+                  <p className={`text-xs font-medium ${
+                    rf.status === 'Thành công' ? 'text-green-600' : 
+                    rf.status === 'Thất bại' ? 'text-red-600' : 
+                    'text-blue-600'
+                  }`}>Trạng thái: {rf.status}</p>
+                </div>
+              ))}
+              {/* Complaints Phase */}
+              {order.complaints?.map(cp => (
+                <div key={cp.id} className="relative pl-5 mt-4 border-t border-gray-100 pt-4">
+                  <div className="absolute w-3 h-3 bg-blue-500 rounded-full -left-[7px] top-5 border-2 border-white ring-4 ring-blue-50" />
+                  <div className="flex justify-between items-start mb-1">
+                    <p className="text-sm font-semibold text-gray-800">Khách hàng gửi khiếu nại</p>
+                    <span className="text-xs text-gray-500">{new Date(cp.createdAt).toLocaleString('vi-VN')}</span>
+                  </div>
+                  <p className="text-xs text-gray-600 mb-1">Nội dung: {cp.content}</p>
+                  <p className={`text-xs font-medium ${
+                    cp.status === 'Đã giải quyết' ? 'text-blue-600' : 'text-orange-600'
+                  }`}>Trạng thái: {cp.status}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Admin/System Cancel/Refund Reason (Fallback) */}
+        {order.cancelReason && !order.cancelRequests?.length && !order.refunds?.length && (
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4 text-xs text-blue-900 space-y-1">
             <p className="font-semibold text-blue-950">
               Ghi chú / Lý do hủy / Phản hồi từ Admin:
@@ -399,36 +531,68 @@ export default function CustomerOrdersPage() {
         {/* Request Cancel / Refund for 'Da thanh toan' orders */}
         {order.orderStatus === "Da thanh toan" && (
           <div className="bg-white rounded-xl border border-gray-100 p-4 mb-4 shadow-xs">
-            <button
-              onClick={() => setShowCancelModal(true)}
-              className="w-full flex items-center justify-center gap-2 bg-red-50 border border-red-200 text-red-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-red-100 transition-colors"
-            >
-              <XCircle size={16} /> Yêu cầu hủy đơn & Hoàn tiền
-            </button>
+            {order.cancelRequests?.length > 0 ? (
+              <button
+                disabled
+                className="w-full flex items-center justify-center gap-2 bg-gray-100 border border-gray-200 text-gray-500 py-2.5 rounded-xl text-sm font-semibold cursor-not-allowed"
+              >
+                <CheckCircle2 size={16} /> Đã gửi yêu cầu hủy đơn
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowCancelModal(true)}
+                className="w-full flex items-center justify-center gap-2 bg-red-50 border border-red-200 text-red-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-red-100 transition-colors"
+              >
+                <XCircle size={16} /> Yêu cầu hủy đơn & Hoàn tiền
+              </button>
+            )}
           </div>
         )}
 
         {/* Actions */}
         {order.orderStatus === "Da thanh toan" && order.codes.length > 0 && (
           <div className="bg-white rounded-xl border border-gray-100 p-4 flex flex-col sm:flex-row gap-3 shadow-xs">
-            <button
-              onClick={() => {
-                setSelectedVoucherMuaId(order.codes[0]?.voucherMuaId || "");
-                setShowReviewModal(true);
-              }}
-              className="flex-1 flex items-center justify-center gap-2 border border-orange-300 text-orange-600 py-2.5 rounded-xl text-sm font-medium hover:bg-orange-50 transition-colors"
-            >
-              <Star size={15} /> Viết đánh giá
-            </button>
-            <button
-              onClick={() => {
-                setSelectedVoucherMuaId(order.codes[0]?.voucherMuaId || "");
-                setShowFeedbackModal(true);
-              }}
-              className="flex-1 flex items-center justify-center gap-2 border border-gray-300 text-gray-700 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
-            >
-              <MessageSquare size={15} /> Gửi phản ánh / khiếu nại
-            </button>
+            {order.codes.every(c => c.hasReviewed) ? (
+              <button
+                disabled
+                className="flex-1 flex items-center justify-center gap-2 border border-gray-200 bg-gray-50 text-gray-400 py-2.5 rounded-xl text-sm font-medium cursor-not-allowed"
+              >
+                <CheckCircle2 size={15} /> Đã đánh giá tất cả
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  const targetCode = order.codes.find(c => !c.hasReviewed) || order.codes[0];
+                  const firstId = targetCode?.id || targetCode?.voucherMuaId || "";
+                  setSelectedVoucherMuaId(firstId);
+                  setShowReviewModal(true);
+                }}
+                className="flex-1 flex items-center justify-center gap-2 border border-orange-300 text-orange-600 py-2.5 rounded-xl text-sm font-medium hover:bg-orange-50 transition-colors"
+              >
+                <Star size={15} /> Viết đánh giá
+              </button>
+            )}
+
+            {order.codes.every(c => c.hasComplained) ? (
+              <button
+                disabled
+                className="flex-1 flex items-center justify-center gap-2 border border-gray-200 bg-gray-50 text-gray-400 py-2.5 rounded-xl text-sm font-medium cursor-not-allowed"
+              >
+                <CheckCircle2 size={15} /> Đã khiếu nại tất cả
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  const targetCode = order.codes.find(c => !c.hasComplained) || order.codes[0];
+                  const firstId = targetCode?.id || targetCode?.voucherMuaId || "";
+                  setSelectedVoucherMuaId(firstId);
+                  setShowFeedbackModal(true);
+                }}
+                className="flex-1 flex items-center justify-center gap-2 border border-gray-300 text-gray-700 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
+              >
+                <MessageSquare size={15} /> Gửi phản ánh / khiếu nại
+              </button>
+            )}
           </div>
         )}
 
@@ -436,36 +600,53 @@ export default function CustomerOrdersPage() {
         {showReviewModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
             <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-5">
-              <h3 className="font-bold text-gray-900 mb-1">
-                Viết đánh giá sản phẩm
-              </h3>
-              <p className="text-xs text-gray-400 mb-3">
-                Đánh giá chất lượng dịch vụ / voucher đã mua
-              </p>
+              <h3 className="font-bold text-gray-900 mb-1">Viết đánh giá sản phẩm</h3>
+              <p className="text-xs text-gray-400 mb-3">Đánh giá chất lượng dịch vụ / voucher đã mua</p>
 
               <div className="mb-3">
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Chọn mã voucher đánh giá
-                </label>
-                <select
-                  value={selectedVoucherMuaId}
-                  onChange={(e) => setSelectedVoucherMuaId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg p-2 text-xs"
-                >
-                  {order.codes.map((c) => (
-                    <option key={c.voucherMuaId} value={c.voucherMuaId}>
-                      {c.code} ({c.status})
-                    </option>
-                  ))}
+                <label className="block text-xs font-medium text-gray-700 mb-1">Chọn mã voucher đánh giá</label>
+                <select value={selectedVoucherMuaId} onChange={e => setSelectedVoucherMuaId(e.target.value)} className="w-full border border-gray-300 rounded-lg p-2 text-xs">
+                  {order.codes.map(c => {
+                    const vid = c.id || c.voucherMuaId;
+                    return (
+                      <option key={vid} value={vid}>
+                        {c.code} ({c.status}) {c.hasReviewed ? ' - Đã đánh giá' : ''}
+                      </option>
+                    )
+                  })}
                 </select>
+                {(() => {
+                  const selectedCode = order.codes.find(c => (c.id || c.voucherMuaId) === selectedVoucherMuaId);
+                  const selectedItem = selectedCode ? order.items.find(i => i.voucherId === selectedCode.voucherId) : null;
+                  if (!selectedCode || !selectedItem) return null;
+                  return (
+                    <div className="mt-2 p-2 bg-orange-50/50 border border-orange-100 rounded-lg flex items-center gap-2.5">
+                      {selectedItem.image ? (
+                        <img src={selectedItem.image} className="w-9 h-9 rounded-md object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="w-9 h-9 rounded-md bg-orange-100 text-orange-500 flex items-center justify-center text-xs font-bold">V</div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-gray-800 truncate">{selectedItem.voucherName}</p>
+                        <p className="text-[11px] text-gray-500 truncate">Mã: <span className="font-mono">{selectedCode.code}</span></p>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="flex items-center gap-1 mb-3">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <button
                     key={i}
-                    onClick={() => setReviewRating(i + 1)}
+                    onClick={() => {
+                      if (!order.codes.find(c => (c.id || c.voucherMuaId) === selectedVoucherMuaId)?.hasReviewed) {
+                        setReviewRating(i + 1);
+                      }
+                    }}
                     type="button"
+                    disabled={order.codes.find(c => (c.id || c.voucherMuaId) === selectedVoucherMuaId)?.hasReviewed}
+                    className={order.codes.find(c => (c.id || c.voucherMuaId) === selectedVoucherMuaId)?.hasReviewed ? 'cursor-not-allowed' : ''}
                   >
                     <Star
                       size={22}
@@ -482,8 +663,11 @@ export default function CustomerOrdersPage() {
                 rows={4}
                 value={reviewText}
                 onChange={(e) => setReviewText(e.target.value)}
+                disabled={order.codes.find(c => (c.id || c.voucherMuaId) === selectedVoucherMuaId)?.hasReviewed}
                 placeholder="Nhận xét chi tiết về trải nghiệm sử dụng..."
-                className="w-full border border-gray-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-300 mb-4"
+                className={`w-full border border-gray-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-300 mb-4 ${
+                  order.codes.find(c => (c.id || c.voucherMuaId) === selectedVoucherMuaId)?.hasReviewed ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''
+                }`}
               />
               <div className="flex gap-2">
                 <button
@@ -494,7 +678,12 @@ export default function CustomerOrdersPage() {
                 </button>
                 <button
                   onClick={handleSubmitReview}
-                  className="flex-1 bg-orange-500 text-white py-2 rounded-lg text-sm font-semibold hover:bg-orange-600"
+                  disabled={order.codes.find(c => (c.id || c.voucherMuaId) === selectedVoucherMuaId)?.hasReviewed}
+                  className={`flex-1 py-2 rounded-lg text-sm font-semibold text-white ${
+                    order.codes.find(c => (c.id || c.voucherMuaId) === selectedVoucherMuaId)?.hasReviewed 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-orange-500 hover:bg-orange-600'
+                  }`}
                 >
                   Gửi đánh giá
                 </button>
@@ -515,20 +704,35 @@ export default function CustomerOrdersPage() {
               </p>
 
               <div className="mb-3">
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Chọn mã voucher liên quan
-                </label>
-                <select
-                  value={selectedVoucherMuaId}
-                  onChange={(e) => setSelectedVoucherMuaId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg p-2 text-xs"
-                >
-                  {order.codes.map((c) => (
-                    <option key={c.voucherMuaId} value={c.voucherMuaId}>
-                      {c.code} ({c.status})
-                    </option>
-                  ))}
+                <label className="block text-xs font-medium text-gray-700 mb-1">Chọn mã voucher liên quan</label>
+                <select value={selectedVoucherMuaId} onChange={e => setSelectedVoucherMuaId(e.target.value)} className="w-full border border-gray-300 rounded-lg p-2 text-xs">
+                  {order.codes.map(c => {
+                    const vid = c.id || c.voucherMuaId;
+                    return (
+                      <option key={vid} value={vid} disabled={c.hasComplained}>
+                        {c.code} ({c.status}) {c.hasComplained ? ' - Đã khiếu nại' : ''}
+                      </option>
+                    )
+                  })}
                 </select>
+                {(() => {
+                  const selectedCode = order.codes.find(c => (c.id || c.voucherMuaId) === selectedVoucherMuaId);
+                  const selectedItem = selectedCode ? order.items.find(i => i.voucherId === selectedCode.voucherId) : null;
+                  if (!selectedCode || !selectedItem) return null;
+                  return (
+                    <div className="mt-2 p-2 bg-orange-50/50 border border-orange-100 rounded-lg flex items-center gap-2.5">
+                      {selectedItem.image ? (
+                        <img src={selectedItem.image} className="w-9 h-9 rounded-md object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="w-9 h-9 rounded-md bg-orange-100 text-orange-500 flex items-center justify-center text-xs font-bold">V</div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-gray-800 truncate">{selectedItem.voucherName}</p>
+                        <p className="text-[11px] text-gray-500 truncate">Mã: <span className="font-mono">{selectedCode.code}</span></p>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               <textarea
@@ -547,7 +751,12 @@ export default function CustomerOrdersPage() {
                 </button>
                 <button
                   onClick={handleSubmitFeedback}
-                  className="flex-1 bg-orange-500 text-white py-2 rounded-lg text-sm font-semibold hover:bg-orange-600"
+                  disabled={order.codes.find(c => (c.id || c.voucherMuaId) === selectedVoucherMuaId)?.hasComplained}
+                  className={`flex-1 py-2 rounded-lg text-sm font-semibold text-white ${
+                    order.codes.find(c => (c.id || c.voucherMuaId) === selectedVoucherMuaId)?.hasComplained 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-orange-500 hover:bg-orange-600'
+                  }`}
                 >
                   Gửi khiếu nại
                 </button>

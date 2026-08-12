@@ -51,27 +51,30 @@ class PaymentService {
   async finalizeVnpayPayment(query) {
     const { isValid, isSuccess, paymentId } = vnpayGateway.verify(query);
     if (!isValid) {
-      const err = new Error("Chữ ký không hợp lệ"); // chống giả mạo callback
+      const err = new Error('Chữ ký không hợp lệ'); // chống giả mạo callback
       err.status = 400;
       throw err;
     }
-    return this._finalizePayment({ paymentId, isSuccess });
+    // Lưu lại mã giao dịch VNPay (vnp_TransactionNo) vào THANHTOAN.ma_gd_goc
+    const maGdGoc = query.vnp_TransactionNo || null;
+    return this._finalizePayment({ paymentId, isSuccess, maGdGoc });
   }
 
   // Xử lý callback từ PayPal (sau khi khách approve trên trang PayPal)
   async finalizePaypalPayment(paypalOrderId) {
-    const { isSuccess, paymentId } =
+    const { isSuccess, paymentId, maGdGoc } =
       await paypalGateway.captureOrder(paypalOrderId);
     if (!paymentId) {
-      const err = new Error("Không xác định được giao dịch tương ứng");
+      const err = new Error('Không xác định được giao dịch tương ứng');
       err.status = 400;
       throw err;
     }
-    return this._finalizePayment({ paymentId, isSuccess });
+    // maGdGoc là PayPal Capture ID — lưu để dùng cho refund.
+    return this._finalizePayment({ paymentId, isSuccess, maGdGoc: maGdGoc || null });
   }
 
   // Cập nhật trạng thái đơn hàng + thanh toán sau khi có kết quả từ cổng
-  async _finalizePayment({ paymentId, isSuccess }) {
+  async _finalizePayment({ paymentId, isSuccess, maGdGoc = null }) {
     const payment = await paymentRepository.findById(paymentId);
     if (!payment) {
       const err = new Error("Không tìm thấy giao dịch thanh toán");
@@ -80,6 +83,10 @@ class PaymentService {
     }
     // Chống xử lý trùng nếu cổng gọi callback nhiều lần (VNPay IPN có thể gọi lại)
     if (payment.trang_thai !== "Dang xu ly") {
+      // Callback lặp có thể bù Capture/Transaction ID cho bản ghi thành công cũ.
+      if (payment.trang_thai === 'Thanh cong' && !payment.ma_gd_goc && maGdGoc) {
+        await paymentRepository.updateStatus(paymentId, 'Thanh cong', maGdGoc);
+      }
       return {
         orderId: payment.ma_dh,
         status: payment.trang_thai === "Thanh cong" ? "success" : "failed",
@@ -96,9 +103,15 @@ class PaymentService {
       };
     }
 
+    if (['paypal', 'vnpay'].includes(String(payment.phuong_thuc_tt || '').toLowerCase()) && !maGdGoc) {
+      const err = new Error('Cổng thanh toán chưa trả về mã giao dịch gốc; chưa thể hoàn tất thanh toán');
+      err.status = 502;
+      throw err;
+    }
+
     // Bước 7-8: thanh toán thành công
-    await paymentRepository.updateStatus(paymentId, "Thanh cong");
-    await orderRepository.updateStatus(payment.ma_dh, "Da thanh toan");
+    await paymentRepository.updateStatus(paymentId, 'Thanh cong', maGdGoc);
+    await orderRepository.updateStatus(payment.ma_dh, 'Da thanh toan');
 
     const items = await orderItemRepository.findByOrderId(payment.ma_dh);
     for (const item of items) {
@@ -148,7 +161,8 @@ class PaymentService {
     return {
       orderId: payment.ma_dh,
       status: "success",
-      orderStatus: issuanceResult.issuePending ? "Loi sinh ma" : "Da phat hanh",
+      orderStatus: "Da thanh toan",
+      voucherCodeStatus: issuanceResult.issuePending ? "Loi sinh ma" : "Chua su dung",
       issuedCount: issuanceResult.issued.length,
       issuePending: issuanceResult.issuePending,
     };

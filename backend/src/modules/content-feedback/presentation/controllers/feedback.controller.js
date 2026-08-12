@@ -23,7 +23,8 @@ async function getFeedbackById(req, res, next) {
 // Tạo mới khiếu nại
 async function createFeedback(req, res, next) {
   try {
-    const result = await service.createFeedback(req.body);
+    const accountId = req.user?.accountId || req.user?.id;
+    const result = await service.createFeedback(req.body, accountId);
     res.status(201).json({ success: true, data: result });
   } catch (error) {
     next(error);
@@ -33,7 +34,8 @@ async function createFeedback(req, res, next) {
 // Lấy khiếu nại theo ma_voucher_mua (lần mua)
 async function getFeedbackByPurchaseId(req, res, next) {
   try {
-    const result = await service.getFeedbackByPurchaseId(req.params.voucherPurchaseId);
+    const accountId = req.user?.accountId || req.user?.id;
+    const result = await service.getFeedbackByPurchaseId(req.params.voucherPurchaseId, accountId, req.user?.role);
     res.status(200).json({ success: true, data: result });
   } catch (error) {
     next(error);

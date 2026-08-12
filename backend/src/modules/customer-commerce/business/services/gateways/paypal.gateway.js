@@ -83,8 +83,100 @@ async function captureOrder(paypalOrderId) {
   const isSuccess = res.ok && data.status === "COMPLETED";
   const paymentId =
     data.purchase_units?.[0]?.payments?.captures?.[0]?.custom_id;
+  const captureId = data.purchase_units?.[0]?.payments?.captures?.[0]?.id || null;
 
-  return { isSuccess, paymentId };
+  return {
+    isSuccess,
+    paymentId,
+    maGdGoc: captureId,
+    responseCode: data.status || "FAILED",
+  };
 }
 
-module.exports = { createOrder, captureOrder };
+/**
+ * Recover a Capture ID for legacy successful payments whose callback was
+ * processed before ma_gd_goc was persisted. PayPal reporting exposes the
+ * application's payment UUID in transaction_info.custom_field.
+ */
+async function findCaptureIdByCustomId({ paymentId, paidAt }) {
+  if (!paymentId) return null;
+
+  const paypalConfig = loadPaypal();
+  const accessToken = await getAccessToken();
+  const paidDate = paidAt ? new Date(paidAt) : new Date();
+  if (Number.isNaN(paidDate.getTime())) return null;
+
+  const startDate = new Date(paidDate.getTime() - 24 * 60 * 60 * 1000);
+  const endDate = new Date(paidDate.getTime() + 48 * 60 * 60 * 1000);
+  const params = new URLSearchParams({
+    start_date: startDate.toISOString(),
+    end_date: endDate.toISOString(),
+    fields: 'transaction_info',
+    page_size: '500',
+  });
+
+  const res = await fetch(`${paypalConfig.apiBase}/v1/reporting/transactions?${params}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    signal: AbortSignal.timeout(15000),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    const err = new Error(`Không thể đối soát giao dịch PayPal Sandbox (${data?.message || res.status})`);
+    err.status = 502;
+    throw err;
+  }
+
+  const transaction = (data.transaction_details || []).find(({ transaction_info: info }) =>
+    info?.custom_field === paymentId
+      && info?.transaction_status === 'S'
+      && info?.transaction_event_code === 'T0006'
+      && info?.transaction_id
+  );
+  return transaction?.transaction_info?.transaction_id || null;
+}
+
+/**
+ * Gọi PayPal Sandbox Refund API.
+ * @param {object} params
+ *  - captureId: PayPal Capture ID (lưu trong THANHTOAN.ma_gd_goc)
+ *  - amountVnd: Số tiền hoàn (VND — sẽ quy đổi sang USD)
+ *  - reason: Lý do hoàn tiền
+ * @returns {{ isSuccess, refundId, responseCode }}
+ */
+async function refundCapture({ captureId, amountVnd, reason, refundRequestId }) {
+  const paypalConfig = loadPaypal();
+  const accessToken = await getAccessToken();
+  const amountUsd = (amountVnd / VND_TO_USD_RATE).toFixed(2);
+
+  try {
+    const res = await fetch(
+      `${paypalConfig.apiBase}/v2/payments/captures/${captureId}/refund`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+          ...(refundRequestId ? { 'PayPal-Request-Id': String(refundRequestId).replace(/[^a-zA-Z0-9]/g, '').slice(0, 38) } : {}),
+        },
+        body: JSON.stringify({
+          amount: { currency_code: 'USD', value: amountUsd },
+          note_to_payer: reason || 'Hoan tien don hang',
+        }),
+        signal: AbortSignal.timeout(15000),
+      }
+    );
+    const data = await res.json();
+    const isSuccess = res.ok && data.status === 'COMPLETED';
+    return {
+      isSuccess,
+      refundId: data.id || null,
+      responseCode: data.status || data.name || data.details?.[0]?.issue || (res.ok ? 'COMPLETED' : `HTTP_${res.status}`),
+    };
+  } catch (err) {
+    const timeoutErr = new Error(`PayPal Sandbox không phản hồi: ${err.message}`);
+    timeoutErr.isTimeout = true;
+    throw timeoutErr;
+  }
+}
+
+module.exports = { createOrder, captureOrder, findCaptureIdByCustomId, refundCapture };

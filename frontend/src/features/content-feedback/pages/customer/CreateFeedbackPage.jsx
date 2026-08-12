@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
 export default function CreateFeedbackPage({ voucherPurchaseId }) {
-  const { create } = useFeedback();
+  const { create } = useFeedback({ loadList: false });
   const navigate = useNavigate();
 
   const handleSubmitFeedback = async (feedbackData) => {

@@ -23,13 +23,15 @@ class PaymentRepository {
     return data.ma_thanh_toan;
   }
 
-  async updateStatus(paymentId, status) {
+  async updateStatus(paymentId, status, maGdGoc = null) {
+    const updateData = { trang_thai: status };
+    if (maGdGoc) updateData.ma_gd_goc = maGdGoc;
     const { error } = await supabase
-      .from("thanhtoan")
-      .update({ trang_thai: status })
-      .eq("ma_thanh_toan", paymentId);
+      .from('thanhtoan')
+      .update(updateData)
+      .eq('ma_thanh_toan', paymentId);
     if (error) {
-      const err = new Error("Không thể cập nhật trạng thái thanh toán");
+      const err = new Error('Không thể cập nhật trạng thái thanh toán');
       err.status = 500;
       throw err;
     }
@@ -50,12 +52,12 @@ class PaymentRepository {
 
   async findById(paymentId) {
     const { data, error } = await supabase
-      .from("thanhtoan")
-      .select("ma_thanh_toan, ma_dh, trang_thai, so_tien")
-      .eq("ma_thanh_toan", paymentId)
+      .from('thanhtoan')
+      .select('ma_thanh_toan, ma_dh, trang_thai, so_tien, phuong_thuc_tt, ma_gd_goc')
+      .eq('ma_thanh_toan', paymentId)
       .maybeSingle();
     if (error) {
-      const err = new Error("Không thể truy xuất giao dịch thanh toán");
+      const err = new Error('Không thể truy xuất giao dịch thanh toán');
       err.status = 500;
       throw err;
     }

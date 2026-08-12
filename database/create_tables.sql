@@ -14,6 +14,9 @@
 --    cho FK, chỉ tự tạo cho PK/UNIQUE).
 -- =====================================================================
 create extension if not exists pgcrypto;
+create schema if not exists extensions;
+create extension if not exists pg_trgm with schema extensions;
+set search_path = public, extensions;
 
 -- =====================================================================
 -- XÓA BẢNG CŨ NẾU ĐÃ TỒN TẠI (giúp chạy lại script nhiều lần không bị lỗi)
@@ -38,6 +41,7 @@ DROP TABLE IF EXISTS HOSODN CASCADE;
 DROP TABLE IF EXISTS CHINHANH CASCADE;
 DROP TABLE IF EXISTS NGUOIDUNG CASCADE;
 DROP TABLE IF EXISTS DANH_MUC CASCADE;
+DROP TABLE IF EXISTS YEUCAUHUY CASCADE;
 
 DROP FUNCTION IF EXISTS fn_check_hosodn_vai_tro() CASCADE;
 
@@ -86,7 +90,6 @@ create table CHINHANH (
     ten_chi_nhanh text not null,
     khu_vuc text,
     dia_chi text,
-    khu_vuc text,
     trang_thai text not null default 'Cho duyet' check (
         trang_thai in (
             'Cho duyet',
@@ -97,7 +100,6 @@ create table CHINHANH (
     ),
     ma_hs uuid not null
 );
-create index idx_chi_nhanh_ma_hs on CHINHANH(ma_hs);
 -- Sau khi co CHINHANH, gan FK va CHECK vao NGUOIDUNG
 -- [FIX] Them FK tu NGUOIDUNG.ma_chi_nhanh -> CHINHANH sau khi CHINHANH da ton tai
 alter table NGUOIDUNG
@@ -115,8 +117,7 @@ alter table NGUOIDUNG
         )
     );
 
-    foreign key of NGUOIDUNG.ma_hosodn -> HOSODN
-create index idx_nguoi_dung_ma_chi_nhanh on NGUOIDUNG(ma_chi_nhanh);
+-- Foreign key NGUOIDUNG.ma_hsdn -> HOSODN is added after HOSODN exists.
 -- =====================================================================
 -- 4. HO_SO_DN  (ho so doanh nghiep doi tac)
 -- [FIX] Tao sau NGUOIDUNG. Subquery trong CHECK khong hop le trong
@@ -138,6 +139,7 @@ create table HOSODN (
         )
     ),
     id_nguoi_dai_dien uuid not null,
+    id_nvql_voucher uuid references NGUOIDUNG(ma_nguoi_dung),
     constraint fk_ho_so_dn_nguoi_dai_dien foreign key (id_nguoi_dai_dien) references NGUOIDUNG(ma_nguoi_dung)
     -- [FIX] Subquery ben trong CHECK constraint bi PostgreSQL tu choi.
     --       Rang buoc vai_tro duoc kiem tra qua trigger trg_hosodn_vai_tro ben duoi.
@@ -157,7 +159,6 @@ alter table NGUOIDUNG
         ma_hsdn IS NULL
         OR vai_tro IN ('Nguoi dai dien', 'Nhan vien quan ly voucher')
     );
-create index idx_nguoi_dung_ma_hsdn on NGUOIDUNG(ma_hsdn);
 -- =====================================================================
 -- TRIGGER: Kiem tra vai_tro cua id_nguoi_dai_dien va id_nvql_voucher
 -- trong HOSODN (thay the cho subquery trong CHECK constraint)
@@ -175,11 +176,13 @@ begin
         raise exception 'id_nguoi_dai_dien phai co vai_tro = ''Nguoi dai dien''';
     end if;
 
-    select vai_tro into v_vai_tro_nvql
-    from NGUOIDUNG where ma_nguoi_dung = NEW.id_nvql_voucher;
+    if NEW.id_nvql_voucher is not null then
+        select vai_tro into v_vai_tro_nvql
+        from NGUOIDUNG where ma_nguoi_dung = NEW.id_nvql_voucher;
 
-    if v_vai_tro_nvql is distinct from 'Nhan vien quan ly voucher' then
-        raise exception 'id_nvql_voucher phai co vai_tro = ''Nhan vien quan ly voucher''';
+        if v_vai_tro_nvql is distinct from 'Nhan vien quan ly voucher' then
+            raise exception 'id_nvql_voucher phai co vai_tro = ''Nhan vien quan ly voucher''';
+        end if;
     end if;
 
     return NEW;
@@ -224,7 +227,6 @@ create table VOUCHER (
     constraint chk_voucher_thoi_gian_ban check (tg_ket_thuc_ban > tg_bat_dau_ban)
 );
 create index idx_voucher_danh_muc on VOUCHER(ma_danh_muc);
-create index idx_voucher_trang_thai on VOUCHER (trang_thai);
 -- =====================================================================
 -- 6. VOUCHER_CN  (voucher ap dung tai cac chi nhanh nao - N-N)
 -- =====================================================================
@@ -243,7 +245,6 @@ create table TAIKHOAN (
     mat_khau text not null,
     ma_nguoi_dung uuid not null unique references NGUOIDUNG(ma_nguoi_dung)
 );
-create index idx_tai_khoan_nguoi_dung on TAIKHOAN(ma_nguoi_dung);
 -- =====================================================================
 -- 8. GIO_HANG
 -- =====================================================================
@@ -280,16 +281,13 @@ create table DONHANG (
             'Da thanh toan',
             'Da huy',
             'Cho hoan tien',
-            'Da hoan tien',
-            'Huy yeu cau hoan tien'
+            'Da hoan tien'
         )
     ),
     ly_do_huy text,
     nguoi_nhan text,
     ma_tk_dat uuid not null references TAIKHOAN(ma_tk)
 );
-create index idx_don_hang_ma_tk_dat on DONHANG(ma_tk_dat);
-create index idx_don_hang_trang_thai on DONHANG(trang_thai);
 -- =====================================================================
 -- 11. CHI_TIET_DON_HANG  (bang ket hop DON_HANG x VOUCHER)
 -- =====================================================================
@@ -312,26 +310,35 @@ create table THANHTOAN (
     trang_thai text not null default 'Dang xu ly' check (
         trang_thai in ('Dang xu ly', 'Thanh cong', 'That bai')
     ),
+    ma_gd_goc text, -- BỔ SUNG: Mã giao dịch/Capture ID từ VNPay/PayPal
     ma_dh uuid not null references DONHANG(ma_dh)
 );
-create index idx_thanh_toan_ma_dh on THANHTOAN(ma_dh);
 -- =====================================================================
 -- 13. HOAN_TIEN
 -- =====================================================================
 create table HOANTIEN (
     ma_hoan_tien uuid primary key default gen_random_uuid(),
     so_tien numeric(12, 2) not null check (so_tien >= 0),
-    trang_thai text not null default 'Dang xu ly' check (
-        trang_thai in ('Dang xu ly', 'Thanh cong', 'That bai')
+    trang_thai text not null default 'Cho xu ly' check (
+        trang_thai in ('Cho xu ly', 'Dang xu ly', 'Thanh cong', 'That bai', 'Can kiem tra')
     ),
     ly_do text,
     ngay_xu_ly timestamptz,
-    -- [FIX] Doi tai_khoan -> TAIKHOAN cho nhat quan
-    ma_tk uuid not null references TAIKHOAN(ma_tk),
-    ma_thanh_toan uuid not null references THANHTOAN(ma_thanh_toan)
+    ma_tk uuid references TAIKHOAN(ma_tk), -- Admin xử lý, có thể null lúc mới tạo
+    ma_thanh_toan uuid not null references THANHTOAN(ma_thanh_toan),
+    
+    -- Các trường mới thêm để hỗ trợ quy trình hoàn tiền Sandbox (UC-ADM-06)
+    cong_thanh_toan text, -- VNPay / PayPal
+    ma_gd_hoan text,      -- Mã giao dịch hoàn tiền từ cổng thanh toán
+    ma_phan_hoi text,     -- Mã/kết quả phản hồi từ cổng thanh toán
+    nguon text check (nguon in ('Yeu cau huy', 'Khieu nai')), -- Hoàn tiền xuất phát từ đâu
+    -- Khóa ngoại được thêm sau khi YEUCAUHUY và KHIEUNAI đã được tạo.
+    ma_yc_huy uuid,
+    ma_khieu_nai uuid
 );
 create index idx_hoan_tien_ma_tk on HOANTIEN(ma_tk);
-create index idx_hoan_tien_ma_thanh_toan on HOANTIEN(ma_thanh_toan);
+create unique index uq_hoan_tien_ma_yc_huy on HOANTIEN(ma_yc_huy) where ma_yc_huy is not null;
+create unique index uq_hoan_tien_ma_khieu_nai on HOANTIEN(ma_khieu_nai) where ma_khieu_nai is not null;
 -- =====================================================================
 -- 14. VOUCHER_MUA  (ma voucher dien tu - moi dong = 1 ma dung 1 lan)
 -- =====================================================================
@@ -357,7 +364,6 @@ create table VOUCHER_MUA (
     constraint fk_voucher_mua_ctdh foreign key (ma_dh, ma_voucher) references CHITIETDONHANG(ma_dh, ma_voucher)
 );
 create index idx_voucher_mua_ctdh on VOUCHER_MUA(ma_dh, ma_voucher);
-create index idx_voucher_mua_code on VOUCHER_MUA(voucher_code);
 -- =====================================================================
 -- 15. LS_SINH_MA  (lich su sinh lai ma)
 -- =====================================================================
@@ -370,7 +376,6 @@ create table LSSINHMA (
     -- [FIX] Xoa dau phay thua o cuoi constraint cuoi cung
     ma_tk_admin uuid not null references TAIKHOAN(ma_tk)
 );
-create index idx_ls_sinh_ma_voucher_mua on LSSINHMA(ma_voucher_mua);
 -- =====================================================================
 -- 16. DANH_GIA
 -- =====================================================================
@@ -397,11 +402,15 @@ create table KHIEUNAI (
     trang_thai text not null default 'Moi' check (
         trang_thai in ('Moi', 'Dang xu ly', 'Da xu ly', 'Tu choi')
     ),
+    ly_do_tu_choi_kn text,
     ma_voucher_mua uuid not null references VOUCHER_MUA(ma_voucher_mua),
-    ma_tk_xuly uuid not null references TAIKHOAN(ma_tk)
+    ma_tk_xuly uuid references TAIKHOAN(ma_tk),
+    constraint chk_khieunai_ma_tk_xuly check (
+        (trang_thai = 'Moi' and ma_tk_xuly is null) or
+        (trang_thai != 'Moi' and ma_tk_xuly is not null)
+    )
 );
 create index idx_khieu_nai_ma_tk_xuly on KHIEUNAI(ma_tk_xuly);
-create index idx_khieu_nai_ma_voucher_mua on KHIEUNAI(ma_voucher_mua);
 -- =====================================================================
 -- 18. LOG_HT  (nhat ky he thong)
 -- =====================================================================
@@ -419,8 +428,6 @@ create table LOG_HT (
     doi_tuong text,
     ma_doi_tuong uuid
 );
-create index idx_log_ma_tk_thuc_hien on LOG_HT(ma_tk_thuc_hien);
-create index idx_log_doi_tuong on LOG_HT(doi_tuong, ma_doi_tuong);
 -- =====================================================================
 -- 19. NOI_DUNG  (quan ly noi dung: banner, bai viet, popup, chinh sach)
 -- =====================================================================
@@ -469,7 +476,6 @@ CREATE TABLE IF NOT EXISTS public.yeu_cau_cap_nhat_hosodn (
 );
 
 -- Index truy vấn nhanh
-CREATE INDEX IF NOT EXISTS idx_yc_hoso_ma_hs ON public.yeu_cau_cap_nhat_hosodn(ma_hs);
 CREATE INDEX IF NOT EXISTS idx_yc_hoso_trang_thai ON public.yeu_cau_cap_nhat_hosodn(trang_thai);
 
 
@@ -478,6 +484,7 @@ CREATE INDEX IF NOT EXISTS idx_yc_hoso_trang_thai ON public.yeu_cau_cap_nhat_hos
 CREATE TABLE IF NOT EXISTS public.yeu_cau_cap_nhat_chinhanh (
     ma_yc UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     ma_chi_nhanh UUID NULL REFERENCES public.chinhanh(ma_chi_nhanh) ON DELETE CASCADE, -- NULL nếu là yêu cầu THEM_MOI
+    ma_hs UUID NULL REFERENCES public.hosodn(ma_hs) ON DELETE CASCADE,
     
     loai_yeu_cau VARCHAR(50) NOT NULL, -- 'THEM_MOI', 'CAP_NHAT', 'XOA'
     
@@ -495,7 +502,6 @@ CREATE TABLE IF NOT EXISTS public.yeu_cau_cap_nhat_chinhanh (
 );
 
 -- Index truy vấn nhanh
-CREATE INDEX IF NOT EXISTS idx_yc_cn_ma_hs ON public.yeu_cau_cap_nhat_chinhanh(ma_hs);
 CREATE INDEX IF NOT EXISTS idx_yc_cn_trang_thai ON public.yeu_cau_cap_nhat_chinhanh(trang_thai);
 
 
@@ -503,6 +509,33 @@ CREATE INDEX IF NOT EXISTS idx_yc_cn_trang_thai ON public.yeu_cau_cap_nhat_chinh
 alter table yeu_cau_cap_nhat_hosodn add ngay_sinh date;
 
 alter table yeu_cau_cap_nhat_hosodn add gioi_tinh text;
+
+-- =====================================================================
+-- 20. YEU_CAU_HUY (Yeu cau huy don hang)
+-- =====================================================================
+create table YEUCAUHUY (
+    ma_yc_huy uuid primary key default gen_random_uuid(),
+    ngay_yeu_cau timestamptz not null default now(),
+    ly_do_kh text not null,
+    trang_thai text not null default 'Cho xu ly' check (
+        trang_thai in ('Cho xu ly', 'Da chap nhan', 'Da tu choi')
+    ),
+    ly_do_xu_ly text,
+    ngay_xu_ly timestamptz,
+    ma_dh uuid not null unique references DONHANG(ma_dh) on delete cascade,
+    ma_tk_xuly uuid references TAIKHOAN(ma_tk)
+);
+create index idx_yeu_cau_huy_ma_tk_xuly on YEUCAUHUY(ma_tk_xuly);
+
+-- HOANTIEN được khai báo trước hai bảng nghiệp vụ nguồn, nên chỉ thêm khóa
+-- ngoại sau khi cả YEUCAUHUY và KHIEUNAI đã tồn tại.
+alter table HOANTIEN
+    add constraint fk_hoantien_yeucauhuy
+    foreign key (ma_yc_huy) references YEUCAUHUY(ma_yc_huy);
+alter table HOANTIEN
+    add constraint fk_hoantien_khieunai
+    foreign key (ma_khieu_nai) references KHIEUNAI(ma_khieu_nai);
+
 -- =====================================================================
 -- RANG BUOC LIEN BANG BO SUNG (xu ly bang TRIGGER)
 -- =====================================================================
@@ -522,3 +555,97 @@ alter table yeu_cau_cap_nhat_hosodn add gioi_tinh text;
 --     using (ma_tk_dat = (select ma_tk from TAIKHOAN where ma_nguoi_dung = auth.uid()));
 --   (ap dung tuong tu cho GIOHANG, VOUCHER_MUA, DANHGIA, KHIEUNAI...)
 -- =====================================================================
+
+-- =====================================================================
+-- PERFORMANCE INDEXES
+-- Keep this section synchronized with:
+-- migrations/20260812_query_performance_indexes.sql
+-- =====================================================================
+
+-- Authentication and Admin user searches (ILIKE / filter + sort).
+create index if not exists idx_perf_taikhoan_login_trgm
+    on public.TAIKHOAN using gin (thong_tin_dang_nhap gin_trgm_ops);
+create index if not exists idx_perf_nguoidung_ho_ten_trgm
+    on public.NGUOIDUNG using gin (ho_ten gin_trgm_ops);
+create index if not exists idx_perf_nguoidung_email_trgm
+    on public.NGUOIDUNG using gin (email gin_trgm_ops);
+create index if not exists idx_perf_nguoidung_sdt_trgm
+    on public.NGUOIDUNG using gin (sdt gin_trgm_ops);
+create index if not exists idx_perf_nguoidung_vai_tro_created
+    on public.NGUOIDUNG (vai_tro, created_at desc);
+create index if not exists idx_perf_nguoidung_trang_thai_created
+    on public.NGUOIDUNG (trang_thai, created_at desc);
+create index if not exists idx_perf_nguoidung_hsdn_vai_tro
+    on public.NGUOIDUNG (ma_hsdn, vai_tro)
+    where ma_hsdn is not null;
+create index if not exists idx_perf_nguoidung_chi_nhanh_vai_tro
+    on public.NGUOIDUNG (ma_chi_nhanh, vai_tro)
+    where ma_chi_nhanh is not null;
+
+-- Partner, branch, voucher and approval queues.
+create index if not exists idx_perf_chinhanh_hs_status_name
+    on public.CHINHANH (ma_hs, trang_thai, ten_chi_nhanh);
+create index if not exists idx_perf_chinhanh_status_name
+    on public.CHINHANH (trang_thai, ten_chi_nhanh);
+create index if not exists idx_perf_hosodn_status_created
+    on public.HOSODN (trang_thai, ngay_tao desc);
+create index if not exists idx_perf_hosodn_status_name
+    on public.HOSODN (trang_thai, ten_dn);
+create index if not exists idx_perf_voucher_status_sale_start
+    on public.VOUCHER (trang_thai, tg_bat_dau_ban desc);
+create index if not exists idx_perf_yc_hosodn_hs_status_date
+    on public.yeu_cau_cap_nhat_hosodn (ma_hs, trang_thai, ngay_yeu_cau desc);
+
+-- Legacy schemas may not yet contain ma_hs on the branch-request table.
+do $$
+begin
+    if exists (
+        select 1
+        from information_schema.columns
+        where table_schema = 'public'
+          and table_name = 'yeu_cau_cap_nhat_chinhanh'
+          and column_name = 'ma_hs'
+    ) then
+        execute $sql$
+            create index if not exists idx_perf_yc_chinhanh_hs_status_date
+            on public.yeu_cau_cap_nhat_chinhanh (ma_hs, trang_thai, ngay_yeu_cau desc)
+        $sql$;
+    end if;
+end $$;
+
+-- Orders, payments, refunds and issued voucher codes.
+create index if not exists idx_perf_donhang_customer_date
+    on public.DONHANG (ma_tk_dat, ngay_dat desc);
+create index if not exists idx_perf_donhang_status_date
+    on public.DONHANG (trang_thai, ngay_dat desc);
+create index if not exists idx_perf_thanhtoan_order_status_date
+    on public.THANHTOAN (ma_dh, trang_thai, thoi_gian_tt desc);
+create index if not exists idx_perf_thanhtoan_status_date
+    on public.THANHTOAN (trang_thai, thoi_gian_tt desc);
+create index if not exists idx_perf_hoantien_payment_date
+    on public.HOANTIEN (ma_thanh_toan, ngay_xu_ly desc);
+create index if not exists idx_perf_voucher_mua_order_status_date
+    on public.VOUCHER_MUA (ma_dh, trang_thai, thoi_gian_sinh_ma desc);
+create index if not exists idx_perf_voucher_mua_status_date
+    on public.VOUCHER_MUA (trang_thai, thoi_gian_sinh_ma desc);
+create index if not exists idx_perf_voucher_mua_used_branch_date
+    on public.VOUCHER_MUA (ma_chi_nhanh_su_dung, ngay_su_dung desc)
+    where trang_thai = 'Da su dung';
+create index if not exists idx_perf_lssinhma_voucher_date
+    on public.LSSINHMA (ma_voucher_mua, tg_thuc_hien desc);
+create index if not exists idx_perf_khieunai_status_date
+    on public.KHIEUNAI (trang_thai, ngay_khieu_nai desc);
+create index if not exists idx_perf_khieunai_voucher_date
+    on public.KHIEUNAI (ma_voucher_mua, ngay_khieu_nai desc);
+create index if not exists idx_perf_yeucauhuy_status_date
+    on public.YEUCAUHUY (trang_thai, ngay_yeu_cau desc);
+
+-- Audit log listing and rejection-history lookups.
+create index if not exists idx_perf_log_time
+    on public.LOG_HT (thoi_diem_thuc_hien desc);
+create index if not exists idx_perf_log_actor_time
+    on public.LOG_HT (ma_tk_thuc_hien, thoi_diem_thuc_hien desc);
+create index if not exists idx_perf_log_target_time
+    on public.LOG_HT (doi_tuong, ma_doi_tuong, thoi_diem_thuc_hien desc);
+create index if not exists idx_perf_log_action_trgm
+    on public.LOG_HT using gin (hanh_dong gin_trgm_ops);
