@@ -15,6 +15,7 @@ import {
   LayoutGrid,       // Icon quản lý nội dung
   ShoppingCart,     // Icon quản lý đơn hàng
   MessageSquare,    // Icon xử lý khiếu nại
+  Star,             // Icon quản lý đánh giá
 } from 'lucide-react';
 
 // Danh sách menu sidebar hợp nhất cho Admin Portal
@@ -27,6 +28,7 @@ const NAV_ITEMS = [
   { path: '/admin/logs', label: 'Nhật ký hệ thống', icon: ScrollText },
   { path: '/admin/contents', label: 'Quản lý nội dung', icon: LayoutGrid },
   { path: '/admin/complaints', label: 'Xử lý khiếu nại', icon: MessageSquare },
+  { path: '/admin/reviews', label: 'Quản lý đánh giá', icon: Star },
 ];
 
 export function AdminLayout({ children }) {

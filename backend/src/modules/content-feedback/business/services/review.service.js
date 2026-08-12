@@ -42,6 +42,11 @@ async function createReview(payload) {
   return dto.buildReviewDto(saved);
 }
 
+// Xóa đánh giá
+async function deleteReview(id) {
+  return await repository.remove(id);
+}
+
 // Lấy danh sách đánh giá theo voucher id
 async function getReviewsByVoucherId(voucherId) {
   const items = await repository.findByVoucherId(voucherId);
@@ -58,6 +63,7 @@ module.exports = {
   getReviewList,
   getReviewById,
   createReview,
+  deleteReview,
   getReviewsByVoucherId,
   getReviewByPurchaseId,
 };
