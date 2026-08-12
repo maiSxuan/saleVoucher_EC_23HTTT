@@ -44,6 +44,22 @@ class OrderController {
     }
   }
 
+  async repay(req, res, next) {
+    try {
+      const accountId = req.user.accountId || req.user.id;
+      const { id } = req.params;
+      const { paymentMethod } = req.body;
+      const result = await orderService.repayOrder({
+        accountId,
+        orderId: id,
+        paymentMethod,
+        ipAddr: req.ip,
+      });
+      return res.json({ success: true, data: result });
+    } catch (e) {
+      next(e);
+    }
+  }
 
   async listCustomerOrders(req, res, next) {
     try {

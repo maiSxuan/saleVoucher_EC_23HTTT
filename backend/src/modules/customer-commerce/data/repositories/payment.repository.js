@@ -35,6 +35,19 @@ class PaymentRepository {
     }
   }
 
+  async markPendingAttemptsFailed(orderId) {
+    const { error } = await supabase
+      .from("thanhtoan")
+      .update({ trang_thai: "That bai" })
+      .eq("ma_dh", orderId)
+      .eq("trang_thai", "Dang xu ly");
+    if (error) {
+      const err = new Error("Không thể cập nhật trạng thái giao dịch thanh toán đang chờ");
+      err.status = 500;
+      throw err;
+    }
+  }
+
   async findById(paymentId) {
     const { data, error } = await supabase
       .from("thanhtoan")

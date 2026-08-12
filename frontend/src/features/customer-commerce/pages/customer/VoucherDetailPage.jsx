@@ -10,7 +10,10 @@ import {
   Store,
   Star,
 } from "lucide-react";
-import { fetchVoucherDetail, fetchVoucherReviews } from "../../../../shared/api/catalogApi";
+import {
+  fetchVoucherDetail,
+  fetchVoucherReviews,
+} from "../../../../shared/api/catalogApi";
 import { addToCart } from "../../../../shared/api/cartApi";
 import { toast } from "sonner";
 
@@ -183,7 +186,12 @@ export default function VoucherDetailPage() {
                 </span>
                 <span className="text-sm font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
                   <Store size={16} />
-                  {typeof voucher.partner === 'object' && voucher.partner !== null ? (voucher.partner.ten_dn || voucher.partner.name || "Đối tác") : (voucher.partner || "Đối tác")}
+                  {typeof voucher.partner === "object" &&
+                  voucher.partner !== null
+                    ? voucher.partner.ten_dn ||
+                      voucher.partner.name ||
+                      "Đối tác"
+                    : voucher.partner || "Đối tác"}
                 </span>
               </div>
             </div>
@@ -208,11 +216,11 @@ export default function VoucherDetailPage() {
             </div>
 
             <div className="bg-gray-50 rounded-lg p-2.5">
-              <div className="flex items-center gap-1 text-gray-400 text-xs mb-0.5">
+              <div className="flex items-center gap-1 text-gray-400 text-sm mb-0.5">
                 <Clock size={11} />
                 Thời gian bán
               </div>
-              <p className="text-xs font-medium text-gray-700">
+              <p className="text-sm font-medium text-gray-700">
                 {new Date(voucher.startSaleDate).toLocaleDateString("vi-VN")} –{" "}
                 {new Date(voucher.endSaleDate).toLocaleDateString("vi-VN")}
               </p>
@@ -220,7 +228,7 @@ export default function VoucherDetailPage() {
 
             {branches.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">
+                <p className="text-sm font-semibold text-gray-500 mb-1 uppercase tracking-wide">
                   Chi nhánh áp dụng
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -298,7 +306,7 @@ export default function VoucherDetailPage() {
                 Đang tải đánh giá...
               </p>
             ) : reviews.length === 0 ? (
-              <p className="text-xs text-gray-400 py-4 text-center">
+              <p className="text-sm text-gray-400 py-4 text-center">
                 Chưa có đánh giá nào cho voucher này.
               </p>
             ) : (
@@ -374,7 +382,7 @@ export default function VoucherDetailPage() {
                     </button>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 mb-3">
+                <p className="text-sm text-gray-500 mb-3">
                   Tổng:{" "}
                   <strong className="text-orange-600">
                     {(voucher.salePrice * qty).toLocaleString("vi-VN")}đ

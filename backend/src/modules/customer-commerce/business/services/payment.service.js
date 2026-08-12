@@ -16,6 +16,8 @@ const voucherIssuanceService = require('../../../core-access/business/services/v
 class PaymentService {
   // Tạo bản ghi thanh toán "Dang xu ly" + sinh link redirect tới cổng đã chọn
   async _startPayment({ order, total, paymentMethod, ipAddr }) {
+    await paymentRepository.markPendingAttemptsFailed(order.ma_dh);
+
     const paymentId = await paymentRepository.createAttempt({
       orderId: order.ma_dh,
       amount: total,

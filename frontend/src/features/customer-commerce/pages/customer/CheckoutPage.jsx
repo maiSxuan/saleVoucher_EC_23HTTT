@@ -2,11 +2,17 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { CreditCard, ArrowLeft, Building2, Globe } from "lucide-react";
 import { toast } from "sonner";
-import { reviewOrder, createOrder } from "../../../../shared/api/orderApi";
+import {
+  reviewOrder,
+  createOrder,
+  repayOrder,
+  fetchCustomerOrderDetail,
+} from "../../../../shared/api/orderApi";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const orderId = location.state?.orderId || null;
   const voucherIds = location.state?.selectedVoucherIds || [];
 
   const [payMethod, setPayMethod] = useState("vnpay");
@@ -16,10 +22,36 @@ export default function CheckoutPage() {
   const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
-    if (voucherIds.length === 0) {
+    if (!orderId && voucherIds.length === 0) {
       navigate("/customer/cart");
       return;
     }
+
+    if (orderId) {
+      fetchCustomerOrderDetail(orderId)
+        .then((order) => {
+          if (order.orderStatus !== "Cho thanh toan") {
+            setErrorMsg("Đơn hàng này không còn ở trạng thái Chờ thanh toán.");
+            return;
+          }
+          setReviewData({
+            items: order.items.map((item) => ({
+              voucherId: item.voucherId,
+              name: item.name || item.voucherName || "Voucher",
+              image: item.image,
+              quantity: item.quantity,
+              subtotal: item.subtotal ?? item.unitPrice * item.quantity,
+            })),
+            total: order.total,
+          });
+        })
+        .catch((err) => {
+          setErrorMsg(err.message || "Không thể tải thông tin đơn hàng.");
+        })
+        .finally(() => setLoading(false));
+      return;
+    }
+
     reviewOrder(voucherIds)
       .then(setReviewData)
       .catch((err) => {
@@ -31,13 +63,18 @@ export default function CheckoutPage() {
         setErrorMsg(err.message || "Không thể kiểm tra thông tin đơn hàng.");
       })
       .finally(() => setLoading(false));
-  }, [voucherIds.length]);
+  }, [orderId, voucherIds.length, navigate]);
 
   const handlePay = async () => {
     setRedirecting(true);
     try {
-      const res = await createOrder({ voucherIds, paymentMethod: payMethod });
-      window.location.href = res.redirectUrl;
+      if (orderId) {
+        const res = await repayOrder(orderId, { paymentMethod: payMethod });
+        window.location.href = res.redirectUrl;
+      } else {
+        const res = await createOrder({ voucherIds, paymentMethod: payMethod });
+        window.location.href = res.redirectUrl;
+      }
     } catch (err) {
       if (err.details?.invalidItems) {
         toast.error(err.message);
@@ -87,7 +124,9 @@ export default function CheckoutPage() {
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 line-clamp-1">
-                      {typeof item.name === 'object' && item.name !== null ? item.name.name : item.name}
+                      {typeof item.name === "object" && item.name !== null
+                        ? item.name.name
+                        : item.name}
                     </p>
                     <p className="text-xs text-gray-400">× {item.quantity}</p>
                   </div>
@@ -137,7 +176,10 @@ export default function CheckoutPage() {
                 className="flex justify-between text-sm mb-1.5"
               >
                 <span className="text-gray-500 truncate max-w-32">
-                  {typeof item.name === 'object' && item.name !== null ? item.name.name : item.name} ×{item.quantity}
+                  {typeof item.name === "object" && item.name !== null
+                    ? item.name.name
+                    : item.name}{" "}
+                  ×{item.quantity}
                 </span>
                 <span>{item.subtotal.toLocaleString("vi-VN")}đ</span>
               </div>

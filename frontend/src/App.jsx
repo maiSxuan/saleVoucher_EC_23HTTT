@@ -8,7 +8,6 @@ function App() {
       <main className="p-4">
         <Outlet />
       </main>
-      <Toaster position="top-right" richColors closeButton />
     </div>
   );
 }
