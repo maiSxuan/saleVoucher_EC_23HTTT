@@ -839,8 +839,8 @@ values
     '70000000-0000-0000-0000-000000000004',
     now() - interval '6 days',
     299000,
-    'Huy yeu cau hoan tien',
-    'Yeu cau khong dap ung chinh sach hoan huy.',
+    'Da thanh toan',
+    null,
     'Nguyen Minh Anh',
     '10000000-0000-0000-0000-000000000002'
 );
@@ -1086,8 +1086,7 @@ values
 
 -- =====================================================================
 -- 16. KHIẾU NẠI
--- Schema hiện tại bắt buộc ma_tk_xuly NOT NULL nên khiếu nại mới
--- cũng được gắn tạm cho Admin.
+-- Schema đã cho phép ma_tk_xuly có thể NULL đối với khiếu nại 'Moi'
 -- =====================================================================
 insert into KHIEUNAI (
     ma_khieu_nai,
@@ -1104,7 +1103,7 @@ values
     now() - interval '2 days',
     'Moi',
     'a0000000-0000-0000-0000-000000000003',
-    '10000000-0000-0000-0000-000000000001'
+    NULL
 ),
 (
     'e0000000-0000-0000-0000-000000000002',
@@ -1365,3 +1364,48 @@ INSERT INTO yeu_cau_cap_nhat_chinhanh (
 --   owner.spa@ec.local   / Demo@123
 --   manager.spa@ec.local / Demo@123
 -- =====================================================================
+
+-- =====================================================================
+-- 21. YÊU CẦU HỦY
+-- =====================================================================
+insert into YEUCAUHUY (
+    ma_yc_huy,
+    ngay_yeu_cau,
+    ly_do_kh,
+    trang_thai,
+    ly_do_xu_ly,
+    ngay_xu_ly,
+    ma_dh,
+    ma_tk_xuly
+)
+values
+(
+    'e0000000-0000-0000-0000-000000000001',
+    now() - interval '8 days',
+    'Khach hang thay doi ke hoach su dung.',
+    'Cho xu ly',
+    null,
+    null,
+    '70000000-0000-0000-0000-000000000002',
+    null
+),
+(
+    'e0000000-0000-0000-0000-000000000002',
+    now() - interval '20 days',
+    'Voucher tam ngung truoc khi khach hang su dung.',
+    'Da chap nhan',
+    'Hoàn tiền thành công',
+    now() - interval '19 days',
+    '70000000-0000-0000-0000-000000000003',
+    '00000000-0000-0000-0000-000000000001'
+),
+(
+    'e0000000-0000-0000-0000-000000000003',
+    now() - interval '6 days',
+    'Yeu cau khong dap ung chinh sach hoan huy.',
+    'Da tu choi',
+    'Lý do không hợp lệ, không nằm trong điều khoản hoàn tiền.',
+    now() - interval '5 days',
+    '70000000-0000-0000-0000-000000000004',
+    '00000000-0000-0000-0000-000000000001'
+);

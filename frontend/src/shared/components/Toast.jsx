@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 
-export function Toast({ message, type = "success", onClose, duration = 3000 }) {
+export function Toast({ message, type = "success", onClose, duration = 1500 }) {
   useEffect(() => {
     if (!message) return;
     const timer = setTimeout(() => {
@@ -19,7 +19,7 @@ export function Toast({ message, type = "success", onClose, duration = 3000 }) {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 animate-bounce">
+    <div className="fixed top-6 right-6 z-50 transition-all duration-300 ease-in-out">
       <div
         className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border text-sm font-medium ${
           typeStyles[type] || typeStyles.success

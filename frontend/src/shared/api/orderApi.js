@@ -18,41 +18,12 @@ async function handleResponse(res) {
   return json;
 }
 
-// --- Checkout API ---
-export async function reviewOrder(voucherIds) {
-  const res = await fetch(`${BASE_URL}/orders/review`, {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify({ voucherIds }),
-  });
-  const json = await handleResponse(res);
-  return json.data;
-}
-
-export async function createOrder(data) {
-  const res = await fetch(`${BASE_URL}/orders`, {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify(data),
-  });
-  const json = await handleResponse(res);
-  return json.data;
-}
-
-export async function cancelOrder(id) {
-  const res = await fetch(`${BASE_URL}/orders/${id}/cancel`, {
-    method: "POST",
-    headers: authHeaders(),
-  });
-  return handleResponse(res);
-}
-
 // --- Customer API ---
-export async function fetchCustomerOrders(status = '', page = 1, limit = 10) {
+export async function fetchCustomerOrders(status = "", page = 1, limit = 10) {
   const params = new URLSearchParams();
-  if (status && status !== 'all') params.append('status', status);
-  params.append('page', page);
-  params.append('limit', limit);
+  if (status && status !== "all") params.append("status", status);
+  params.append("page", page);
+  params.append("limit", limit);
   const res = await fetch(`${BASE_URL}/orders/history?${params.toString()}`, {
     method: "GET",
     headers: authHeaders(),
@@ -100,25 +71,77 @@ export async function customerCancelOrder(id, { reason }) {
   return handleResponse(res);
 }
 
+export async function repayOrder(id, { paymentMethod }) {
+  const res = await fetch(`${BASE_URL}/orders/${id}/pay`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ paymentMethod }),
+  });
+  const json = await handleResponse(res);
+  return json.data;
+}
+
+// --- Checkout API ---
+export async function createOrder(data) {
+  const res = await fetch(`${BASE_URL}/orders`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(data),
+  });
+  const json = await handleResponse(res);
+  return json.data;
+}
+
+export async function reviewOrder(voucherIds) {
+  const res = await fetch(`${BASE_URL}/orders/review`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ voucherIds }),
+  });
+  const json = await handleResponse(res);
+  return json.data;
+}
+
+export async function cancelOrder(id) {
+  const res = await fetch(`${BASE_URL}/orders/${id}/cancel`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  return handleResponse(res);
+}
+
 // --- Admin API ---
 export async function fetchAdminOrders(filters = {}) {
   const params = new URLSearchParams();
-  if (filters.search) params.append('search', filters.search);
-  if (filters.orderStatus) params.append('orderStatus', filters.orderStatus);
-  if (filters.paymentStatus) params.append('paymentStatus', filters.paymentStatus);
-  if (filters.voucherCodeStatus) params.append('voucherCodeStatus', filters.voucherCodeStatus);
-  params.append('page', filters.page || 1);
-  params.append('limit', filters.limit || 10);
+  if (filters.search) params.append("search", filters.search);
+  if (filters.orderStatus) params.append("orderStatus", filters.orderStatus);
+  if (filters.paymentStatus)
+    params.append("paymentStatus", filters.paymentStatus);
+  if (filters.voucherCodeStatus)
+    params.append("voucherCodeStatus", filters.voucherCodeStatus);
+  params.append("page", filters.page || 1);
+  params.append("limit", filters.limit || 10);
 
   const res = await fetch(`${BASE_URL}/admin/orders?${params.toString()}`, {
     method: "GET",
     headers: authHeaders(),
+    cache: "no-store",
   });
   const json = await handleResponse(res);
   return {
     orders: json.data || [],
-    pagination: json.pagination || { page: 1, limit: 10, total: 0, totalPages: 0 },
+    pagination: json.pagination || {
+      page: 1,
+      limit: 10,
+      total: 0,
+      totalPages: 0,
+    },
     total: json.pagination?.total || 0,
+    actionCenter: json.actionCenter || {
+      refunds: [],
+      codeErrors: [],
+      complaints: [],
+    },
   };
 }
 
@@ -126,6 +149,7 @@ export async function fetchAdminOrderDetail(id) {
   const res = await fetch(`${BASE_URL}/admin/orders/${id}`, {
     method: "GET",
     headers: authHeaders(),
+    cache: "no-store",
   });
   const json = await handleResponse(res);
   return json.data;
@@ -135,22 +159,14 @@ export async function fetchAdminOrderLogs(id) {
   const res = await fetch(`${BASE_URL}/admin/orders/${id}/logs`, {
     method: "GET",
     headers: authHeaders(),
+    cache: "no-store",
   });
   const json = await handleResponse(res);
   return json.data || [];
 }
 
-export async function updateOrderPaymentStatus(id, { newStatus, reason }) {
-  const res = await fetch(`${BASE_URL}/admin/orders/${id}/payment-status`, {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify({ newStatus, reason }),
-  });
-  return handleResponse(res);
-}
-
-export async function adminCancelOrder(id, { reason }) {
-  const res = await fetch(`${BASE_URL}/admin/orders/${id}/cancel`, {
+export async function approveCancelRequest(id, { reason }) {
+  const res = await fetch(`${BASE_URL}/admin/orders/cancel-requests/${id}/approve`, {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify({ reason }),
@@ -158,8 +174,8 @@ export async function adminCancelOrder(id, { reason }) {
   return handleResponse(res);
 }
 
-export async function confirmOrderRefund(id, { reason }) {
-  const res = await fetch(`${BASE_URL}/admin/orders/${id}/refund`, {
+export async function rejectCancelRequest(id, { reason }) {
+  const res = await fetch(`${BASE_URL}/admin/orders/cancel-requests/${id}/reject`, {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify({ reason }),
@@ -167,8 +183,49 @@ export async function confirmOrderRefund(id, { reason }) {
   return handleResponse(res);
 }
 
-export async function rejectOrderRefund(id, { reason }) {
-  const res = await fetch(`${BASE_URL}/admin/orders/${id}/refund/reject`, {
+export async function executeRefund(id) {
+  const res = await fetch(`${BASE_URL}/admin/orders/refunds/${id}/execute`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function openComplaint(id) {
+  const res = await fetch(`${BASE_URL}/admin/orders/complaints/${id}/open`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function resendComplaintCode(id) {
+  const res = await fetch(`${BASE_URL}/admin/orders/complaints/${id}/resend-code`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function reissueComplaintCode(id) {
+  const res = await fetch(`${BASE_URL}/admin/orders/complaints/${id}/reissue-code`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function approveComplaintRefund(id, { reason }) {
+  const res = await fetch(`${BASE_URL}/admin/orders/complaints/${id}/approve-refund`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ reason }),
+  });
+  return handleResponse(res);
+}
+
+export async function rejectComplaint(id, { reason }) {
+  const res = await fetch(`${BASE_URL}/admin/orders/complaints/${id}/reject`, {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify({ reason }),

@@ -17,7 +17,6 @@ import VoucherApprovalDetailPage from "../features/partner-voucher/pages/admin/V
 import UserListPage from "../features/core-access/pages/admin/UserListPage";
 import PartnerVoucherLookupPage from "../features/core-access/pages/partner/PartnerVoucherLookupPage";
 import ContentListPage from "../features/content-feedback/pages/admin/ContentListPage";
-import AdminComplaintsPage from "../features/content-feedback/pages/admin/AdminComplaintsPage";
 import AdminReviewsPage from "../features/content-feedback/pages/admin/AdminReviewsPage";
 
 // Partner Portal Pages
@@ -202,7 +201,7 @@ const router = createBrowserRouter([
             element: <Navigate to="/admin/logs" replace />,
           },
           { path: "contents", element: <ContentListPage /> },
-          { path: "complaints", element: <AdminComplaintsPage /> },
+          { path: "complaints", element: <Navigate to="/admin/orders" replace /> },
           { path: "reviews", element: <AdminReviewsPage /> },
         ],
       },

@@ -5,46 +5,56 @@ class OrderController {
   // Customer Handlers
   async review(req, res, next) {
     try {
-      const { voucherIds } = req.body;
-      const result = await orderService.reviewOrder({
-        accountId: req.user.accountId,
-        voucherIds,
-      });
-      res.json({ success: true, data: result });
-    } catch (error) {
-      next(error);
+      const accountId = req.user.accountId || req.user.id;
+      // Chấp nhận cả contract chuẩn { voucherIds } và body mảng từ client cũ.
+      const voucherIds = Array.isArray(req.body) ? req.body : req.body?.voucherIds;
+      const result = await orderService.reviewOrder({ accountId, voucherIds });
+      return res.json({ success: true, data: result });
+    } catch (e) {
+      next(e);
     }
   }
 
   async create(req, res, next) {
     try {
+      const accountId = req.user.accountId || req.user.id;
       const { voucherIds, paymentMethod } = req.body;
-      const result = await orderService.createOrder({
-        accountId: req.user.accountId,
-        voucherIds,
-        paymentMethod,
-        ipAddr: req.ip,
-      });
-      res.status(201).json({ success: true, data: result });
-    } catch (error) {
-      next(error);
+      const ipAddr = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+      const result = await orderService.createOrder({ accountId, voucherIds, paymentMethod, ipAddr });
+      return res.json({ success: true, data: result });
+    } catch (e) {
+      next(e);
     }
   }
 
   async commerceCancel(req, res, next) {
     try {
+      const accountId = req.user.accountId || req.user.id;
       const { id } = req.params;
-      const result = await orderService.cancelOrderCustomer({
-        accountId: req.user.accountId,
-        orderId: id,
-      });
-      res.json({ success: true, data: result });
-    } catch (error) {
-      next(error);
+      const { reason } = req.body;
+      const result = await orderService.cancelOrderCustomer({ accountId, orderId: id, reason });
+      return res.json({ success: true, data: result, message: 'Đã gửi yêu cầu hủy đơn hàng' });
+    } catch (e) {
+      next(e);
     }
   }
 
-
+  async repay(req, res, next) {
+    try {
+      const accountId = req.user.accountId || req.user.id;
+      const { id } = req.params;
+      const { paymentMethod } = req.body;
+      const result = await orderService.repayOrder({
+        accountId,
+        orderId: id,
+        paymentMethod,
+        ipAddr: req.ip,
+      });
+      return res.json({ success: true, data: result });
+    } catch (e) {
+      next(e);
+    }
+  }
   async listCustomerOrders(req, res, next) {
     try {
       const accountId = req.user.accountId || req.user.id;
@@ -100,7 +110,17 @@ class OrderController {
       const pageNum = Number(page) || 1;
       const limitNum = Number(limit) || 10;
       const result = await orderService.getAdminOrders({ search, orderStatus, paymentStatus, voucherCodeStatus, page: pageNum, limit: limitNum });
-      return paginatedResponse(res, result.orders, { page: pageNum, limit: limitNum, total: result.total });
+      return res.json({
+        success: true,
+        data: result.orders,
+        actionCenter: result.actionCenter,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total: result.total,
+          totalPages: Math.ceil(result.total / limitNum),
+        },
+      });
     } catch (e) {
       next(e);
     }
@@ -109,7 +129,8 @@ class OrderController {
   async getAdminOrder(req, res, next) {
     try {
       const { id } = req.params;
-      const order = await orderService.getAdminOrderById(id);
+      const adminAccountId = req.user.accountId || req.user.id;
+      const order = await orderService.getAdminOrderById(id, adminAccountId);
       return res.json({ success: true, data: order });
     } catch (e) {
       next(e);
@@ -138,53 +159,102 @@ class OrderController {
     }
   }
 
-  async cancelOrder(req, res, next) {
+  // -----------------------------------------------------------------------
+  // UC-ADM-05: XỬ LÝ YÊU CẦU HỦY
+  // -----------------------------------------------------------------------
+  async approveCancelRequest(req, res, next) {
     try {
-      const { id } = req.params;
+      const { id } = req.params; // ma_yc_huy
       const { reason } = req.body;
       const adminAccountId = req.user.accountId || req.user.id;
-      const result = await orderService.cancelOrder(id, { reason }, adminAccountId);
-      return res.json({ success: true, data: result, message: 'Đã chuyển đơn hàng sang chờ hoàn tiền' });
+      const result = await orderService.approveYeuCauHuy(id, reason, adminAccountId);
+      return res.json({ success: true, data: result, message: 'Đã chấp nhận yêu cầu hủy' });
     } catch (e) {
       next(e);
     }
   }
 
-  async customerCancelOrder(req, res, next) {
+  async rejectCancelRequest(req, res, next) {
     try {
-      const { id } = req.params;
+      const { id } = req.params; // ma_yc_huy
       const { reason } = req.body;
-      const customerAccountId = req.user.accountId || req.user.id;
-      const order = await orderService.getCustomerOrderById(customerAccountId, id);
-      if (order.orderStatus !== 'Da thanh toan') {
-        return res.status(400).json({ success: false, message: "Chỉ có thể yêu cầu hủy đơn cho đơn hàng đã thanh toán" });
-      }
-      const result = await orderService.cancelOrder(id, { reason: reason || 'Khách hàng yêu cầu hủy đơn và hoàn tiền' }, customerAccountId);
-      return res.json({ success: true, data: result, message: 'Đã gửi yêu cầu hủy đơn, đơn hàng chuyển sang chờ hoàn tiền' });
+      const adminAccountId = req.user.accountId || req.user.id;
+      const result = await orderService.rejectYeuCauHuy(id, reason, adminAccountId);
+      return res.json({ success: true, data: result, message: 'Đã từ chối yêu cầu hủy' });
     } catch (e) {
       next(e);
     }
   }
 
-  async confirmRefund(req, res, next) {
+  // -----------------------------------------------------------------------
+  // UC-ADM-06: THỰC HIỆN HOÀN TIỀN
+  // -----------------------------------------------------------------------
+  async executeRefund(req, res, next) {
     try {
-      const { id } = req.params;
-      const { reason } = req.body;
+      const { id } = req.params; // ma_hoan_tien
       const adminAccountId = req.user.accountId || req.user.id;
-      const result = await orderService.confirmRefund(id, { reason }, adminAccountId);
-      return res.json({ success: true, data: result, message: 'Đã ghi nhận hoàn tiền mô phỏng thành công' });
+      const result = await orderService.executeRefund(id, adminAccountId);
+      return res.json({ success: true, data: result, message: 'Đã xử lý hoàn tiền' });
     } catch (e) {
       next(e);
     }
   }
 
-  async rejectRefund(req, res, next) {
+  // -----------------------------------------------------------------------
+  // UC-ADM-07: XỬ LÝ KHIẾU NẠI
+  // -----------------------------------------------------------------------
+  async openComplaint(req, res, next) {
     try {
-      const { id } = req.params;
+      const { id } = req.params; // ma_khieu_nai
+      const adminAccountId = req.user.accountId || req.user.id;
+      const result = await orderService.openComplaint(id, adminAccountId);
+      return res.json({ success: true, data: result, message: 'Đã mở khiếu nại' });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async resendComplaintCode(req, res, next) {
+    try {
+      const { id } = req.params; // ma_khieu_nai
+      const adminAccountId = req.user.accountId || req.user.id;
+      const result = await orderService.resendCode(id, adminAccountId);
+      return res.json({ success: true, data: result, message: 'Đã gửi lại mã voucher' });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async reissueComplaintCode(req, res, next) {
+    try {
+      const { id } = req.params; // ma_khieu_nai
+      const adminAccountId = req.user.accountId || req.user.id;
+      const result = await orderService.reissueCodeFromComplaint(id, adminAccountId);
+      return res.json({ success: true, data: result, message: 'Đã cấp lại mã mới' });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async approveComplaintRefund(req, res, next) {
+    try {
+      const { id } = req.params; // ma_khieu_nai
       const { reason } = req.body;
       const adminAccountId = req.user.accountId || req.user.id;
-      const result = await orderService.rejectRefund(id, { reason }, adminAccountId);
-      return res.json({ success: true, data: result, message: 'Đã từ chối yêu cầu hoàn tiền' });
+      const result = await orderService.approveComplaintRefund(id, reason, adminAccountId);
+      return res.json({ success: true, data: result, message: 'Đã chấp nhận khiếu nại và chuyển sang hoàn tiền' });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async rejectComplaint(req, res, next) {
+    try {
+      const { id } = req.params; // ma_khieu_nai
+      const { reason } = req.body;
+      const adminAccountId = req.user.accountId || req.user.id;
+      const result = await orderService.rejectComplaint(id, reason, adminAccountId);
+      return res.json({ success: true, data: result, message: 'Đã từ chối khiếu nại' });
     } catch (e) {
       next(e);
     }

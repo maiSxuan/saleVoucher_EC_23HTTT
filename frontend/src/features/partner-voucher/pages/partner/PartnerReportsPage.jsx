@@ -18,6 +18,31 @@ export function PartnerReportsPage() {
   const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [timelineMode, setTimelineMode] = useState("day");
+
+  const activeChartData = React.useMemo(() => {
+    if (!reportData) return [];
+    if (timelineMode === "month") {
+      return reportData.revenueTimeline?.monthly || [];
+    }
+    if (timelineMode === "year") {
+      return reportData.revenueTimeline?.yearly || [];
+    }
+    return reportData.revenueTimeline?.daily || reportData.revenueTrend || [];
+  }, [reportData, timelineMode]);
+
+  const formatYAxisTick = (val) => {
+    if (val == null || val === 0) return "0";
+    if (val >= 1_000_000) {
+      const v = (val / 1_000_000).toFixed(1).replace(".0", "");
+      return `${v}M`;
+    }
+    if (val >= 1_000) {
+      const v = (val / 1_000).toFixed(0);
+      return `${v}k`;
+    }
+    return String(val);
+  };
 
   const getLoggedInPartnerId = () => {
     try {
@@ -227,24 +252,118 @@ export function PartnerReportsPage() {
               ))}
             </div>
 
-            {/* Revenue Area Chart */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <h3 className="font-semibold text-gray-900 mb-4 text-sm">Doanh thu theo ngày</h3>
-              <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={revenueTrend}>
-                  <defs>
-                    <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.15} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="day" tick={{ fontSize: 11 }} />
-                  <YAxis tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`} tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v) => [`${Number(v).toLocaleString()}đ`, "Doanh thu"]} />
-                  <Area type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} fill="url(#revGrad)" />
-                </AreaChart>
-              </ResponsiveContainer>
+            {/* Revenue Area Chart matching requested design */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-xs space-y-4">
+              {/* Header & Subtitle & Mode Toggle */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
+                <div>
+                  <h3 className="font-bold text-gray-900 text-base">Biểu đồ doanh thu</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Biến động doanh thu thanh toán thành công theo thời gian
+                  </p>
+                </div>
+
+                {/* Tab Switcher: Theo ngày | Theo tháng | Theo năm */}
+                <div className="flex items-center bg-slate-100 p-1 rounded-xl shrink-0 border border-slate-200/80">
+                  <button
+                    type="button"
+                    onClick={() => setTimelineMode("day")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      timelineMode === "day"
+                        ? "bg-white text-blue-600 shadow-xs font-bold"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    Theo ngày
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTimelineMode("month")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      timelineMode === "month"
+                        ? "bg-white text-blue-600 shadow-xs font-bold"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    Theo tháng
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTimelineMode("year")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      timelineMode === "year"
+                        ? "bg-white text-blue-600 shadow-xs font-bold"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    Theo năm
+                  </button>
+                </div>
+              </div>
+
+              {/* Recharts Container */}
+              <div className="h-72 w-full pt-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={activeChartData} margin={{ top: 10, right: 15, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="partnerRevGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#0284c7" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="#0284c7" stopOpacity={0.0} />
+                      </linearGradient>
+                    </defs>
+
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis
+                      dataKey="day"
+                      tick={{ fontSize: 11, fill: "#64748b" }}
+                      axisLine={{ stroke: "#e2e8f0" }}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      tickFormatter={formatYAxisTick}
+                      tick={{ fontSize: 11, fill: "#64748b" }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-slate-900/95 backdrop-blur-md text-white p-3 rounded-xl shadow-xl border border-slate-700/60 text-xs min-w-[160px]">
+                              <div className="font-semibold text-slate-300 mb-1 flex items-center gap-1.5">
+                                📅 {data.fullLabel || data.day}
+                              </div>
+                              <div className="flex items-center justify-between gap-3 pt-1 border-t border-slate-800">
+                                <span className="text-slate-400">Doanh thu:</span>
+                                <span className="font-bold text-emerald-400">
+                                  {Number(data.revenue).toLocaleString("vi-VN")} ₫
+                                </span>
+                              </div>
+                              {data.count != null && (
+                                <div className="flex items-center justify-between gap-3 text-[11px] text-slate-400 mt-0.5">
+                                  <span>Số giao dịch:</span>
+                                  <span className="font-semibold text-slate-200">{data.count} đơn</span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke="#0284c7"
+                      strokeWidth={2.5}
+                      fill="url(#partnerRevGrad)"
+                      dot={{ r: 3.5, fill: "#0284c7", stroke: "#0284c7", strokeWidth: 1 }}
+                      activeDot={{ r: 6, fill: "#0284c7", stroke: "#ffffff", strokeWidth: 2 }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
 
             {/* Breakdown Table */}

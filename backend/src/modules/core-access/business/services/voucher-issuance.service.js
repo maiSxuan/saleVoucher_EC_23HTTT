@@ -7,7 +7,7 @@
  *  2. Kiểm tra đơn hàng đã thanh toán thành công (issuance eligibility contract từ My).
  *  3. Sinh mã code duy nhất cho mỗi item × quantity — idempotent.
  *  4. Ghi audit log bắt buộc (NFR-06).
- *  5. Nếu lỗi → cập nhật trạng thái đơn thành "Loi sinh ma" (A4.3).
+ *  5. Nếu lỗi → ghi nhận quyền lợi VOUCHER_MUA ở trạng thái "Loi sinh ma".
  */
 const issuedVoucherRepository = require('../../data/repositories/issued-voucher.repository');
 const auditLogService = require('./audit-log.service');
@@ -45,13 +45,10 @@ class VoucherIssuanceService {
         issuedAll.push(...issued);
       }
 
-      // 3. Cập nhật trạng thái đơn hàng → "Da phat hanh"
-      await supabase
-        .from('donhang')
-        .update({ trang_thai: 'Da phat hanh' })
-        .eq('ma_dh', orderId);
+      // Trạng thái đơn vẫn là "Da thanh toan"; trạng thái phát hành được quản
+      // lý độc lập ở VOUCHER_MUA theo đúng mô hình dữ liệu.
 
-      // 4. Ghi audit log (NFR-06 — bắt buộc)
+      // 3. Ghi audit log (NFR-06)
       await auditLogService.log({
         actorId,
         actorRole,
@@ -68,17 +65,15 @@ class VoucherIssuanceService {
 
       return issuedAll;
     } catch (err) {
-      // A4: Không sinh được code → ghi log lỗi + cập nhật trạng thái đơn
+      // A4: Không sinh được code → tạo các bản ghi lỗi còn thiếu để Admin có
+      // đúng ma_voucher_mua mà cấp lại. Không ghi "Loi sinh ma" vào DONHANG
+      // vì trạng thái này không thuộc vòng đời đơn hàng.
       console.error('[VoucherIssuanceService] issueAfterPayment error:', err.message);
 
-      // A4.3: Cập nhật trạng thái đơn hàng → "Loi sinh ma"
       try {
-        await supabase
-          .from('donhang')
-          .update({ trang_thai: 'Loi sinh ma' })
-          .eq('ma_dh', orderId);
-      } catch (updateErr) {
-        console.error('[VoucherIssuanceService] Failed to update order status to error:', updateErr.message);
+        await issuedVoucherRepository.markIssuanceFailure({ orderId, items });
+      } catch (markError) {
+        console.error('[VoucherIssuanceService] Failed to persist issuance error:', markError.message);
       }
 
       // A4.2: Ghi nhận lỗi vào audit log

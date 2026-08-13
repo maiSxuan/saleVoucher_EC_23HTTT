@@ -30,36 +30,69 @@ router.get(
   orderController.getOrderLogs.bind(orderController)
 );
 
-// POST /admin/orders/:id/payment-status — A4a: Xử lý thanh toán bất thường / xác nhận thủ công
+// -----------------------------------------------------------------------
+// UC-ADM-05: XỬ LÝ YÊU CẦU HỦY
+// -----------------------------------------------------------------------
 router.post(
-  '/:id/payment-status',
+  '/cancel-requests/:id/approve',
   authenticateMiddleware,
   authorizeMiddleware(JWT_ROLES.ADMIN),
-  orderController.updatePaymentStatus.bind(orderController)
+  orderController.approveCancelRequest.bind(orderController)
 );
 
-// POST /admin/orders/:id/cancel — A4b: Hủy đơn hàng (chuyển chờ hoàn tiền)
 router.post(
-  '/:id/cancel',
+  '/cancel-requests/:id/reject',
   authenticateMiddleware,
   authorizeMiddleware(JWT_ROLES.ADMIN),
-  orderController.cancelOrder.bind(orderController)
+  orderController.rejectCancelRequest.bind(orderController)
 );
 
-// POST /admin/orders/:id/refund — A4c: Ghi nhận hoàn tiền mô phỏng
+// -----------------------------------------------------------------------
+// UC-ADM-06: THỰC HIỆN HOÀN TIỀN
+// -----------------------------------------------------------------------
 router.post(
-  '/:id/refund',
+  '/refunds/:id/execute',
   authenticateMiddleware,
   authorizeMiddleware(JWT_ROLES.ADMIN),
-  orderController.confirmRefund.bind(orderController)
+  orderController.executeRefund.bind(orderController)
 );
 
-// POST /admin/orders/:id/refund/reject — A4c: Từ chối hoàn tiền
+// -----------------------------------------------------------------------
+// UC-ADM-07: XỬ LÝ KHIẾU NẠI
+// -----------------------------------------------------------------------
 router.post(
-  '/:id/refund/reject',
+  '/complaints/:id/open',
   authenticateMiddleware,
   authorizeMiddleware(JWT_ROLES.ADMIN),
-  orderController.rejectRefund.bind(orderController)
+  orderController.openComplaint.bind(orderController)
+);
+
+router.post(
+  '/complaints/:id/resend-code',
+  authenticateMiddleware,
+  authorizeMiddleware(JWT_ROLES.ADMIN),
+  orderController.resendComplaintCode.bind(orderController)
+);
+
+router.post(
+  '/complaints/:id/reissue-code',
+  authenticateMiddleware,
+  authorizeMiddleware(JWT_ROLES.ADMIN),
+  orderController.reissueComplaintCode.bind(orderController)
+);
+
+router.post(
+  '/complaints/:id/approve-refund',
+  authenticateMiddleware,
+  authorizeMiddleware(JWT_ROLES.ADMIN),
+  orderController.approveComplaintRefund.bind(orderController)
+);
+
+router.post(
+  '/complaints/:id/reject',
+  authenticateMiddleware,
+  authorizeMiddleware(JWT_ROLES.ADMIN),
+  orderController.rejectComplaint.bind(orderController)
 );
 
 // POST /admin/orders/:id/reissue-code — A4d: Cấp lại mã lỗi

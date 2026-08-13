@@ -26,5 +26,6 @@ router.put("/:id", controller.update.bind(controller));
 router.post("/:id/approve", controller.approve.bind(controller));
 router.post("/:id/reject", controller.reject.bind(controller));
 router.post("/:id/lock", controller.lock.bind(controller));
+router.post("/:id/change-password", controller.changePassword.bind(controller));
 
 module.exports = router;

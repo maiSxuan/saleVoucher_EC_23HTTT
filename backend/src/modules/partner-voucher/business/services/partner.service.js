@@ -479,6 +479,26 @@ class PartnerService {
 
     return res;
   }
+
+  async changePassword(partnerId, oldPassword, newPassword, confirmPassword) {
+    if (!oldPassword) {
+      const err = new Error("Vui lòng nhập mật khẩu hiện tại.");
+      err.status = 400;
+      throw err;
+    }
+    if (!newPassword || newPassword.length < 6) {
+      const err = new Error("Mật khẩu mới phải có ít nhất 6 ký tự.");
+      err.status = 400;
+      throw err;
+    }
+    if (newPassword !== confirmPassword) {
+      const err = new Error("Mật khẩu xác nhận không trùng khớp.");
+      err.status = 400;
+      throw err;
+    }
+
+    return await partnerRepository.changePassword(partnerId, oldPassword, newPassword);
+  }
 }
 
 module.exports = new PartnerService();

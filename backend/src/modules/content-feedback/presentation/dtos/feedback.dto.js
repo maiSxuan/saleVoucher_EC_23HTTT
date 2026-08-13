@@ -9,6 +9,10 @@ function buildFeedbackDto(item) {
     status: item.trang_thai,
     voucherPurchaseId: item.ma_voucher_mua, // ma_voucher_mua
     handlerId: item.ma_tk_xuly, // ma_tk_xuly
+    rejectReason: item.ly_do_tu_choi_kn || null,
+    voucherCode: item.voucher_mua?.voucher_code || null,
+    voucherCodeStatus: item.voucher_mua?.trang_thai || null,
+    orderId: item.voucher_mua?.ma_dh || null,
   };
 }
 

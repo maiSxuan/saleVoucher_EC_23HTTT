@@ -14,7 +14,6 @@ import {
   Bell,             // Icon thông báo
   LayoutGrid,       // Icon quản lý nội dung
   ShoppingCart,     // Icon quản lý đơn hàng
-  MessageSquare,    // Icon xử lý khiếu nại
   Star,             // Icon quản lý đánh giá
 } from 'lucide-react';
 
@@ -27,7 +26,6 @@ const NAV_ITEMS = [
   { path: '/admin/users', label: 'Quản lý người dùng', icon: Users },
   { path: '/admin/logs', label: 'Nhật ký hệ thống', icon: ScrollText },
   { path: '/admin/contents', label: 'Quản lý nội dung', icon: LayoutGrid },
-  { path: '/admin/complaints', label: 'Xử lý khiếu nại', icon: MessageSquare },
   { path: '/admin/reviews', label: 'Quản lý đánh giá', icon: Star },
 ];
 
@@ -153,10 +151,9 @@ export function AdminLayout({ children }) {
                 title={!sidebarOpen ? item.label : undefined}
                 className={`
                   flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
-                  ${
-                    active
-                      ? 'bg-blue-50 text-blue-700 font-semibold shadow-xs'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  ${active
+                    ? 'bg-blue-50 text-blue-700 font-semibold shadow-xs'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   }
                 `}
               >
