@@ -45,6 +45,24 @@ export default function VoucherDetailPage() {
   const [buyingNow, setBuyingNow] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
+  const [selectedRatingFilter, setSelectedRatingFilter] = useState("all");
+  const [reviewCurrentPage, setReviewCurrentPage] = useState(1);
+  const reviewPageSize = 20;
+
+  useEffect(() => {
+    setReviewCurrentPage(1);
+  }, [selectedRatingFilter]);
+
+  const filteredReviews = reviews.filter((r) => {
+    if (selectedRatingFilter === "all") return true;
+    return r.rating === parseInt(selectedRatingFilter, 10);
+  });
+
+  const totalReviewPages = Math.ceil(filteredReviews.length / reviewPageSize) || 1;
+  const paginatedReviews = filteredReviews.slice(
+    (reviewCurrentPage - 1) * reviewPageSize,
+    reviewCurrentPage * reviewPageSize
+  );
 
   // Bước 2-3: hệ thống tiếp nhận yêu cầu và truy xuất thông tin chi tiết
   useEffect(() => {
@@ -274,7 +292,7 @@ export default function VoucherDetailPage() {
 
           {/* Vùng đọc dữ liệu review cho từng voucher */}
           <div className="bg-white rounded-xl border border-gray-100 p-4">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
                 <Star size={16} className="text-yellow-500 fill-yellow-500" />
                 Đánh giá từ khách hàng ({reviews.length})
@@ -293,6 +311,32 @@ export default function VoucherDetailPage() {
               )}
             </div>
 
+            {/* Filter by star rating */}
+            {reviews.length > 0 && (
+              <div className="flex gap-1.5 mb-3 flex-wrap">
+                {[
+                  { key: 'all', label: 'Tất cả' },
+                  { key: '5', label: '5 ⭐' },
+                  { key: '4', label: '4 ⭐' },
+                  { key: '3', label: '3 ⭐' },
+                  { key: '2', label: '2 ⭐' },
+                  { key: '1', label: '1 ⭐' },
+                ].map(btn => (
+                  <button
+                    key={btn.key}
+                    onClick={() => setSelectedRatingFilter(btn.key)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                      selectedRatingFilter === btn.key
+                        ? 'bg-orange-500 text-white shadow-xs'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {btn.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {loadingReviews ? (
               <p className="text-xs text-gray-400 py-3 text-center">
                 Đang tải đánh giá...
@@ -301,39 +345,70 @@ export default function VoucherDetailPage() {
               <p className="text-xs text-gray-400 py-4 text-center">
                 Chưa có đánh giá nào cho voucher này.
               </p>
+            ) : filteredReviews.length === 0 ? (
+              <p className="text-xs text-gray-400 py-4 text-center">
+                Không có đánh giá nào phù hợp với bộ lọc sao này.
+              </p>
             ) : (
-              <div className="space-y-3 divide-y divide-gray-100">
-                {reviews.map((rev, idx) => (
-                  <div key={rev.id || idx} className={idx > 0 ? "pt-3" : ""}>
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            size={12}
-                            className={
-                              star <= (rev.rating || 5)
-                                ? "text-yellow-500 fill-yellow-500"
-                                : "text-gray-300"
-                            }
-                          />
-                        ))}
-                        <span className="text-xs font-semibold text-gray-700 ml-1">
-                          {rev.rating} sao
+              <>
+                <div className="space-y-3 divide-y divide-gray-100">
+                  {paginatedReviews.map((rev, idx) => (
+                    <div key={rev.id || idx} className={idx > 0 ? "pt-3" : ""}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              size={12}
+                              className={
+                                star <= (rev.rating || 5)
+                                  ? "text-yellow-500 fill-yellow-500"
+                                  : "text-gray-300"
+                              }
+                            />
+                          ))}
+                          <span className="text-xs font-semibold text-gray-700 ml-1">
+                            {rev.rating} sao
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-gray-400">
+                          {rev.createdAt
+                            ? new Date(rev.createdAt).toLocaleDateString("vi-VN")
+                            : ""}
                         </span>
                       </div>
-                      <span className="text-[10px] text-gray-400">
-                        {rev.createdAt
-                          ? new Date(rev.createdAt).toLocaleDateString("vi-VN")
-                          : ""}
-                      </span>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {rev.comment || "Không có nội dung."}
+                      </p>
                     </div>
-                    <p className="text-xs text-gray-600 mt-1">
-                      {rev.comment || "Không có nội dung."}
-                    </p>
+                  ))}
+                </div>
+
+                {/* Pagination footer */}
+                {totalReviewPages > 1 && (
+                  <div className="flex items-center justify-between pt-3 mt-3 border-t border-gray-100">
+                    <span className="text-[11px] text-gray-400">
+                      Trang {reviewCurrentPage} / {totalReviewPages} ({filteredReviews.length} đánh giá)
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setReviewCurrentPage(p => Math.max(p - 1, 1))}
+                        disabled={reviewCurrentPage === 1}
+                        className="px-2.5 py-1 border border-gray-200 rounded text-xs text-gray-600 disabled:opacity-40 hover:bg-gray-50"
+                      >
+                        Trước
+                      </button>
+                      <button
+                        onClick={() => setReviewCurrentPage(p => Math.min(p + 1, totalReviewPages))}
+                        disabled={reviewCurrentPage === totalReviewPages}
+                        className="px-2.5 py-1 border border-gray-200 rounded text-xs text-gray-600 disabled:opacity-40 hover:bg-gray-50"
+                      >
+                        Sau
+                      </button>
+                    </div>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </div>
         </div>
