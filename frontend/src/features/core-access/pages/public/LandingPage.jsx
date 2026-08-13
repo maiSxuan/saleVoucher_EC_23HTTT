@@ -25,8 +25,9 @@ import { getPartnersApi } from "../../../../shared/api/partnerApi";
 function cleanImageUrl(url) {
   if (!url || typeof url !== "string") return null;
   let cleaned = url.trim();
-  // Strip trailing $0 or invalid trailing characters
-  cleaned = cleaned.replace(/\$0$/, "").trim();
+  if (cleaned.includes("$0")) {
+    cleaned = cleaned.split("$0")[0].trim();
+  }
   if (cleaned.startsWith("data:") || cleaned.startsWith("http://") || cleaned.startsWith("https://")) {
     return cleaned;
   }
@@ -128,7 +129,7 @@ export default function LandingPage() {
 
       const partnerObj = v.partner || (v.voucher_cn && v.voucher_cn[0]?.chinhanh?.hosodn) || {};
       const ten_dn = v.ten_dn || partnerObj.name || partnerObj.ten_dn || "Thương hiệu đối tác";
-      const logo_dn = v.logo || v.logo_url || partnerObj.logo || partnerObj.logo_url;
+      const logo_dn = v.logo || partnerObj.logo;
 
       const categoryName = v.category || v.ten_danh_muc || v.danh_muc?.ten_danh_muc || "Khác";
       const ma_danh_muc = v.ma_danh_muc || v.categoryId || v.danh_muc_id || v.danh_muc?.ma_danh_muc || categoryName;
@@ -166,7 +167,7 @@ export default function LandingPage() {
           map.set(name.toLowerCase(), {
             ma_hs: p.ma_hs || p.id,
             ten_dn: name,
-            logo_url: p.logo || p.logo_url || p.hinh_anh,
+            logo: p.logo,
           });
         }
       });
@@ -177,27 +178,10 @@ export default function LandingPage() {
         map.set(v.ten_dn.toLowerCase(), {
           ma_hs: v.ma_voucher,
           ten_dn: v.ten_dn,
-          logo_url: v.logo_dn,
+          logo: v.logo_dn,
         });
       }
     });
-
-    if (map.size === 0) {
-      [
-        { name: "CGV Cinemas", icon: "🎬" },
-        { name: "Highlands Coffee", icon: "☕" },
-        { name: "Starbucks", icon: "🍵" },
-        { name: "GrabFood", icon: "🛵" },
-        { name: "Shopee", icon: "🛒" },
-        { name: "Phúc Long", icon: "🧋" },
-        { name: "Haidilao Hotpot", icon: "🍲" },
-        { name: "Kichi Kichi", icon: "🍣" },
-        { name: "Golden Gate", icon: "🍖" },
-        { name: "Lotteria", icon: "🍔" },
-      ].forEach((b) => {
-        map.set(b.name.toLowerCase(), { ma_hs: b.name, ten_dn: b.name, icon: b.icon });
-      });
-    }
 
     return Array.from(map.values());
   }, [partners, normalizedVouchers]);
@@ -419,29 +403,8 @@ export default function LandingPage() {
                   <span className="w-3 h-3 rounded-full bg-emerald-400" />
                 </div>
                 <span className="text-xs font-mono font-bold text-white bg-white/20 border border-white/30 px-2.5 py-1 rounded-full">
-                  ⚡ HOT DEAL IN TOWN
+                  ⚡ HOT DEAL AT SNOW VOUCHER!
                 </span>
-              </div>
-
-              <div className="aspect-video bg-gradient-to-tr from-sky-600 via-blue-600 to-indigo-700 rounded-2xl p-5 text-white relative overflow-hidden flex flex-col justify-between shadow-lg">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-sky-200">Snow Special</p>
-                    <p className="text-xl font-black mt-0.5">E-VOUCHER BUFFET LẨU</p>
-                  </div>
-                  <span className="bg-yellow-400 text-slate-950 font-black text-xs px-2.5 py-1 rounded-lg shadow-sm">
-                    GIẢM 40%
-                  </span>
-                </div>
-                <div className="flex justify-between items-end pt-4">
-                  <div>
-                    <p className="text-[10px] opacity-80">Giá độc quyền Snow Voucher</p>
-                    <p className="text-2xl font-black">299.000 ₫</p>
-                  </div>
-                  <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-xl">
-                    🍲
-                  </div>
-                </div>
               </div>
 
               <div className="space-y-2">
@@ -449,7 +412,6 @@ export default function LandingPage() {
                   <span className="flex items-center gap-1.5 text-yellow-300 font-semibold">
                     <CheckCircle2 size={14} /> Mã QR Sử Dụng Trực Tiếp
                   </span>
-                  <span className="text-sky-100">Đã bán 1.2k+</span>
                 </div>
               </div>
             </div>
@@ -490,7 +452,7 @@ export default function LandingPage() {
             >
               {brandList.map((brand, idx) => {
                 const name = brand.ten_dn || brand.name || "Doanh nghiệp";
-                const logo = cleanImageUrl(brand.logo_url || brand.logo);
+                const logo = cleanImageUrl(brand.logo);
 
                 return (
                   <div
@@ -613,48 +575,11 @@ export default function LandingPage() {
                     </div>
                   );
                 })
-              : [
-                  { name: "Ẩm Thực & Nhà Hàng", icon: "🍲" },
-                  { name: "Cà Phê & Đồ Uống", icon: "☕" },
-                  { name: "Giải Trí & Phim", icon: "🎬" },
-                  { name: "Mua Sắm & Siêu Thị", icon: "🛒" },
-                  { name: "Du Lịch & Vé Khoang", icon: "✈️" },
-                  { name: "Sức Khỏe & Làm Đẹp", icon: "💅" },
-                ].map((demoCat) => {
-                  const count = countVouchersForCategory(demoCat);
-                  const isSelected = isVoucherInCategory({ categoryName: demoCat.name }, selectedCategory);
-
-                  return (
-                    <div
-                      key={demoCat.name}
-                      onClick={() => {
-                        setSelectedCategory(isSelected && selectedCategory !== "all" ? "all" : demoCat.name);
-                      }}
-                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between h-36 ${
-                        isSelected
-                          ? "bg-gradient-to-br from-sky-500 to-blue-600 text-white border-sky-400 shadow-md scale-102"
-                          : "bg-white border-slate-200 hover:border-sky-300 hover:shadow-md"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg ${isSelected ? "bg-white/20 text-white" : "bg-sky-50 text-sky-600"}`}>
-                          {demoCat.icon}
-                        </div>
-                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${isSelected ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"}`}>
-                          {count} deal
-                        </span>
-                      </div>
-                      <div>
-                        <h3 className={`font-bold text-sm line-clamp-1 ${isSelected ? "text-white" : "text-slate-900"}`}>
-                          {demoCat.name}
-                        </h3>
-                        <p className={`text-[11px] mt-0.5 font-medium ${isSelected ? "text-sky-100" : "text-slate-400"}`}>
-                          {count > 0 ? "Đang phát hành" : "Chờ cập nhật"}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
+              : (
+                <div className="col-span-full py-8 text-center text-xs text-slate-400">
+                  Đang tải danh mục từ hệ thống...
+                </div>
+              )}
           </div>
         </div>
       </section>

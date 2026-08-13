@@ -84,6 +84,7 @@ class PartnerProfileRequestRepository {
       ma_so_thue_moi: payload.ma_so_thue_moi || null,
       dia_chi_moi: payload.dia_chi_moi || null,
       giay_phep_kinh_doanh_moi: payload.giay_phep_kinh_doanh_moi || null,
+      logo_new: payload.logo_new || payload.logo_moi || payload.logo || null,
       ho_ten_nguoi_dai_dien_moi: payload.ho_ten_nguoi_dai_dien_moi || null,
       sdt_nguoi_dai_dien_moi: payload.sdt_nguoi_dai_dien_moi || null,
       email_nguoi_dai_dien_moi: payload.email_nguoi_dai_dien_moi || null,

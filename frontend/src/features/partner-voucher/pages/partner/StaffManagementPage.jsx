@@ -42,6 +42,7 @@ export function StaffManagementPage() {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [emailError, setEmailError] = useState("");
 
   const getActiveUser = () => {
     try {
@@ -137,6 +138,7 @@ export function StaffManagementPage() {
   };
 
   const handleSave = async () => {
+    setEmailError("");
     if (!form.ho_ten.trim()) {
       setToastMessage("Vui lòng nhập họ và tên nhân viên.");
       return;
@@ -150,6 +152,7 @@ export function StaffManagementPage() {
       return;
     }
     if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      setEmailError("Địa chỉ email không đúng định dạng.");
       setToastMessage("Địa chỉ email không đúng định dạng.");
       return;
     }
@@ -174,7 +177,11 @@ export function StaffManagementPage() {
       await reload();
       setShowModal(false);
     } catch (e) {
-      setToastMessage("Lỗi lưu nhân viên: " + e.message);
+      const errMsg = e.message || "Lưu nhân viên thất bại.";
+      if (errMsg.toLowerCase().includes("email") || errMsg.toLowerCase().includes("đã tồn tại")) {
+        setEmailError(errMsg);
+      }
+      setToastMessage("Lỗi lưu nhân viên: " + errMsg);
     }
   };
 
@@ -364,21 +371,31 @@ export function StaffManagementPage() {
                   <label className="block text-xs font-semibold text-gray-700 mb-1">Email *</label>
                   <input
                     type="email"
-                    className="w-full border rounded-lg px-3.5 py-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className={`w-full border rounded-lg px-3.5 py-2 focus:ring-2 focus:outline-none ${emailError ? "border-rose-500 focus:ring-rose-500" : "border-gray-300 focus:ring-blue-500"}`}
                     placeholder="email@domain.com"
                     value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    onChange={(e) => {
+                      setForm({ ...form, email: e.target.value });
+                      if (emailError) setEmailError("");
+                    }}
                   />
+                  {emailError && <p className="text-xs text-rose-600 font-semibold mt-1">⚠️ {emailError}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">Số điện thoại *</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1 flex items-center justify-between">
+                    <span>Số điện thoại *</span>
+                    <span className={`text-xs font-semibold ${form.sdt?.length === 10 ? "text-emerald-600 font-bold" : "text-slate-400"}`}>
+                      {form.sdt?.length || 0}/10 chữ số
+                    </span>
+                  </label>
                   <input
                     type="text"
+                    maxLength={10}
                     className="w-full border rounded-lg px-3.5 py-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     placeholder="0901234567"
                     value={form.sdt}
-                    onChange={(e) => setForm({ ...form, sdt: e.target.value })}
+                    onChange={(e) => setForm({ ...form, sdt: e.target.value.replace(/\D/g, "") })}
                   />
                 </div>
 
@@ -387,7 +404,7 @@ export function StaffManagementPage() {
                     <label className="block text-xs font-semibold text-gray-700 mb-1">Mật khẩu khởi tạo *</label>
                     <input
                       type="password"
-                      className="w-full border rounded-lg px-3.5 py-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
+                      className="w-full border rounded-lg px-3.5 py-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                       placeholder="Nhập mật khẩu (Mặc định: 123456)"
                       value={form.mat_khau || "123456"}
                       onChange={(e) => setForm({ ...form, mat_khau: e.target.value })}
@@ -419,13 +436,19 @@ export function StaffManagementPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">Số CCCD / CMND</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1 flex items-center justify-between">
+                    <span>Số CCCD / CMND</span>
+                    <span className={`text-xs font-semibold ${form.cccd?.length === 12 ? "text-emerald-600 font-bold" : "text-slate-400"}`}>
+                      {form.cccd?.length || 0}/12 chữ số
+                    </span>
+                  </label>
                   <input
                     type="text"
+                    maxLength={12}
                     className="w-full border rounded-lg px-3.5 py-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     placeholder="079098000000"
                     value={form.cccd}
-                    onChange={(e) => setForm({ ...form, cccd: e.target.value })}
+                    onChange={(e) => setForm({ ...form, cccd: e.target.value.replace(/\D/g, "") })}
                   />
                 </div>
 

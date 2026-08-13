@@ -44,7 +44,7 @@ function mapVoucher(v) {
         name: hosodn.ten_dn,
         taxCode: hosodn.ma_so_thue,
         address: hosodn.dia_chi,
-        logo: hosodn.logo || hosodn.logo_url,
+        logo: hosodn.logo || null,
       }
     : null;
 

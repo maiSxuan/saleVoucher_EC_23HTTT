@@ -63,6 +63,7 @@ class VoucherService {
     if (payload.trang_thai === "Cho duyet") {
       try {
         await auditLogService.log({
+          actorId: actorId || payload.actorId || payload.ma_tk,
           actorRole: "PARTNER",
           action: "SUBMIT_VOUCHER_REVIEW",
           targetType: "VOUCHER",
@@ -79,7 +80,7 @@ class VoucherService {
     return voucher;
   }
 
-  async updateVoucher(id, payload) {
+  async updateVoucher(id, payload, actorId = null) {
     if (payload.hinh_anh_url && payload.hinh_anh_url.startsWith("data:")) {
       payload.hinh_anh_url = await uploadBase64ToSupabase(payload.hinh_anh_url, "vouchers");
     }
@@ -91,6 +92,7 @@ class VoucherService {
     if (payload.trang_thai === "Cho duyet") {
       try {
         await auditLogService.log({
+          actorId: actorId || payload.actorId || payload.ma_tk,
           actorRole: "PARTNER",
           action: "SUBMIT_VOUCHER_REVIEW",
           targetType: "VOUCHER",
@@ -107,10 +109,11 @@ class VoucherService {
     return updated;
   }
 
-  async submitForReview(id) {
+  async submitForReview(id, actorId = null) {
     const res = await voucherRepository.updateStatus(id, "Cho duyet", "Cho duyet");
     try {
       await auditLogService.log({
+        actorId: actorId,
         actorRole: "PARTNER",
         action: "SUBMIT_VOUCHER_REVIEW",
         targetType: "VOUCHER",
@@ -126,13 +129,14 @@ class VoucherService {
     return res;
   }
 
-  async approveVoucher(id, isHidden = false) {
+  async approveVoucher(id, isHidden = false, reason = "", actorId = null) {
     const status = isHidden ? "Tam ngung" : "Dang ban";
     const res = await voucherRepository.updateStatus(id, status, "Da duyet");
 
     try {
       await auditLogService.log(
         {
+          actorId: actorId,
           actorRole: "ADMIN",
           action: "APPROVE_VOUCHER",
           targetType: "VOUCHER",
@@ -151,12 +155,13 @@ class VoucherService {
     return res;
   }
 
-  async rejectVoucher(id, reason = "") {
+  async rejectVoucher(id, reason = "", actorId = null) {
     const res = await voucherRepository.updateStatus(id, "Tu choi", "Tu choi", reason);
 
     try {
       await auditLogService.log(
         {
+          actorId: actorId,
           actorRole: "ADMIN",
           action: "REJECT_VOUCHER",
           targetType: "VOUCHER",

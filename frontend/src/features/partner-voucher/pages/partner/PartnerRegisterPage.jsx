@@ -61,8 +61,9 @@ export function PartnerRegisterPage() {
     ngay_sinh: "1990-01-01",
     gioi_tinh: "Nam",
 
-    // Step 4: Business License
+    // Step 4: Business License & Brand Logo
     giay_phep_kinh_doanh: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80",
+    logo: "",
 
     // Step 5: Initial Branch Info
     ten_chi_nhanh: "",
@@ -76,7 +77,7 @@ export function PartnerRegisterPage() {
     { number: 1, title: "Tạo tài khoản" },
     { number: 2, title: "Thông tin doanh nghiệp" },
     { number: 3, title: "Người đại diện" },
-    { number: 4, title: "Giấy phép kinh doanh" },
+    { number: 4, title: "Logo & Đăng ký kinh doanh" },
     { number: 5, title: "Chi nhánh ban đầu" },
     { number: 6, title: "Xem lại & Gửi duyệt" },
   ];
@@ -86,6 +87,24 @@ export function PartnerRegisterPage() {
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
+  };
+
+  const handleLogoFileUpload = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      setToastMessage("Dung lượng tệp Logo vượt quá 10MB. Vui lòng chọn tệp nhỏ hơn.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const dataUrl = evt.target.result;
+      setFormData((prev) => ({ ...prev, logo: dataUrl }));
+      setToastMessage(`Đã tải lên tệp Logo "${file.name}" thành công!`);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleLicenseFileUpload = (e) => {
@@ -232,6 +251,7 @@ export function PartnerRegisterPage() {
         ma_so_thue: formData.ma_so_thue,
         dia_chi: formData.dia_chi,
         giay_phep_kinh_doanh: formData.giay_phep_kinh_doanh,
+        logo: formData.logo,
         ho_ten: formData.ho_ten,
         sdt: formData.sdt,
         email: formData.email,
@@ -422,15 +442,19 @@ export function PartnerRegisterPage() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Số điện thoại liên hệ <span className="text-rose-500">*</span>
+                  <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center justify-between">
+                    <span>Số điện thoại liên hệ <span className="text-rose-500">*</span></span>
+                    <span className={`text-xs font-semibold ${formData.account_sdt?.length === 10 ? "text-emerald-600 font-bold" : "text-slate-400"}`}>
+                      {formData.account_sdt?.length || 0}/10 chữ số
+                    </span>
                   </label>
                   <input
                     type="text"
+                    maxLength={10}
                     disabled={!!createdUser}
                     value={formData.account_sdt}
-                    onChange={(e) => handleInputChange("account_sdt", e.target.value)}
-                    placeholder=""
+                    onChange={(e) => handleInputChange("account_sdt", e.target.value.replace(/\D/g, ""))}
+                    placeholder="Ví dụ: 0901234567"
                     className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-50"
                   />
                   {errors.account_sdt && <p className="text-xs text-rose-600 mt-1">{errors.account_sdt}</p>}
@@ -459,13 +483,17 @@ export function PartnerRegisterPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Mã số thuế / Mã ĐKKD <span className="text-rose-500">*</span>
+                  <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center justify-between">
+                    <span>Mã số thuế / Mã ĐKKD <span className="text-rose-500">*</span></span>
+                    <span className={`text-xs font-semibold ${formData.ma_so_thue?.length >= 10 && formData.ma_so_thue?.length <= 13 ? "text-emerald-600 font-bold" : "text-slate-400"}`}>
+                      {formData.ma_so_thue?.length || 0}/10-13 chữ số
+                    </span>
                   </label>
                   <input
                     type="text"
+                    maxLength={13}
                     value={formData.ma_so_thue}
-                    onChange={(e) => handleInputChange("ma_so_thue", e.target.value)}
+                    onChange={(e) => handleInputChange("ma_so_thue", e.target.value.replace(/\D/g, ""))}
                     placeholder="Ví dụ: 0312345678"
                     className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
@@ -509,13 +537,17 @@ export function PartnerRegisterPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Số điện thoại liên hệ <span className="text-rose-500">*</span>
+                  <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center justify-between">
+                    <span>Số điện thoại liên hệ <span className="text-rose-500">*</span></span>
+                    <span className={`text-xs font-semibold ${formData.sdt?.length === 10 ? "text-emerald-600 font-bold" : "text-slate-400"}`}>
+                      {formData.sdt?.length || 0}/10 chữ số
+                    </span>
                   </label>
                   <input
                     type="text"
+                    maxLength={10}
                     value={formData.sdt}
-                    onChange={(e) => handleInputChange("sdt", e.target.value)}
+                    onChange={(e) => handleInputChange("sdt", e.target.value.replace(/\D/g, ""))}
                     placeholder="0901234567"
                     className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
@@ -539,13 +571,17 @@ export function PartnerRegisterPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Số CCCD / CMND <span className="text-rose-500">*</span>
+                  <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center justify-between">
+                    <span>Số CCCD / CMND <span className="text-rose-500">*</span></span>
+                    <span className={`text-xs font-semibold ${formData.cccd?.length === 12 ? "text-emerald-600 font-bold" : "text-slate-400"}`}>
+                      {formData.cccd?.length || 0}/12 chữ số
+                    </span>
                   </label>
                   <input
                     type="text"
+                    maxLength={12}
                     value={formData.cccd}
-                    onChange={(e) => handleInputChange("cccd", e.target.value)}
+                    onChange={(e) => handleInputChange("cccd", e.target.value.replace(/\D/g, ""))}
                     placeholder="079090123456"
                     className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
@@ -581,51 +617,102 @@ export function PartnerRegisterPage() {
             </div>
           )}
 
-          {/* STEP 4: License Document */}
+          {/* STEP 4: Logo & License Document */}
           {currentStep === 4 && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">
-                Bước 4: Đăng Tải Giấy Phép Kinh Doanh
+                Bước 4: Đăng Tải Logo Thương Hiệu & Giấy Phép Kinh Doanh
               </h3>
               <p className="text-xs text-slate-500">
-                Tải lên bản scan hoặc ảnh chụp rõ nét Giấy phép đăng ký kinh doanh còn hiệu lực (Định dạng JPG, PNG hoặc PDF, tối đa 10MB).
+                Tải lên Logo thương hiệu và Giấy phép đăng ký kinh doanh còn hiệu lực (Tệp ảnh PNG, JPG hoặc PDF, tối đa 10MB).
               </p>
 
-              <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-blue-500 transition-colors bg-slate-50">
-                <div className="text-3xl mb-2">📄</div>
-                <div className="text-sm font-semibold text-slate-800">Tải lên tài liệu pháp lý</div>
-                <div className="text-xs text-slate-500 mt-1">Kéo thả file vào đây hoặc bấm để chọn tệp từ máy tính</div>
-                <input
-                  type="file"
-                  className="hidden"
-                  id="license-upload"
-                  accept="image/*,.pdf"
-                  onChange={handleLicenseFileUpload}
-                />
-                <label
-                  htmlFor="license-upload"
-                  className="mt-4 inline-block px-4 py-2 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-100"
-                >
-                  Chọn tệp từ máy tính
-                </label>
-              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Logo Upload Card */}
+                <div className="border-2 border-dashed border-slate-300 rounded-xl p-5 text-center hover:border-blue-500 transition-colors bg-slate-50 flex flex-col items-center justify-between">
+                  <div className="w-full">
+                    <div className="text-3xl mb-2">🖼️</div>
+                    <div className="text-sm font-semibold text-slate-800">Logo Thương Hiệu Doanh Nghiệp</div>
+                    <div className="text-xs text-slate-500 mt-1">Hiển thị trên danh mục & Slider đối tác Landing Page</div>
+                    
+                    {formData.logo ? (
+                      <div className="mt-3 p-2 bg-white rounded-lg border border-slate-200 inline-block">
+                        <img
+                          src={formData.logo}
+                          alt="Logo xem trước"
+                          className="w-24 h-24 object-contain rounded-md"
+                        />
+                      </div>
+                    ) : (
+                      <div className="mt-3 w-24 h-24 rounded-lg border border-dashed border-slate-300 bg-white mx-auto flex items-center justify-center text-xs text-slate-400">
+                        Chưa chọn logo
+                      </div>
+                    )}
+                  </div>
 
-              {formData.giay_phep_kinh_doanh && (
-                <div className="mt-4 p-4 bg-white rounded-xl border border-slate-200">
-                  <div className="text-xs font-semibold text-slate-700 mb-2">Xem trước bản ĐKKD đã tải lên:</div>
-                  {formData.giay_phep_kinh_doanh.startsWith("data:application/pdf") ? (
-                    <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 text-xs font-semibold">
-                      <span>📄 Tệp PDF Giấy phép ĐKKD đã được chọn</span>
-                    </div>
-                  ) : (
-                    <img
-                      src={formData.giay_phep_kinh_doanh}
-                      alt="Giấy phép kinh doanh"
-                      className="max-h-48 rounded-lg border border-slate-200 object-contain bg-slate-50"
+                  <div className="mt-4 w-full">
+                    <input
+                      type="file"
+                      className="hidden"
+                      id="logo-upload"
+                      accept="image/*"
+                      onChange={handleLogoFileUpload}
                     />
-                  )}
+                    <label
+                      htmlFor="logo-upload"
+                      className="w-full inline-block px-4 py-2 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-100 shadow-xs"
+                    >
+                      📁 Chọn tệp Logo (PNG/JPG)
+                    </label>
+                  </div>
                 </div>
-              )}
+
+                {/* License Upload Card */}
+                <div className="border-2 border-dashed border-slate-300 rounded-xl p-5 text-center hover:border-blue-500 transition-colors bg-slate-50 flex flex-col items-center justify-between">
+                  <div className="w-full">
+                    <div className="text-3xl mb-2">📄</div>
+                    <div className="text-sm font-semibold text-slate-800">Giấy Phép Đăng Ký Kinh Doanh</div>
+                    <div className="text-xs text-slate-500 mt-1">Tài liệu thẩm định pháp lý doanh nghiệp (Ảnh/PDF)</div>
+                    
+                    {formData.giay_phep_kinh_doanh ? (
+                      <div className="mt-3 p-2 bg-white rounded-lg border border-slate-200 inline-block">
+                        {formData.giay_phep_kinh_doanh.startsWith("data:application/pdf") ? (
+                          <div className="w-24 h-24 flex flex-col items-center justify-center bg-blue-50 text-blue-700 text-xs font-semibold rounded-md p-1">
+                            <span className="text-2xl">📄</span>
+                            <span>Tệp PDF</span>
+                          </div>
+                        ) : (
+                          <img
+                            src={formData.giay_phep_kinh_doanh}
+                            alt="Giấy phép kinh doanh"
+                            className="w-24 h-24 object-cover rounded-md"
+                          />
+                        )}
+                      </div>
+                    ) : (
+                      <div className="mt-3 w-24 h-24 rounded-lg border border-dashed border-slate-300 bg-white mx-auto flex items-center justify-center text-xs text-slate-400">
+                        Chưa chọn GPKD
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-4 w-full">
+                    <input
+                      type="file"
+                      className="hidden"
+                      id="license-upload"
+                      accept="image/*,.pdf"
+                      onChange={handleLicenseFileUpload}
+                    />
+                    <label
+                      htmlFor="license-upload"
+                      className="w-full inline-block px-4 py-2 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-100 shadow-xs"
+                    >
+                      📁 Chọn tệp ĐKKD (Ảnh/PDF)
+                    </label>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -701,6 +788,16 @@ export function PartnerRegisterPage() {
                   <span className="text-slate-500">Tên doanh nghiệp:</span>
                   <span className="font-semibold text-slate-900">{formData.ten_dn || "Chưa nhập"}</span>
                 </div>
+                {formData.logo && (
+                  <div className="grid grid-cols-2 gap-2 border-b border-slate-200 pb-2 items-center">
+                    <span className="text-slate-500">Logo thương hiệu:</span>
+                    <img
+                      src={formData.logo}
+                      alt="Logo xem trước"
+                      className="w-12 h-12 object-contain rounded-lg border border-slate-300 bg-white p-0.5"
+                    />
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-2 border-b border-slate-200 pb-2">
                   <span className="text-slate-500">Mã số thuế:</span>
                   <span className="font-semibold text-slate-900">{formData.ma_so_thue || "Chưa nhập"}</span>
@@ -783,8 +880,11 @@ export function PartnerRegisterPage() {
               )} */}
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Nhập mã OTP 6 chữ số *
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
+                  <span>Nhập mã OTP 6 chữ số *</span>
+                  <span className={`text-xs font-semibold ${otpValue?.length === 6 ? "text-emerald-600 font-bold" : "text-slate-400"}`}>
+                    {otpValue?.length || 0}/6 chữ số
+                  </span>
                 </label>
                 <input
                   type="text"

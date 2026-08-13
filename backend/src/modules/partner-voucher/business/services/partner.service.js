@@ -167,6 +167,7 @@ class PartnerService {
     // Ghi Audit Log Đăng ký tài khoản (SUC-PAR-01)
     try {
       await auditLogService.log({
+        actorId: userAccount?.ma_tk || userAccount?.id,
         actorRole: "PARTNER",
         action: "REGISTER_PARTNER_ACCOUNT",
         targetType: "TAIKHOAN",
@@ -223,13 +224,17 @@ class PartnerService {
     return await partnerRepository.checkTaxCodeUniqueness(mst);
   }
 
-  async createPartner(payload) {
+  async createPartner(payload, actorId = null) {
     if (payload.giay_phep_kinh_doanh && payload.giay_phep_kinh_doanh.startsWith("data:")) {
       payload.giay_phep_kinh_doanh = await uploadBase64ToSupabase(payload.giay_phep_kinh_doanh, "licenses");
+    }
+    if (payload.logo && typeof payload.logo === "string" && payload.logo.startsWith("data:")) {
+      payload.logo = await uploadBase64ToSupabase(payload.logo, "logos");
     }
     const partner = await partnerRepository.create(payload);
     try {
       await auditLogService.log({
+        actorId: actorId || partner?.id_nguoi_dai_dien,
         actorRole: "PARTNER",
         action: "REGISTER_PARTNER_PROFILE",
         targetType: "HOSODN",
@@ -251,7 +256,7 @@ class PartnerService {
     return await partnerRepository.update(id, payload);
   }
 
-  async approvePartner(id, reason = "") {
+  async approvePartner(id, reason = "", actorId = null) {
     const updated = await partnerRepository.updateStatus(id, "Dang hoat dong");
     const branches = await branchRepository.findByPartnerId(id);
     await Promise.all(
@@ -262,6 +267,7 @@ class PartnerService {
     try {
       await auditLogService.log(
         {
+          actorId: actorId,
           actorRole: "ADMIN",
           action: "APPROVE_PARTNER",
           targetType: "HOSODN",
@@ -280,13 +286,14 @@ class PartnerService {
     return updated;
   }
 
-  async rejectPartner(id, reason = "") {
+  async rejectPartner(id, reason = "", actorId = null) {
     const updated = await partnerRepository.updateStatus(id, "Tu choi", reason);
 
     // Ghi Audit Log Từ chối hồ sơ đối tác (BR-ADM-02)
     try {
       await auditLogService.log(
         {
+          actorId: actorId,
           actorRole: "ADMIN",
           action: "REJECT_PARTNER",
           targetType: "HOSODN",
@@ -305,13 +312,14 @@ class PartnerService {
     return updated;
   }
 
-  async lockUnlockPartner(id, isLocking, reason = "") {
+  async lockUnlockPartner(id, isLocking, reason = "", actorId = null) {
     const status = isLocking ? "Tam khoa" : "Dang hoat dong";
     const updated = await partnerRepository.updateStatus(id, status, reason);
 
     try {
       await auditLogService.log(
         {
+          actorId: actorId,
           actorRole: "ADMIN",
           action: isLocking ? "LOCK_PARTNER" : "UNLOCK_PARTNER",
           targetType: "HOSODN",
@@ -340,6 +348,15 @@ class PartnerService {
         payload.giay_phep_kinh_doanh_moi = await uploadBase64ToSupabase(payload.giay_phep_kinh_doanh_moi, "licenses");
       } catch (e) {
         console.warn("[PartnerService] Upload license file error:", e.message);
+      }
+    }
+
+    const rawLogoNew = payload.logo_new || payload.logo_moi || payload.logo;
+    if (rawLogoNew && typeof rawLogoNew === "string" && rawLogoNew.startsWith("data:")) {
+      try {
+        payload.logo_new = await uploadBase64ToSupabase(rawLogoNew, "logos");
+      } catch (e) {
+        console.warn("[PartnerService] Upload logo file error:", e.message);
       }
     }
 
@@ -407,6 +424,7 @@ class PartnerService {
     if (req.ma_so_thue_moi) updateHosodnFields.ma_so_thue = req.ma_so_thue_moi;
     if (req.dia_chi_moi) updateHosodnFields.dia_chi = req.dia_chi_moi;
     if (req.giay_phep_kinh_doanh_moi) updateHosodnFields.giay_phep_kinh_doanh = req.giay_phep_kinh_doanh_moi;
+    if (req.logo_new || req.logo_moi || req.logo) updateHosodnFields.logo = req.logo_new || req.logo_moi || req.logo;
 
     if (
       req.ho_ten_nguoi_dai_dien_moi ||

@@ -1,41 +1,41 @@
 const supabase = require("../../../../config/supabase");
 const BranchModel = require("../models/branch.model");
 
-const PARTNER_UUID_MAP = {
-  "hs-001": "20000000-0000-0000-0000-000000000001",
-  "hs-002": "20000000-0000-0000-0000-000000000002",
-  "hs-003": "20000000-0000-0000-0000-000000000003",
-  "hs-004": "20000000-0000-0000-0000-000000000004",
-};
-
 class BranchRepository {
   /**
    * Find branches by partner ID (ma_hs / id_nguoi_dai_dien / user ID) directly from Supabase DB
    */
   async findByPartnerId(partnerId) {
-    if (!partnerId) return [];
+    if (!partnerId || partnerId === "undefined" || partnerId === "null") return [];
 
     try {
-      // 1. Resolve actual ma_hs from partnerId (which could be ma_hs, id_nguoi_dai_dien, or user ma_nguoi_dung)
-      let resolvedMaHs = PARTNER_UUID_MAP[partnerId] || partnerId;
-      const { data: hosodn } = await supabase
-        .from("hosodn")
-        .select("ma_hs")
-        .or(`ma_hs.eq.${partnerId},id_nguoi_dai_dien.eq.${partnerId}`)
-        .maybeSingle();
+      let resolvedMaHs = partnerId;
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(partnerId);
 
-      if (hosodn?.ma_hs) {
-        resolvedMaHs = hosodn.ma_hs;
-      } else {
-        const { data: userRecord } = await supabase
-          .from("nguoidung")
-          .select("ma_hsdn")
-          .eq("ma_nguoi_dung", partnerId)
+      if (isUuid) {
+        const { data: hosodn } = await supabase
+          .from("hosodn")
+          .select("ma_hs")
+          .or(`ma_hs.eq.${partnerId},id_nguoi_dai_dien.eq.${partnerId}`)
           .maybeSingle();
-        if (userRecord?.ma_hsdn) resolvedMaHs = userRecord.ma_hsdn;
+
+        if (hosodn?.ma_hs) {
+          resolvedMaHs = hosodn.ma_hs;
+        } else {
+          const { data: userRecord } = await supabase
+            .from("nguoidung")
+            .select("ma_hsdn")
+            .eq("ma_nguoi_dung", partnerId)
+            .maybeSingle();
+          if (userRecord?.ma_hsdn) resolvedMaHs = userRecord.ma_hsdn;
+        }
       }
 
-      // 2. Query branches strictly for resolvedMaHs
+      // 2. Query branches strictly for resolvedMaHs if valid UUID
+      if (!resolvedMaHs || typeof resolvedMaHs !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(resolvedMaHs)) {
+        return [];
+      }
+
       const { data, error } = await supabase
         .from("chinhanh")
         .select("*")
@@ -91,7 +91,7 @@ class BranchRepository {
    * Create new branch record directly in Supabase CHINHANH table
    */
   async create(payload) {
-    let validPartnerId = PARTNER_UUID_MAP[payload.ma_hs] || payload.ma_hs;
+    let validPartnerId = payload.ma_hs;
     if (payload.ma_hs) {
       const { data: userRecord } = await supabase
         .from("nguoidung")

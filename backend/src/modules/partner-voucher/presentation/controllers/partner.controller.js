@@ -72,7 +72,8 @@ class PartnerController {
 
   async create(req, res, next) {
     try {
-      const result = await this.partnerService.createPartner(req.body);
+      const actorId = req.user?.ma_tk || req.user?.id || req.user?.ma_nguoi_dung || req.body?.actorId;
+      const result = await this.partnerService.createPartner(req.body, actorId);
       res.status(201).json({ success: true, data: result });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });
@@ -90,7 +91,8 @@ class PartnerController {
 
   async approve(req, res, next) {
     try {
-      const result = await this.partnerService.approvePartner(req.params.id, req.body.reason);
+      const actorId = req.user?.ma_tk || req.user?.id || req.user?.ma_nguoi_dung || req.body?.actorId;
+      const result = await this.partnerService.approvePartner(req.params.id, req.body?.reason, actorId);
       res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
@@ -99,7 +101,8 @@ class PartnerController {
 
   async reject(req, res, next) {
     try {
-      const result = await this.partnerService.rejectPartner(req.params.id, req.body.reason);
+      const actorId = req.user?.ma_tk || req.user?.id || req.user?.ma_nguoi_dung || req.body?.actorId;
+      const result = await this.partnerService.rejectPartner(req.params.id, req.body?.reason, actorId);
       res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
@@ -108,8 +111,9 @@ class PartnerController {
 
   async lock(req, res, next) {
     try {
+      const actorId = req.user?.ma_tk || req.user?.id || req.user?.ma_nguoi_dung || req.body?.actorId;
       const isLocking = req.body.isLocking !== undefined ? req.body.isLocking : (req.body.isLocked !== undefined ? req.body.isLocked : true);
-      const result = await this.partnerService.lockUnlockPartner(req.params.id, isLocking, req.body.reason);
+      const result = await this.partnerService.lockUnlockPartner(req.params.id, isLocking, req.body?.reason, actorId);
       res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
