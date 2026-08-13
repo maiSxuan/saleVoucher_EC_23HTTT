@@ -122,7 +122,8 @@ class PartnerController {
 
   async createProfileRequest(req, res, next) {
     try {
-      const result = await this.partnerService.createProfileRequest(req.body);
+      const actorId = req.user?.ma_tk || req.user?.id || req.user?.ma_nguoi_dung || req.body?.actorId || req.body?.ma_hs;
+      const result = await this.partnerService.createProfileRequest(req.body, actorId);
       res.status(201).json({ success: true, data: result });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });
@@ -140,7 +141,8 @@ class PartnerController {
 
   async approveProfileRequest(req, res, next) {
     try {
-      const result = await this.partnerService.approveProfileRequest(req.params.reqId, req.body.adminId);
+      const actorId = req.user?.ma_tk || req.user?.id || req.user?.ma_nguoi_dung || req.body?.actorId || req.body?.adminId;
+      const result = await this.partnerService.approveProfileRequest(req.params.reqId, actorId);
       res.status(200).json({ success: true, data: result });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });
@@ -149,7 +151,8 @@ class PartnerController {
 
   async rejectProfileRequest(req, res, next) {
     try {
-      const result = await this.partnerService.rejectProfileRequest(req.params.reqId, req.body.reason, req.body.adminId);
+      const actorId = req.user?.ma_tk || req.user?.id || req.user?.ma_nguoi_dung || req.body?.actorId || req.body?.adminId;
+      const result = await this.partnerService.rejectProfileRequest(req.params.reqId, req.body.reason, actorId);
       res.status(200).json({ success: true, data: result });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });

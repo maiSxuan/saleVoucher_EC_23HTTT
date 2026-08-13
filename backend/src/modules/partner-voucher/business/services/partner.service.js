@@ -340,7 +340,7 @@ class PartnerService {
   /**
    * Tạo Yêu cầu Cập nhật Hồ sơ Doanh nghiệp mới trong yeu_cau_cap_nhat_hosodn (SUC-PAR-04)
    */
-  async createProfileRequest(payload) {
+  async createProfileRequest(payload, actorId = null) {
     const partnerProfileRequestRepo = require("../../data/repositories/partner-profile-request.repository");
 
     if (payload.giay_phep_kinh_doanh_moi && payload.giay_phep_kinh_doanh_moi.startsWith("data:")) {
@@ -367,6 +367,7 @@ class PartnerService {
 
     try {
       await auditLogService.log({
+        actorId: actorId || payload.actorId || payload.ma_hs,
         actorRole: "PARTNER",
         action: "REQUEST_UPDATE_PARTNER_PROFILE",
         targetType: "HOSODN",

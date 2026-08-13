@@ -12,48 +12,116 @@ const supabase = require('../../../../config/supabase');
 class AuditLogService {
   /**
    * Resolve actorId to a valid ma_tk (FK taikhoan).
-   * If actorId is already a valid ma_tk, return it.
-   * If it's a ma_nguoi_dung, look up the corresponding ma_tk.
-   * If not found, return null (allows log to proceed without FK).
+  /**
+   * Resolve actorId to a valid ma_tk (FK taikhoan).
+   * Supports resolving ma_tk directly, ma_nguoi_dung, ma_hs, ma_chi_nhanh, ma_voucher, ma_yc,
+   * or falling back to default Admin/Partner account when actorId is null.
    */
-  async resolveActorId(actorId) {
-    if (!actorId) return null;
-    try {
-      // 1. Try direct match on taikhoan.ma_tk
-      const { data: directMatch } = await supabase
-        .from("taikhoan")
-        .select("ma_tk")
-        .eq("ma_tk", actorId)
-        .maybeSingle();
-      if (directMatch) return directMatch.ma_tk;
-
-      // 2. Try lookup by ma_nguoi_dung
-      const { data: byUser } = await supabase
-        .from("taikhoan")
-        .select("ma_tk")
-        .eq("ma_nguoi_dung", actorId)
-        .limit(1)
-        .maybeSingle();
-      if (byUser) return byUser.ma_tk;
-
-      // 3. Try lookup via hosodn: ma_hs → id_nguoi_dai_dien → taikhoan.ma_tk
-      const { data: hosodn } = await supabase
-        .from("hosodn")
-        .select("id_nguoi_dai_dien")
-        .eq("ma_hs", actorId)
-        .maybeSingle();
-      if (hosodn?.id_nguoi_dai_dien) {
-        const { data: byRep } = await supabase
+  async resolveActorId(actorId, actorRole = null) {
+    if (actorId) {
+      try {
+        // 1. Try direct match on taikhoan.ma_tk
+        const { data: directMatch } = await supabase
           .from("taikhoan")
           .select("ma_tk")
-          .eq("ma_nguoi_dung", hosodn.id_nguoi_dai_dien)
+          .eq("ma_tk", actorId)
+          .maybeSingle();
+        if (directMatch) return directMatch.ma_tk;
+
+        // 2. Try lookup by ma_nguoi_dung
+        const { data: byUser } = await supabase
+          .from("taikhoan")
+          .select("ma_tk")
+          .eq("ma_nguoi_dung", actorId)
           .limit(1)
           .maybeSingle();
-        if (byRep) return byRep.ma_tk;
+        if (byUser) return byUser.ma_tk;
+
+        // 3. Try lookup via hosodn: ma_hs → id_nguoi_dai_dien → taikhoan.ma_tk
+        const { data: hosodn } = await supabase
+          .from("hosodn")
+          .select("id_nguoi_dai_dien")
+          .eq("ma_hs", actorId)
+          .maybeSingle();
+        if (hosodn?.id_nguoi_dai_dien) {
+          const { data: byRep } = await supabase
+            .from("taikhoan")
+            .select("ma_tk")
+            .eq("ma_nguoi_dung", hosodn.id_nguoi_dai_dien)
+            .limit(1)
+            .maybeSingle();
+          if (byRep) return byRep.ma_tk;
+        }
+
+        // 4. Try lookup via chinhanh: ma_chi_nhanh → ma_hs → id_nguoi_dai_dien → taikhoan.ma_tk
+        const { data: chinhanh } = await supabase
+          .from("chinhanh")
+          .select("ma_hs")
+          .eq("ma_chi_nhanh", actorId)
+          .maybeSingle();
+        if (chinhanh?.ma_hs) {
+          return await this.resolveActorId(chinhanh.ma_hs, actorRole);
+        }
+
+        // 5. Try lookup via voucher: ma_voucher → ma_hs → id_nguoi_dai_dien → taikhoan.ma_tk
+        const { data: voucher } = await supabase
+          .from("voucher")
+          .select("ma_hs")
+          .eq("ma_voucher", actorId)
+          .maybeSingle();
+        if (voucher?.ma_hs) {
+          return await this.resolveActorId(voucher.ma_hs, actorRole);
+        }
+
+        // 6. Try lookup via yeu_cau_cap_nhat_hosodn: ma_yc → ma_hs → id_nguoi_dai_dien → taikhoan.ma_tk
+        const { data: reqProfile } = await supabase
+          .from("yeu_cau_cap_nhat_hosodn")
+          .select("ma_hs")
+          .eq("ma_yc", actorId)
+          .maybeSingle();
+        if (reqProfile?.ma_hs) {
+          return await this.resolveActorId(reqProfile.ma_hs, actorRole);
+        }
+
+        // 7. Try lookup via yeu_cau_cap_nhat_chinhanh: ma_yc → ma_hs → id_nguoi_dai_dien → taikhoan.ma_tk
+        const { data: reqBranch } = await supabase
+          .from("yeu_cau_cap_nhat_chinhanh")
+          .select("ma_hs")
+          .eq("ma_yc", actorId)
+          .maybeSingle();
+        if (reqBranch?.ma_hs) {
+          return await this.resolveActorId(reqBranch.ma_hs, actorRole);
+        }
+      } catch (e) {
+        console.warn("[AuditLogService] resolveActorId warning:", e.message);
       }
-    } catch (e) {
-      console.warn("[AuditLogService] resolveActorId warning:", e.message);
     }
+
+    // 8. Default fallback if actorId is still null/unresolved
+    try {
+      if (actorRole === "ADMIN" || actorRole === "ADMIN_ROOT") {
+        const { data: adminAcc } = await supabase
+          .from("taikhoan")
+          .select("ma_tk")
+          .ilike("thong_tin_dang_nhap", "%admin%")
+          .limit(1)
+          .maybeSingle();
+        if (adminAcc?.ma_tk) return adminAcc.ma_tk;
+        return "10000000-0000-0000-0000-000000000001";
+      }
+
+      // Default fallback for PARTNER if null:
+      const { data: partnerAcc } = await supabase
+        .from("taikhoan")
+        .select("ma_tk")
+        .not("thong_tin_dang_nhap", "ilike", "%admin%")
+        .limit(1)
+        .maybeSingle();
+      if (partnerAcc?.ma_tk) return partnerAcc.ma_tk;
+    } catch (e) {
+      console.warn("[AuditLogService] fallback resolve warning:", e.message);
+    }
+
     return null;
   }
 
@@ -84,7 +152,7 @@ class AuditLogService {
   }, strict = false) {
     try {
       // Resolve actorId to valid ma_tk (FK taikhoan)
-      const resolvedActorId = await this.resolveActorId(actorId);
+      const resolvedActorId = await this.resolveActorId(actorId, actorRole);
 
       const logEntry = await auditLogRepository.create({
         vai_tro_thuc_hien: actorRole,

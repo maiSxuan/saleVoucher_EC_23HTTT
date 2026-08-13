@@ -11,11 +11,12 @@ class BranchService {
     return await branchRequestRepository.findByPartnerId(partnerId);
   }
 
-  async createBranchRequest(payload) {
+  async createBranchRequest(payload, actorId = null) {
     const createdReq = await branchRequestRepository.create(payload);
 
     try {
       await auditLogService.log({
+        actorId: actorId || payload.actorId || payload.ma_hs || payload.ma_chi_nhanh,
         actorRole: "PARTNER",
         action: payload.loai_yeu_cau === "Xoa" ? "REQUEST_DELETE_BRANCH" : "REQUEST_UPDATE_BRANCH",
         targetType: "CHINHANH",
@@ -35,7 +36,7 @@ class BranchService {
     return createdReq;
   }
 
-  async approveBranchRequest(requestId) {
+  async approveBranchRequest(requestId, adminId = null) {
     const req = await branchRequestRepository.findById(requestId);
     if (!req) {
       throw new Error("Không tìm thấy yêu cầu chi nhánh");
@@ -77,6 +78,7 @@ class BranchService {
 
     try {
       await auditLogService.log({
+        actorId: adminId,
         actorRole: "ADMIN",
         action: "APPROVE_BRANCH_REQUEST",
         targetType: "CHINHANH",
@@ -92,7 +94,7 @@ class BranchService {
     return res;
   }
 
-  async rejectBranchRequest(requestId, adminNote = "") {
+  async rejectBranchRequest(requestId, adminNote = "", adminId = null) {
     const req = await branchRequestRepository.findById(requestId);
     if (!req) {
       throw new Error("Không tìm thấy yêu cầu chi nhánh");
@@ -108,6 +110,7 @@ class BranchService {
 
     try {
       await auditLogService.log({
+        actorId: adminId,
         actorRole: "ADMIN",
         action: "REJECT_BRANCH_REQUEST",
         targetType: "CHINHANH",
