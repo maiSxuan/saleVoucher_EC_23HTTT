@@ -270,28 +270,33 @@ export default function CustomerLayout() {
           </div>
           <div>
             <h4 className="font-semibold text-gray-900 mb-3 text-xs uppercase tracking-wider">Chính sách & Quy định</h4>
-            {policies.length === 0 ? (
-              <p className="text-xs text-gray-400">Đang cập nhật chính sách...</p>
-            ) : (
-              <ul className="space-y-2">
-                {policies.map(pol => (
-                  <li key={pol.id}>
-                    <button
-                      onClick={() => setSelectedPolicy(pol)}
-                      className="text-xs text-gray-600 hover:text-orange-600 transition-colors text-left flex items-center gap-1.5"
-                    >
-                      <FileText size={12} className="text-orange-500" /> {pol.title}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <ul className="space-y-2">
+              <li>
+                <button
+                  onClick={() => navigate("/policy")}
+                  className="text-xs text-orange-600 font-semibold hover:underline transition-colors text-left flex items-center gap-1.5 cursor-pointer"
+                >
+                  <FileText size={12} className="text-orange-500" /> Điều khoản & Chính sách sàn
+                </button>
+              </li>
+              {policies.map(pol => (
+                <li key={pol.id}>
+                  <button
+                    onClick={() => setSelectedPolicy(pol)}
+                    className="text-xs text-gray-600 hover:text-orange-600 transition-colors text-left flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <FileText size={12} className="text-orange-500" /> {pol.title}
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
           <div>
-            <h4 className="font-semibold text-gray-900 mb-3 text-xs uppercase tracking-wider">Hỗ trợ khách hàng</h4>
-            <p className="text-xs text-gray-500 mb-1">Hotline: 1900 1234 (8:00 - 22:00)</p>
-            <p className="text-xs text-gray-500 mb-1">Email: support@ecvoucher.vn</p>
-            <p className="text-xs text-gray-400 mt-3">© 2026 EC Voucher. All rights reserved.</p>
+            <h4 className="font-semibold text-gray-900 mb-3 text-xs uppercase tracking-wider">Thông tin liên hệ</h4>
+            <p className="text-xs text-gray-600 mb-1"><strong>SĐT:</strong> 0967456832</p>
+            <p className="text-xs text-gray-600 mb-1"><strong>Email:</strong> nkngan23@clc.fitus.edu.vn</p>
+            <p className="text-xs text-gray-600 mb-1"><strong>Địa chỉ:</strong> 227 Nguyễn Văn Cừ, Chợ Quán, TP. Hồ Chí Minh</p>
+            <p className="text-xs text-gray-400 mt-3">© 2026 Snow Voucher. All rights reserved.</p>
           </div>
         </div>
       </footer>

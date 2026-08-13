@@ -46,6 +46,8 @@ import ProfilePage from "../features/customer-commerce/pages/customer/ProfilePag
 import MyVoucherPage from "../features/core-access/pages/customer/MyVoucherPage";
 import IssuedVoucherDetailPage from "../features/core-access/pages/customer/IssuedVoucherDetailPage";
 import ArticleDetailPage from "../features/content-feedback/pages/customer/ArticleDetailPage";
+import LandingPage from "../features/core-access/pages/public/LandingPage";
+import PolicyPage from "../features/core-access/pages/public/PolicyPage";
 
 function PartnerHome() {
   try {
@@ -85,6 +87,14 @@ const router = createBrowserRouter([
     element: <LogoutPage />,
   },
   {
+    path: "/policy",
+    element: <PolicyPage />,
+  },
+  {
+    path: "/privacy-policy",
+    element: <PolicyPage />,
+  },
+  {
     path: "/customer/register",
     element: <RegisterPage />,
   },
@@ -97,7 +107,7 @@ const router = createBrowserRouter([
     path: "/",
     element: <App />,
     children: [
-      { index: true, element: <Navigate to="/login" replace /> },
+      { index: true, element: <LandingPage /> },
 
       {
         path: "/customer",
