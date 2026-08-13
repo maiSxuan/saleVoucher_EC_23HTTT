@@ -8,9 +8,9 @@
 
 ## Cấu trúc
 
-- migrations/: các file SQL migrate theo phiên bản
-- seeds/: dữ liệu mẫu để test
-- create_tables.sql: file SQL dùng để tạo bảng nhanh trên Supabase
+- `migrations/`: các file SQL nâng cấp database hiện có theo phiên bản.
+- `seeds.sql`: dữ liệu mẫu để test.
+- `create_tables.sql`: file SQL dùng để tạo mới toàn bộ schema trên Supabase; đã bao gồm các index hiệu năng hiện tại.
 
 ## Cách tạo bảng trên Supabase
 
@@ -34,7 +34,7 @@
 
 ### 4. Chạy dữ liệu mẫu (nếu cần)
 
-- File [seeds/001_seed.sql](seeds/001_seed.sql) cũng là file SQL mẫu trong repo.
+- File [seeds.sql](seeds.sql) cũng là file SQL mẫu trong repo.
 - Bạn copy rồi dán vào Supabase SQL Editor.
 - Nhấn Run để đổ dữ liệu mẫu vào database thật.
 
@@ -42,6 +42,17 @@
 
 - Vào Table Editor để xem các bảng vừa tạo
 - Nếu cần, vào Database -> Logs để kiểm tra lỗi SQL
+
+## Nâng cấp database đang có và thêm index
+
+Không chạy lại `create_tables.sql` trên database đang có dữ liệu vì đầu file có các lệnh `DROP TABLE`.
+
+Trong Supabase Dashboard, mở **SQL Editor -> New query**, rồi chạy lần lượt các migration cần thiết:
+
+1. [20260812_admin_order_workflow.sql](migrations/20260812_admin_order_workflow.sql) để bổ sung schema cho luồng xử lý đơn hàng Admin.
+2. [20260812_query_performance_indexes.sql](migrations/20260812_query_performance_indexes.sql) để thêm index theo các truy vấn thực tế của backend.
+
+Migration index có thể chạy lại an toàn nhờ `IF NOT EXISTS`. Nên chạy lúc ít người dùng vì PostgreSQL sẽ khóa ghi ngắn hạn trên từng bảng trong lúc tạo index. Kết quả cuối script liệt kê toàn bộ index có tiền tố `idx_perf_` để kiểm tra.
 
 ## Cách dùng với dự án này
 
@@ -59,3 +70,4 @@ Sau đó backend có thể kết nối vào Supabase thông qua [backend/src/con
 - Supabase dùng PostgreSQL, nên SQL phải đúng cú pháp PostgreSQL.
 - Nếu chạy nhiều lần, nên dùng `IF NOT EXISTS` để tránh lỗi bảng đã tồn tại.
 - Với dữ liệu mẫu, nên dùng seed riêng để tránh làm lẫn dữ liệu thật.
+- Index làm nhanh truy vấn đọc nhưng cũng tốn dung lượng và tăng chi phí ghi. Chỉ giữ các index khớp với `WHERE`, quan hệ và `ORDER BY` đang được backend sử dụng; theo dõi `pg_stat_user_indexes` trước khi bổ sung thêm.

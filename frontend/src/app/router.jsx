@@ -17,7 +17,6 @@ import VoucherApprovalDetailPage from "../features/partner-voucher/pages/admin/V
 import UserListPage from "../features/core-access/pages/admin/UserListPage";
 import PartnerVoucherLookupPage from "../features/core-access/pages/partner/PartnerVoucherLookupPage";
 import ContentListPage from "../features/content-feedback/pages/admin/ContentListPage";
-import AdminComplaintsPage from "../features/content-feedback/pages/admin/AdminComplaintsPage";
 import AdminReviewsPage from "../features/content-feedback/pages/admin/AdminReviewsPage";
 
 // Partner Portal Pages
@@ -46,6 +45,7 @@ import AdminOrdersPage from "../features/customer-commerce/pages/admin/AdminOrde
 import ProfilePage from "../features/customer-commerce/pages/customer/ProfilePage";
 import MyVoucherPage from "../features/core-access/pages/customer/MyVoucherPage";
 import IssuedVoucherDetailPage from "../features/core-access/pages/customer/IssuedVoucherDetailPage";
+import ArticleDetailPage from "../features/content-feedback/pages/customer/ArticleDetailPage";
 
 function PartnerHome() {
   try {
@@ -122,6 +122,10 @@ const router = createBrowserRouter([
               {
                 path: "vouchers/:id",
                 element: <VoucherDetailPage />,
+              },
+              {
+                path: "articles/:id",
+                element: <ArticleDetailPage />,
               },
               {
                 path: "cart",
@@ -202,7 +206,7 @@ const router = createBrowserRouter([
             element: <Navigate to="/admin/logs" replace />,
           },
           { path: "contents", element: <ContentListPage /> },
-          { path: "complaints", element: <AdminComplaintsPage /> },
+          { path: "complaints", element: <Navigate to="/admin/orders" replace /> },
           { path: "reviews", element: <AdminReviewsPage /> },
         ],
       },

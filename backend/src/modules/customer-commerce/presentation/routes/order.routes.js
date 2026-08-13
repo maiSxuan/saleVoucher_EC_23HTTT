@@ -53,7 +53,7 @@ router.post(
   "/:id/request-cancel",
   authenticateMiddleware,
   authorizeMiddleware(JWT_ROLES.CUSTOMER),
-  orderController.customerCancelOrder.bind(orderController),
+  orderController.commerceCancel.bind(orderController)
 );
 
 router.post(

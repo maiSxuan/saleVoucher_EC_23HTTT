@@ -412,6 +412,51 @@ class IssuedVoucherRepository {
   }
 
   /**
+   * Ghi nhận các mã còn thiếu khi phát hành thất bại. Mỗi bản ghi lỗi vẫn là
+   * một quyền lợi voucher cụ thể, nhờ đó Admin có thể cấp lại đúng mã/đúng đơn.
+   */
+  async markIssuanceFailure({ orderId, items = [] }) {
+    const failedRows = [];
+
+    for (const item of items) {
+      const quantity = Math.max(1, Number(item.quantity) || 1);
+      const { data: existing, error: existingError } = await supabase
+        .from('voucher_mua')
+        .select('ma_voucher_mua')
+        .eq('ma_dh', orderId)
+        .eq('ma_voucher', item.voucherId);
+
+      if (existingError) {
+        throw new Error(`Không thể kiểm tra mã đã phát hành: ${existingError.message}`);
+      }
+
+      const missing = Math.max(0, quantity - (existing?.length || 0));
+      for (let index = 0; index < missing; index++) {
+        const failureCode = `ERR-${crypto.randomBytes(8).toString('hex').toUpperCase()}`;
+        const { data, error } = await supabase
+          .from('voucher_mua')
+          .insert({
+            ma_dh: orderId,
+            ma_voucher: item.voucherId,
+            voucher_code: failureCode,
+            trang_thai: 'Loi sinh ma',
+            gia_tri_qr_mo_phong: null,
+            thoi_gian_sinh_ma: new Date().toISOString(),
+          })
+          .select('*')
+          .single();
+
+        if (error) {
+          throw new Error(`Không thể ghi nhận lỗi phát hành voucher: ${error.message}`);
+        }
+        failedRows.push(data);
+      }
+    }
+
+    return failedRows;
+  }
+
+  /**
    * 7. [BR-CUS-07] Lấy tất cả voucher đã phát hành của một đơn hàng (kèm chi tiết voucher + chi nhánh).
    * @param {string} orderId - Mã đơn hàng
    * @returns {Array<object>} raw rows

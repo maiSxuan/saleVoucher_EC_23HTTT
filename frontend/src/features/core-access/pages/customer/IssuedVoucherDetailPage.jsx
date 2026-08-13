@@ -32,11 +32,8 @@ import {
 import { getIssuedVoucherDetail } from "../../../../shared/api/issuedVoucherApi";
 import QrCodeDisplay from "../../component/QRCodeDisplay";
 import ReviewForm from "../../../content-feedback/components/ReviewForm";
-import FeedbackForm from "../../../content-feedback/components/FeedbackForm";
 import { useReview } from "../../../content-feedback/hooks/useReview";
-import { useFeedback } from "../../../content-feedback/hooks/useFeedback";
 import { reviewApi } from "../../../content-feedback/api/reviewApi";
-import { feedbackApi } from "../../../content-feedback/api/feedbackApi";
 import { toast } from "sonner";
 
 function StatusBadge({ status }) {
@@ -100,14 +97,10 @@ export default function IssuedVoucherDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [existingReview, setExistingReview] = useState(null);
   const [showViewReviewModal, setShowViewReviewModal] = useState(false);
-  const [existingFeedback, setExistingFeedback] = useState(null);
-  const [showViewFeedbackModal, setShowViewFeedbackModal] = useState(false);
 
   const { create: createReview } = useReview();
-  const { create: createFeedback } = useFeedback();
 
   const handleSubmitReview = async (reviewData) => {
     try {
@@ -117,22 +110,9 @@ export default function IssuedVoucherDetailPage() {
       // Refresh existing review
       reviewApi.getByPurchaseId(issuedId)
         .then((rev) => setExistingReview(rev))
-        .catch(() => {});
+        .catch(() => { });
     } catch (err) {
       toast.error(err.message || 'Gửi đánh giá thất bại');
-    }
-  };
-
-  const handleSubmitFeedback = async (feedbackData) => {
-    try {
-      await createFeedback({ ...feedbackData, ma_voucher_mua: issuedId });
-      setShowFeedbackModal(false);
-      toast.success('Đã gửi phản ánh!');
-      feedbackApi.getByPurchaseId(issuedId)
-        .then((fb) => setExistingFeedback(fb))
-        .catch(() => {});
-    } catch (err) {
-      toast.error(err.message || 'Gửi phản ánh thất bại');
     }
   };
 
@@ -150,10 +130,6 @@ export default function IssuedVoucherDetailPage() {
     reviewApi.getByPurchaseId(issuedId)
       .then((rev) => setExistingReview(rev))
       .catch(() => setExistingReview(null));
-
-    feedbackApi.getByPurchaseId(issuedId)
-      .then((fb) => setExistingFeedback(fb))
-      .catch(() => setExistingFeedback(null));
   }, [issuedId]);
 
   // Loading
@@ -365,23 +341,7 @@ export default function IssuedVoucherDetailPage() {
             Viết đánh giá
           </button>
         )}
-        {existingFeedback ? (
-          <button
-            onClick={() => setShowViewFeedbackModal(true)}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-purple-50 text-purple-700 border border-purple-200 text-sm font-medium rounded-xl hover:bg-purple-100 transition-colors"
-          >
-            <MessageSquare className="w-4 h-4 text-purple-600" />
-            Xem phản ánh của bạn
-          </button>
-        ) : (
-          <button
-            onClick={() => setShowFeedbackModal(true)}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 text-sm font-medium text-slate-700 rounded-xl hover:border-orange-300 hover:text-orange-600 transition-colors"
-          >
-            <MessageSquare className="w-4 h-4" />
-            Gửi phản ánh/khiếu nại
-          </button>
-        )}
+
         <button
           onClick={() => navigate("/customer/vouchers/my")}
           className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 text-sm font-medium text-slate-700 rounded-xl hover:border-orange-300 hover:text-orange-600 transition-colors"
@@ -394,13 +354,12 @@ export default function IssuedVoucherDetailPage() {
           className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 text-sm font-medium text-slate-700 rounded-xl hover:border-orange-300 hover:text-orange-600 transition-colors"
         >
           <ShoppingBag className="w-4 h-4" />
-          Lịch sử đơn hàng
+          Đơn hàng của tôi
         </button>
       </div>
 
       {/* Modals */}
       {showReviewModal && <ReviewForm onSubmit={handleSubmitReview} onCancel={() => setShowReviewModal(false)} />}
-      {showFeedbackModal && <FeedbackForm onSubmit={handleSubmitFeedback} onCancel={() => setShowFeedbackModal(false)} />}
       {showViewReviewModal && existingReview && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
@@ -426,30 +385,6 @@ export default function IssuedVoucherDetailPage() {
             </p>
             <button
               onClick={() => setShowViewReviewModal(false)}
-              className="w-full py-2.5 bg-slate-900 text-white font-semibold text-sm rounded-xl hover:bg-slate-800"
-            >
-              Đóng
-            </button>
-          </div>
-        </div>
-      )}
-
-      {showViewFeedbackModal && existingFeedback && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
-            <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-orange-500" />
-              Phản ánh / Khiếu nại của bạn
-            </h3>
-            <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-xl mb-3">
-              {existingFeedback.content || "Không có nội dung."}
-            </p>
-            <div className="flex items-center justify-between text-xs text-slate-400 mb-5">
-              <span>Trạng thái: <strong className="text-slate-700">{existingFeedback.status || "Mới"}</strong></span>
-              <span>Ngày gửi: {existingFeedback.createdAt ? new Date(existingFeedback.createdAt).toLocaleString("vi-VN") : "—"}</span>
-            </div>
-            <button
-              onClick={() => setShowViewFeedbackModal(false)}
               className="w-full py-2.5 bg-slate-900 text-white font-semibold text-sm rounded-xl hover:bg-slate-800"
             >
               Đóng

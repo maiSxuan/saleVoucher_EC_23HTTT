@@ -151,6 +151,16 @@ class PartnerController {
       res.status(400).json({ success: false, message: error.message });
     }
   }
+
+  async changePassword(req, res, next) {
+    try {
+      const { oldPassword, newPassword, confirmPassword } = req.body;
+      const result = await this.partnerService.changePassword(req.params.id, oldPassword, newPassword, confirmPassword);
+      res.status(200).json({ success: true, ...result });
+    } catch (error) {
+      res.status(error.status || 400).json({ success: false, message: error.message });
+    }
+  }
 }
 
 module.exports = PartnerController;

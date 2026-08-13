@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { feedbackApi } from '../api/feedbackApi';
 
-export function useFeedback() {
+export function useFeedback({ loadList = true } = {}) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -19,12 +19,13 @@ export function useFeedback() {
   }, []);
 
   useEffect(() => {
-    fetchList();
-  }, [fetchList]);
+    if (loadList) fetchList();
+    else setLoading(false);
+  }, [fetchList, loadList]);
 
   const create = async (item) => {
     await feedbackApi.create(item);
-    await fetchList(); // Refetch list
+    if (loadList) await fetchList();
   };
 
   return { data, loading, error, create, refetch: fetchList };

@@ -1,14 +1,20 @@
-import { Edit2, Eye, EyeOff, StopCircle, Trash2 } from "lucide-react";
+import { Edit2, Eye, EyeOff, StopCircle, Trash2, Image as ImageIcon } from "lucide-react";
 import { StatusBadge, getContentStatusBadge } from "./ui/StatusBadge";
 
-export default function ContentTable({ items, onEdit, onHide, onShow, onStop, onDelete }) {
+export default function ContentTable({ items, onEdit, onHide, onShow, onStop, onDelete, contentType }) {
   if (items.length === 0) return <div className="py-16 text-center text-gray-400 text-sm">Chưa có dữ liệu.</div>;
+
+  const showImage = contentType !== 'danh_muc';
 
   return (
     <table className="w-full">
       <thead>
         <tr className="bg-gray-50 border-b">
-          {['Tiêu đề / Tên', 'Mô tả / Chi tiết', 'Trạng thái', 'Hành động'].map(h => <th key={h} className="px-4 py-3 text-left text-xs font-semibold">{h}</th>)}
+          <th className="px-4 py-3 text-left text-xs font-semibold">Tiêu đề / Tên</th>
+          {showImage && <th className="px-4 py-3 text-left text-xs font-semibold">Hình ảnh</th>}
+          <th className="px-4 py-3 text-left text-xs font-semibold">Mô tả / Chi tiết</th>
+          <th className="px-4 py-3 text-left text-xs font-semibold">Trạng thái</th>
+          <th className="px-4 py-3 text-left text-xs font-semibold">Hành động</th>
         </tr>
       </thead>
       <tbody className="divide-y">
@@ -23,6 +29,15 @@ export default function ContentTable({ items, onEdit, onHide, onShow, onStop, on
                 item.title
               )}
             </td>
+            {showImage && (
+              <td className="px-4 py-3">
+                {(item.imageUrl || item.hinh_anh_url) ? (
+                  <img src={item.imageUrl || item.hinh_anh_url} alt="Thumbnail" className="w-12 h-9 object-cover rounded-lg border border-gray-200 shadow-xs" />
+                ) : (
+                  <span className="text-xs text-gray-400 italic">Không có</span>
+                )}
+              </td>
+            )}
             <td className="px-4 py-3 text-sm text-gray-500 truncate max-w-xs">{item.content || item.description}</td>
             <td className="px-4 py-3">
               {item.type === 'danh_muc' ? (

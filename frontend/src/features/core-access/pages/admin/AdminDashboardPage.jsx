@@ -292,6 +292,18 @@ export default function AdminDashboardPage() {
       color: { bg: 'bg-rose-50', icon: 'text-rose-600', border: 'border-rose-100' },
       badge: summary?.pendingOrders > 0 ? 'Cần xử lý' : null,
       badgeColor: 'bg-rose-100 text-rose-700',
+      linkTo: '/admin/orders',
+    },
+    {
+      key: 'complaintOrders',
+      icon: AlertCircle,
+      label: 'Đơn hàng đang khiếu nại',
+      value: summary?.complaintOrders ?? null,
+      sub: 'Khách hàng yêu cầu hỗ trợ',
+      color: { bg: 'bg-red-50', icon: 'text-red-600', border: 'border-red-100' },
+      badge: summary?.complaintOrders > 0 ? 'Cần xử lý' : null,
+      badgeColor: 'bg-red-100 text-red-700',
+      linkTo: '/admin/orders',
     },
     {
       key: 'totalRevenue',

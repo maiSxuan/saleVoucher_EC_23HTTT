@@ -2,6 +2,13 @@ import { useState, useEffect, useCallback } from "react";
 import { MessageSquare, RefreshCw, AlertCircle, CheckCircle2, Clock, XCircle, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { feedbackApi } from "../../api/feedbackApi";
+import {
+  openComplaint,
+  resendComplaintCode,
+  reissueComplaintCode,
+  approveComplaintRefund,
+  rejectComplaint
+} from "../../../../shared/api/orderApi";
 
 const STATUS_CONFIG = {
   'Moi': { label: 'Mới', cls: 'bg-amber-50 text-amber-700 border-amber-200', icon: Clock },
@@ -27,6 +34,11 @@ export default function AdminComplaintsPage() {
   const [error, setError] = useState(null);
   const [filterStatus, setFilterStatus] = useState("all");
   const [updatingId, setUpdatingId] = useState(null);
+  
+  const [rejectModal, setRejectModal] = useState(false);
+  const [refundModal, setRefundModal] = useState(false);
+  const [reasonInput, setReasonInput] = useState('');
+  const [activeComplaintId, setActiveComplaintId] = useState(null);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -54,14 +66,83 @@ export default function AdminComplaintsPage() {
     setCurrentPage(1);
   }, [filterStatus]);
 
-  const handleUpdateStatus = async (id, newStatus) => {
+  // Hành động Mở xử lý (Moi -> Dang xu ly)
+  const handleOpenComplaint = async (id) => {
     try {
       setUpdatingId(id);
-      await feedbackApi.updateStatus(id, { status: newStatus });
-      toast.success("Cập nhật trạng thái khiếu nại thành công!");
+      await openComplaint(id);
+      toast.success("Đã tiếp nhận khiếu nại để xử lý.");
       await loadComplaints();
     } catch (err) {
-      toast.error(err.message || "Không thể cập nhật trạng thái");
+      toast.error(err.message || "Thao tác thất bại");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  // A1: Gửi lại mã
+  const handleResendCode = async (id) => {
+    if (!window.confirm('Gửi lại chính voucher code hiện tại cho khách hàng?')) return;
+    try {
+      setUpdatingId(id);
+      await resendComplaintCode(id);
+      toast.success("Đã gửi lại mã cho khách hàng thành công.");
+      await loadComplaints();
+    } catch (err) {
+      toast.error(err.message || "Thao tác thất bại");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  // A2: Cấp lại mã mới
+  const handleReissueCode = async (id) => {
+    if (!window.confirm('Vô hiệu hóa mã cũ và cấp một voucher code mới?')) return;
+    try {
+      setUpdatingId(id);
+      await reissueComplaintCode(id);
+      toast.success("Đã cấp lại mã mới thành công.");
+      await loadComplaints();
+    } catch (err) {
+      toast.error(err.message || "Thao tác thất bại");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  // A3: Chấp nhận hoàn tiền
+  const handleApproveRefund = async () => {
+    if (!reasonInput.trim()) { toast.error("Vui lòng nhập lý do hoàn tiền"); return; }
+    try {
+      setUpdatingId(activeComplaintId);
+      await approveComplaintRefund(activeComplaintId, { reason: reasonInput });
+      toast.success("Đã chấp nhận khiếu nại, chuyển sang hoàn tiền.");
+      setRefundModal(false);
+      setReasonInput('');
+      await loadComplaints();
+    } catch (err) {
+      toast.error(err.message || "Thao tác thất bại");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  // A4: Từ chối khiếu nại
+  const handleRejectComplaint = async () => {
+    if (!reasonInput.trim()) { toast.error("Vui lòng nhập lý do từ chối"); return; }
+    try {
+      setUpdatingId(activeComplaintId);
+      const res = await rejectComplaint(activeComplaintId, { reason: reasonInput });
+      if (res.data?.notificationSent === false) {
+        toast.warning("Đã từ chối khiếu nại, nhưng chưa gửi được email thông báo cho khách hàng.");
+      } else {
+        toast.success("Đã từ chối khiếu nại thành công.");
+      }
+      setRejectModal(false);
+      setReasonInput('');
+      await loadComplaints();
+    } catch (err) {
+      toast.error(err.message || "Thao tác thất bại");
     } finally {
       setUpdatingId(null);
     }
@@ -79,9 +160,9 @@ export default function AdminComplaintsPage() {
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <MessageSquare className="text-orange-500" size={26} /> Quản lý và Xử lý Khiếu nại
-          </h1>
+          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            Danh sách khiếu nại
+          </h2>
           <p className="text-sm text-gray-500 mt-1">Xem xét, tiếp nhận và cập nhật trạng thái khiếu nại từ khách hàng.</p>
         </div>
         <button
@@ -143,13 +224,19 @@ export default function AdminComplaintsPage() {
               <tbody className="divide-y divide-gray-100 text-sm">
                 {paginatedComplaints.map(c => {
                   const isLocked = c.status === 'Da xu ly' || c.status === 'Tu choi';
+                  const canResendCode = c.voucherCodeStatus === 'Chua su dung';
+                  const canReissueCode = ['Loi sinh ma', 'Het han', 'Vo hieu hoa'].includes(c.voucherCodeStatus);
+                  const canRequestRefund = c.voucherCodeStatus !== 'Da su dung';
                   return (
                     <tr key={c.id} className="hover:bg-gray-50/50 transition-colors">
                       <td className="p-4 font-mono text-xs font-bold text-gray-800">{c.id.substring(0, 8)}...</td>
                       <td className="p-4 text-gray-700 max-w-xs">
                         <p className="line-clamp-2">{c.content}</p>
                       </td>
-                      <td className="p-4 font-mono text-xs text-gray-500">{c.voucherPurchaseId?.substring(0, 8)}...</td>
+                      <td className="p-4 text-xs text-gray-500">
+                        <span className="font-mono">{c.voucherPurchaseId?.substring(0, 8)}...</span>
+                        <span className="mt-1 block text-[11px] text-gray-400">{c.voucherCodeStatus || 'Chưa rõ trạng thái mã'}</span>
+                      </td>
                       <td className="p-4 text-xs text-gray-500">
                         {c.createdAt ? new Date(c.createdAt).toLocaleString('vi-VN') : '—'}
                       </td>
@@ -163,28 +250,38 @@ export default function AdminComplaintsPage() {
                         {isLocked ? (
                           <span className="text-xs font-medium text-gray-400 italic">Đã khóa (Hoàn tất)</span>
                         ) : (
-                          <div className="flex items-center justify-end gap-1.5 flex-wrap">
-                            <button
-                              disabled={updatingId === c.id || c.status === 'Dang xu ly'}
-                              onClick={() => handleUpdateStatus(c.id, 'Dang xu ly')}
-                              className="px-2.5 py-1.5 text-xs bg-blue-50 text-blue-700 font-semibold rounded-lg hover:bg-blue-100 disabled:opacity-40 transition-colors"
-                            >
-                              Đang xử lý
-                            </button>
-                            <button
-                              disabled={updatingId === c.id}
-                              onClick={() => handleUpdateStatus(c.id, 'Da xu ly')}
-                              className="px-2.5 py-1.5 text-xs bg-emerald-50 text-emerald-700 font-semibold rounded-lg hover:bg-emerald-100 disabled:opacity-40 transition-colors"
-                            >
-                              Đã xử lý
-                            </button>
-                            <button
-                              disabled={updatingId === c.id}
-                              onClick={() => handleUpdateStatus(c.id, 'Tu choi')}
-                              className="px-2.5 py-1.5 text-xs bg-red-50 text-red-600 font-semibold rounded-lg hover:bg-red-100 disabled:opacity-40 transition-colors"
-                            >
-                              Từ chối
-                            </button>
+                          <div className="flex flex-col items-end gap-1.5 flex-wrap">
+                            {c.status === 'Moi' && (
+                              <button
+                                disabled={updatingId === c.id}
+                                onClick={() => handleOpenComplaint(c.id)}
+                                className="px-2.5 py-1.5 text-xs bg-blue-50 text-blue-700 font-semibold rounded-lg hover:bg-blue-100 disabled:opacity-40 transition-colors"
+                              >
+                                Mở & Tiếp nhận
+                              </button>
+                            )}
+                            {c.status === 'Dang xu ly' && (
+                              <>
+                                {canResendCode && (
+                                  <button disabled={updatingId === c.id} onClick={() => handleResendCode(c.id)} className="w-full text-right px-2.5 py-1.5 text-xs bg-emerald-50 text-emerald-700 font-semibold rounded-lg hover:bg-emerald-100 disabled:opacity-40 transition-colors">
+                                    Gửi lại mã hiện tại
+                                  </button>
+                                )}
+                                {canReissueCode && (
+                                  <button disabled={updatingId === c.id} onClick={() => handleReissueCode(c.id)} className="w-full text-right px-2.5 py-1.5 text-xs bg-emerald-50 text-emerald-700 font-semibold rounded-lg hover:bg-emerald-100 disabled:opacity-40 transition-colors">
+                                    Cấp mã mới
+                                  </button>
+                                )}
+                                {canRequestRefund && (
+                                  <button disabled={updatingId === c.id} onClick={() => { setReasonInput(''); setActiveComplaintId(c.id); setRefundModal(true); }} className="w-full text-right px-2.5 py-1.5 text-xs bg-amber-50 text-amber-700 font-semibold rounded-lg hover:bg-amber-100 disabled:opacity-40 transition-colors">
+                                    Chấp nhận (Hoàn tiền)
+                                  </button>
+                                )}
+                                <button disabled={updatingId === c.id} onClick={() => { setReasonInput(''); setActiveComplaintId(c.id); setRejectModal(true); }} className="w-full text-right px-2.5 py-1.5 text-xs bg-red-50 text-red-600 font-semibold rounded-lg hover:bg-red-100 disabled:opacity-40 transition-colors">
+                                  Từ chối
+                                </button>
+                              </>
+                            )}
                           </div>
                         )}
                       </td>
@@ -234,6 +331,42 @@ export default function AdminComplaintsPage() {
           )}
         </div>
       )}
+
+      {/* Modals */}
+      {refundModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+            <h3 className="font-bold text-lg text-gray-900">Chấp nhận & Hoàn tiền</h3>
+            <p className="text-sm text-gray-500">Hệ thống tạo bản ghi hoàn tiền Chờ xử lý; khiếu nại vẫn ở trạng thái Đang xử lý cho đến khi Sandbox hoàn tiền thành công.</p>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Lý do (Bắt buộc)</label>
+              <textarea rows={3} value={reasonInput} onChange={e => setReasonInput(e.target.value)} placeholder="Nhập lý do hoàn tiền..." className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 outline-none" />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button disabled={updatingId === activeComplaintId} onClick={() => { setRefundModal(false); setReasonInput(''); }} className="px-4 py-2 border rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50">Hủy</button>
+              <button disabled={updatingId === activeComplaintId} onClick={handleApproveRefund} className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-semibold hover:bg-amber-600 disabled:opacity-50">{updatingId === activeComplaintId ? 'Đang xử lý...' : 'Xác nhận'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {rejectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+            <h3 className="font-bold text-lg text-gray-900">Từ chối khiếu nại</h3>
+            <p className="text-sm text-gray-500">Khách hàng sẽ nhận được lý do từ chối này.</p>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Lý do (Bắt buộc)</label>
+              <textarea rows={3} value={reasonInput} onChange={e => setReasonInput(e.target.value)} placeholder="Nhập lý do từ chối..." className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-red-500 outline-none" />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button disabled={updatingId === activeComplaintId} onClick={() => { setRejectModal(false); setReasonInput(''); }} className="px-4 py-2 border rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50">Hủy</button>
+              <button disabled={updatingId === activeComplaintId} onClick={handleRejectComplaint} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 disabled:opacity-50">{updatingId === activeComplaintId ? 'Đang xử lý...' : 'Xác nhận từ chối'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

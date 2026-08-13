@@ -9,8 +9,14 @@ import {
   ChevronDown,
   LogOut,
   Package,
+  X,
+  FileText,
+  ShieldCheck,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { fetchCategories } from "../shared/api/catalogApi";
+import { contentApi } from "../features/content-feedback/api/contentApi";
 
 function getStoredUser() {
   try {
@@ -34,10 +40,31 @@ export default function CustomerLayout() {
   const [showMoreCategories, setShowMoreCategories] = useState(false);
   const cartCount = 0;
 
+  // Popup & Policies state
+  const [popups, setPopups] = useState([]);
+  const [currentPopupIndex, setCurrentPopupIndex] = useState(0);
+  const [policies, setPolicies] = useState([]);
+  const [selectedPolicy, setSelectedPolicy] = useState(null);
+
   useEffect(() => {
     fetchCategories()
       .then(setCategories)
       .catch(() => setCategories([]));
+
+    // Fetch popups and policies
+    contentApi.list("popup")
+      .then(res => {
+        const active = (res.data || []).filter(p => p.status === 'visible' || !p.status);
+        setPopups(active);
+      })
+      .catch(() => {});
+
+    contentApi.list("chinh_sach")
+      .then(res => {
+        const active = (res.data || []).filter(p => p.status === 'visible' || !p.status);
+        setPolicies(active);
+      })
+      .catch(() => {});
   }, []);
 
   const visibleCategories = categories.slice(0, MAX_VISIBLE_CATEGORIES);
@@ -56,6 +83,10 @@ export default function CustomerLayout() {
     setShowMoreCategories(false);
     if (location.pathname !== "/customer") navigate("/customer");
   }
+
+  const activePopup = popups[currentPopupIndex];
+  const popupImg = activePopup?.imageUrl || activePopup?.hinh_anh_url;
+  const policyImg = selectedPolicy?.imageUrl || selectedPolicy?.hinh_anh_url;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -113,7 +144,6 @@ export default function CustomerLayout() {
                   <ChevronDown size={11} />
                 </button>
 
-                {/* ⚡ BỌC THÊM DIV NÀY: Dùng pt-1 để nối liền khoảng hở, không bao giờ bị đứt hover */}
                 <div className="absolute right-0 top-full pt-1 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50">
                   <div className="w-40 bg-white rounded-lg shadow-lg border border-gray-100 py-1">
                     <MenuLink
@@ -159,7 +189,7 @@ export default function CustomerLayout() {
             )}
           </div>
 
-          {/* Thanh danh mục dưới Header - Đã tăng cỡ chữ & khoảng cách hài hòa */}
+          {/* Thanh danh mục dưới Header */}
           <div className="flex items-center gap-6 overflow-x-auto pb-2.5 pt-1 scrollbar-none text-base font-medium">
             <button
               onClick={() => selectCategory("Tất cả")}
@@ -225,6 +255,140 @@ export default function CustomerLayout() {
           }}
         />
       </main>
+
+      {/* Footer chứa Chính sách */}
+      <footer className="bg-white border-t border-gray-200 mt-auto py-8 px-4 text-gray-600 text-sm">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <div className="flex items-center gap-2 font-bold text-gray-900 text-base mb-2">
+              <div className="w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs">🏷️</div>
+              EC Voucher Platform
+            </div>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              Nền tảng mua bán và phân phối voucher ưu đãi hàng đầu, kết nối khách hàng với hàng ngàn dịch vụ ẩm thực, giải trí, làm đẹp và du lịch chất lượng.
+            </p>
+          </div>
+          <div>
+            <h4 className="font-semibold text-gray-900 mb-3 text-xs uppercase tracking-wider">Chính sách & Quy định</h4>
+            {policies.length === 0 ? (
+              <p className="text-xs text-gray-400">Đang cập nhật chính sách...</p>
+            ) : (
+              <ul className="space-y-2">
+                {policies.map(pol => (
+                  <li key={pol.id}>
+                    <button
+                      onClick={() => setSelectedPolicy(pol)}
+                      className="text-xs text-gray-600 hover:text-orange-600 transition-colors text-left flex items-center gap-1.5"
+                    >
+                      <FileText size={12} className="text-orange-500" /> {pol.title}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div>
+            <h4 className="font-semibold text-gray-900 mb-3 text-xs uppercase tracking-wider">Hỗ trợ khách hàng</h4>
+            <p className="text-xs text-gray-500 mb-1">Hotline: 1900 1234 (8:00 - 22:00)</p>
+            <p className="text-xs text-gray-500 mb-1">Email: support@ecvoucher.vn</p>
+            <p className="text-xs text-gray-400 mt-3">© 2026 EC Voucher. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
+
+      {/* Popup Modal hỗ trợ chuyển đổi nhiều popup nếu có */}
+      {activePopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl relative border border-gray-100">
+            <button
+              onClick={() => setPopups(prev => prev.filter((_, i) => i !== currentPopupIndex))}
+              className="absolute top-4 right-4 z-20 p-2 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors backdrop-blur-sm"
+              title="Đóng"
+            >
+              <X size={16} />
+            </button>
+
+            {popupImg && (
+              <div className="w-full h-56 sm:h-64 bg-gray-100 overflow-hidden relative">
+                <img src={popupImg} alt={activePopup.title} className="w-full h-full object-cover" />
+              </div>
+            )}
+
+            <div className="p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{activePopup.title}</h3>
+              <div className="text-sm text-gray-600 max-h-48 overflow-y-auto leading-relaxed mb-6">
+                {activePopup.content}
+              </div>
+              <div className="flex items-center justify-between">
+                {popups.length > 1 ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPopupIndex(prev => (prev - 1 + popups.length) % popups.length)}
+                      className="p-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-100"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                    <span className="text-xs text-gray-500 font-medium">
+                      {currentPopupIndex + 1} / {popups.length}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPopupIndex(prev => (prev + 1) % popups.length)}
+                      className="p-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-100"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                ) : <div />}
+                <button
+                  onClick={() => setPopups(prev => prev.filter((_, i) => i !== currentPopupIndex))}
+                  className="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors shadow-sm text-sm ml-auto"
+                >
+                  Đã hiểu
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Policy Detail Modal với hỗ trợ ảnh chính sách */}
+      {selectedPolicy && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl relative max-h-[85vh] flex flex-col">
+            <button
+              onClick={() => setSelectedPolicy(null)}
+              className="absolute top-4 right-4 z-20 p-2 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors backdrop-blur-sm"
+            >
+              <X size={16} />
+            </button>
+
+            {policyImg && (
+              <div className="w-full h-48 bg-gray-100 overflow-hidden relative flex-shrink-0">
+                <img src={policyImg} alt={selectedPolicy.title} className="w-full h-full object-cover" />
+              </div>
+            )}
+
+            <div className="p-6 flex-1 overflow-y-auto">
+              <div className="flex items-center gap-2 mb-3 text-orange-600">
+                <ShieldCheck size={22} />
+                <h3 className="text-lg font-bold text-gray-900">{selectedPolicy.title}</h3>
+              </div>
+              <div className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+                {selectedPolicy.content}
+              </div>
+            </div>
+
+            <div className="p-4 bg-gray-50 border-t border-gray-100 text-right flex-shrink-0">
+              <button
+                onClick={() => setSelectedPolicy(null)}
+                className="px-5 py-2 bg-gray-900 text-white text-xs font-semibold rounded-xl hover:bg-gray-800 transition-colors"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <nav className="sm:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 z-30 flex">
         {[

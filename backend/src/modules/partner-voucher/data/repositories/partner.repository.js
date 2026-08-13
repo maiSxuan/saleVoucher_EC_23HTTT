@@ -297,6 +297,54 @@ class PartnerRepository {
     return true;
   }
 
+  async changePassword(partnerId, oldPassword, newPassword) {
+    const bcrypt = require("bcryptjs");
+    const partner = await this.findById(partnerId);
+    if (!partner) {
+      throw new Error("Không tìm thấy thông tin đối tác.");
+    }
+    const repUserId = partner.id_nguoi_dai_dien || partner.nguoi_dai_dien?.ma_nguoi_dung;
+    let account = null;
+
+    if (repUserId) {
+      const { data } = await supabase
+        .from("taikhoan")
+        .select("*")
+        .eq("ma_nguoi_dung", repUserId)
+        .maybeSingle();
+      account = data;
+    }
+
+    if (!account && partner.nguoi_dai_dien?.email) {
+      const { data } = await supabase
+        .from("taikhoan")
+        .select("*")
+        .eq("thong_tin_dang_nhap", partner.nguoi_dai_dien.email.trim().toLowerCase())
+        .maybeSingle();
+      account = data;
+    }
+
+    if (!account) {
+      throw new Error("Không tìm thấy tài khoản đăng nhập của đối tác.");
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, account.mat_khau);
+    if (!isMatch && account.mat_khau !== oldPassword) {
+      throw new Error("Mật khẩu hiện tại không chính xác.");
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const { error } = await supabase
+      .from("taikhoan")
+      .update({ mat_khau: hashedPassword })
+      .eq("ma_tk", account.ma_tk);
+
+    if (error) {
+      throw new Error("Cập nhật mật khẩu thất bại: " + error.message);
+    }
+    return { success: true, message: "Đổi mật khẩu thành công!" };
+  }
+
   async create(payload) {
     await this.checkTaxCodeUniqueness(payload.ma_so_thue);
 

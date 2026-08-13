@@ -1,7 +1,15 @@
 import { useState, useEffect, useMemo } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
-import { Search, SlidersHorizontal } from "lucide-react";
+import {
+  Search,
+  SlidersHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  BookOpen,
+  Calendar,
+} from "lucide-react";
 import { fetchSellingVouchers } from "../../../../shared/api/catalogApi";
+import { contentApi } from "../../../../features/content-feedback/api/contentApi";
 import VoucherCard from "../../components/VoucherCard";
 
 export default function VoucherSearchPage() {
@@ -14,6 +22,12 @@ export default function VoucherSearchPage() {
   const [priceRange, setPriceRange] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [showFilters, setShowFilters] = useState(false);
+
+  // Dynamic banners & articles state
+  const [banners, setBanners] = useState([]);
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+  const [articles, setArticles] = useState([]);
+
   const {
     searchValue,
     setSearchValue,
@@ -26,6 +40,7 @@ export default function VoucherSearchPage() {
     let ignore = false;
     setLoading(true);
     setErrorMsg("");
+
     fetchSellingVouchers()
       .then((data) => !ignore && setVouchers(data))
       .catch(
@@ -34,10 +49,46 @@ export default function VoucherSearchPage() {
           setErrorMsg("Không thể tải danh sách voucher. Vui lòng thử lại sau."),
       )
       .finally(() => !ignore && setLoading(false));
+
+    // Fetch active banners and articles from content management
+    contentApi
+      .list("banner")
+      .then((res) => {
+        if (!ignore) {
+          const active = (res.data || []).filter(
+            (b) => b.status === "visible" || !b.status,
+          );
+          setBanners(active);
+        }
+      })
+      .catch(() => {});
+
+    contentApi
+      .list("bai_viet")
+      .then((res) => {
+        if (!ignore) {
+          const active = (res.data || []).filter(
+            (a) => a.status === "visible" || !a.status,
+          );
+          setArticles(active);
+        }
+      })
+      .catch(() => {});
+
     return () => {
       ignore = true;
     };
   }, []);
+
+  // Auto-slide banner every 5 seconds
+  useEffect(() => {
+    if (banners.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [banners.length]);
+
   const filtered = useMemo(() => {
     return vouchers
       .filter((v) => {
@@ -86,32 +137,80 @@ export default function VoucherSearchPage() {
       </div>
     );
 
+  const currentBanner = banners[currentBannerIndex];
+  const bannerImg = currentBanner?.imageUrl || currentBanner?.hinh_anh_url;
+
   return (
     <div className="space-y-6">
-      {/* Banner */}
-      <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-md">
-        <div className="absolute -right-10 -top-10 w-48 h-48 rounded-full bg-white/10 pointer-events-none" />
-        <div className="absolute -right-4 -bottom-6 w-32 h-32 rounded-full bg-white/10 pointer-events-none" />
-        <p className="text-sm sm:text-base font-medium tracking-wide opacity-90 mb-1">
-          🔥 Ưu đãi hot hôm nay
-        </p>
-        <h1 className="text-2xl sm:text-3xl font-extrabold mb-4 leading-tight">
-          Voucher giảm giá đặc biệt <br className="hidden sm:block" />
-          lên đến 60%
-        </h1>
-        <div className="flex gap-4">
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2.5 text-center min-w-[100px]">
-            <p className="text-lg sm:text-xl font-bold">{filtered.length}</p>
-            <p className="text-xs sm:text-sm opacity-90">Voucher đang bán</p>
-          </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2.5 text-center min-w-[100px]">
-            <p className="text-lg sm:text-xl font-bold">
-              {Array.isArray(categories) ? categories.length : 0}
+      {/* Dynamic Hero Banner Carousel với ảnh nền và lớp phủ tối ưu không che chữ */}
+      {banners.length > 0 && currentBanner && (
+        <div className="rounded-3xl relative overflow-hidden shadow-lg transition-all duration-500 min-h-[300px] flex items-center bg-gray-900 text-white">
+          {bannerImg ? (
+            <div className="absolute inset-0 z-0">
+              <img
+                src={bannerImg}
+                alt={currentBanner.title}
+                className="w-full h-full object-cover opacity-75 scale-105 transition-transform duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-transparent" />
+            </div>
+          ) : (
+            <div className="absolute inset-0 z-0 bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 opacity-90" />
+          )}
+
+          <div className="relative z-10 p-6 sm:p-10 max-w-xl">
+            <span className="inline-block px-3 py-1 rounded-full bg-white/25 text-xs font-semibold uppercase tracking-wider mb-3 backdrop-blur-sm shadow-xs">
+              ✨ Tin nổi bật
+            </span>
+            <h1 className="text-2xl sm:text-4xl font-extrabold mb-3 leading-tight drop-shadow-md">
+              {currentBanner.title}
+            </h1>
+            <p className="text-sm sm:text-base opacity-95 leading-relaxed drop-shadow-md line-clamp-3">
+              {currentBanner.content}
             </p>
-            <p className="text-xs sm:text-sm opacity-90">Danh mục</p>
           </div>
+
+          {/* Carousel Controls (Arrows & Dots) nếu có từ 2 banner trở lên */}
+          {banners.length > 1 && (
+            <>
+              <button
+                onClick={() =>
+                  setCurrentBannerIndex(
+                    (prev) => (prev - 1 + banners.length) % banners.length,
+                  )
+                }
+                className="absolute left-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors backdrop-blur-sm z-20"
+                title="Banner trước"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                onClick={() =>
+                  setCurrentBannerIndex((prev) => (prev + 1) % banners.length)
+                }
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors backdrop-blur-sm z-20"
+                title="Banner tiếp"
+              >
+                <ChevronRight size={20} />
+              </button>
+
+              <div className="absolute bottom-4 right-6 flex items-center gap-1.5 z-20">
+                {banners.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentBannerIndex(idx)}
+                    className={`h-2 rounded-full transition-all ${
+                      currentBannerIndex === idx
+                        ? "w-6 bg-white"
+                        : "w-2 bg-white/50 hover:bg-white/80"
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </div>
-      </div>
+      )}
 
       {/* Toolbar Lọc và Sắp xếp */}
       <div className="flex items-center gap-3">
@@ -154,10 +253,10 @@ export default function VoucherSearchPage() {
               <button
                 key={opt.value}
                 onClick={() => setPriceRange(opt.value)}
-                className={`px-3.5 py-1.5 rounded-lg text-sm border font-medium transition-all ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
                   priceRange === opt.value
-                    ? "bg-orange-500 text-white border-orange-500 shadow-sm"
-                    : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    ? "bg-orange-500 text-white shadow-xs"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
                 {opt.label}
@@ -167,40 +266,82 @@ export default function VoucherSearchPage() {
         </div>
       )}
 
+      {/* Danh sách Voucher */}
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center py-20 text-gray-400">
-          <Search size={48} className="mb-3 stroke-1" />
-          <p className="text-base font-medium text-gray-600">
-            Không tìm thấy voucher phù hợp
+        <div className="bg-white rounded-3xl border border-gray-100 p-16 text-center text-gray-400">
+          <p className="text-base font-semibold">
+            Không tìm thấy voucher phù hợp.
           </p>
-          <button
-            onClick={() => {
-              setSearchValue("");
-              setActiveCategory("Tất cả");
-              setPriceRange("");
-            }}
-            className="mt-3 text-orange-600 font-semibold text-sm hover:underline"
-          >
-            Xóa bộ lọc
-          </button>
+          <p className="text-sm mt-1">
+            Hãy thử tìm kiếm với từ khóa hoặc danh mục khác.
+          </p>
         </div>
       ) : (
-        <div>
-          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            {searchValue ? "Kết quả tìm kiếm" : "Voucher đang bán"}
-            <span className="text-sm font-normal text-gray-500">
-              ({filtered.length})
-            </span>
-          </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filtered.map((voucher) => (
+            <VoucherCard
+              key={voucher.id}
+              voucher={voucher}
+              onClick={() => navigate(`/customer/vouchers/${voucher.id}`)}
+            />
+          ))}
+        </div>
+      )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {filtered.map((v) => (
-              <VoucherCard
-                key={v.id}
-                voucher={v}
-                onClick={() => navigate(`/customer/vouchers/${v.id}`)}
-              />
-            ))}
+      {/* Khối Cẩm nang & Bài viết (Có đường dẫn sang trang chi tiết bài viết) */}
+      {articles.length > 0 && (
+        <div className="mt-12 pt-8 border-t border-gray-200">
+          <div className="flex items-center gap-2 mb-6">
+            <BookOpen className="text-orange-500" size={22} />
+            <h2 className="text-xl font-bold text-gray-900">
+              Cẩm nang & Mẹo săn voucher
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {articles.map((art) => {
+              const artImg = art.imageUrl || art.hinh_anh_url;
+              return (
+                <div
+                  key={art.id}
+                  onClick={() => navigate(`/customer/articles/${art.id}`)}
+                  className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between cursor-pointer group"
+                >
+                  {artImg && (
+                    <div className="w-full h-44 overflow-hidden bg-gray-100">
+                      <img
+                        src={artImg}
+                        alt={art.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                  )}
+                  <div className="p-5 flex flex-col flex-1 justify-between">
+                    <div>
+                      <span className="inline-block px-2.5 py-1 rounded-md bg-orange-50 text-orange-600 text-xs font-semibold mb-2">
+                        Bài viết hữu ích
+                      </span>
+                      <h3 className="font-bold text-gray-900 text-base mb-2 line-clamp-2 group-hover:text-orange-600 transition-colors">
+                        {art.title}
+                      </h3>
+                      <p className="text-xs text-gray-600 line-clamp-3 leading-relaxed">
+                        {art.content.replace(/<[^>]*>/g, "")}
+                      </p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400">
+                      <span className="flex items-center gap-1">
+                        <Calendar size={12} />{" "}
+                        {art.createdAt
+                          ? new Date(art.createdAt).toLocaleDateString("vi-VN")
+                          : "Hôm nay"}
+                      </span>
+                      <span className="text-orange-600 font-semibold group-hover:underline">
+                        Đọc tiếp →
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

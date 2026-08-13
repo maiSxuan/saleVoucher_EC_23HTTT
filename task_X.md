@@ -186,6 +186,7 @@ hiện tại khi từ nhân viên quản lí voucher cập nhật thành nhân v
 - chi nhánh: ở đây cần hiện đủ và đúng các chi nhánh thuộc sở hữu của doanh nghiệp đó
 
 BƯỚC 8: HỢP NHẤT LAYOUT ADMIN PORTAL & KẾT NỐI NHẬT KÝ HỆ THỐNG (BR-ADM-07)
+
 - Hợp nhất toàn bộ thanh điều hướng Admin Portal về một layout duy nhất tại: `frontend/src/features/core-access/layouts/AdminLayout.jsx`
 - Menu sidebar hợp nhất gồm 5 tính năng cốt lõi:
   1. Tổng quan (`/admin/overview`)
@@ -197,6 +198,7 @@ BƯỚC 8: HỢP NHẤT LAYOUT ADMIN PORTAL & KẾT NỐI NHẬT KÝ HỆ THỐN
 - Kết nối API Nhật ký hệ thống thật từ Supabase (`GET /admin/logs`) thông qua `auditLogApi.js`, hiển thị đầy đủ bộ lọc hành động, kết quả và phân trang.
 
 BƯỚC 9: CHẶN ĐẦU KIỂM TRA MÁY CHỦ SMTP / DNS TRƯỚC KHI GỬI EMAIL OTP
+
 - Xây dựng hàm chặn đầu `validateEmailDomain(email)` trong `mailer.js` sử dụng `dns.promises.resolveMx` và `resolve4`:
   - Chặn ngay các domain nội bộ / giả lập như `@ec.local`, `@*.test`, `@*.example`, `localhost`...
   - Kiểm tra sự tồn tại của bản ghi máy chủ nhận thư (MX/A) trên Internet trước khi gọi SMTP gửi mail.
@@ -230,7 +232,7 @@ Hệ thống hiển thị thông báo không tìm thấy tài khoản.
 Hệ thống hiển thị lại biểu mẫu nhập email hoặc số điện thoại.
 Khách hàng nhập lại email hoặc số điện thoại.
 Hệ thống tiếp nhận thông tin và quay lại bước 5 của luồng cơ bản.
-A11: Mã xác thực không hợp lệ 
+A11: Mã xác thực không hợp lệ
 Hệ thống phát hiện mã xác thực không hợp lệ.
 Hệ thống hiển thị thông báo mã xác thực không hợp lệ.
 Hệ thống hiển thị lựa chọn nhập lại mã xác thực hoặc yêu cầu gửi lại mã xác thực.
@@ -241,19 +243,19 @@ A11.2: Gửi lại mã xác thực
 Khách hàng chọn gửi lại mã xác thực.
 Hệ thống phát hành và gửi mã xác thực mới, sau đó quay lại bước 8 của luồng cơ bản.
 Luồng ngoại lệ
-E1: Không thể truy cập dữ liệu tài khoản 
-Hệ thống không thể truy cập dữ liệu tài khoản để kiểm tra thông tin. 
-Hệ thống hiển thị thông báo không thể thực hiện yêu cầu khôi phục mật khẩu. 
-Hệ thống kết thúc Use Case thất bại. 
-E2: Không thể gửi mã xác thực 
-Hệ thống không thể phát hành hoặc gửi mã xác thực đến Email hoặc Số điện thoại đã đăng ký. 
-Hệ thống hiển thị thông báo không thể gửi mã xác thực. 
-Hệ thống kết thúc Use Case thất bại. 
-E3: Không thể cập nhật mật khẩu mới 
-Hệ thống không thể lưu mật khẩu mới vào cơ sở dữ liệu. 
-Hệ thống giữ nguyên mật khẩu hiện tại của tài khoản. 
-Hệ thống hiển thị thông báo đặt lại mật khẩu thất bại. 
-Hệ thống kết thúc Use Case thất bại. 
+E1: Không thể truy cập dữ liệu tài khoản
+Hệ thống không thể truy cập dữ liệu tài khoản để kiểm tra thông tin.
+Hệ thống hiển thị thông báo không thể thực hiện yêu cầu khôi phục mật khẩu.
+Hệ thống kết thúc Use Case thất bại.
+E2: Không thể gửi mã xác thực
+Hệ thống không thể phát hành hoặc gửi mã xác thực đến Email hoặc Số điện thoại đã đăng ký.
+Hệ thống hiển thị thông báo không thể gửi mã xác thực.
+Hệ thống kết thúc Use Case thất bại.
+E3: Không thể cập nhật mật khẩu mới
+Hệ thống không thể lưu mật khẩu mới vào cơ sở dữ liệu.
+Hệ thống giữ nguyên mật khẩu hiện tại của tài khoản.
+Hệ thống hiển thị thông báo đặt lại mật khẩu thất bại.
+Hệ thống kết thúc Use Case thất bại.
 Yêu cầu phi chức năng
 NFR-01 – Hiệu năng
 Hệ thống phải phản hồi nhanh khi kiểm tra Email hoặc Số điện thoại đã đăng ký.
@@ -292,11 +294,11 @@ Sau khi khôi phục mật khẩu thành công, khách hàng phải sử dụng 
 
 BƯỚC 11: THÊM CODE USECASE UC-BUS-07 TRONG docs/đặc tả hệ thống cho khách hàng(2).pdf (USECASE này xảy ra khi khách hàng mua voucher thành công, đơn hàng có trạng thái thanh toán thành công và ngay lập tức sinh mã code liền cho khách hàng. Hãy thêm vào code phần code này nhé.)
 Tên UC
-Nhận voucher đã mua 
+Nhận voucher đã mua
 Use case ID
 BR_CUS_07
 Mô tả
-Hệ thống thực hiện phát hành voucher code điện tử sau khi đơn hàng được thanh toán thành công, hiển thị thông tin voucher và cho phép khách hàng xem lại voucher, trạng thái sử dụng và lịch sử đơn hàng. 
+Hệ thống thực hiện phát hành voucher code điện tử sau khi đơn hàng được thanh toán thành công, hiển thị thông tin voucher và cho phép khách hàng xem lại voucher, trạng thái sử dụng và lịch sử đơn hàng.
 Actor
 Khách hàng
 Độ ưu tiên
@@ -366,7 +368,7 @@ E2 – Không thể truy xuất danh sách voucher
 E2.1 Hệ thống Không thể truy xuất danh sách voucher tại bước 11.
 E2.2 Hệ thống Không hiển thị danh sách voucher.
 E2.3 Hệ thống Hiển thị thông báo: “Không thể tải danh sách voucher.”
-E2.4 Hệ thống  Kết thúc Use Case thất bại.
+E2.4 Hệ thống Kết thúc Use Case thất bại.
 YC Phi chức năng
 NFR-01 – Hiệu năng
 Hệ thống phải tự động phát hành voucher ngay sau khi thanh toán thành công.
@@ -397,9 +399,10 @@ Thời gian phát hành;
 Trạng thái phát hành.
 Các lỗi phát hành phải được ghi nhận để xử lý.
 
-BƯỚC 12:  THÊM CODE USECASE UC-ADM-06 TRONG docs/đặc tả hệ thống cho admin.pdf. code xong thì ghi lại luồng code (thứ tự mà bạn đã code) vào codeX_done.md
+## BƯỚC 12: THÊM CODE USECASE UC-ADM-06 TRONG docs/đặc tả hệ thống cho admin.pdf. code xong thì ghi lại luồng code (thứ tự mà bạn đã code) vào codeX_done.md
+
 Tên UC
-Hiển thị dashboard tổng quan hệ thống 
+Hiển thị dashboard tổng quan hệ thống
 Use case ID
 BR_ADM_06
 Mô tả
@@ -414,12 +417,12 @@ Tiền điều kiện
 Quản trị viên đã đăng nhập vào hệ thống.
 Tài khoản có vai trò Quản trị viên.
 Phiên đăng nhập còn hiệu lực.
-Hệ thống có quyền truy xuất dữ liệu tổng hợp 
+Hệ thống có quyền truy xuất dữ liệu tổng hợp
 Hậu điều kiện
 3.1. Trường hợp hiển thị thành công
 Hệ thống hiển thị đầy đủ các chỉ số tổng quan:
 Tổng người dùng
-Tổng đối tác đang hoạt động 
+Tổng đối tác đang hoạt động
 Tổng đối tác chờ duyệt
 Số lượng voucher đang bán
 Số lượng voucher chờ duyệt
@@ -432,45 +435,45 @@ Không hiển thị dữ liệu không tồn tại như một kết quả hợp 
 Hệ thống hiển thị trạng thái đang tải.
 Không hiển thị dữ liệu chưa xác định.
 Luồng cơ bản
-1  Quản trị viên  Đăng nhập vào hệ thống và truy cập giao diện Admin Dashboard.
-2  Hệ thống  Kiểm tra phiên đăng nhập và quyền truy cập của tài khoản.
-3  Hệ thống  Khởi tạo quá trình tải dữ liệu dashboard.
-4  Hệ thống  Truy xuất dữ liệu tổng hợp từ các module: người dùng, đối tác, voucher, đơn hàng và doanh thu.
-5  Hệ thống  Tính toán và truy xuất các chỉ số tổng quan gồm: Tổng người dùng, , Tổng đối tác đang hoạt động, Tổng đối tác chờ duyệt, Số lượng voucher đang bán, Số lượng voucher chờ duyệt, Tổng đơn hàng chờ xử lí (hoàn tiền, lỗi), Doanh thu tổng
-6  Hệ thống  Hiển thị dashboard với các chỉ số tổng quan.
-7  Hệ thống  Kết thúc Use Case.
+1 Quản trị viên Đăng nhập vào hệ thống và truy cập giao diện Admin Dashboard.
+2 Hệ thống Kiểm tra phiên đăng nhập và quyền truy cập của tài khoản.
+3 Hệ thống Khởi tạo quá trình tải dữ liệu dashboard.
+4 Hệ thống Truy xuất dữ liệu tổng hợp từ các module: người dùng, đối tác, voucher, đơn hàng và doanh thu.
+5 Hệ thống Tính toán và truy xuất các chỉ số tổng quan gồm: Tổng người dùng, , Tổng đối tác đang hoạt động, Tổng đối tác chờ duyệt, Số lượng voucher đang bán, Số lượng voucher chờ duyệt, Tổng đơn hàng chờ xử lí (hoàn tiền, lỗi), Doanh thu tổng
+6 Hệ thống Hiển thị dashboard với các chỉ số tổng quan.
+7 Hệ thống Kết thúc Use Case.
 Luồng thay thế
-A1a – Dữ liệu dashboard chưa tải được 
-A1a.1  Hệ thống  Không thể hoàn tất việc truy xuất dữ liệu dashboard trong thời gian chờ.
-A1a.2  Hệ thống  Hiển thị trạng thái đang tải dữ liệu.
-A1a.3  Hệ thống  Khi vượt quá thời gian chờ, hiển thị thông báo lỗi tải dữ liệu.
-A1a.4  Hệ thống  Hiển thị lựa chọn cho phép tải lại dashboard.
-A1a.5  Quản trị viên  Chọn tải lại dashboard.
-A1a.6  Hệ thống  Thực hiện lại quá trình tải dữ liệu từ bước 3 của Basic Flow.
-A1a.7  Hệ thống  Kết thúc Use Case nếu không tiếp tục thao tác.
+A1a – Dữ liệu dashboard chưa tải được
+A1a.1 Hệ thống Không thể hoàn tất việc truy xuất dữ liệu dashboard trong thời gian chờ.
+A1a.2 Hệ thống Hiển thị trạng thái đang tải dữ liệu.
+A1a.3 Hệ thống Khi vượt quá thời gian chờ, hiển thị thông báo lỗi tải dữ liệu.
+A1a.4 Hệ thống Hiển thị lựa chọn cho phép tải lại dashboard.
+A1a.5 Quản trị viên Chọn tải lại dashboard.
+A1a.6 Hệ thống Thực hiện lại quá trình tải dữ liệu từ bước 3 của Basic Flow.
+A1a.7 Hệ thống Kết thúc Use Case nếu không tiếp tục thao tác.
 A1b – Không có dữ liệu  
-A1b.1  Hệ thống  Không có dữ liệu cho một hoặc nhiều chỉ số dashboard.
-A1b.2  Hệ thống  Hiển thị các khu vực dữ liệu tương ứng với trạng thái trống.
-A1b.3  Hệ thống  Không hiển thị dữ liệu không tồn tại như kết quả hợp lệ.
-A1b.4  Hệ thống  Cho phép Quản trị viên tiếp tục xem các phần còn lại của dashboard.
-A1b.5  Hệ thống  Kết thúc Use Case.
+A1b.1 Hệ thống Không có dữ liệu cho một hoặc nhiều chỉ số dashboard.
+A1b.2 Hệ thống Hiển thị các khu vực dữ liệu tương ứng với trạng thái trống.
+A1b.3 Hệ thống Không hiển thị dữ liệu không tồn tại như kết quả hợp lệ.
+A1b.4 Hệ thống Cho phép Quản trị viên tiếp tục xem các phần còn lại của dashboard.
+A1b.5 Hệ thống Kết thúc Use Case.
 Luồng ngoại lệ
 E1 – Không có quyền truy cập
-E1.1  Hệ thống  Phát hiện tài khoản không có vai trò Quản trị viên.
-E1.2  Hệ thống  Từ chối truy cập dashboard quản trị.
-E1.3  Hệ thống  Hiển thị thông báo: “Bạn không có quyền truy cập.”
-E1.4  Hệ thống  Kết thúc Use Case thất bại.
-E2 – Dữ liệu trả về không hợp lệ 
-E2.1  Hệ thống  Phát hiện phiên đăng nhập không còn hiệu lực.
-E2.2  Hệ thống  Không thực hiện truy xuất dữ liệu dashboard.
-E2.3  Hệ thống  Hiển thị yêu cầu đăng nhập lại.
-E2.4  Hệ thống  Kết thúc Use Case thất bại.
+E1.1 Hệ thống Phát hiện tài khoản không có vai trò Quản trị viên.
+E1.2 Hệ thống Từ chối truy cập dashboard quản trị.
+E1.3 Hệ thống Hiển thị thông báo: “Bạn không có quyền truy cập.”
+E1.4 Hệ thống Kết thúc Use Case thất bại.
+E2 – Dữ liệu trả về không hợp lệ
+E2.1 Hệ thống Phát hiện phiên đăng nhập không còn hiệu lực.
+E2.2 Hệ thống Không thực hiện truy xuất dữ liệu dashboard.
+E2.3 Hệ thống Hiển thị yêu cầu đăng nhập lại.
+E2.4 Hệ thống Kết thúc Use Case thất bại.
 E3 – Không thể truy xuất dữ liệu dashboard
-E3.1  Hệ thống  Không thể truy xuất dữ liệu từ một hoặc nhiều module.
-E3.2  Hệ thống  Không hiển thị dữ liệu không đầy đủ như kết quả hợp lệ.
-E3.3  Hệ thống  Hiển thị thông báo lỗi tải dữ liệu.
-E3.4  Hệ thống  Cho phép thực hiện lại thao tác tải dữ liệu.
-E3.5  Hệ thống  Kết thúc Use Case nếu không thể khôi phục dữ liệu.
+E3.1 Hệ thống Không thể truy xuất dữ liệu từ một hoặc nhiều module.
+E3.2 Hệ thống Không hiển thị dữ liệu không đầy đủ như kết quả hợp lệ.
+E3.3 Hệ thống Hiển thị thông báo lỗi tải dữ liệu.
+E3.4 Hệ thống Cho phép thực hiện lại thao tác tải dữ liệu.
+E3.5 Hệ thống Kết thúc Use Case nếu không thể khôi phục dữ liệu.
 YC Phi chức năng
 NFR-01 – Hiệu năng
 Dashboard phải hiển thị trong thời gian hợp lý sau khi Quản trị viên truy cập.
@@ -503,3 +506,16 @@ NOTE: Khách hàng "Thanh toán hụt" (Bỏ dở giữa chừng): Nếu khách 
 => Kết luận: 3 đơn hàng "Chờ thanh toán" ngày 6/8 mà bạn thấy trong ảnh chính là 3 lần bấm "Thanh toán" nhưng bỏ dở (không trả tiền) của tài khoản mytran trong quá trình test hệ thống. Hệ thống ghi nhận đúng lịch sử thao tác chứ không hề lưu sai tài khoản.
 
 Lưu ý thêm: Trong thực tế, để dọn dẹp các đơn "Chờ thanh toán" rác do khách hàng bỏ dở, các hệ thống thường sẽ có một tác vụ chạy ngầm (cron job) tự động chuyển trạng thái sang "Đã hủy" sau 15-30 phút không thanh toán. Nếu hiện tại hệ thống chưa có tính năng cron job này, các đơn "Chờ thanh toán" sẽ nằm đó mãi mãi.
+
+##Bước 13: giúp tôi chỉnh lại toàn bộ logic quản lí đơn hàng theo UC-ADM-04, UC-ADM-05, UC-ADM-06, UC-ADM-07 (bắt buộc phải đi đúng luồng của các UC-ADM-\* không được tự bịa, từ khách hàng đến admin). tôi cần bạn thiết kế lại UI và logic sao cho đáp ứng đầy đủ tất cả các uc của quản trị viên
+bạn hãy xem trong docs/đặc tả hệ thống admin.pdf
+sau đó hãy viết lại toàn bộ những thứ bạn đã code vào codeX_done_QLĐH.md (sinh file mới)
+
+Hiển thị lịch sử Khiếu nại: Đã thêm phần hiển thị lịch sử "Khách hàng gửi khiếu nại" vào trong khối "Tiến trình xử lý Yêu cầu & Hỗ trợ" (tương tự như tiến trình hủy đơn/hoàn tiền). Khách hàng sẽ thấy được nội dung khiếu nại, thời gian gửi và trạng thái xử lý hiện tại (Đã giải quyết / Đang xử lý...).
+Khóa (Disable) nút Yêu cầu hủy đơn: Nếu khách hàng đã từng gửi yêu cầu hủy đơn cho đơn hàng này rồi, hệ thống sẽ ẩn nút yêu cầu hủy cũ đi và hiển thị một nút xám (disabled) với thông báo "Đã gửi yêu cầu hủy đơn". Điều này giúp chặn khách hàng bấm gửi nhiều lần và cho họ biết trạng thái hệ thống đã ghi nhận.
+Khóa (Disable) nút Gửi khiếu nại: Nếu khách hàng đã gửi khiếu nại cho TẤT CẢ các mã voucher có trong đơn hàng, nút Gửi khiếu nại cũng sẽ bị vô hiệu hóa với thông báo "Đã khiếu nại tất cả". (Tôi cũng áp dụng logic chặn tương tự cho nút Đánh giá để đồng bộ giao diện).
+
+tăng tốc độ xử cho toàn bộ
+gửi lại mã: code + qr
+chỉnh lại tổng quan: yc hủy đơn, khiếu nại, chart
+chỉnh lại log đúng nơi đúng chỗ

@@ -16,9 +16,15 @@ async function getFeedbackById(id) {
 }
 
 // Tạo mới khiếu nại
-async function createFeedback(payload) {
+async function createFeedback(payload, accountId) {
   // Validate dữ liệu
   validator.validateCreateFeedback(payload);
+
+  if (!accountId || !await repository.isVoucherPurchaseOwnedBy(payload.ma_voucher_mua, accountId)) {
+    const err = new Error('Bạn không có quyền khiếu nại cho lần mua voucher này');
+    err.status = 403;
+    throw err;
+  }
   
   // Kiểm tra xem lần mua này đã được gửi khiếu nại chưa
   const existing = await repository.findByVoucherPurchaseId(payload.ma_voucher_mua);
@@ -37,7 +43,12 @@ async function createFeedback(payload) {
 }
 
 // Lấy khiếu nại theo ma_voucher_mua
-async function getFeedbackByPurchaseId(voucherPurchaseId) {
+async function getFeedbackByPurchaseId(voucherPurchaseId, accountId, role) {
+  if (role !== 'ADMIN' && !await repository.isVoucherPurchaseOwnedBy(voucherPurchaseId, accountId)) {
+    const err = new Error('Bạn không có quyền xem khiếu nại này');
+    err.status = 403;
+    throw err;
+  }
   const item = await repository.findByVoucherPurchaseId(voucherPurchaseId);
   return dto.buildFeedbackDto(item);
 }

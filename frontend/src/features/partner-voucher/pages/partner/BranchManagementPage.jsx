@@ -30,6 +30,14 @@ export function BranchManagementPage() {
   const [selectedBranchForEdit, setSelectedBranchForEdit] = useState(null);
   const [selectedBranchForDelete, setSelectedBranchForDelete] = useState(null);
 
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const limit = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, activeTab]);
+
   const [newBranchForm, setNewBranchForm] = useState({
     ten_chi_nhanh: "",
     khu_vuc: "TP. Hồ Chí Minh",
@@ -303,57 +311,84 @@ export function BranchManagementPage() {
                 <p className="text-sm">Không tìm thấy chi nhánh nào.</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100">
-                {filteredBranches.map((branch) => {
-                  const pendingReq = partnerRequests.find(
-                    (r) => r.ma_chi_nhanh === branch.ma_chi_nhanh && (r.trang_thai === "Cho duyet" || r.trang_thai === "Cho xu ly")
-                  );
+              <div>
+                <div className="divide-y divide-gray-100">
+                  {filteredBranches.slice((page - 1) * limit, page * limit).map((branch) => {
+                    const pendingReq = partnerRequests.find(
+                      (r) => r.ma_chi_nhanh === branch.ma_chi_nhanh && (r.trang_thai === "Cho duyet" || r.trang_thai === "Cho xu ly")
+                    );
 
-                  return (
-                    <div key={branch.ma_chi_nhanh} className="p-5 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-3">
-                          <h4 className="font-bold text-gray-900 text-base">{branch.ten_chi_nhanh}</h4>
-                          <Badge status={branch.trang_thai} size="sm" />
-                          {pendingReq && pendingReq.loai_yeu_cau === "Cap nhat" && (
-                            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                              Chờ duyệt cập nhật
-                            </span>
-                          )}
-                          {pendingReq && pendingReq.loai_yeu_cau === "Xoá" && (
-                            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                             Chờ duyệt xóa
-                            </span>
+                    return (
+                      <div key={branch.ma_chi_nhanh} className="p-5 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-3">
+                            <h4 className="font-bold text-gray-900 text-base">{branch.ten_chi_nhanh}</h4>
+                            <Badge status={branch.trang_thai} size="sm" />
+                            {pendingReq && pendingReq.loai_yeu_cau === "Cap nhat" && (
+                              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                Chờ duyệt cập nhật
+                              </span>
+                            )}
+                            {pendingReq && pendingReq.loai_yeu_cau === "Xoá" && (
+                              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                               Chờ duyệt xóa
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-600 flex items-center gap-1">
+                            <MapPin size={13} className="text-amber-500 shrink-0" />
+                            {branch.dia_chi} ({branch.khu_vuc})
+                          </p>
+                          {branch.trang_thai === "Tu choi" && branch.ly_do_tu_choi && (
+                            <div className="mt-1.5 p-2 bg-rose-50 border border-rose-200 rounded-md text-xs text-rose-700 font-medium">
+                              Lý do từ chối: {branch.ly_do_tu_choi}
+                            </div>
                           )}
                         </div>
-                        <p className="text-xs text-gray-600 flex items-center gap-1">
-                          <MapPin size={13} className="text-amber-500 shrink-0" />
-                          {branch.dia_chi} ({branch.khu_vuc})
-                        </p>
-                        {branch.trang_thai === "Tu choi" && branch.ly_do_tu_choi && (
-                          <div className="mt-1.5 p-2 bg-rose-50 border border-rose-200 rounded-md text-xs text-rose-700 font-medium">
-                            Lý do từ chối: {branch.ly_do_tu_choi}
-                          </div>
-                        )}
-                      </div>
 
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleOpenEdit(branch)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-                        >
-                          <Edit size={13} /> Sửa
-                        </button>
-                        <button
-                          onClick={() => handleDeleteClick(branch)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold border border-rose-200 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                        >
-                          <Trash2 size={13} /> Xóa
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleOpenEdit(branch)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                          >
+                            <Edit size={13} /> Sửa
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(branch)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold border border-rose-200 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                          >
+                            <Trash2 size={13} /> Xóa
+                          </button>
+                        </div>
                       </div>
+                    );
+                  })}
+                </div>
+
+                {/* Phân trang */}
+                {filteredBranches.length > 0 && (
+                  <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50 text-sm">
+                    <p className="text-xs text-gray-600">
+                      Trang {page} / {Math.ceil(filteredBranches.length / limit) || 1} (Tổng {filteredBranches.length} chi nhánh)
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={page <= 1}
+                        className="px-3 py-1 bg-white border border-gray-300 rounded text-xs font-medium text-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-colors cursor-pointer"
+                      >
+                        Trước
+                      </button>
+                      <button
+                        onClick={() => setPage((p) => Math.min(Math.ceil(filteredBranches.length / limit) || 1, p + 1))}
+                        disabled={page >= (Math.ceil(filteredBranches.length / limit) || 1)}
+                        className="px-3 py-1 bg-white border border-gray-300 rounded text-xs font-medium text-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-colors cursor-pointer"
+                      >
+                        Sau
+                      </button>
                     </div>
-                  );
-                })}
+                  </div>
+                )}
               </div>
             )}
           </div>

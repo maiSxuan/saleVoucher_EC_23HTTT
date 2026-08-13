@@ -200,7 +200,7 @@ export function PartnerManagementPage() {
               onChange={(e) => setFilterPendingBranchReqs(e.target.checked)}
               className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
             />
-            <span>Có yêu cầu chi nhánh chờ duyệt</span>
+            <span>Có yêu cầu chờ duyệt</span>
           </label>
         </div>
 

@@ -4,11 +4,13 @@ import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
 import Badge from "../../../../shared/components/Badge";
 import Toast from "../../../../shared/components/Toast";
+import Modal from "../../../../shared/components/Modal";
 import {
   getPartnerByIdApi,
   updatePartnerApi,
   createPartnerProfileRequestApi,
   getPendingPartnerProfileRequestApi,
+  changePartnerPasswordApi,
 } from "../../../../shared/api/partnerApi";
 
 export function PartnerProfilePage() {
@@ -18,6 +20,15 @@ export function PartnerProfilePage() {
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+
+  // Password change modal state
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [changingPassword, setChangingPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     ten_dn: "",
@@ -101,6 +112,15 @@ export function PartnerProfilePage() {
       setIsEditing(false);
       return;
     }
+    if (formData.sdt && !/^\d{10}$/.test(formData.sdt.trim())) {
+      setToastMessage("Số điện thoại phải bao gồm đúng 10 chữ số.");
+      return;
+    }
+    if (formData.cccd && !/^\d{12}$/.test(formData.cccd.trim())) {
+      setToastMessage("Số CCCD phải bao gồm đúng 12 chữ số.");
+      return;
+    }
+
     setSaving(true);
     try {
       await createPartnerProfileRequestApi({
@@ -124,6 +144,32 @@ export function PartnerProfilePage() {
     setSaving(false);
     setIsEditing(false);
     await loadPartner();
+  };
+
+  const handleChangePasswordConfirm = async () => {
+    if (!passwordForm.oldPassword) {
+      setToastMessage("Vui lòng nhập mật khẩu hiện tại.");
+      return;
+    }
+    if (!passwordForm.newPassword || passwordForm.newPassword.length < 6) {
+      setToastMessage("Mật khẩu mới phải có ít nhất 6 ký tự.");
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setToastMessage("Mật khẩu xác nhận không trùng khớp.");
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      await changePartnerPasswordApi(partner.ma_hs, passwordForm);
+      setToastMessage("Đổi mật khẩu thành công!");
+      setShowPasswordModal(false);
+      setPasswordForm({ oldPassword: "", newPassword: "", confirmPassword: "" });
+    } catch (e) {
+      setToastMessage(e.message || "Đổi mật khẩu thất bại.");
+    }
+    setChangingPassword(false);
   };
 
   if (loading) {
@@ -158,8 +204,11 @@ export function PartnerProfilePage() {
           </div>
           <div className="flex items-center gap-3">
             <Badge status={partner.trang_thai} />
+            <Button variant="secondary" onClick={() => setShowPasswordModal(true)}>
+              Đổi mật khẩu
+            </Button>
             {canEdit && (
-              <Button variant="secondary" onClick={() => setIsEditing(true)}>
+              <Button variant="primary" onClick={() => setIsEditing(true)}>
                 Chỉnh sửa hồ sơ
               </Button>
             )}
@@ -245,12 +294,16 @@ export function PartnerProfilePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Mã số thuế / MST</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                    <span>Mã số thuế / MST</span>
+                    <span className="text-[10px] text-slate-400 font-normal">(Cố định - Không thể chỉnh sửa)</span>
+                  </label>
                   <input
                     type="text"
                     value={formData.ma_so_thue}
-                    onChange={(e) => setFormData({ ...formData, ma_so_thue: e.target.value })}
-                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    disabled
+                    readOnly
+                    className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-200 bg-slate-100 text-slate-500 cursor-not-allowed font-mono font-bold"
                   />
                 </div>
               </div>
@@ -444,6 +497,54 @@ export function PartnerProfilePage() {
             </div>
           )}
         </Card>
+
+        {/* Change Password Modal */}
+        {showPasswordModal && (
+          <Modal
+            isOpen={true}
+            onClose={() => setShowPasswordModal(false)}
+            onConfirm={handleChangePasswordConfirm}
+            title="Đổi Mật Khẩu Tài Khoản"
+            confirmText={changingPassword ? "Đang xử lý..." : "Xác nhận đổi mật khẩu"}
+            confirmVariant="primary"
+          >
+            <div className="space-y-3 text-left">
+              <p className="text-xs text-slate-500">
+                Nhập mật khẩu hiện tại và mật khẩu mới để bảo mật tài khoản đối tác của bạn.
+              </p>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Mật khẩu hiện tại</label>
+                <input
+                  type="password"
+                  value={passwordForm.oldPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, oldPassword: e.target.value })}
+                  placeholder="Nhập mật khẩu hiện tại..."
+                  className="w-full px-3 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Mật khẩu mới (tối thiểu 6 ký tự)</label>
+                <input
+                  type="password"
+                  value={passwordForm.newPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                  placeholder="Nhập mật khẩu mới..."
+                  className="w-full px-3 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Xác nhận mật khẩu mới</label>
+                <input
+                  type="password"
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                  placeholder="Nhập lại mật khẩu mới..."
+                  className="w-full px-3 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+            </div>
+          </Modal>
+        )}
 
         <Toast message={toastMessage} onClose={() => setToastMessage("")} />
       </div>

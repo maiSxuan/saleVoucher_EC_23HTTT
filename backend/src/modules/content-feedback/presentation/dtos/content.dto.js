@@ -13,6 +13,8 @@ function buildContentDto(item) {
     title: item.tieu_de,
     content: item.noi_dung,
     status: statusMap[item.trang_thai] || item.trang_thai,
+    imageUrl: item.hinh_anh_url || null,
+    hinh_anh_url: item.hinh_anh_url || null,
     createdAt: item.ngay_tao,
     updatedAt: item.ngay_cap_nhat,
   };

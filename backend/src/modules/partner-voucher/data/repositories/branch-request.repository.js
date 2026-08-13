@@ -39,6 +39,11 @@ class BranchRequestRepository {
               khu_vuc: r.khu_vuc_moi,
               dia_chi: r.dia_chi_moi,
             },
+            thong_tin_hien_tai: {
+              ten_chi_nhanh: r.chinhanh?.ten_chi_nhanh || "",
+              khu_vuc: r.chinhanh?.khu_vuc || "",
+              dia_chi: r.chinhanh?.dia_chi || "",
+            },
             trang_thai: r.trang_thai,
             ly_do_tu_choi: reason,
             nguoi_duyet: r.nguoi_duyet,
@@ -185,7 +190,6 @@ class BranchRequestRepository {
 
     // Branch update or delete: Insert into yeu_cau_cap_nhat_chinhanh
     const dbRecord = {
-      ma_hs: payload.ma_hs,
       ma_chi_nhanh: payload.ma_chi_nhanh,
       loai_yeu_cau: payload.loai_yeu_cau === "Xoá" || payload.loai_yeu_cau === "XOA" ? "XOA" : "CAP_NHAT",
       ten_chi_nhanh_moi: payload.du_lieu_de_xuat?.ten_chi_nhanh || payload.ten_chi_nhanh || null,
@@ -206,7 +210,7 @@ class BranchRequestRepository {
         const item = {
           ma_yeu_cau: data.ma_yc,
           ma_chi_nhanh: data.ma_chi_nhanh,
-          ma_hs: data.ma_hs,
+          ma_hs: payload.ma_hs,
           loai_yeu_cau: payload.loai_yeu_cau,
           ten_chi_nhanh: payload.ten_chi_nhanh,
           khu_vuc: payload.khu_vuc,
@@ -217,6 +221,8 @@ class BranchRequestRepository {
         };
         BRANCH_REQUESTS_STORE.set(item.ma_yeu_cau, item);
         return item;
+      } else if (error) {
+        console.error("[BranchRequestRepo] Create DB Error:", error);
       }
     } catch (e) {
       console.warn("[BranchRequestRepo] Create DB exception:", e.message);
@@ -312,12 +318,15 @@ class BranchRequestRepository {
     try {
       const { data, error } = await supabase
         .from("yeu_cau_cap_nhat_chinhanh")
-        .select("ma_hs, trang_thai")
+        .select("ma_chi_nhanh, trang_thai, chinhanh!inner(ma_hs)")
         .eq("trang_thai", "Cho duyet");
 
       if (!error && data) {
         data.forEach((item) => {
-          map.set(item.ma_hs, (map.get(item.ma_hs) || 0) + 1);
+          const maHs = item.chinhanh?.ma_hs;
+          if (maHs) {
+            map.set(maHs, (map.get(maHs) || 0) + 1);
+          }
         });
       }
     } catch (e) {

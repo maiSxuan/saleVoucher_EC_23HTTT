@@ -7,6 +7,15 @@ const dns = require("dns").promises;
 const { loadGmail, loadAuthGmail } = require("../../config/environment");
 const AppError = require("../errors/AppError");
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function getActiveTransporter(type = "register") {
   require("dotenv").config();
   const isForgotPassword = type === "forgot_password";
@@ -137,7 +146,52 @@ async function sendOtpEmail(toEmail, otp, type = "register") {
   }
 }
 
+/**
+ * Send a transactional notification (voucher delivery, complaint result, ...).
+ * Callers decide whether a delivery failure blocks their business workflow.
+ */
+async function sendNotificationEmail(toEmail, { subject, title, message, voucherCode } = {}) {
+  await validateEmailDomain(toEmail);
+
+  const mailerObj = getActiveTransporter("register");
+  if (!mailerObj || !mailerObj.user || !mailerObj.pass) {
+    throw new AppError(
+      "Chưa cấu hình tài khoản máy chủ SMTP gửi mail trong hệ thống.",
+      500,
+      "SMTP_NOT_CONFIGURED"
+    );
+  }
+
+  const safeTitle = escapeHtml(title || "Thông báo từ EC Voucher");
+  const safeMessage = escapeHtml(message || "Thông tin tài khoản của bạn vừa được cập nhật.");
+  const safeVoucherCode = escapeHtml(voucherCode);
+  const codeBlock = voucherCode
+    ? `<div style="margin:20px 0;padding:16px;text-align:center;border:1px solid #bfdbfe;border-radius:8px;background:#eff6ff;font-size:24px;font-weight:700;letter-spacing:3px;color:#1d4ed8">${safeVoucherCode}</div>`
+    : "";
+
+  try {
+    return await mailerObj.transporter.sendMail({
+      from: mailerObj.from,
+      to: toEmail,
+      subject: subject || safeTitle,
+      html: `<div style="font-family:Arial,sans-serif;padding:20px;max-width:560px;margin:auto;border:1px solid #e5e7eb;border-radius:10px">
+        <h2 style="color:#2563eb">${safeTitle}</h2>
+        <p>${safeMessage}</p>
+        ${codeBlock}
+        <p style="font-size:12px;color:#9ca3af">Đây là email tự động từ hệ thống EC Voucher.</p>
+      </div>`,
+    });
+  } catch (err) {
+    throw new AppError(
+      `Không thể gửi thông báo đến "${toEmail}" (${err.message}).`,
+      400,
+      "SMTP_SEND_FAILED"
+    );
+  }
+}
+
 module.exports = {
   sendOtpEmail,
+  sendNotificationEmail,
   validateEmailDomain,
 };
