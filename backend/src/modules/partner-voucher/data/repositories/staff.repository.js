@@ -111,7 +111,39 @@ class StaffRepository {
     }
   }
 
+  async checkEmailExists(email, excludeStaffId = null) {
+    if (!email || !email.trim()) return false;
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Check in nguoidung table
+    let query = supabase.from("nguoidung").select("ma_nguoi_dung").eq("email", cleanEmail);
+    if (excludeStaffId) {
+      query = query.neq("ma_nguoi_dung", excludeStaffId);
+    }
+    const { data: userMatch } = await query.limit(1).maybeSingle();
+    if (userMatch) return true;
+
+    // Check in taikhoan table
+    let accQuery = supabase.from("taikhoan").select("ma_tk, ma_nguoi_dung").eq("thong_tin_dang_nhap", cleanEmail);
+    if (excludeStaffId) {
+      accQuery = accQuery.neq("ma_nguoi_dung", excludeStaffId);
+    }
+    const { data: accMatch } = await accQuery.limit(1).maybeSingle();
+    if (accMatch) return true;
+
+    return false;
+  }
+
   async create(payload) {
+    if (payload.email) {
+      const isDuplicate = await this.checkEmailExists(payload.email);
+      if (isDuplicate) {
+        const err = new Error(`Email "${payload.email}" đã tồn tại trên hệ thống. Vui lòng chọn email khác.`);
+        err.status = 400;
+        throw err;
+      }
+    }
+
     const validPartnerId = await this.resolvePartnerId(payload.ma_hs);
     const isNvbh = payload.vai_tro !== "Quản lý vận hành";
 
@@ -166,6 +198,15 @@ class StaffRepository {
   }
 
   async update(id, payload) {
+    if (payload.email) {
+      const isDuplicate = await this.checkEmailExists(payload.email, id);
+      if (isDuplicate) {
+        const err = new Error(`Email "${payload.email}" đã tồn tại trên hệ thống. Vui lòng chọn email khác.`);
+        err.status = 400;
+        throw err;
+      }
+    }
+
     const isNvbh = payload.vai_tro !== "Quản lý vận hành";
     const updatePayload = {};
     if (payload.ho_ten !== undefined) updatePayload.ho_ten = payload.ho_ten;

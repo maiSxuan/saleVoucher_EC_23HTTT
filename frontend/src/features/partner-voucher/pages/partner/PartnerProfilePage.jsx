@@ -68,6 +68,7 @@ export function PartnerProfilePage() {
         ma_so_thue: data.ma_so_thue || "",
         dia_chi: data.dia_chi || "",
         giay_phep_kinh_doanh: data.giay_phep_kinh_doanh || "",
+        logo: data.logo || "",
         ho_ten: data.nguoi_dai_dien?.ho_ten || "",
         sdt: data.nguoi_dai_dien?.sdt || "",
         email: data.nguoi_dai_dien?.email || "",
@@ -105,6 +106,24 @@ export function PartnerProfilePage() {
     reader.readAsDataURL(file);
   };
 
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      setToastMessage("Dung lượng tệp Logo vượt quá 10MB. Vui lòng chọn tệp nhỏ hơn.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const dataUrl = evt.target.result;
+      setFormData((prev) => ({ ...prev, logo: dataUrl }));
+      setToastMessage(`Đã tải lên tệp Logo "${file.name}" mới thành công!`);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSave = async () => {
     if (!partner?.ma_hs) return;
     if (partner.trang_thai === "Cho duyet" || pendingProfileReq) {
@@ -129,6 +148,7 @@ export function PartnerProfilePage() {
         ma_so_thue_moi: formData.ma_so_thue,
         dia_chi_moi: formData.dia_chi,
         giay_phep_kinh_doanh_moi: formData.giay_phep_kinh_doanh,
+        logo_new: formData.logo,
         ho_ten_nguoi_dai_dien_moi: formData.ho_ten,
         sdt_nguoi_dai_dien_moi: formData.sdt,
         email_nguoi_dai_dien_moi: formData.email,
@@ -225,11 +245,6 @@ export function PartnerProfilePage() {
                 <p className="text-xs text-rose-700 font-medium">
                   Lý do từ chối: <span className="italic font-normal">{partner.ly_do_tu_choi || "Thông tin hồ sơ chưa đủ điều kiện pháp lý."}</span>
                 </p>
-                <div className="pt-2">
-                  <Button variant="danger" size="sm" onClick={() => setIsEditing(true)}>
-                    Khắc phục thông tin & Gửi lại yêu cầu xét duyệt
-                  </Button>
-                </div>
               </div>
             </div>
           </div>
@@ -331,11 +346,17 @@ export function PartnerProfilePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Số điện thoại</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                    <span>Số điện thoại</span>
+                    <span className={`text-xs font-semibold ${formData.sdt?.length === 10 ? "text-emerald-600 font-bold" : "text-slate-400"}`}>
+                      {formData.sdt?.length || 0}/10 chữ số
+                    </span>
+                  </label>
                   <input
                     type="text"
+                    maxLength={10}
                     value={formData.sdt}
-                    onChange={(e) => setFormData({ ...formData, sdt: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, sdt: e.target.value.replace(/\D/g, "") })}
                     className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
@@ -349,11 +370,17 @@ export function PartnerProfilePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Số CCCD / CMND</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                    <span>Số CCCD / CMND</span>
+                    <span className={`text-xs font-semibold ${formData.cccd?.length === 12 ? "text-emerald-600 font-bold" : "text-slate-400"}`}>
+                      {formData.cccd?.length || 0}/12 chữ số
+                    </span>
+                  </label>
                   <input
                     type="text"
+                    maxLength={12}
                     value={formData.cccd}
-                    onChange={(e) => setFormData({ ...formData, cccd: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, cccd: e.target.value.replace(/\D/g, "") })}
                     className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
@@ -380,38 +407,77 @@ export function PartnerProfilePage() {
                 </div>
               </div>
 
-              <h4 className="font-semibold text-slate-900 pt-4 border-t border-slate-100 text-sm">Giấy Phép Đăng Ký Kinh Doanh & Tệp Pháp Lý</h4>
+              <h4 className="font-semibold text-slate-900 pt-4 border-t border-slate-100 text-sm">Hình Ảnh Logo Thương Hiệu & Giấy Phép Pháp Lý</h4>
 
-              <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <label className="block text-xs font-semibold text-slate-700">Tải lên Giấy phép kinh doanh mới (Nếu muốn thay đổi)</label>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                  {formData.giay_phep_kinh_doanh ? (
-                    <img
-                      src={formData.giay_phep_kinh_doanh}
-                      alt="Giấy phép xem trước"
-                      className="w-36 h-24 object-cover rounded-lg border border-slate-300 shadow-xs bg-white"
-                    />
-                  ) : (
-                    <div className="w-36 h-24 rounded-lg border-2 border-dashed border-slate-300 bg-white flex items-center justify-center text-xs text-slate-400">
-                      Chưa có tệp
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Logo Upload Box */}
+                <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <label className="block text-xs font-semibold text-slate-700">Logo Thương Hiệu Doanh Nghiệp (Hiển thị trên Landing Page)</label>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    {formData.logo ? (
+                      <img
+                        src={formData.logo}
+                        alt="Logo xem trước"
+                        referrerPolicy="no-referrer"
+                        className="w-24 h-24 object-contain rounded-xl border border-slate-300 shadow-xs bg-white p-1"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-300 bg-white flex items-center justify-center text-xs text-slate-400">
+                        Chưa có logo
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <input
+                        type="file"
+                        id="profile-logo-upload-input"
+                        accept="image/*"
+                        onChange={handleLogoChange}
+                        className="hidden"
+                      />
+                      <label
+                        htmlFor="profile-logo-upload-input"
+                        className="inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors cursor-pointer shadow-xs"
+                      >
+                        🖼️ Tải lên Logo mới (PNG, JPG)
+                      </label>
+                      <p className="text-[11px] text-slate-500">Kích thước khuyên dùng: Vuông (1:1), PNG/JPG (tối đa 10MB). Tự động lưu trên Supabase Storage.</p>
                     </div>
-                  )}
+                  </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <input
-                      type="file"
-                      id="profile-license-upload-input"
-                      accept="image/*,application/pdf"
-                      onChange={handleFileChange}
-                      className="hidden"
-                    />
-                    <label
-                      htmlFor="profile-license-upload-input"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors cursor-pointer shadow-xs"
-                    >
-                      📁 Tải lên Giấy phép kinh doanh mới (Ảnh / PDF)
-                    </label>
-                    <p className="text-[11px] text-slate-500">Hỗ trợ các định dạng PNG, JPG, PDF (tối đa 10MB). Tệp mới sẽ được tự động lưu trữ trên hệ thống Supabase Storage.</p>
+                {/* License Upload Box */}
+                <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <label className="block text-xs font-semibold text-slate-700">Giấy phép kinh doanh mới (Tệp pháp lý)</label>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    {formData.giay_phep_kinh_doanh ? (
+                      <img
+                        src={formData.giay_phep_kinh_doanh}
+                        alt="Giấy phép xem trước"
+                        className="w-24 h-24 object-cover rounded-xl border border-slate-300 shadow-xs bg-white"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-300 bg-white flex items-center justify-center text-xs text-slate-400">
+                        Chưa có tệp
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <input
+                        type="file"
+                        id="profile-license-upload-input"
+                        accept="image/*,application/pdf"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                      <label
+                        htmlFor="profile-license-upload-input"
+                        className="inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors cursor-pointer shadow-xs"
+                      >
+                        📁 Tải GPKD mới (Ảnh/PDF)
+                      </label>
+                      <p className="text-[11px] text-slate-500">Hỗ trợ PNG, JPG, PDF (tối đa 10MB). Lưu trữ trên Supabase Storage.</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -469,28 +535,42 @@ export function PartnerProfilePage() {
                 </div>
               </div>
 
-              {/* License Document Preview */}
-              <div className="border-t border-slate-100 pt-4">
-                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Giấy Phép Đăng Ký Kinh Doanh</h4>
-                <div className="flex items-center gap-4">
-                  <img
-                    src={partner.giay_phep_kinh_doanh || "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80"}
-                    alt="Giấy phép kinh doanh"
-                    className="w-36 h-24 object-cover rounded-lg border border-slate-200 shadow-xs"
-                  />
-                  <div className="text-xs space-y-1">
-                    <div className="font-semibold text-slate-800">File_GiayPhepKinhDoanh_Certified.pdf</div>
-                    <div className="text-slate-400">Định dạng: Đã xác thực trên hệ thống</div>
-                    {partner.giay_phep_kinh_doanh && (
-                      <a
-                        href={partner.giay_phep_kinh_doanh}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-block text-blue-600 font-medium hover:underline pt-1"
-                      >
-                        🔗 Xem bản phóng to
-                      </a>
+              {/* Logo & License Document Preview */}
+              <div className="border-t border-slate-100 pt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Logo Thương Hiệu Hiện Tại</h4>
+                  <div className="flex items-center gap-4">
+                    {partner.logo ? (
+                      <img
+                        src={partner.logo}
+                        alt="Logo doanh nghiệp"
+                        referrerPolicy="no-referrer"
+                        className="w-24 h-24 object-contain rounded-xl border border-slate-200 shadow-xs bg-white p-1"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-xs text-slate-400 font-medium">
+                        Chưa thiết lập
+                      </div>
                     )}
+                    <div className="text-xs space-y-1">
+                      <div className="font-semibold text-slate-800">Logo chính thức đối tác</div>
+                      <div className="text-slate-400">Hiển thị tại danh mục & slider Landing Page</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Giấy Phép Đăng Ký Kinh Doanh</h4>
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={partner.giay_phep_kinh_doanh || "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80"}
+                      alt="Giấy phép kinh doanh"
+                      className="w-24 h-24 object-cover rounded-xl border border-slate-200 shadow-xs"
+                    />
+                    <div className="text-xs space-y-1">
+                      <div className="font-semibold text-slate-800">Giấy phép kinh doanh chính thức</div>
+                      <div className="text-slate-400">Định dạng: Đã xác thực trên hệ thống</div>
+                    </div>
                   </div>
                 </div>
               </div>

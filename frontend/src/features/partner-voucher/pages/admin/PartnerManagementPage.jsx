@@ -249,11 +249,23 @@ export function PartnerManagementPage() {
 
                     return (
                       <tr key={partner.ma_hs} className="hover:bg-slate-50 transition-colors">
-                        {/* Tên doanh nghiệp with Building Icon */}
+                        {/* Tên doanh nghiệp with Partner Logo / Icon */}
                         <td className="px-3.5 py-3.5">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0 border border-blue-100">
-                              <Building2 size={16} />
+                            <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0 border border-blue-100 overflow-hidden relative">
+                              {partner.logo ? (
+                                <img
+                                  src={partner.logo}
+                                  alt={partner.ten_dn}
+                                  referrerPolicy="no-referrer"
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = "none";
+                                  }}
+                                />
+                              ) : (
+                                <Building2 size={16} />
+                              )}
                             </div>
                             <div>
                               <Link

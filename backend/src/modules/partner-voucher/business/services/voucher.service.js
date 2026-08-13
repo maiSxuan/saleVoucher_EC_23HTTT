@@ -51,7 +51,7 @@ class VoucherService {
     return await voucherRepository.findById(id);
   }
 
-  async createVoucher(payload) {
+  async createVoucher(payload, actorId = null) {
     if (payload.hinh_anh_url && payload.hinh_anh_url.startsWith("data:")) {
       payload.hinh_anh_url = await uploadBase64ToSupabase(payload.hinh_anh_url, "vouchers");
     }
@@ -60,57 +60,62 @@ class VoucherService {
       await voucherBranchRepository.setBranchesForVoucher(voucher.ma_voucher, payload.ma_chi_nhanh);
     }
 
-    if (payload.trang_thai === "Cho duyet") {
-      try {
-        await auditLogService.log({
-          actorRole: "PARTNER",
-          action: "SUBMIT_VOUCHER_REVIEW",
-          targetType: "VOUCHER",
-          targetId: voucher.ma_voucher,
-          after: { ten_voucher: payload.ten_voucher, trang_thai: "Cho duyet" },
-          result: "Thanh cong",
-          reason: "Tạo mới và gửi chương trình Voucher chờ duyệt",
-        });
-      } catch (e) {
-        console.warn("[VoucherService] Log submitVoucher failed:", e.message);
-      }
+    // Always log voucher creation
+    try {
+      await auditLogService.log({
+        actorId: actorId || payload.actorId || payload.ma_tk || payload.ma_hs,
+        actorRole: "PARTNER",
+        action: payload.trang_thai === "Cho duyet" ? "SUBMIT_VOUCHER_REVIEW" : "CREATE_VOUCHER_DRAFT",
+        targetType: "VOUCHER",
+        targetId: voucher.ma_voucher,
+        after: { ten_voucher: payload.ten_voucher, trang_thai: payload.trang_thai || "Nhap" },
+        result: "Thanh cong",
+        reason: payload.trang_thai === "Cho duyet" ? "Tạo mới và gửi chương trình Voucher chờ duyệt" : "Tạo mới bản nháp Voucher",
+      });
+    } catch (e) {
+      console.warn("[VoucherService] Log createVoucher failed:", e.message);
     }
 
     return voucher;
   }
 
-  async updateVoucher(id, payload) {
+  async updateVoucher(id, payload, actorId = null) {
     if (payload.hinh_anh_url && payload.hinh_anh_url.startsWith("data:")) {
       payload.hinh_anh_url = await uploadBase64ToSupabase(payload.hinh_anh_url, "vouchers");
     }
+    const existing = await voucherRepository.findById(id);
     const updated = await voucherRepository.update(id, payload);
     if (payload.ma_chi_nhanh && Array.isArray(payload.ma_chi_nhanh)) {
       await voucherBranchRepository.setBranchesForVoucher(id, payload.ma_chi_nhanh);
     }
 
-    if (payload.trang_thai === "Cho duyet") {
-      try {
-        await auditLogService.log({
-          actorRole: "PARTNER",
-          action: "SUBMIT_VOUCHER_REVIEW",
-          targetType: "VOUCHER",
-          targetId: id,
-          after: { ten_voucher: payload.ten_voucher, trang_thai: "Cho duyet" },
-          result: "Thanh cong",
-          reason: "Khắc phục/cập nhật thông tin và gửi lại Voucher chờ duyệt",
-        });
-      } catch (e) {
-        console.warn("[VoucherService] Log resubmitVoucher failed:", e.message);
-      }
+    try {
+      const isSubmitReview = payload.trang_thai === "Cho duyet";
+      await auditLogService.log({
+        actorId: actorId || payload.actorId || payload.ma_tk || payload.ma_hs || id,
+        actorRole: "PARTNER",
+        action: isSubmitReview ? "SUBMIT_VOUCHER_REVIEW" : "UPDATE_VOUCHER",
+        targetType: "VOUCHER",
+        targetId: id,
+        before: existing ? { ten_voucher: existing.ten_voucher, trang_thai: existing.trang_thai } : null,
+        after: { ten_voucher: payload.ten_voucher || existing?.ten_voucher, trang_thai: payload.trang_thai || existing?.trang_thai },
+        result: "Thanh cong",
+        reason: isSubmitReview
+          ? "Khắc phục/cập nhật thông tin và gửi lại Voucher chờ duyệt"
+          : "Cập nhật thông tin chi tiết chương trình Voucher",
+      });
+    } catch (e) {
+      console.warn("[VoucherService] Log updateVoucher failed:", e.message);
     }
 
     return updated;
   }
 
-  async submitForReview(id) {
+  async submitForReview(id, actorId = null) {
     const res = await voucherRepository.updateStatus(id, "Cho duyet", "Cho duyet");
     try {
       await auditLogService.log({
+        actorId: actorId || id,
         actorRole: "PARTNER",
         action: "SUBMIT_VOUCHER_REVIEW",
         targetType: "VOUCHER",
@@ -126,13 +131,14 @@ class VoucherService {
     return res;
   }
 
-  async approveVoucher(id, isHidden = false) {
+  async approveVoucher(id, isHidden = false, reason = "", actorId = null) {
     const status = isHidden ? "Tam ngung" : "Dang ban";
     const res = await voucherRepository.updateStatus(id, status, "Da duyet");
 
     try {
       await auditLogService.log(
         {
+          actorId: actorId,
           actorRole: "ADMIN",
           action: "APPROVE_VOUCHER",
           targetType: "VOUCHER",
@@ -151,12 +157,13 @@ class VoucherService {
     return res;
   }
 
-  async rejectVoucher(id, reason = "") {
+  async rejectVoucher(id, reason = "", actorId = null) {
     const res = await voucherRepository.updateStatus(id, "Tu choi", "Tu choi", reason);
 
     try {
       await auditLogService.log(
         {
+          actorId: actorId,
           actorRole: "ADMIN",
           action: "REJECT_VOUCHER",
           targetType: "VOUCHER",

@@ -22,7 +22,8 @@ class CatalogRepository {
         tg_ket_thuc_ban,
         trang_thai,
         hinh_anh_url,
-        danh_muc:danh_muc ( ten_danh_muc ),
+        ma_danh_muc,
+        danh_muc:danh_muc ( ma_danh_muc, ten_danh_muc ),
         voucher_cn (
           chinhanh (
             ma_chi_nhanh,
@@ -30,7 +31,7 @@ class CatalogRepository {
             dia_chi,
             khu_vuc,
             trang_thai,
-            hosodn ( ten_dn )
+            hosodn ( ma_hs, ten_dn, logo )
           )
         )
         `,

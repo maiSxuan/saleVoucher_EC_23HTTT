@@ -35,7 +35,8 @@ class VoucherController {
 
   async create(req, res, next) {
     try {
-      const result = await this.voucherService.createVoucher(req.body);
+      const actorId = req.user?.ma_tk || req.user?.id || req.user?.ma_nguoi_dung || req.body?.actorId;
+      const result = await this.voucherService.createVoucher(req.body, actorId);
       res.status(201).json({ success: true, data: result });
     } catch (error) {
       next(error);
@@ -44,7 +45,8 @@ class VoucherController {
 
   async update(req, res, next) {
     try {
-      const result = await this.voucherService.updateVoucher(req.params.id, req.body);
+      const actorId = req.user?.ma_tk || req.user?.id || req.user?.ma_nguoi_dung || req.body?.actorId;
+      const result = await this.voucherService.updateVoucher(req.params.id, req.body, actorId);
       res.json({ success: true, data: result });
     } catch (error) {
       next(error);
@@ -53,7 +55,8 @@ class VoucherController {
 
   async submit(req, res, next) {
     try {
-      const result = await this.voucherService.submitForReview(req.params.id);
+      const actorId = req.user?.ma_tk || req.user?.id || req.user?.ma_nguoi_dung || req.body?.actorId;
+      const result = await this.voucherService.submitForReview(req.params.id, actorId);
       res.json({ success: true, data: result });
     } catch (error) {
       next(error);
@@ -62,7 +65,8 @@ class VoucherController {
 
   async approve(req, res, next) {
     try {
-      const result = await this.voucherService.approveVoucher(req.params.id, req.body.isHidden);
+      const actorId = req.user?.ma_tk || req.user?.id || req.user?.ma_nguoi_dung || req.body?.actorId;
+      const result = await this.voucherService.approveVoucher(req.params.id, req.body.isHidden, req.body.reason, actorId);
       res.json({ success: true, data: result });
     } catch (error) {
       next(error);
@@ -71,7 +75,8 @@ class VoucherController {
 
   async reject(req, res, next) {
     try {
-      const result = await this.voucherService.rejectVoucher(req.params.id, req.body.reason);
+      const actorId = req.user?.ma_tk || req.user?.id || req.user?.ma_nguoi_dung || req.body?.actorId;
+      const result = await this.voucherService.rejectVoucher(req.params.id, req.body.reason, actorId);
       res.json({ success: true, data: result });
     } catch (error) {
       next(error);

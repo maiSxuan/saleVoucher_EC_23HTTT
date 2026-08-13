@@ -148,7 +148,7 @@ export async function getPartnersApi(query = {}) {
   } catch (e) {
     console.warn("Backend API unavailable, using mockStore fallback:", e.message);
   }
-  return mockStore.getPartners();
+  return [];
 }
 
 /**
@@ -470,12 +470,14 @@ export async function createStaffApi(staffData) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(staffData),
     });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success) return json.data;
+    const json = await res.json();
+    if (res.ok && json.success) return json.data;
+    if (!res.ok) {
+      throw new Error(json.message || json.error || "Thêm nhân viên thất bại");
     }
   } catch (e) {
-    console.warn("Backend API unavailable, using mockStore fallback:", e.message);
+    console.warn("[createStaffApi] Error:", e.message);
+    throw e;
   }
   return mockStore.createStaff(staffData);
 }
@@ -487,12 +489,14 @@ export async function updateStaffApi(staffId, staffData) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(staffData),
     });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success) return json.data;
+    const json = await res.json();
+    if (res.ok && json.success) return json.data;
+    if (!res.ok) {
+      throw new Error(json.message || json.error || "Cập nhật nhân viên thất bại");
     }
   } catch (e) {
-    console.warn("Backend API unavailable, using mockStore fallback:", e.message);
+    console.warn("[updateStaffApi] Error:", e.message);
+    throw e;
   }
   return mockStore.updateStaff(staffId, staffData);
 }

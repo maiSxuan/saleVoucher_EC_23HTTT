@@ -213,54 +213,55 @@ export function VoucherFormPage() {
     return Object.keys(errs).length === 0;
   };
 
-  const executeSave = async (isSubmitNow = false) => {
-    setLoading(true);
-    const partnerId = getLoggedInPartnerId();
+  const executeSave = async (mode) => {
+  // mode: "draft" | "submit" | "update"
+  setLoading(true);
+  const partnerId = getLoggedInPartnerId();
 
-    // Determine target status
-    let targetStatus = "Nhap";
-    if (isTamNgung) {
-      targetStatus = "Tam ngung"; // Giữ nguyên trạng thái Tạm ngưng khi chỉnh sửa
-    } else if (isSubmitNow) {
-      targetStatus = "Cho duyet"; // Gửi duyệt
-    } else {
-      targetStatus = "Nhap"; // Lưu bản nháp
-    }
+  let targetStatus;
+  if (mode === "update") {
+    // Sửa voucher đã qua duyệt (Tam ngung, Dang ban, Da duyet...):
+    // chỉ cập nhật nội dung, KHÔNG đổi trạng thái, KHÔNG cần gửi duyệt lại
+    targetStatus = voucherStatus;
+  } else if (mode === "submit") {
+    targetStatus = "Cho duyet";
+  } else {
+    targetStatus = "Nhap";
+  }
 
-    const targetKiemDuyet = isTamNgung ? "Da duyet" : targetStatus;
+  const targetKiemDuyet = mode === "update" ? "Da duyet" : targetStatus;
 
-    const saved = await saveVoucherApi({
-      ...formData,
-      ma_hs: partnerId,
-      trang_thai: targetStatus,
-      trang_thai_kiem_duyet: targetKiemDuyet,
-      ly_do_tu_choi: targetStatus === "Cho duyet" ? "" : formData.ly_do_tu_choi,
-    });
+  const saved = await saveVoucherApi({
+    ...formData,
+    ma_hs: partnerId,
+    trang_thai: targetStatus,
+    trang_thai_kiem_duyet: targetKiemDuyet,
+    ly_do_tu_choi: targetStatus === "Cho duyet" ? "" : formData.ly_do_tu_choi,
+  });
 
-    setLoading(false);
-    setToastMessage(
-      isTamNgung
-        ? "Đã cập nhật thông tin Voucher thành công!"
-        : isSubmitNow
-        ? isRejected
-          ? "Đã khắc phục thông tin & Gửi lại yêu cầu duyệt thành công!"
-          : "Tạo và Gửi duyệt Voucher thành công!"
-        : "Lưu bản nháp thành công!"
-    );
-    setTimeout(() => {
-      navigate(`/partner/vouchers/${saved?.ma_voucher || id}`);
-    }, 1000);
-  };
+  setLoading(false);
+  setToastMessage(
+    mode === "update"
+      ? "Đã cập nhật thông tin Voucher thành công!"
+      : mode === "submit"
+      ? isRejected
+        ? "Đã khắc phục thông tin & Gửi lại yêu cầu duyệt thành công!"
+        : "Gửi duyệt Voucher thành công!"
+      : "Lưu bản nháp thành công!"
+  );
+  setTimeout(() => {
+    navigate(`/partner/vouchers/${saved?.ma_voucher || id}`);
+  }, 1000);
+};
 
-  const handleSave = (isSubmitNow = false) => {
-    if (!validate()) return;
-    if (isSubmitNow) {
-      setShowSubmitModal(true);
-    } else {
-      executeSave(false);
-    }
-  };
-
+const handleSave = (mode) => {
+  if (!validate()) return;
+  if (mode === "submit") {
+    setShowSubmitModal(true);   // chỉ trạng thái Nhap/Tu choi mới cần confirm "gửi duyệt"
+  } else {
+    executeSave(mode);          // draft và update: lưu thẳng, không popup gửi duyệt
+  }
+};
   const discountPercent =
     formData.gia_goc && formData.gia_ban
       ? Math.round(((formData.gia_goc - formData.gia_ban) / formData.gia_goc) * 100)
@@ -556,19 +557,19 @@ export function VoucherFormPage() {
 
           <div className="flex items-center gap-3">
   {id && !["Nhap", "Tu choi"].includes(voucherStatus) ? (
-    <Button variant="primary" onClick={() => handleSave(true)} loading={loading}>
-      Lưu thay đổi
+  <Button variant="primary" onClick={() => handleSave("update")} loading={loading}>
+    Lưu thay đổi
+  </Button>
+) : (
+  <>
+    <Button variant="secondary" onClick={() => handleSave("draft")} loading={loading}>
+      Lưu bản nháp
     </Button>
-  ) : (
-    <>
-      <Button variant="secondary" onClick={() => handleSave(false)} loading={loading}>
-        Lưu bản nháp
-      </Button>
-      <Button variant="primary" onClick={() => handleSave(true)} loading={loading}>
-        ✓ Lưu & Gửi duyệt ngay
-      </Button>
-    </>
-  )}
+    <Button variant="primary" onClick={() => handleSave("submit")} loading={loading}>
+      ✓ Lưu & Gửi duyệt ngay
+    </Button>
+  </>
+)}
 </div>
         </div>
 
@@ -578,7 +579,7 @@ export function VoucherFormPage() {
           onClose={() => setShowSubmitModal(false)}
           onConfirm={async () => {
             setShowSubmitModal(false);
-            await executeSave(true);
+            await executeSave("submit");
           }}
           title="Xác nhận gửi duyệt Voucher"
           confirmText="✓ Xác nhận Gửi duyệt"

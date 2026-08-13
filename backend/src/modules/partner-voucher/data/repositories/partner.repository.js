@@ -99,6 +99,7 @@ class PartnerRepository {
           ma_so_thue: item.ma_so_thue,
           dia_chi: item.dia_chi,
           giay_phep_kinh_doanh: item.giay_phep_kinh_doanh,
+          logo: item.logo || "",
           ngay_tao: item.ngay_tao || new Date().toISOString(),
           trang_thai: item.trang_thai || "Cho duyet",
           id_nguoi_dai_dien: item.id_nguoi_dai_dien,
@@ -183,6 +184,7 @@ class PartnerRepository {
         ma_so_thue: fallbackData?.ma_so_thue || "Chưa cập nhật",
         dia_chi: fallbackData?.dia_chi || "Chưa cập nhật",
         giay_phep_kinh_doanh: fallbackData?.giay_phep_kinh_doanh || "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80",
+        logo: fallbackData?.logo || "",
         ngay_tao: fallbackData?.ngay_tao || new Date().toISOString(),
         trang_thai: status,
         id_nguoi_dai_dien: fallbackData?.id_nguoi_dai_dien || repUser?.ma_nguoi_dung || id,
@@ -349,12 +351,14 @@ class PartnerRepository {
     await this.checkTaxCodeUniqueness(payload.ma_so_thue);
 
     const generatedMaHs = crypto.randomUUID();
+    const logoVal = payload.logo || null;
     const newPartner = {
       ma_hs: generatedMaHs,
       ten_dn: payload.ten_dn,
       ma_so_thue: payload.ma_so_thue,
       dia_chi: payload.dia_chi,
       giay_phep_kinh_doanh: payload.giay_phep_kinh_doanh || "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80",
+      logo: logoVal,
       trang_thai: "Cho duyet",
       id_nguoi_dai_dien: payload.id_nguoi_dai_dien || null,
       nguoi_dai_dien: {
@@ -379,6 +383,7 @@ class PartnerRepository {
         ma_so_thue: payload.ma_so_thue,
         dia_chi: payload.dia_chi,
         giay_phep_kinh_doanh: newPartner.giay_phep_kinh_doanh,
+        logo: logoVal,
         trang_thai: "Cho duyet",
         id_nguoi_dai_dien: payload.id_nguoi_dai_dien || null,
       }).select().maybeSingle();
@@ -418,10 +423,10 @@ class PartnerRepository {
         dia_chi: payload.dia_chi_cn || payload.dia_chi,
         trang_thai: "Cho duyet",
         ma_hs: generatedMaHs,
-      }).select().maybeSingle();
+      }).select().single();
 
-      if (branchErr) {
-        console.error("[PartnerRepository.create] chinhanh insert error:", branchErr.message);
+      if (!branchErr && branchData) {
+        newPartner.branches = [{ ...branchData, ma_chi_nhanh: branchData.ma_chi_nhanh }];
       }
     }
 
@@ -438,6 +443,7 @@ class PartnerRepository {
     if (payload.ma_so_thue !== undefined) hosodnUpdate.ma_so_thue = payload.ma_so_thue;
     if (payload.dia_chi !== undefined) hosodnUpdate.dia_chi = payload.dia_chi;
     if (payload.giay_phep_kinh_doanh !== undefined) hosodnUpdate.giay_phep_kinh_doanh = payload.giay_phep_kinh_doanh;
+    if (payload.logo !== undefined) hosodnUpdate.logo = payload.logo;
     if (payload.trang_thai !== undefined) hosodnUpdate.trang_thai = payload.trang_thai;
 
     const updateMemory = (key) => {

@@ -198,6 +198,21 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
             >
               <ArrowLeft size={18} />
             </button>
+            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-base shrink-0 border border-blue-100 overflow-hidden relative shadow-xs">
+              {partner.logo ? (
+                <img
+                  src={partner.logo}
+                  alt={partner.ten_dn}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              ) : (
+                <Building2 size={22} />
+              )}
+            </div>
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-xl font-bold text-slate-900">{partner.ten_dn}</h1>
@@ -370,6 +385,29 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
                       </div>
                     )}
 
+                    {(pendingProfileReq.logo_new || pendingProfileReq.logo_moi) && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span className="text-gray-500">Logo thương hiệu mới đề xuất:</span>
+                        <div className="flex items-center gap-2">
+                          {partner.logo && (
+                            <img
+                              src={partner.logo}
+                              alt="Logo cũ"
+                              referrerPolicy="no-referrer"
+                              className="w-8 h-8 rounded-lg object-cover border border-gray-200"
+                            />
+                          )}
+                          <span className="text-amber-600 font-bold">➔</span>
+                          <img
+                            src={pendingProfileReq.logo_new || pendingProfileReq.logo_moi}
+                            alt="Logo mới"
+                            referrerPolicy="no-referrer"
+                            className="w-10 h-10 rounded-lg object-cover border-2 border-emerald-500 shadow-xs"
+                          />
+                        </div>
+                      </div>
+                    )}
+
                     {pendingProfileReq.ho_ten_nguoi_dai_dien_moi && (
                       <div className="flex justify-between items-center py-1 border-b border-gray-100">
                         <span className="text-gray-500">Người đại diện:</span>
@@ -498,32 +536,66 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
             </div>
           </div>
 
-          {/* Right Column: Business License Document */}
-          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-3">
-            <h3 className="font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-2">
-              <FileText size={16} className="text-blue-600" /> Giấy phép kinh doanh
-            </h3>
-            {partner.giay_phep_kinh_doanh ? (
-              <div className="space-y-3">
-                <img
-                  src={partner.giay_phep_kinh_doanh}
-                  alt="Giấy phép kinh doanh"
-                  className="w-full h-64 object-cover rounded-lg border border-slate-200 shadow-xs"
-                />
-                <a
-                  href={partner.giay_phep_kinh_doanh}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="block text-center text-xs text-blue-600 font-semibold hover:underline"
-                >
-                  🔍 Xem bản full kích thước gốc
-                </a>
-              </div>
-            ) : (
-              <div className="p-8 text-center text-slate-400 text-xs italic">
-                Chưa đăng tải giấy phép kinh doanh.
-              </div>
-            )}
+          {/* Right Column: Logo & Business License Document */}
+          <div className="space-y-6">
+            {/* Logo Thương Hiệu Card */}
+            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-3">
+              <h3 className="font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-2">
+                <Tag size={16} className="text-blue-600" /> Logo thương hiệu đối tác
+              </h3>
+              {partner.logo ? (
+                <div className="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                  <div className="w-36 h-36 rounded-2xl bg-white border border-slate-200 p-2 shadow-xs flex items-center justify-center overflow-hidden">
+                    <img
+                      src={partner.logo}
+                      alt={partner.ten_dn}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <a
+                    href={partner.logo}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-blue-600 font-semibold hover:underline flex items-center gap-1"
+                  >
+                    🔍 Xem ảnh Logo kích thước gốc
+                  </a>
+                </div>
+              ) : (
+                <div className="p-8 text-center text-slate-400 text-xs italic bg-slate-50 rounded-xl border border-slate-100">
+                  Chưa cài đặt Logo thương hiệu.
+                </div>
+              )}
+            </div>
+
+            {/* Business License Document */}
+            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-3">
+              <h3 className="font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-2">
+                <FileText size={16} className="text-blue-600" /> Giấy phép kinh doanh
+              </h3>
+              {partner.giay_phep_kinh_doanh ? (
+                <div className="space-y-3">
+                  <img
+                    src={partner.giay_phep_kinh_doanh}
+                    alt="Giấy phép kinh doanh"
+                    className="w-full h-64 object-cover rounded-lg border border-slate-200 shadow-xs"
+                  />
+                  <a
+                    href={partner.giay_phep_kinh_doanh}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block text-center text-xs text-blue-600 font-semibold hover:underline"
+                  >
+                    🔍 Xem bản full kích thước gốc
+                  </a>
+                </div>
+              ) : (
+                <div className="p-8 text-center text-slate-400 text-xs italic">
+                  Chưa đăng tải giấy phép kinh doanh.
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
