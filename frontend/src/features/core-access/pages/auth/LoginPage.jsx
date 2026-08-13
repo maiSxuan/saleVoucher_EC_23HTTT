@@ -60,7 +60,8 @@ export default function LoginPage() {
 
     const userRole = payload.user?.role;
     if (userRole === "ADMIN") navigate("/admin");
-    else if (userRole === "PARTNER_OWNER" || userRole === "PARTNER_STAFF") navigate("/partner");
+    else if (userRole === "PARTNER_OWNER" || userRole === "PARTNER_STAFF")
+      navigate("/partner");
     else navigate("/customer");
   };
 
@@ -102,7 +103,10 @@ export default function LoginPage() {
       setOtp("");
       setMode("verify-otp");
     } catch (err) {
-      setError(err.message || "Không thể thực hiện yêu cầu khôi phục mật khẩu. Vui lòng thử lại sau.");
+      setError(
+        err.message ||
+          "Không thể thực hiện yêu cầu khôi phục mật khẩu. Vui lòng thử lại sau.",
+      );
     } finally {
       setLoading(false);
     }
@@ -121,7 +125,9 @@ export default function LoginPage() {
       }
       setResendCountdown(60);
     } catch (err) {
-      setError(err.message || "Không thể gửi lại mã xác thực. Vui lòng thử lại.");
+      setError(
+        err.message || "Không thể gửi lại mã xác thực. Vui lòng thử lại.",
+      );
     } finally {
       setLoading(false);
     }
@@ -174,14 +180,20 @@ export default function LoginPage() {
       });
 
       // Thành công -> chuyển về màn hình đăng nhập kèm thông báo
-      setSuccessMsg(res.message || "Đặt lại mật khẩu thành công! Vui lòng đăng nhập lại bằng mật khẩu mới.");
+      setSuccessMsg(
+        res.message ||
+          "Đặt lại mật khẩu thành công! Vui lòng đăng nhập lại bằng mật khẩu mới.",
+      );
       setMode("login");
       setPassword("");
       setOtp("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (err) {
-      setError(err.message || "Không thể cập nhật mật khẩu mới. Mật khẩu hiện tại vẫn được giữ nguyên.");
+      setError(
+        err.message ||
+          "Không thể cập nhật mật khẩu mới. Mật khẩu hiện tại vẫn được giữ nguyên.",
+      );
     } finally {
       setLoading(false);
     }
@@ -190,7 +202,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50/50 via-slate-50 to-purple-50/40 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl shadow-xl border border-gray-100 max-w-md w-full p-8 relative overflow-hidden transition-all duration-300">
-
         {/* Header decoration */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
 
@@ -199,7 +210,9 @@ export default function LoginPage() {
           <div className="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center mb-3 shadow-lg shadow-indigo-200">
             <Shield size={28} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">EC Voucher</h1>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+            EC Voucher
+          </h1>
           <p className="text-sm text-gray-500 mt-1">
             {mode === "login" && "Hệ thống Đăng nhập"}
             {mode === "forgot-password" && "Quên mật khẩu (Bước 1/3)"}
@@ -212,13 +225,31 @@ export default function LoginPage() {
         {mode !== "login" && (
           <div className="mb-6">
             <div className="flex items-center justify-between text-xs font-semibold text-gray-500 mb-2">
-              <span className={mode === "forgot-password" ? "text-indigo-600 font-bold" : "text-gray-400"}>
+              <span
+                className={
+                  mode === "forgot-password"
+                    ? "text-indigo-600 font-bold"
+                    : "text-gray-400"
+                }
+              >
                 1. Nhập thông tin
               </span>
-              <span className={mode === "verify-otp" ? "text-indigo-600 font-bold" : "text-gray-400"}>
+              <span
+                className={
+                  mode === "verify-otp"
+                    ? "text-indigo-600 font-bold"
+                    : "text-gray-400"
+                }
+              >
                 2. Nhập OTP
               </span>
-              <span className={mode === "reset-password" ? "text-indigo-600 font-bold" : "text-gray-400"}>
+              <span
+                className={
+                  mode === "reset-password"
+                    ? "text-indigo-600 font-bold"
+                    : "text-gray-400"
+                }
+              >
                 3. Đổi mật khẩu
               </span>
             </div>
@@ -249,7 +280,10 @@ export default function LoginPage() {
         {/* Thông báo thành công */}
         {successMsg && (
           <div className="flex items-start gap-2.5 text-emerald-800 text-xs bg-emerald-50/90 border border-emerald-200 rounded-xl p-3.5 mb-5">
-            <CheckCircle2 size={16} className="shrink-0 mt-0.5 text-emerald-600" />
+            <CheckCircle2
+              size={16}
+              className="shrink-0 mt-0.5 text-emerald-600"
+            />
             <span className="leading-relaxed font-medium">{successMsg}</span>
           </div>
         )}
@@ -275,7 +309,9 @@ export default function LoginPage() {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-semibold text-gray-700">Mật khẩu</label>
+                <label className="block text-xs font-semibold text-gray-700">
+                  Mật khẩu
+                </label>
                 <button
                   type="button"
                   onClick={() => {
@@ -341,7 +377,8 @@ export default function LoginPage() {
         {mode === "forgot-password" && (
           <div className="space-y-4">
             <div className="bg-indigo-50/60 rounded-xl p-3.5 border border-indigo-100 text-xs text-indigo-900 leading-relaxed">
-              Nhập địa chỉ Email đã đăng ký. Hệ thống sẽ kiểm tra và gửi mã xác thực (OTP 6 số) đến hộp thư của bạn.
+              Nhập địa chỉ Email đã đăng ký. Hệ thống sẽ kiểm tra và gửi mã xác
+              thực (OTP 6 số) đến hộp thư của bạn.
             </div>
 
             <div>
@@ -349,7 +386,10 @@ export default function LoginPage() {
                 Email đã đăng ký
               </label>
               <div className="relative">
-                <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Mail
+                  size={16}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                />
                 <input
                   type="text"
                   value={email}
@@ -388,7 +428,16 @@ export default function LoginPage() {
         {mode === "verify-otp" && (
           <div className="space-y-4">
             <div className="bg-indigo-50/60 rounded-xl p-3.5 border border-indigo-100 text-xs text-indigo-900 leading-relaxed">
-              Mã xác thực đã được gửi đến {maskedEmail ? <strong className="text-indigo-700 font-bold">{maskedEmail}</strong> : "email đã đăng ký của bạn"}. Mã có hiệu lực trong vòng <strong className="text-indigo-700">5 phút</strong>.
+              Mã xác thực đã được gửi đến{" "}
+              {maskedEmail ? (
+                <strong className="text-indigo-700 font-bold">
+                  {maskedEmail}
+                </strong>
+              ) : (
+                "email đã đăng ký của bạn"
+              )}
+              . Mã có hiệu lực trong vòng{" "}
+              <strong className="text-indigo-700">5 phút</strong>.
             </div>
 
             <div>
@@ -396,12 +445,17 @@ export default function LoginPage() {
                 Nhập mã xác thực (OTP 6 số)
               </label>
               <div className="relative">
-                <KeyRound size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <KeyRound
+                  size={16}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                />
                 <input
                   type="text"
                   maxLength={6}
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ""))}
+                  onChange={(e) =>
+                    setOtp(e.target.value.replace(/[^0-9]/g, ""))
+                  }
                   onKeyDown={(e) => e.key === "Enter" && handleVerifyOtp()}
                   placeholder="Nhập 6 số OTP..."
                   className="w-full border border-gray-200 rounded-xl pl-10 pr-3.5 py-2.5 text-base font-bold tracking-[0.25em] text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
@@ -470,7 +524,10 @@ export default function LoginPage() {
           <div className="space-y-4">
             <div className="bg-emerald-50/70 rounded-xl p-3.5 border border-emerald-200 text-xs text-emerald-900 leading-relaxed flex items-center gap-2">
               <Sparkles size={16} className="shrink-0 text-emerald-600" />
-              <span>Xác thực OTP thành công! Vui lòng tạo mật khẩu mới an toàn cho tài khoản.</span>
+              <span>
+                Xác thực OTP thành công! Vui lòng tạo mật khẩu mới an toàn cho
+                tài khoản.
+              </span>
             </div>
 
             <div>
@@ -478,7 +535,10 @@ export default function LoginPage() {
                 Mật khẩu mới (tối thiểu 6 ký tự)
               </label>
               <div className="relative">
-                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Lock
+                  size={16}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                />
                 <input
                   type={showNewPw ? "text" : "password"}
                   value={newPassword}
@@ -501,7 +561,10 @@ export default function LoginPage() {
                 Xác nhận mật khẩu mới
               </label>
               <div className="relative">
-                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Lock
+                  size={16}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                />
                 <input
                   type={showConfirmPw ? "text" : "password"}
                   value={confirmPassword}
