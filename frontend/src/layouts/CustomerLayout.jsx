@@ -301,7 +301,7 @@ export default function CustomerLayout() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-fadeIn">
           <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl relative border border-gray-100">
             <button
-              onClick={() => setPopups(prev => prev.filter((_, i) => i !== currentPopupIndex))}
+              onClick={() => setPopups([])}
               className="absolute top-4 right-4 z-20 p-2 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors backdrop-blur-sm"
               title="Đóng"
             >
@@ -340,7 +340,7 @@ export default function CustomerLayout() {
                   </div>
                 ) : <div />}
                 <button
-                  onClick={() => setPopups(prev => prev.filter((_, i) => i !== currentPopupIndex))}
+                  onClick={() => setPopups([])}
                   className="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors shadow-sm text-sm ml-auto"
                 >
                   Đã hiểu

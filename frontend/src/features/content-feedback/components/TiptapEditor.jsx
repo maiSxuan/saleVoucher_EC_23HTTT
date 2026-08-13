@@ -118,12 +118,22 @@ export default function TiptapEditor({ content, onChange }) {
     },
   });
 
+  // Đồng bộ nội dung khi prop content thay đổi (ví dụ khi load dữ liệu chỉnh sửa bất đồng bộ)
+  useEffect(() => {
+    if (editor && content !== undefined) {
+      const isSame = editor.getHTML() === content;
+      if (!isSame && content !== null) {
+        editor.commands.setContent(content || '', false);
+      }
+    }
+  }, [content, editor]);
+
   return (
     <div className="w-full">
       <MenuBar editor={editor} />
       <EditorContent 
         editor={editor} 
-        className="prose max-w-none p-3.5 min-h-[220px] max-h-[400px] overflow-y-auto border border-gray-200 rounded-b-xl bg-white focus-within:ring-2 focus-within:ring-blue-100 text-sm outline-none"
+        className="prose max-w-none p-4 min-h-[240px] max-h-[450px] overflow-y-auto border border-gray-200 rounded-b-xl bg-white focus-within:ring-2 focus-within:ring-blue-100 text-sm outline-none [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-2 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mb-2 [&_blockquote]:border-l-4 [&_blockquote]:border-blue-500 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-gray-600 [&_p]:mb-2"
       />
     </div>
   );
