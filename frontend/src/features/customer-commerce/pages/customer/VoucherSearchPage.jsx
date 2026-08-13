@@ -38,19 +38,25 @@ export default function VoucherSearchPage() {
       ignore = true;
     };
   }, []);
-
   const filtered = useMemo(() => {
     return vouchers
       .filter((v) => {
         const kw = searchValue.trim().toLowerCase();
-        const partnerStr = typeof v.partner === 'object' && v.partner !== null 
-          ? (v.partner.ten_dn || v.partner.name || "")
-          : (v.partner || "");
+        const partnerStr =
+          typeof v.partner === "object" && v.partner !== null
+            ? v.partner.ten_dn || v.partner.name || ""
+            : v.partner || "";
+
+        const matchBranch =
+          Array.isArray(v.branches) &&
+          v.branches.some((b) => (b.name || "").toLowerCase().includes(kw));
 
         const matchSearch =
           !kw ||
           (v.name || "").toLowerCase().includes(kw) ||
-          partnerStr.toLowerCase().includes(kw);
+          partnerStr.toLowerCase().includes(kw) ||
+          matchBranch;
+
         const matchCat =
           activeCategory === "Tất cả" || v.category === activeCategory;
         let matchPrice = true;
