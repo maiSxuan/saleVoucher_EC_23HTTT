@@ -3,7 +3,7 @@ const service = require("../../business/services/content.service");
 // Lấy danh sách nội dung
 async function getContentList(req, res, next) {
   try {
-    const result = await service.getContentList();
+    const result = await service.getContentList(req.query);
     res.status(200).json({ success: true, data: result });
   } catch (error) {
     next(error);

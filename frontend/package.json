@@ -9,6 +9,8 @@
         "preview": "vite preview --host 0.0.0.0 --port 4173"
     },
     "dependencies": {
+        "@tiptap/react": "^3.30.0",
+        "@tiptap/starter-kit": "^3.30.0",
         "html5-qrcode": "^2.3.8",
         "lucide-react": "^1.27.0",
         "qrcode": "^1.5.4",

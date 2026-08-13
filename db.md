@@ -156,6 +156,7 @@
 | `phuong_thuc_tt` | `text` |  |
 | `trang_thai` | `text` |  |
 | `ma_dh` | `uuid` |  |
+| `ma_gd_goc` | `text` |  Nullable |
 
 ## Table `hoantien`
 
@@ -168,8 +169,15 @@
 | `trang_thai` | `text` |  |
 | `ly_do` | `text` |  Nullable |
 | `ngay_xu_ly` | `timestamptz` |  Nullable |
-| `ma_tk` | `uuid` |  |
+| `ma_tk` | `uuid` |  Nullable |
 | `ma_thanh_toan` | `uuid` |  |
+| `cong_thanh_toan` | `text` |  Nullable |
+| `ma_gd_hoan` | `text` |  Nullable |
+| `nguon_phat_sinh` | `text` |  Nullable |
+| `ma_yc_huy` | `uuid` |  Nullable |
+| `ma_khieu_nai` | `uuid` |  Nullable |
+| `ma_phan_hoi` | `text` |  Nullable |
+| `nguon` | `text` |  Nullable |
 
 ## Table `voucher_mua`
 
@@ -226,6 +234,7 @@
 | `trang_thai` | `text` |  |
 | `ma_voucher_mua` | `uuid` |  |
 | `ma_tk_xuly` | `uuid` |  Nullable |
+| `ly_do_tu_choi_kn` | `text` |  Nullable |
 
 ## Table `log_ht`
 
@@ -262,6 +271,7 @@
 | `ngay_tao` | `timestamptz` |  |
 | `ngay_cap_nhat` | `timestamptz` |  |
 | `matk_admin` | `uuid` |  |
+| `hinh_anh_url` | `text` |  Nullable |
 
 ## Table `yeu_cau_cap_nhat_hosodn`
 
@@ -304,4 +314,19 @@
 | `ngay_yeu_cau` | `timestamptz` |  |
 | `nguoi_duyet` | `uuid` |  Nullable |
 | `ngay_duyet` | `timestamptz` |  Nullable |
+
+## Table `yeucauhuy`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `ma_yc_huy` | `uuid` | Primary |
+| `ngay_yeu_cau` | `timestamptz` |  |
+| `ly_do_kh` | `text` |  |
+| `trang_thai` | `text` |  |
+| `ly_do_xu_ly` | `text` |  Nullable |
+| `ngay_xu_ly` | `timestamptz` |  Nullable |
+| `ma_dh` | `uuid` |  Unique |
+| `ma_tk_xuly` | `uuid` |  Nullable |
 

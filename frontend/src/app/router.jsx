@@ -45,6 +45,7 @@ import AdminOrdersPage from "../features/customer-commerce/pages/admin/AdminOrde
 import ProfilePage from "../features/customer-commerce/pages/customer/ProfilePage";
 import MyVoucherPage from "../features/core-access/pages/customer/MyVoucherPage";
 import IssuedVoucherDetailPage from "../features/core-access/pages/customer/IssuedVoucherDetailPage";
+import ArticleDetailPage from "../features/content-feedback/pages/customer/ArticleDetailPage";
 
 function PartnerHome() {
   try {
@@ -121,6 +122,10 @@ const router = createBrowserRouter([
               {
                 path: "vouchers/:id",
                 element: <VoucherDetailPage />,
+              },
+              {
+                path: "articles/:id",
+                element: <ArticleDetailPage />,
               },
               {
                 path: "cart",

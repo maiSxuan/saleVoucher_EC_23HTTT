@@ -64,6 +64,7 @@ export default function ContentListPage() {
         loai: activeType, 
         tieu_de: formData.title, 
         noi_dung: formData.content, 
+        hinh_anh_url: formData.imageUrl || null,
         trang_thai: 'Dang hien thi', 
         matk_admin: 'UUID_ADMIN_EXAMPLE' 
       });
@@ -77,7 +78,8 @@ export default function ContentListPage() {
       ...selectedItem, 
       type: activeType,
       title: formData.title, 
-      content: formData.content 
+      content: formData.content,
+      hinh_anh_url: formData.imageUrl || null
     });
     setSelectedItem(null);
     setIsFormOpen(false);
@@ -149,6 +151,7 @@ export default function ContentListPage() {
           </div>
           <ContentTable 
             items={filtered} 
+            contentType={activeType}
             onEdit={(item) => { setSelectedItem(item); setIsFormOpen(true); }}
             onHide={(item) => setHideModal(item)}
             onShow={(item) => setShowModal(item)}
@@ -161,6 +164,7 @@ export default function ContentListPage() {
         {isFormOpen && (
           <ContentForm 
             initialData={selectedItem} 
+            contentType={activeType}
             onSubmit={selectedItem ? handleUpdate : handleCreate} 
             onCancel={() => setIsFormOpen(false)}
           />
