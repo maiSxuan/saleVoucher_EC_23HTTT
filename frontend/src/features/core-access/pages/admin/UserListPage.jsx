@@ -214,7 +214,8 @@ function UserDetailPanel({ user: initialUser, onLock, onUnlock, onRoleUpdate, on
             maHsdn: res.data.ma_hsdn || res.data.maHsdn || null,
             extraInfo: res.data.extraInfo,
             orderHistory: res.data.orderHistory,
-            auditLogs: res.data.auditLogs
+            auditLogs: res.data.auditLogs,
+            activityLogs: res.data.activityLogs,
           };
           setUser(normalized);
         }
@@ -256,6 +257,18 @@ function UserDetailPanel({ user: initialUser, onLock, onUnlock, onRoleUpdate, on
   }, [roleModal, selectedNewRole, branches.length, partners.length, loadingDetails, user.maHsdn]);
 
   const isActive = user.status === 'Dang hoat dong';
+  const isCustomer = user.role === 'Khach hang';
+  const detailTabs = isCustomer
+    ? [
+      { id: 'info', label: 'Thông tin cá nhân' },
+      { id: 'orders', label: 'Lịch sử mua voucher' },
+      { id: 'activity', label: 'Lịch sử hoạt động' },
+    ]
+    : [
+      { id: 'info', label: 'Thông tin cá nhân' },
+      { id: 'audit', label: 'Lịch sử quản trị' },
+    ];
+  const visibleLogs = isCustomer ? user.activityLogs : user.auditLogs;
 
   const handleRoleUpdate = async () => {
     if (selectedNewRole === user.role) {
@@ -368,11 +381,7 @@ function UserDetailPanel({ user: initialUser, onLock, onUnlock, onRoleUpdate, on
 
       {/* Tabs */}
       <div className="flex border-b border-gray-200 mb-4 bg-white rounded-t-xl border border-b-0 px-4">
-        {[
-          { id: 'info', label: 'Thông tin cá nhân' },
-          { id: 'orders', label: 'Lịch sử mua voucher' },
-          { id: 'audit', label: 'Lịch sử quản trị' }
-        ].map(tab => (
+        {detailTabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
@@ -473,9 +482,9 @@ function UserDetailPanel({ user: initialUser, onLock, onUnlock, onRoleUpdate, on
                 ) : <p className="text-sm text-gray-500 text-center py-6">Chưa có lịch sử mua voucher nào.</p>}
               </div>
             )}
-            {activeTab === 'audit' && (
+            {(activeTab === 'audit' || activeTab === 'activity') && (
               <div>
-                {user.auditLogs && user.auditLogs.length > 0 ? (
+                {visibleLogs && visibleLogs.length > 0 ? (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
                       <thead>
@@ -487,7 +496,7 @@ function UserDetailPanel({ user: initialUser, onLock, onUnlock, onRoleUpdate, on
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
-                        {user.auditLogs.map(l => (
+                        {visibleLogs.map(l => (
                           <tr key={l.log_id}>
                             <td className="py-2">{new Date(l.thoi_diem_thuc_hien).toLocaleString('vi-VN')}</td>
                             <td className="py-2 font-medium">{l.hanh_dong}</td>
@@ -498,7 +507,7 @@ function UserDetailPanel({ user: initialUser, onLock, onUnlock, onRoleUpdate, on
                       </tbody>
                     </table>
                   </div>
-                ) : <p className="text-sm text-gray-500 text-center py-6">Chưa có lịch sử quản trị nào.</p>}
+                ) : <p className="text-sm text-gray-500 text-center py-6">{isCustomer ? 'Chưa có hoạt động mua hàng, hủy đơn hoặc khiếu nại nào.' : 'Chưa có lịch sử quản trị nào.'}</p>}
               </div>
             )}
           </>
@@ -647,8 +656,8 @@ export default function UserListPage() {
   const [selectedUser, setSelectedUser] = useState(null); // User đang xem chi tiết
 
   // --- State bộ lọc tìm kiếm ---
-  const [searchName, setSearchName] = useState('');
-  const [searchPhone, setSearchPhone] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filterRole, setFilterRole] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
@@ -668,8 +677,7 @@ export default function UserListPage() {
       const result = await fetchUsers({
         page,
         limit: 20,
-        name: searchName.trim() || undefined,
-        phone: searchPhone.trim() || undefined,
+        search: debouncedSearch || undefined,
         role: filterRole || undefined,
         status: filterStatus || undefined,
       });
@@ -682,7 +690,12 @@ export default function UserListPage() {
     } finally {
       setLoading(false);
     }
-  }, [searchName, searchPhone, filterRole, filterStatus]); // Reload khi filter thay đổi
+  }, [debouncedSearch, filterRole, filterStatus]); // Reload khi filter thay đổi
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => setDebouncedSearch(searchInput.trim()), 300);
+    return () => window.clearTimeout(timeoutId);
+  }, [searchInput]);
 
   // Tải dữ liệu lần đầu khi component mount và khi filter thay đổi
   useEffect(() => {
@@ -788,23 +801,13 @@ export default function UserListPage() {
       {/* Khu vực bộ lọc tìm kiếm */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {/* Tìm theo tên */}
-          <div className="relative">
+          {/* Tìm theo tên hoặc email */}
+          <div className="relative sm:col-span-2">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
-              value={searchName}
-              onChange={e => setSearchName(e.target.value)}
-              placeholder="Tìm theo họ tên..."
-              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          {/* Tìm theo SĐT */}
-          <div className="relative">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              value={searchPhone}
-              onChange={e => setSearchPhone(e.target.value)}
-              placeholder="Tìm theo số điện thoại..."
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
+              placeholder="Tìm theo họ tên hoặc email..."
               className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>

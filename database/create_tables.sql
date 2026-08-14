@@ -129,6 +129,7 @@ create table HOSODN (
     ma_so_thue text unique not null,
     dia_chi text,
     giay_phep_kinh_doanh text,
+    logo varchar(500),
     ngay_tao timestamptz not null default now(),
     trang_thai text not null default 'Cho duyet' check (
         trang_thai in (
@@ -460,6 +461,7 @@ CREATE TABLE IF NOT EXISTS public.yeu_cau_cap_nhat_hosodn (
     ma_so_thue_moi TEXT NULL,
     dia_chi_moi TEXT NULL,
     giay_phep_kinh_doanh_moi TEXT NULL,
+    logo_new VARCHAR(500) NULL,
     
     -- 2. Thông tin Người đại diện đề xuất mới (ghi vào NGUOIDUNG khi duyệt)
     ho_ten_nguoi_dai_dien_moi TEXT NULL,

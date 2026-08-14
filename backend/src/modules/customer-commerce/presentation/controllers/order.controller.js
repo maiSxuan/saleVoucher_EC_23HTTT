@@ -129,19 +129,8 @@ class OrderController {
   async getAdminOrder(req, res, next) {
     try {
       const { id } = req.params;
-      const adminAccountId = req.user.accountId || req.user.id;
-      const order = await orderService.getAdminOrderById(id, adminAccountId);
+      const order = await orderService.getAdminOrderById(id);
       return res.json({ success: true, data: order });
-    } catch (e) {
-      next(e);
-    }
-  }
-
-  async getOrderLogs(req, res, next) {
-    try {
-      const { id } = req.params;
-      const logs = await orderService.getOrderLogs(id);
-      return res.json({ success: true, data: logs });
     } catch (e) {
       next(e);
     }

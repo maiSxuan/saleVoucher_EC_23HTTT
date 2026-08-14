@@ -2,7 +2,7 @@
  * Purpose: Entry point của frontend React.
  * File này render ứng dụng vào DOM và khởi tạo router/context.
  */
-import React from "react";
+import React, { Suspense } from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import { AuthProvider } from "./app/auth-context";
@@ -14,7 +14,15 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <AuthProvider>
       <Toaster position="bottom-right" richColors closeButton />
-      <RouterProvider router={router} />
+      <Suspense
+        fallback={(
+          <div className="min-h-screen bg-slate-50 flex items-center justify-center text-sm font-medium text-slate-500">
+            Đang tải trang...
+          </div>
+        )}
+      >
+        <RouterProvider router={router} />
+      </Suspense>
     </AuthProvider>
   </React.StrictMode>,
 );

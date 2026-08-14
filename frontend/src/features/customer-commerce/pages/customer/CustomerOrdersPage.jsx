@@ -80,6 +80,189 @@ const codeStatusColor = {
   disabled: "bg-red-50 text-red-500",
 };
 
+const CANCEL_REASON_OPTIONS = [
+  {
+    id: "missing-valid-code",
+    label: "Chưa nhận được mã hợp lệ",
+    reason: "Không nhận được voucher code hợp lệ sau khi thanh toán.",
+  },
+  {
+    id: "invalid-code",
+    label: "Mã voucher bị lỗi",
+    reason: "Voucher code được cung cấp bị lỗi hoặc không hợp lệ.",
+  },
+  {
+    id: "partner-refused",
+    label: "Đối tác từ chối voucher",
+    reason: "Đối tác từ chối voucher đang hợp lệ.",
+  },
+  {
+    id: "service-unavailable",
+    label: "Không còn cung cấp dịch vụ",
+    reason: "Đối tác hoặc chi nhánh áp dụng không còn khả năng cung cấp dịch vụ.",
+  },
+  {
+    id: "benefit-mismatch",
+    label: "Quyền lợi không đúng mô tả",
+    reason: "Quyền lợi thực tế không đúng với nội dung voucher đã công bố.",
+  },
+  {
+    id: "voucher-specific-policy",
+    label: "Theo điều kiện hủy của voucher",
+    reason: "Yêu cầu hủy theo điều kiện hoàn/hủy riêng đã được công bố của voucher.",
+  },
+];
+
+const COMPLAINT_REASON_OPTIONS = [
+  {
+    id: "missing-code",
+    label: "Đã thanh toán nhưng chưa nhận mã",
+    reason: "Đã thanh toán thành công nhưng chưa nhận được voucher code.",
+  },
+  {
+    id: "invalid-code",
+    label: "Mã voucher không hợp lệ",
+    reason: "Voucher code được cấp không hợp lệ hoặc không thể sử dụng.",
+  },
+  {
+    id: "partner-refused",
+    label: "Đối tác từ chối voucher",
+    reason: "Đối tác từ chối tiếp nhận voucher vẫn còn hiệu lực và đáp ứng điều kiện sử dụng.",
+  },
+  {
+    id: "branch-unavailable",
+    label: "Không dùng được tại chi nhánh công bố",
+    reason: "Không thể sử dụng voucher tại chi nhánh áp dụng đã được công bố.",
+  },
+  {
+    id: "benefit-mismatch",
+    label: "Quyền lợi không đúng nội dung",
+    reason: "Quyền lợi thực tế không đúng với nội dung voucher đã công bố.",
+  },
+  {
+    id: "service-unavailable",
+    label: "Đối tác không thể cung cấp dịch vụ",
+    reason: "Đối tác không còn khả năng cung cấp dịch vụ hoặc quyền lợi của voucher.",
+  },
+  {
+    id: "other-transaction-error",
+    label: "Lỗi giao dịch, mã hoặc quyền lợi khác",
+    reason: "Phát sinh lỗi khác liên quan đến giao dịch, voucher code hoặc quyền lợi voucher.",
+  },
+];
+
+const COMPLAINT_STATUS_CONFIG = {
+  Moi: { label: "Đã tiếp nhận", color: "bg-amber-50 text-amber-700 border-amber-200" },
+  "Dang xu ly": { label: "Đang xác minh", color: "bg-blue-50 text-blue-700 border-blue-200" },
+  "Da xu ly": { label: "Đã giải quyết", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  "Tu choi": { label: "Không đủ điều kiện", color: "bg-red-50 text-red-700 border-red-200" },
+};
+
+const COMPLAINT_PROCESS_STEPS = [
+  { title: "Đã gửi", description: "Hệ thống tiếp nhận khiếu nại" },
+  { title: "Xác minh", description: "Kiểm tra giao dịch, mã và điều kiện sử dụng" },
+  { title: "Khắc phục", description: "Gửi lại mã, cấp lại mã hoặc xem xét hoàn tiền" },
+  { title: "Hoàn tất", description: "Thông báo kết quả xử lý" },
+];
+
+function ComplaintProgress({ complaint }) {
+  const statusConfig = COMPLAINT_STATUS_CONFIG[complaint.status] || {
+    label: complaint.status || "Không rõ",
+    color: "bg-gray-50 text-gray-700 border-gray-200",
+  };
+  const completedThrough = complaint.status === "Da xu ly"
+    ? 3
+    : complaint.status === "Dang xu ly"
+      ? 1
+      : 0;
+  const activeStep = complaint.status === "Moi"
+    ? 1
+    : complaint.status === "Dang xu ly"
+      ? 2
+      : complaint.status === "Da xu ly"
+        ? 3
+        : 1;
+  const rejected = complaint.status === "Tu choi";
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-3">
+          {complaint.voucherImage ? (
+            <img
+              src={complaint.voucherImage}
+              alt={complaint.voucherName}
+              className="h-11 w-11 shrink-0 rounded-lg border border-gray-200 object-cover"
+            />
+          ) : (
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-orange-100 text-sm font-bold text-orange-600">
+              V
+            </div>
+          )}
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-gray-900">{complaint.voucherName || "Voucher"}</p>
+            <p className="mt-0.5 text-xs text-gray-500">
+              Mã voucher: <span className="font-mono font-semibold text-gray-700">{complaint.voucherCode || "Chưa phát hành"}</span>
+            </p>
+            <p className="mt-0.5 text-[11px] text-gray-400">
+              Gửi lúc {new Date(complaint.createdAt).toLocaleString("vi-VN")}
+            </p>
+          </div>
+        </div>
+        <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${statusConfig.color}`}>
+          {statusConfig.label}
+        </span>
+      </div>
+
+      <p className="mt-3 rounded-lg bg-white px-3 py-2 text-xs leading-5 text-gray-700">
+        {complaint.content}
+      </p>
+
+      {rejected && complaint.rejectReason && (
+        <div className="mt-3 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs leading-5 text-red-700">
+          <span className="font-semibold">Lý do không tiếp nhận:</span> {complaint.rejectReason}
+        </div>
+      )}
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-4" aria-label="Quy trình xử lý khiếu nại">
+        {COMPLAINT_PROCESS_STEPS.map((step, index) => {
+          const isComplete = !rejected && index <= completedThrough;
+          const isActive = !rejected && index === activeStep;
+          const isRejectedStep = rejected && index === 1;
+          return (
+            <div key={step.title} className="relative flex gap-2 sm:block">
+              <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold ${
+                isComplete
+                  ? "border-emerald-500 bg-emerald-500 text-white"
+                  : isActive
+                    ? "border-blue-500 bg-blue-50 text-blue-700 ring-4 ring-blue-50"
+                    : isRejectedStep
+                      ? "border-red-500 bg-red-50 text-red-700"
+                      : "border-gray-200 bg-white text-gray-400"
+              }`}>
+                {isComplete ? <CheckCircle2 size={14} /> : isRejectedStep ? <XCircle size={14} /> : index + 1}
+              </div>
+              <div className="sm:mt-2">
+                <p className={`text-xs font-semibold ${isRejectedStep ? "text-red-700" : isComplete || isActive ? "text-gray-900" : "text-gray-400"}`}>
+                  {isRejectedStep ? "Không đủ điều kiện" : step.title}
+                </p>
+                <p className="mt-0.5 text-[11px] leading-4 text-gray-500">
+                  {isRejectedStep ? "Khiếu nại không đáp ứng chính sách" : step.description}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-4 flex items-start gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-[11px] leading-4 text-blue-800">
+        <AlertCircle size={14} className="mt-0.5 shrink-0" />
+        <span>Thứ tự ưu tiên xử lý: kiểm tra và gửi lại mã hiện có → cấp lại mã nếu cần → hoàn tiền khi không thể khắc phục và đủ điều kiện chính sách.</span>
+      </div>
+    </div>
+  );
+}
+
 function StatusBadge({ status }) {
   const cfg = ORDER_STATUS_CONFIG[status] || {
     label: status || "Không rõ",
@@ -117,7 +300,10 @@ export default function CustomerOrdersPage() {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [selectedCancelReason, setSelectedCancelReason] = useState("");
   const [cancelReason, setCancelReason] = useState("");
+  const [selectedComplaintReason, setSelectedComplaintReason] = useState("");
+  const [submittingComplaint, setSubmittingComplaint] = useState(false);
   const [selectedVoucherMuaId, setSelectedVoucherMuaId] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState("");
@@ -135,16 +321,37 @@ export default function CustomerOrdersPage() {
       }
     }
   }, [showReviewModal, selectedVoucherMuaId, selectedOrder]);
+
+  const closeCancelModal = () => {
+    setShowCancelModal(false);
+    setSelectedCancelReason("");
+    setCancelReason("");
+  };
+
+  const closeComplaintModal = () => {
+    if (submittingComplaint) return;
+    setShowFeedbackModal(false);
+    setSelectedComplaintReason("");
+    setFeedbackText("");
+  };
+
   const handleCancelOrder = async () => {
-    if (!cancelReason.trim()) {
-      toast.error("Vui lòng nhập lý do hủy đơn/hoàn tiền.");
+    const selectedOption = CANCEL_REASON_OPTIONS.find((option) => option.id === selectedCancelReason);
+    const additionalDetail = cancelReason.trim();
+
+    if (!selectedOption && !additionalDetail) {
+      toast.error("Vui lòng chọn một lý do hoặc nhập lý do của bạn.");
       return;
     }
+
+    const reason = selectedOption
+      ? `${selectedOption.reason}${additionalDetail ? ` Thông tin bổ sung: ${additionalDetail}` : ""}`
+      : additionalDetail;
+
     try {
-      await customerCancelOrder(selectedOrderId, { reason: cancelReason });
+      await customerCancelOrder(selectedOrderId, { reason });
       toast.success("Đã gửi yêu cầu hủy đơn, chuyển sang chờ hoàn tiền.");
-      setShowCancelModal(false);
-      setCancelReason("");
+      closeCancelModal();
       handleSelectOrder(selectedOrderId);
       loadOrders(pagination.page);
     } catch (e) {
@@ -244,20 +451,30 @@ export default function CustomerOrdersPage() {
       toast.error("Vui lòng chọn mã voucher liên quan.");
       return;
     }
-    if (!feedbackText.trim()) {
-      toast.error("Vui lòng nhập nội dung phản ánh.");
+    const selectedOption = COMPLAINT_REASON_OPTIONS.find((option) => option.id === selectedComplaintReason);
+    const additionalDetail = feedbackText.trim();
+    if (!selectedOption && !additionalDetail) {
+      toast.error("Vui lòng chọn một lý do hoặc nhập nội dung khiếu nại của bạn.");
       return;
     }
+    const content = selectedOption
+      ? `${selectedOption.reason}${additionalDetail ? ` Thông tin bổ sung: ${additionalDetail}` : ""}`
+      : additionalDetail;
     try {
+      setSubmittingComplaint(true);
       await submitOrderComplaint(selectedOrderId, {
         maVoucherMua: selectedVoucherMuaId,
-        noiDung: feedbackText,
+        noiDung: content,
       });
-      toast.success("Phản ánh/khiếu nại đã được gửi đến Admin.");
+      toast.success("Khiếu nại đã được tiếp nhận. Bạn có thể theo dõi quy trình ngay trong đơn hàng.");
       setShowFeedbackModal(false);
+      setSelectedComplaintReason("");
       setFeedbackText("");
+      await Promise.all([handleSelectOrder(selectedOrderId), loadOrders(pagination.page)]);
     } catch (e) {
       toast.error(e.message || "Không thể gửi phản ánh");
+    } finally {
+      setSubmittingComplaint(false);
     }
   };
 
@@ -409,11 +626,11 @@ export default function CustomerOrdersPage() {
                     )}
                     {codeObj.hasComplained && (
                       <span className={`inline-flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-md font-semibold border ${
-                        codeObj.complaintStatus === 'Đã giải quyết' 
+                        codeObj.complaintStatus === 'Da xu ly'
                           ? 'bg-blue-50 text-blue-700 border-blue-100'
                           : 'bg-red-50 text-red-700 border-red-100'
                       }`}>
-                        <MessageSquare size={12} /> Khiếu nại: {codeObj.complaintStatus}
+                        <MessageSquare size={12} /> Khiếu nại: {COMPLAINT_STATUS_CONFIG[codeObj.complaintStatus]?.label || codeObj.complaintStatus}
                       </span>
                     )}
                   </div>
@@ -504,14 +721,7 @@ export default function CustomerOrdersPage() {
               {order.complaints?.map(cp => (
                 <div key={cp.id} className="relative pl-5 mt-4 border-t border-gray-100 pt-4">
                   <div className="absolute w-3 h-3 bg-blue-500 rounded-full -left-[7px] top-5 border-2 border-white ring-4 ring-blue-50" />
-                  <div className="flex justify-between items-start mb-1">
-                    <p className="text-sm font-semibold text-gray-800">Khách hàng gửi khiếu nại</p>
-                    <span className="text-xs text-gray-500">{new Date(cp.createdAt).toLocaleString('vi-VN')}</span>
-                  </div>
-                  <p className="text-xs text-gray-600 mb-1">Nội dung: {cp.content}</p>
-                  <p className={`text-xs font-medium ${
-                    cp.status === 'Đã giải quyết' ? 'text-blue-600' : 'text-orange-600'
-                  }`}>Trạng thái: {cp.status}</p>
+                  <ComplaintProgress complaint={cp} />
                 </div>
               ))}
             </div>
@@ -692,20 +902,30 @@ export default function CustomerOrdersPage() {
           </div>
         )}
 
-        {/* Feedback Modal */}
+        {/* Complaint Modal */}
         {showFeedbackModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-            <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-5">
-              <h3 className="font-bold text-gray-900 mb-1">
-                Gửi phản ánh / khiếu nại
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" role="presentation">
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="complaint-modal-title"
+              className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-5 sm:p-6 max-h-[90vh] overflow-y-auto"
+            >
+              <h3 id="complaint-modal-title" className="font-bold text-gray-900 text-lg mb-1">
+                Gửi khiếu nại voucher
               </h3>
-              <p className="text-xs text-gray-400 mb-3">
-                Mô tả vấn đề gặp phải để quản trị viên hỗ trợ
+              <p className="text-sm text-gray-500 mb-4">
+                Chọn vấn đề theo chính sách hoặc mô tả trường hợp riêng của bạn.
               </p>
 
-              <div className="mb-3">
-                <label className="block text-xs font-medium text-gray-700 mb-1">Chọn mã voucher liên quan</label>
-                <select value={selectedVoucherMuaId} onChange={e => setSelectedVoucherMuaId(e.target.value)} className="w-full border border-gray-300 rounded-lg p-2 text-xs">
+              <div className="mb-4">
+                <label htmlFor="complaint-voucher" className="block text-sm font-semibold text-gray-800 mb-1.5">Voucher cần hỗ trợ</label>
+                <select
+                  id="complaint-voucher"
+                  value={selectedVoucherMuaId}
+                  onChange={e => setSelectedVoucherMuaId(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
+                >
                   {order.codes.map(c => {
                     const vid = c.id || c.voucherMuaId;
                     return (
@@ -735,30 +955,86 @@ export default function CustomerOrdersPage() {
                 })()}
               </div>
 
+              <div role="group" aria-labelledby="complaint-reason-options-label">
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <p id="complaint-reason-options-label" className="text-sm font-semibold text-gray-800">Vấn đề theo chính sách khiếu nại</p>
+                  <span className="text-xs text-gray-400">Chọn tối đa 1</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {COMPLAINT_REASON_OPTIONS.map((option) => {
+                    const selected = selectedComplaintReason === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => setSelectedComplaintReason(selected ? "" : option.id)}
+                        className={`rounded-full border px-3 py-2 text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-orange-300 ${
+                          selected
+                            ? "border-orange-500 bg-orange-50 text-orange-700 shadow-sm"
+                            : "border-gray-200 bg-white text-gray-600 hover:border-orange-300 hover:bg-orange-50/50"
+                        }`}
+                      >
+                        {selected ? "✓ " : ""}{option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-3">
+                <p className="text-xs font-semibold text-blue-900">Quy trình sau khi gửi</p>
+                <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {COMPLAINT_PROCESS_STEPS.map((step, index) => (
+                    <div key={step.title} className="rounded-lg bg-white/80 p-2">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">{index + 1}</span>
+                      <p className="mt-1 text-[11px] font-semibold text-gray-800">{step.title}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-2 text-[11px] leading-4 text-blue-800">
+                  Khiếu nại được hoàn tiền chỉ khi voucher hợp lệ, chưa sử dụng, không thể khắc phục bằng gửi lại/cấp lại mã và đáp ứng chính sách.
+                </p>
+              </div>
+
+              <label htmlFor="complaint-detail" className="mt-4 mb-2 block text-sm font-semibold text-gray-800">
+                Mô tả bổ sung <span className="font-normal text-gray-400">(không bắt buộc nếu đã chọn tag)</span>
+              </label>
               <textarea
-                rows={4}
+                id="complaint-detail"
+                rows={3}
+                maxLength={1000}
                 value={feedbackText}
                 onChange={(e) => setFeedbackText(e.target.value)}
-                placeholder="Mô tả sự cố hoặc vấn đề bạn gặp phải..."
-                className="w-full border border-gray-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-300 mb-3"
+                placeholder="Không có tag phù hợp? Hãy mô tả vấn đề. Bạn cũng có thể bổ sung thời gian, chi nhánh hoặc thông tin liên quan cho tag đã chọn..."
+                className="w-full border border-gray-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
-              <div className="flex gap-2">
+              <div className="mt-1 text-right text-[11px] text-gray-400">{feedbackText.length}/1000</div>
+
+              <div className="mt-4 flex gap-2">
                 <button
-                  onClick={() => setShowFeedbackModal(false)}
-                  className="flex-1 border border-gray-300 py-2 rounded-lg text-sm text-gray-600"
+                  type="button"
+                  onClick={closeComplaintModal}
+                  disabled={submittingComplaint}
+                  className="flex-1 border border-gray-300 py-2.5 rounded-lg text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
                 >
-                  Hủy
+                  Đóng
                 </button>
                 <button
+                  type="button"
                   onClick={handleSubmitFeedback}
-                  disabled={order.codes.find(c => (c.id || c.voucherMuaId) === selectedVoucherMuaId)?.hasComplained}
+                  disabled={
+                    submittingComplaint
+                    || (!selectedComplaintReason && !feedbackText.trim())
+                    || order.codes.find(c => (c.id || c.voucherMuaId) === selectedVoucherMuaId)?.hasComplained
+                  }
                   className={`flex-1 py-2 rounded-lg text-sm font-semibold text-white ${
-                    order.codes.find(c => (c.id || c.voucherMuaId) === selectedVoucherMuaId)?.hasComplained 
+                    submittingComplaint || (!selectedComplaintReason && !feedbackText.trim()) || order.codes.find(c => (c.id || c.voucherMuaId) === selectedVoucherMuaId)?.hasComplained
                     ? 'bg-gray-400 cursor-not-allowed' 
                     : 'bg-orange-500 hover:bg-orange-600'
                   }`}
                 >
-                  Gửi khiếu nại
+                  {submittingComplaint ? <span className="inline-flex items-center gap-2"><Loader2 size={15} className="animate-spin" /> Đang gửi...</span> : "Gửi khiếu nại"}
                 </button>
               </div>
             </div>
@@ -768,30 +1044,75 @@ export default function CustomerOrdersPage() {
         {/* Cancel Modal */}
         {showCancelModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-            <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-5">
-              <h3 className="font-bold text-gray-900 mb-1">
+            <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
+              <h3 className="font-bold text-gray-900 text-lg mb-1">
                 Yêu cầu hủy đơn & Hoàn tiền
               </h3>
-              <p className="text-xs text-gray-400 mb-3">
-                Nhập lý do bạn muốn hủy đơn hàng đã thanh toán này.
+              <p className="text-sm text-gray-500 mb-4">
+                Chọn lý do phù hợp hoặc nhập lý do riêng của bạn bên dưới.
               </p>
+
+              <div role="group" aria-labelledby="cancel-reason-options-label">
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <p id="cancel-reason-options-label" className="text-sm font-semibold text-gray-800">Lý do theo chính sách</p>
+                  <span className="text-xs text-gray-400">Chọn tối đa 1</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {CANCEL_REASON_OPTIONS.map((option) => {
+                    const selected = selectedCancelReason === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => setSelectedCancelReason(selected ? "" : option.id)}
+                        className={`rounded-full border px-3 py-2 text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-orange-300 ${
+                          selected
+                            ? "border-orange-500 bg-orange-50 text-orange-700 shadow-sm"
+                            : "border-gray-200 bg-white text-gray-600 hover:border-orange-300 hover:bg-orange-50/50"
+                        }`}
+                      >
+                        {selected ? "✓ " : ""}{option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-800">
+                <AlertCircle size={15} className="mt-0.5 shrink-0" />
+                <p>
+                  Yêu cầu được xét duyệt khi voucher chưa sử dụng, còn trong thời hạn hủy và đáp ứng chính sách của voucher hoặc Chính sách Sàn.
+                </p>
+              </div>
+
+              <label htmlFor="cancel-reason-detail" className="mt-4 mb-2 block text-sm font-semibold text-gray-800">
+                Thông tin bổ sung <span className="font-normal text-gray-400">(không bắt buộc nếu đã chọn tag)</span>
+              </label>
               <textarea
-                rows={4}
+                id="cancel-reason-detail"
+                rows={3}
+                maxLength={1000}
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
-                placeholder="Nhập lý do hoàn tiền..."
-                className="w-full border border-gray-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-300 mb-3"
+                placeholder="Không có tag phù hợp? Hãy nhập lý do của bạn. Bạn cũng có thể bổ sung chi tiết cho tag đã chọn..."
+                className="w-full border border-gray-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
-              <div className="flex gap-2">
+              <div className="mt-1 text-right text-[11px] text-gray-400">{cancelReason.length}/1000</div>
+
+              <div className="mt-4 flex gap-2">
                 <button
-                  onClick={() => setShowCancelModal(false)}
-                  className="flex-1 border border-gray-300 py-2 rounded-lg text-sm text-gray-600"
+                  type="button"
+                  onClick={closeCancelModal}
+                  className="flex-1 border border-gray-300 py-2.5 rounded-lg text-sm text-gray-600 hover:bg-gray-50"
                 >
                   Đóng
                 </button>
                 <button
+                  type="button"
                   onClick={handleCancelOrder}
-                  className="flex-1 bg-red-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-red-700"
+                  disabled={!selectedCancelReason && !cancelReason.trim()}
+                  className="flex-1 bg-red-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
                   Xác nhận gửi
                 </button>

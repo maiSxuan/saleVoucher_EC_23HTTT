@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Search,
   X,
@@ -18,7 +19,6 @@ import { toast } from "sonner";
 import {
   fetchAdminOrders,
   fetchAdminOrderDetail,
-  fetchAdminOrderLogs,
   approveCancelRequest,
   rejectCancelRequest,
   executeRefund,
@@ -187,6 +187,7 @@ function getVoucherCodeStatusBadge(status) {
 }
 
 export default function AdminOrdersPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [orders, setOrders] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -207,8 +208,7 @@ export default function AdminOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
-  const [orderLogs, setOrderLogs] = useState([]);
-  const [logsError, setLogsError] = useState(false);
+  const deepLinkRequestRef = useRef('');
 
   // Modals & reasons
   const [approveCancelModal, setApproveCancelModal] = useState(false);
@@ -221,6 +221,7 @@ export default function AdminOrdersPage() {
   const [reissueModal, setReissueModal] = useState(false);
   const [reasonInput, setReasonInput] = useState('');
   const [activeComplaintId, setActiveComplaintId] = useState(null);
+  const [complaintConfirmAction, setComplaintConfirmAction] = useState(null);
   const [complaintRefundModal, setComplaintRefundModal] = useState(false);
   const [complaintRejectModal, setComplaintRejectModal] = useState(false);
   const [complaintReasonInput, setComplaintReasonInput] = useState('');
@@ -266,16 +267,8 @@ export default function AdminOrdersPage() {
       setSelectedOrder(null);
       setActiveTab(tab);
       setLoadingDetail(true);
-      setLogsError(false);
-      // Chi tiết được tải trước để backend ghi nhận VIEW_ORDER_DETAIL, sau đó
-      // mới lấy log nhằm hiển thị luôn lần kiểm tra vừa thực hiện.
       const data = await fetchAdminOrderDetail(id);
-      const logsResult = await fetchAdminOrderLogs(id)
-        .then((logs) => ({ logs }))
-        .catch(() => ({ error: true }));
       setSelectedOrder(data);
-      setOrderLogs(logsResult.logs || []);
-      setLogsError(Boolean(logsResult.error));
       return true;
     } catch (e) {
       toast.error(e.message || 'Không thể tải chi tiết đơn hàng');
@@ -376,12 +369,34 @@ export default function AdminOrdersPage() {
     }
   };
 
+  useEffect(() => {
+    const orderId = searchParams.get('orderId');
+    if (!orderId) return;
+    const requestedTab = searchParams.get('tab');
+    const allowedTabs = ['overview', 'payment', 'codes', 'refund', 'complaints'];
+    const targetTab = allowedTabs.includes(requestedTab) ? requestedTab : 'overview';
+    const requestKey = `${orderId}:${targetTab}`;
+    if (deepLinkRequestRef.current === requestKey) return;
+    deepLinkRequestRef.current = requestKey;
+    loadDetail(orderId, targetTab);
+  }, [searchParams]);
+
+  const closeDetail = () => {
+    setSelectedId(null);
+    setSelectedOrder(null);
+    deepLinkRequestRef.current = '';
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('orderId');
+    nextParams.delete('tab');
+    setSearchParams(nextParams, { replace: true });
+  };
+
   const handleOpenComplaint = async (complaintId) => {
-    if (!window.confirm('Tiếp nhận khiếu nại này và chuyển sang trạng thái Đang xử lý?')) return;
     try {
       setActionLoading(`open-complaint-${complaintId}`);
       await openComplaint(complaintId);
       toast.success('Đã tiếp nhận khiếu nại để xử lý.');
+      setComplaintConfirmAction(null);
       await refreshCurrentData();
     } catch (e) {
       toast.error(e.message || 'Không thể tiếp nhận khiếu nại.');
@@ -391,11 +406,11 @@ export default function AdminOrdersPage() {
   };
 
   const handleResendComplaintCode = async (complaintId) => {
-    if (!window.confirm('Gửi lại chính voucher code hiện tại cho khách hàng?')) return;
     try {
       setActionLoading(`resend-complaint-${complaintId}`);
       await resendComplaintCode(complaintId);
       toast.success('Đã gửi lại voucher code hiện tại cho khách hàng.');
+      setComplaintConfirmAction(null);
       await refreshCurrentData();
     } catch (e) {
       toast.error(e.message || 'Không thể gửi lại voucher code.');
@@ -405,11 +420,11 @@ export default function AdminOrdersPage() {
   };
 
   const handleReissueComplaintCode = async (complaintId) => {
-    if (!window.confirm('Vô hiệu hóa mã cũ và cấp một voucher code mới cho khách hàng?')) return;
     try {
       setActionLoading(`reissue-complaint-${complaintId}`);
       await reissueComplaintCode(complaintId);
       toast.success('Đã cấp và gửi voucher code mới cho khách hàng.');
+      setComplaintConfirmAction(null);
       await refreshCurrentData();
     } catch (e) {
       toast.error(e.message || 'Không thể cấp lại voucher code.');
@@ -506,7 +521,7 @@ export default function AdminOrdersPage() {
 
     return (
       <div className="max-w-6xl mx-auto p-4 sm:p-6">
-        <button onClick={() => setSelectedId(null)} className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-800 mb-4 transition-colors">
+        <button onClick={closeDetail} className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-800 mb-4 transition-colors">
           <ArrowLeft size={16} /> Quay lại danh sách đơn hàng
         </button>
 
@@ -554,7 +569,6 @@ export default function AdminOrdersPage() {
             { id: 'codes', label: 'Lịch sử mã voucher' },
             { id: 'refund', label: 'Yêu cầu hủy/hoàn tiền' },
             { id: 'complaints', label: `Khiếu nại (${order.complaints?.length || 0})` },
-            { id: 'log', label: 'Nhật ký quản trị' },
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
               className={`px-4 py-3 text-sm font-semibold border-b-2 whitespace-nowrap transition-colors ${activeTab === tab.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
@@ -819,7 +833,14 @@ export default function AdminOrdersPage() {
                               {complaint.status === 'Moi' && (
                                 <button
                                   disabled={isProcessing}
-                                  onClick={() => handleOpenComplaint(complaint.id)}
+                                  onClick={() => setComplaintConfirmAction({
+                                    type: 'open',
+                                    complaintId: complaint.id,
+                                    title: 'Tiếp nhận khiếu nại',
+                                    description: 'Khi xác nhận, khiếu nại sẽ chuyển sang trạng thái Đang xử lý và được ghi nhận cho quản trị viên hiện tại.',
+                                    confirmLabel: 'Xác nhận tiếp nhận',
+                                    confirmClass: 'bg-blue-600 hover:bg-blue-700',
+                                  })}
                                   className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
                                 >
                                   {actionLoading === `open-complaint-${complaint.id}` ? <Loader2 size={13} className="animate-spin" /> : <MessageSquare size={13} />}
@@ -829,7 +850,14 @@ export default function AdminOrdersPage() {
                               {canResendCode && (
                                 <button
                                   disabled={isProcessing}
-                                  onClick={() => handleResendComplaintCode(complaint.id)}
+                                  onClick={() => setComplaintConfirmAction({
+                                    type: 'resend',
+                                    complaintId: complaint.id,
+                                    title: 'Gửi lại mã voucher hiện tại',
+                                    description: 'Hệ thống sẽ gửi lại đúng voucher code đang còn hiệu lực cho khách hàng. Mã hiện tại không bị thay đổi.',
+                                    confirmLabel: 'Xác nhận gửi lại',
+                                    confirmClass: 'bg-emerald-600 hover:bg-emerald-700',
+                                  })}
                                   className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
                                 >
                                   {actionLoading === `resend-complaint-${complaint.id}` ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
@@ -839,7 +867,14 @@ export default function AdminOrdersPage() {
                               {canReissueCode && (
                                 <button
                                   disabled={isProcessing}
-                                  onClick={() => handleReissueComplaintCode(complaint.id)}
+                                  onClick={() => setComplaintConfirmAction({
+                                    type: 'reissue',
+                                    complaintId: complaint.id,
+                                    title: 'Cấp voucher code mới',
+                                    description: 'Mã cũ sẽ bị vô hiệu hóa và hệ thống cấp một voucher code mới cho khách hàng. Thao tác này không thể hoàn tác.',
+                                    confirmLabel: 'Xác nhận cấp mã mới',
+                                    confirmClass: 'bg-amber-500 hover:bg-amber-600',
+                                  })}
                                   className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
                                 >
                                   {actionLoading === `reissue-complaint-${complaint.id}` ? <Loader2 size={13} className="animate-spin" /> : <RotateCcw size={13} />}
@@ -873,27 +908,6 @@ export default function AdminOrdersPage() {
             </div>
           )}
 
-          {activeTab === 'log' && (
-            <div className="space-y-3">
-              {logsError ? (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
-                  Không thể tải nhật ký kiểm tra của đơn hàng. Dữ liệu đơn hàng phía trên vẫn được giữ nguyên.
-                </div>
-              ) : orderLogs.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-6">Chưa có nhật ký hệ thống cho đơn hàng này.</p>
-              ) : (
-                orderLogs.map(log => (
-                  <div key={log.log_id} className="border border-gray-200 rounded-xl p-3 text-xs bg-gray-50 space-y-1">
-                    <div className="flex justify-between font-semibold text-gray-800">
-                      <span>Hành động: {log.hanh_dong}</span>
-                      <span className="text-gray-400">{new Date(log.thoi_diem_thuc_hien).toLocaleString('vi-VN')}</span>
-                    </div>
-                    {log.ly_do_thuc_hien && <p className="text-gray-600">Lý do: {log.ly_do_thuc_hien}</p>}
-                  </div>
-                ))
-              )}
-            </div>
-          )}
         </div>
 
         {/* Modals UC-ADM-05 / 06 */}
@@ -983,6 +997,59 @@ export default function AdminOrdersPage() {
                 <button disabled={Boolean(actionLoading)} onClick={() => { setReissueModal(false); setActiveVoucherMuaId(null); }} className="px-4 py-2 border rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50">Hủy</button>
                 <button disabled={Boolean(actionLoading)} onClick={handleReissueCode} className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-semibold hover:bg-amber-600 disabled:opacity-50">
                   {actionLoading === 'reissue-code' ? 'Đang cấp lại...' : 'Xác nhận cấp lại'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {complaintConfirmAction && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="presentation">
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="complaint-confirm-title"
+              className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                  <MessageSquare size={19} />
+                </div>
+                <div>
+                  <h3 id="complaint-confirm-title" className="text-lg font-bold text-gray-900">
+                    {complaintConfirmAction.title}
+                  </h3>
+                  <p className="mt-1 text-sm leading-6 text-gray-500">
+                    {complaintConfirmAction.description}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 flex justify-end gap-2 border-t border-gray-100 pt-4">
+                <button
+                  type="button"
+                  disabled={Boolean(actionLoading)}
+                  onClick={() => setComplaintConfirmAction(null)}
+                  className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  disabled={Boolean(actionLoading)}
+                  onClick={() => {
+                    if (complaintConfirmAction.type === 'open') {
+                      handleOpenComplaint(complaintConfirmAction.complaintId);
+                    } else if (complaintConfirmAction.type === 'resend') {
+                      handleResendComplaintCode(complaintConfirmAction.complaintId);
+                    } else {
+                      handleReissueComplaintCode(complaintConfirmAction.complaintId);
+                    }
+                  }}
+                  className={`inline-flex min-w-36 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 ${complaintConfirmAction.confirmClass}`}
+                >
+                  {actionLoading ? <Loader2 size={15} className="animate-spin" /> : null}
+                  {actionLoading ? 'Đang xử lý...' : complaintConfirmAction.confirmLabel}
                 </button>
               </div>
             </div>

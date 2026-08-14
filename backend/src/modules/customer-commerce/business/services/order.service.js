@@ -170,53 +170,14 @@ class OrderService {
     return await orderRepository.findAdminOrders(filters);
   }
 
-  async getAdminOrderById(orderId, adminAccountId = null) {
+  async getAdminOrderById(orderId) {
     const order = await orderRepository.findAdminOrderById(orderId);
     if (!order) {
       const err = new Error("Không tìm thấy đơn hàng");
       err.statusCode = 404;
       throw err;
     }
-    if (adminAccountId) {
-      await auditLogService.log({
-        actorId: adminAccountId,
-        actorRole: 'ADMIN',
-        action: 'VIEW_ORDER_DETAIL',
-        targetType: 'donhang',
-        targetId: orderId,
-        after: { accessType: 'read_only' },
-        reason: 'Kiểm tra chi tiết đơn hàng',
-      }).catch(() => {});
-    }
     return order;
-  }
-
-  async getOrderLogs(orderId) {
-    const supabase = require("../../../../config/supabase");
-    const order = await orderRepository.findAdminOrderById(orderId);
-    if (!order) return [];
-
-    const targets = [
-      { types: ['donhang', 'DONHANG'], ids: [orderId] },
-      { types: ['yeucauhuy'], ids: (order.cancelRequests || []).map((item) => item.id) },
-      { types: ['hoantien'], ids: (order.refunds || []).map((item) => item.id) },
-      { types: ['khieunai'], ids: (order.complaints || []).map((item) => item.id) },
-      { types: ['voucher_mua'], ids: (order.codes || []).map((item) => item.id) },
-    ].filter((target) => target.ids.length > 0);
-
-    const results = await Promise.all(targets.map(async (target) => {
-      const { data, error } = await supabase
-        .from('log_ht')
-        .select('*')
-        .in('doi_tuong', target.types)
-        .in('ma_doi_tuong', target.ids);
-      if (error) throw error;
-      return data || [];
-    }));
-
-    return results
-      .flat()
-      .sort((left, right) => new Date(right.thoi_diem_thuc_hien) - new Date(left.thoi_diem_thuc_hien));
   }
 
   async submitComplaint(accountId, orderId, { maVoucherMua, noiDung }) {
@@ -575,6 +536,8 @@ class OrderService {
         title: 'Voucher code của bạn',
         message: `Chào ${context.customerName || 'bạn'}, mã voucher theo khiếu nại ${maKhieuNai} được gửi lại bên dưới.`,
         voucherCode: pendingDelivery.voucherCode,
+        voucherDetails: context.voucherDetails,
+        qrValue: context.qrValue,
       });
     } catch (error) {
       await auditLogService.log({

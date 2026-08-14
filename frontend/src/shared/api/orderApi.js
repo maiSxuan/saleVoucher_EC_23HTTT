@@ -155,16 +155,6 @@ export async function fetchAdminOrderDetail(id) {
   return json.data;
 }
 
-export async function fetchAdminOrderLogs(id) {
-  const res = await fetch(`${BASE_URL}/admin/orders/${id}/logs`, {
-    method: "GET",
-    headers: authHeaders(),
-    cache: "no-store",
-  });
-  const json = await handleResponse(res);
-  return json.data || [];
-}
-
 export async function approveCancelRequest(id, { reason }) {
   const res = await fetch(`${BASE_URL}/admin/orders/cancel-requests/${id}/approve`, {
     method: "POST",
