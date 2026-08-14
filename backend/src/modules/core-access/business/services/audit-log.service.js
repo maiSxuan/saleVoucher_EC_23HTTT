@@ -139,21 +139,46 @@ class AuditLogService {
    *  - reason: string|null lý do thực hiện
    * @param {boolean} strict - Nếu true, throw nếu ghi log thất bại (dùng cho thao tác bắt buộc log)
    */
-  async log({
-    actorId = null,
-    actorRole = null,
-    action,
-    targetType = null,
-    targetId = null,
-    before = null,
-    after = null,
-    result = LOG_RESULT.THANH_CONG,
-    reason = null,
-  }, strict = false) {
-    try {
-      // Resolve actorId to valid ma_tk (FK taikhoan)
-      const resolvedActorId = await this.resolveActorId(actorId, actorRole);
+  async log(
+    {
+      actorId = null,
+      actorRole = null,
+      action,
+      targetType = null,
+      targetId = null,
+      before = null,
+      after = null,
+      result = LOG_RESULT.THANH_CONG,
+      reason = null,
+    },
+    strict = false
+  ) {
+    if (!strict) {
+      // Non-blocking background log execution for non-strict actions
+      setImmediate(async () => {
+        try {
+          const resolvedActorId = await this.resolveActorId(actorId, actorRole);
+          await auditLogRepository.create({
+            vai_tro_thuc_hien: actorRole,
+            hanh_dong: action,
+            du_lieu_truoc: before,
+            du_lieu_sau: after,
+            ket_qua: result,
+            ly_do_thuc_hien: reason,
+            ma_tk_thuc_hien: resolvedActorId,
+            doi_tuong: targetType,
+            ma_doi_tuong: targetId,
+          });
+        } catch (err) {
+          console.warn('[AuditLogService] Ghi log thất bại (background):', err.message);
+        }
+      });
+      return { success: true, queued: true };
+    }
 
+    try {
+      // Strict logging: synchronous execution
+      const resolvedActorId = await this.resolveActorId(actorId, actorRole);
       const logEntry = await auditLogRepository.create({
         vai_tro_thuc_hien: actorRole,
         hanh_dong: action,
@@ -167,12 +192,7 @@ class AuditLogService {
       });
       return logEntry;
     } catch (err) {
-      if (strict) {
-        // RB-15: Nếu log bắt buộc mà thất bại → không cho tiếp tục
-        throw new Error(`Ghi audit log bắt buộc thất bại: ${err.message}`);
-      }
-      // Lỗi log không chặn nghiệp vụ (best-effort logging)
-      console.warn('[AuditLogService] Ghi log thất bại (non-strict):', err.message);
+      throw new Error(`Ghi audit log bắt buộc thất bại: ${err.message}`);
     }
   }
 

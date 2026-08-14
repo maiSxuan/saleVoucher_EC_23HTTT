@@ -67,6 +67,26 @@ function PartnerManagementAccess() {
   return <Outlet />;
 }
 
+function PartnerOwnerOnlyRoute() {
+  try {
+    const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+    const role = currentUser.vai_tro_he_thong || currentUser.role;
+    if (
+      role === "Nhan vien quan ly voucher" ||
+      role === "PARTNER_MANAGER" ||
+      role === "VOUCHER_MANAGER"
+    ) {
+      return <Navigate to="/partner/reports" replace />;
+    }
+    if (role === "Nhan vien ban hang") {
+      return <Navigate to="/partner/vouchers/lookup" replace />;
+    }
+  } catch {
+    return <Navigate to="/login" replace />;
+  }
+  return <Outlet />;
+}
+
 const routes = [
   {
     path: "/login",
@@ -180,13 +200,18 @@ const routes = [
         element: <PartnerManagementAccess />,
         children: [
           { path: "reports", element: <PartnerReportsPage /> },
-          { path: "profile", element: <PartnerProfilePage /> },
-          { path: "branches", element: <BranchManagementPage /> },
-          { path: "staffs", element: <StaffManagementPage /> },
           { path: "vouchers", element: <VoucherListPage /> },
           { path: "vouchers/new", element: <VoucherFormPage /> },
           { path: "vouchers/:id/edit", element: <VoucherFormPage /> },
           { path: "vouchers/:id", element: <PartnerVoucherDetailPage /> },
+          {
+            element: <PartnerOwnerOnlyRoute />,
+            children: [
+              { path: "profile", element: <PartnerProfilePage /> },
+              { path: "branches", element: <BranchManagementPage /> },
+              { path: "staffs", element: <StaffManagementPage /> },
+            ],
+          },
         ],
       },
     ],

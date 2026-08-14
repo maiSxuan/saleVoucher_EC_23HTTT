@@ -25,7 +25,7 @@ export function VoucherApprovalListPage() {
   // Filters state matching prototype code
   const [searchName, setSearchName] = useState(savedState?.searchName || "");
   const [filterPartner, setFilterPartner] = useState(savedState?.filterPartner || "");
-  const [filterReview, setFilterReview] = useState(savedState?.filterReview || "pending");
+  const [filterReview, setFilterReview] = useState(savedState?.filterReview || "Cho duyet");
 
   // Pagination state
   const [page, setPage] = useState(savedState?.page || 1);
@@ -67,14 +67,18 @@ export function VoucherApprovalListPage() {
     loadData();
   }, []);
 
-  const getReviewStatusBadge = (status) => {
-    if (status === "Dang ban" || status === "Da duyet" || status === "approved") {
-      return { label: "Đã duyệt", color: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" };
+  const getReviewStatusBadge = (v) => {
+    const status = typeof v === "string" ? v : (v.trang_thai_kiem_duyet || (["Cho duyet", "Tu choi", "Nhap"].includes(v.trang_thai) ? v.trang_thai : "Da duyet"));
+    if (status === "Cho duyet") {
+      return { label: "Chờ duyệt", color: "bg-amber-50 text-amber-700 border-amber-200", dot: "bg-amber-500" };
     }
-    if (status === "Tu choi" || status === "rejected") {
+    if (status === "Tu choi") {
       return { label: "Bị từ chối", color: "bg-rose-50 text-rose-700 border-rose-200", dot: "bg-rose-500" };
     }
-    return { label: "Chờ duyệt", color: "bg-amber-50 text-amber-700 border-amber-200", dot: "bg-amber-500" };
+    if (status === "Nhap") {
+      return { label: "Bản nháp", color: "bg-slate-50 text-slate-700 border-slate-200", dot: "bg-slate-500" };
+    }
+    return { label: "Đã duyệt", color: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" };
   };
 
   const getPublicationStatusBadge = (v) => {
@@ -82,16 +86,22 @@ export function VoucherApprovalListPage() {
   };
 
   const filteredVouchers = vouchers.filter((v) => {
+    // Ẩn tất cả voucher Bản nháp (Nhap) vì chưa được đối tác gửi duyệt
+    if (v.trang_thai === "Nhap") {
+      return false;
+    }
+
     const matchName = !searchName || (v.ten_voucher || "").toLowerCase().includes(searchName.toLowerCase());
     const partnerName = v.ten_dn || "";
     const partnerId = v.ma_hs || "";
     const matchPartner = !filterPartner || partnerId === filterPartner || partnerName === filterPartner;
 
-    let vReviewStatus = "pending";
-    if (v.trang_thai === "Dang ban" || v.trang_thai === "Da duyet") vReviewStatus = "approved";
-    else if (v.trang_thai === "Tu choi") vReviewStatus = "rejected";
+    const kiemDuyetStatus = v.trang_thai_kiem_duyet || (["Cho duyet", "Tu choi"].includes(v.trang_thai) ? v.trang_thai : "Da duyet");
 
-    const matchReview = !filterReview || filterReview === "ALL" || vReviewStatus === filterReview || v.trang_thai === filterReview;
+    const matchReview =
+      !filterReview ||
+      filterReview === "ALL" ||
+      kiemDuyetStatus === filterReview;
 
     return matchName && matchPartner && matchReview;
   });
@@ -142,9 +152,9 @@ export function VoucherApprovalListPage() {
             className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-700 font-medium"
           >
             <option value="ALL">Tất cả trạng thái kiểm duyệt</option>
-            <option value="pending">Chờ duyệt</option>
-            <option value="approved">Đã duyệt</option>
-            <option value="rejected">Bị từ chối</option>
+            <option value="Cho duyet">Chờ duyệt</option>
+            <option value="Da duyet">Đã duyệt</option>
+            <option value="Tu choi">Bị từ chối</option>
           </select>
         </div>
 
@@ -195,7 +205,7 @@ export function VoucherApprovalListPage() {
                     const giaBan = Number(v.gia_ban) || 0;
                     const isInvalidPrice = giaBan >= giaGoc;
 
-                    const rb = getReviewStatusBadge(v.trang_thai);
+                    const rb = getReviewStatusBadge(v);
                     const pb = getPublicationStatusBadge(v);
 
                     const startDate = v.tg_bat_dau_ban ? v.tg_bat_dau_ban.slice(0, 10) : "2025-08-01";
@@ -224,7 +234,7 @@ export function VoucherApprovalListPage() {
                         </td>
 
                         {/* Danh mục */}
-                        <td className="px-3.5 py-3.5 text-slate-600">{formatCategoryName(v.ten_danh_muc)}</td>
+                        <td className="px-3.5 py-3.5 text-slate-600">{v.ten_danh_muc || "---"}</td>
 
                         {/* Giá gốc */}
                         <td className="px-3.5 py-3.5 font-medium text-slate-700">{giaGoc.toLocaleString("vi-VN")}đ</td>

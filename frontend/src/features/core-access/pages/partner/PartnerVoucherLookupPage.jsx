@@ -65,10 +65,13 @@ export default function PartnerVoucherLookupPage() {
         ? 'Người đại diện'
         : 'Nhân viên đối tác');
 
-  const canAccessManagement =
-    currentUser?.vai_tro_he_thong !== 'Nhan vien ban hang' &&
-    currentUser?.role !== 'PARTNER_STAFF' &&
-    currentUser?.role !== 'CUSTOMER';
+  const isSalesStaff =
+    currentUser?.vai_tro_he_thong === 'Nhan vien ban hang' ||
+    (currentUser?.role === 'PARTNER_STAFF' &&
+      currentUser?.vai_tro_he_thong !== 'Nhan vien quan ly voucher' &&
+      currentUser?.vai_tro_he_thong !== 'Nguoi dai dien');
+
+  const canAccessManagement = !isSalesStaff && currentUser?.role !== 'CUSTOMER';
 
   // Chi nhánh của nhân viên
   const staffBranchId = currentUser?.ma_chi_nhanh || null;
@@ -308,7 +311,7 @@ export default function PartnerVoucherLookupPage() {
               <button
                 type="button"
                 onClick={() => navigate('/partner/reports')}
-                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold border border-slate-200 transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold border border-slate-200 transition-colors cursor-pointer"
                 title="Quay lại Cổng Quản Lý Đối Tác"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
@@ -354,8 +357,8 @@ export default function PartnerVoucherLookupPage() {
               type="button"
               onClick={() => setActiveViewTab('lookup')}
               className={`flex items-center gap-2 py-3 px-4 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer ${activeViewTab === 'lookup'
-                  ? 'border-emerald-600 text-emerald-700 bg-emerald-50/40'
-                  : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
+                ? 'border-emerald-600 text-emerald-700 bg-emerald-50/40'
+                : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
                 }`}
             >
               <Search className="w-4 h-4" />
@@ -366,8 +369,8 @@ export default function PartnerVoucherLookupPage() {
               type="button"
               onClick={() => setActiveViewTab('history')}
               className={`flex items-center gap-2 py-3 px-4 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer ${activeViewTab === 'history'
-                  ? 'border-emerald-600 text-emerald-700 bg-emerald-50/40'
-                  : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
+                ? 'border-emerald-600 text-emerald-700 bg-emerald-50/40'
+                : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
                 }`}
             >
               <History className="w-4 h-4" />
@@ -540,23 +543,23 @@ export default function PartnerVoucherLookupPage() {
                   {/* Digital Ticket Container */}
                   <div
                     className={`bg-white rounded-2xl border shadow-md overflow-hidden transition-all ${verificationResult.status === 'valid'
-                        ? 'border-emerald-300 ring-2 ring-emerald-500/20'
-                        : verificationResult.status === 'used'
-                          ? 'border-slate-300'
-                          : verificationResult.status === 'expired'
-                            ? 'border-amber-300'
-                            : 'border-rose-300'
+                      ? 'border-emerald-300 ring-2 ring-emerald-500/20'
+                      : verificationResult.status === 'used'
+                        ? 'border-slate-300'
+                        : verificationResult.status === 'expired'
+                          ? 'border-amber-300'
+                          : 'border-rose-300'
                       }`}
                   >
                     {/* 1. Status Banner Top */}
                     <div
                       className={`px-6 py-4 flex items-center justify-between text-white ${verificationResult.status === 'valid'
-                          ? 'bg-emerald-600'
-                          : verificationResult.status === 'used'
-                            ? 'bg-slate-700'
-                            : verificationResult.status === 'expired'
-                              ? 'bg-amber-600'
-                              : 'bg-rose-600'
+                        ? 'bg-emerald-600'
+                        : verificationResult.status === 'used'
+                          ? 'bg-slate-700'
+                          : verificationResult.status === 'expired'
+                            ? 'bg-amber-600'
+                            : 'bg-rose-600'
                         }`}
                     >
                       <div className="flex items-center gap-2.5">
@@ -671,8 +674,8 @@ export default function PartnerVoucherLookupPage() {
                               <span
                                 key={b.branchId}
                                 className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${b.branchId === selectedBranchId
-                                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                                    : 'bg-slate-100 text-slate-600'
+                                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                  : 'bg-slate-100 text-slate-600'
                                   }`}
                               >
                                 {b.branchName}

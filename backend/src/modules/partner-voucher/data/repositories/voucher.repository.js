@@ -3,18 +3,36 @@ const VoucherModel = require("../models/voucher.model");
 
 const VOUCHERS_MEMORY_STORE = new Map();
 
+let CATEGORIES_CACHE = null;
+let CATEGORIES_CACHE_EXPIRES = 0;
+
 class VoucherRepository {
-  normalizeCategoryUuid(catId) {
+  async resolveCategoryUuid(catInput) {
     const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-    if (catId && uuidRegex.test(catId)) return catId;
-    return "40000000-0000-0000-0000-000000000001";
+    if (catInput && uuidRegex.test(catInput)) return catInput;
+    if (catInput) {
+      const { data } = await supabase
+        .from("danh_muc")
+        .select("ma_danh_muc")
+        .ilike("ten_danh_muc", catInput.toString().trim())
+        .maybeSingle();
+      if (data?.ma_danh_muc) return data.ma_danh_muc;
+    }
+    const { data: firstCategory } = await supabase
+      .from("danh_muc")
+      .select("ma_danh_muc")
+      .limit(1)
+      .maybeSingle();
+    return firstCategory?.ma_danh_muc || "40000000-0000-0000-0000-000000000001";
   }
 
   async resolvePartnerNamesMap() {
     try {
-      const { data: partnersData } = await supabase.from("hosodn").select("ma_hs, ten_dn, id_nguoi_dai_dien");
-      const { data: branchesData } = await supabase.from("chinhanh").select("ma_chi_nhanh, ma_hs");
-      const { data: linksData } = await supabase.from("voucher_cn").select("ma_voucher, ma_chi_nhanh");
+      const [{ data: partnersData }, { data: branchesData }, { data: linksData }] = await Promise.all([
+        supabase.from("hosodn").select("ma_hs, ten_dn, id_nguoi_dai_dien"),
+        supabase.from("chinhanh").select("ma_chi_nhanh, ma_hs"),
+        supabase.from("voucher_cn").select("ma_voucher, ma_chi_nhanh"),
+      ]);
 
       const partnerMap = new Map();
       (partnersData || []).forEach((p) => {
@@ -238,7 +256,7 @@ class VoucherRepository {
       }
     }
 
-    const categoryUuid = this.normalizeCategoryUuid(payload.ma_danh_muc);
+    const categoryUuid = await this.resolveCategoryUuid(payload.ma_danh_muc);
 
     const dbPayload = {
       ten_voucher: payload.ten_voucher,
@@ -358,8 +376,8 @@ class VoucherRepository {
       updatePayload.so_luong_phat_hanh = Number(payload.so_luong_phat_hanh);
     }
 
-    if (payload.gia_goc !== undefined && payload.gia_ban !== undefined) {
-      updatePayload.gia_tri_giam = Math.max(0, Number(payload.gia_goc) - Number(payload.gia_ban));
+    if (payload.ma_danh_muc) {
+      updatePayload.ma_danh_muc = await this.resolveCategoryUuid(payload.ma_danh_muc);
     }
 
     if (Object.keys(updatePayload).length > 0) {
@@ -373,19 +391,19 @@ class VoucherRepository {
       if (error) {
         console.error("[VoucherRepository] update error:", error.message);
       } else if (data && Array.isArray(payload.ma_chi_nhanh)) {
-        try {
-          await supabase.from("voucher_cn").delete().eq("ma_voucher", id);
-          if (payload.ma_chi_nhanh.length > 0) {
-            const links = payload.ma_chi_nhanh.map((bId) => ({
-              ma_voucher: id,
-              ma_chi_nhanh: bId,
-            }));
-            await supabase.from("voucher_cn").insert(links);
-          }
-        } catch (linkErr) {
-          console.warn("[VoucherRepository] voucher_cn update warning:", linkErr.message);
+      try {
+        await supabase.from("voucher_cn").delete().eq("ma_voucher", id);
+        if (payload.ma_chi_nhanh.length > 0) {
+          const links = payload.ma_chi_nhanh.map((bId) => ({
+            ma_voucher: id,
+            ma_chi_nhanh: bId,
+          }));
+          await supabase.from("voucher_cn").insert(links);
         }
+      } catch (linkErr) {
+        console.warn("[VoucherRepository] voucher_cn update warning:", linkErr.message);
       }
+    }
     }
 
     const result = await this.findById(id);
@@ -409,6 +427,30 @@ class VoucherRepository {
       ly_do_tu_choi: lyDoTuChoi || "",
     };
     return this.update(id, payload);
+  }
+
+  async getVoucherCategories() {
+    const now = Date.now();
+    if (CATEGORIES_CACHE && now < CATEGORIES_CACHE_EXPIRES) {
+      return CATEGORIES_CACHE;
+    }
+    try {
+      const { data, error } = await supabase
+        .from("danh_muc")
+        .select("ma_danh_muc, ten_danh_muc, mo_ta");
+
+      if (error || !data) {
+        console.error("Lỗi lấy danh mục từ Supabase:", error);
+        return CATEGORIES_CACHE || [];
+      }
+
+      CATEGORIES_CACHE = data;
+      CATEGORIES_CACHE_EXPIRES = now + 5 * 60 * 1000; // 5 minute TTL cache
+      return data;
+    } catch (e) {
+      console.error("Exception getVoucherCategories:", e.message);
+      return CATEGORIES_CACHE || [];
+    }
   }
 }
 

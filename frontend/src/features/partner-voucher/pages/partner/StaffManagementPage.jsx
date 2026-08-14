@@ -53,18 +53,18 @@ export function StaffManagementPage() {
     }
   };
 
-  const reload = async () => {
+  const reload = async (knownMaHs = null) => {
     setLoading(true);
     const activeUser = getActiveUser();
-    const targetId = activeUser?.ma_hsdn || activeUser?.ma_hs || activeUser?.id || activeUser?.ma_nguoi_dung || "20000000-0000-0000-0000-000000000001";
+    const targetId = knownMaHs || partnerId || activeUser?.ma_hsdn || activeUser?.ma_hs || activeUser?.id || activeUser?.ma_nguoi_dung || "20000000-0000-0000-0000-000000000001";
 
-    const partner = await getPartnerByIdApi(targetId);
-    const realMaHs = partner?.ma_hs || targetId;
-    setPartnerId(realMaHs);
+    if (!partnerId && targetId) {
+      setPartnerId(targetId);
+    }
 
     const [staffData, branchData] = await Promise.all([
-      getStaffsByPartnerApi(realMaHs),
-      getBranchesByPartnerApi(realMaHs),
+      getStaffsByPartnerApi(targetId),
+      getBranchesByPartnerApi(targetId),
     ]);
 
     setStaffs(staffData || []);
@@ -157,31 +157,36 @@ export function StaffManagementPage() {
       return;
     }
 
+    const isEditMode = editing;
+    const currentForm = { ...form };
+    setShowModal(false);
+    setToastMessage(isEditMode ? "Đang cập nhật nhân viên..." : "Đang thêm nhân viên mới...");
+
     try {
-      if (editing) {
-        await updateStaffApi(form.ma_nv, {
-          ...form,
+      if (isEditMode) {
+        await updateStaffApi(currentForm.ma_nv, {
+          ...currentForm,
           ma_hs: partnerId,
-          ma_chi_nhanh: form.vai_tro === "Nhân viên chi nhánh" ? form.ma_chi_nhanh : null,
+          ma_chi_nhanh: currentForm.vai_tro === "Nhân viên chi nhánh" ? currentForm.ma_chi_nhanh : null,
         });
         setToastMessage("Cập nhật thông tin nhân viên thành công.");
       } else {
         await createStaffApi({
-          ...form,
+          ...currentForm,
           ma_hs: partnerId,
-          ma_chi_nhanh: form.vai_tro === "Nhân viên chi nhánh" ? form.ma_chi_nhanh : null,
+          ma_chi_nhanh: currentForm.vai_tro === "Nhân viên chi nhánh" ? currentForm.ma_chi_nhanh : null,
         });
         setToastMessage("Thêm nhân viên mới thành công.");
       }
 
       await reload();
-      setShowModal(false);
     } catch (e) {
       const errMsg = e.message || "Lưu nhân viên thất bại.";
       if (errMsg.toLowerCase().includes("email") || errMsg.toLowerCase().includes("đã tồn tại")) {
         setEmailError(errMsg);
       }
       setToastMessage("Lỗi lưu nhân viên: " + errMsg);
+      setShowModal(true);
     }
   };
 

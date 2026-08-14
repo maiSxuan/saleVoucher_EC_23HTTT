@@ -29,7 +29,7 @@ export function VoucherDetailPage() {
         const u = JSON.parse(storedUser);
         return u.ma_hsdn || u.ma_hs || u.id || u.ma_nguoi_dung;
       }
-    } catch (e) {}
+    } catch (e) { }
     return "20000000-0000-0000-0000-000000000001";
   };
 
@@ -72,8 +72,8 @@ export function VoucherDetailPage() {
     const reviewStatus = ["Dang ban", "Tam ngung", "Ngung ban"].includes(newStatus)
       ? "Da duyet"
       : newStatus === "Cho duyet"
-      ? "Cho duyet"
-      : voucher.trang_thai_kiem_duyet || "Nhap";
+        ? "Cho duyet"
+        : voucher.trang_thai_kiem_duyet || "Nhap";
 
     await saveVoucherApi({
       ma_voucher: voucher.ma_voucher,
