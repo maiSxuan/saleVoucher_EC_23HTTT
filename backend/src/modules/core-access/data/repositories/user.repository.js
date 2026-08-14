@@ -176,13 +176,20 @@ class UserRepository {
       .eq("ma_tk_thuc_hien", tkData.ma_tk)
       .order("thoi_diem_thuc_hien", { ascending: false });
     if (error) throw new Error(`Lỗi lấy lịch sử quản trị: ${error.message}`);
-    return data || [];
+    return (data || []).filter((log) => {
+      const action = String(log.hanh_dong || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toUpperCase()
+        .replace(/[\s-]+/g, "_");
+      return !action.includes("LOGIN") && !action.includes("DANG_NHAP") && !action.includes("SIGN_IN");
+    });
   }
 
   // -----------------------------------------------------------------------
   // 2. LẤY DANH SÁCH NGƯỜI DÙNG (BR-ADM-01 — Admin xem danh sách)
   // -----------------------------------------------------------------------
-  async findAll({ page = 1, limit = 20, name, phone, role, status } = {}) {
+  async findAll({ page = 1, limit = 20, search, role, status } = {}) {
     const offset = (page - 1) * limit;
 
     let query = supabase
@@ -194,8 +201,10 @@ class UserRepository {
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
 
-    if (name) query = query.ilike("ho_ten", `%${name}%`);
-    if (phone) query = query.ilike("sdt", `%${phone}%`);
+    if (search) {
+      const safeSearch = String(search).replace(/[%(),]/g, " ").trim();
+      if (safeSearch) query = query.or(`ho_ten.ilike.%${safeSearch}%,email.ilike.%${safeSearch}%`);
+    }
     if (role) query = query.eq("vai_tro", role);
     if (status) query = query.eq("trang_thai", status);
 

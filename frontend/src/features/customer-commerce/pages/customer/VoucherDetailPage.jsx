@@ -35,7 +35,21 @@ function getBranchKey(branch, index) {
   return `${branch?.id || branch?.ma_chi_nhanh || getBranchName(branch)}-${index}`;
 }
 
-export default function VoucherDetailPage() {
+function getStoredRole() {
+  try {
+    const storedUser = localStorage.getItem("user") || localStorage.getItem("ec_auth_user");
+    const user = storedUser ? JSON.parse(storedUser) : null;
+    return user?.role || user?.vai_tro_he_thong || user?.vai_tro || "";
+  } catch {
+    return "";
+  }
+}
+
+function isCustomerRole(role) {
+  return ["CUSTOMER", "Khach hang", "Khách hàng"].includes(role);
+}
+
+export default function VoucherDetailPage({ publicView = false }) {
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -121,11 +135,22 @@ export default function VoucherDetailPage() {
   );
 
   // Bước 5-7: thêm vào giỏ hàng + kiểm tra trạng thái tại thời điểm bấm
-  const handleAddToCart = async () => {
-    if (!localStorage.getItem("accessToken")) {
+  const canStartCustomerAction = () => {
+    if (!localStorage.getItem("accessToken") && !localStorage.getItem("ec_auth_token")) {
       navigate("/login");
-      return;
+      return false;
     }
+
+    if (publicView && !isCustomerRole(getStoredRole())) {
+      toast.error("Chỉ tài khoản khách hàng mới có thể mua voucher.");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleAddToCart = async () => {
+    if (!canStartCustomerAction()) return;
     if (!isAvailable) {
       setAddState("unavailable");
       return;
@@ -144,10 +169,7 @@ export default function VoucherDetailPage() {
   };
 
   const handleBuyNow = async () => {
-    if (!localStorage.getItem("accessToken")) {
-      navigate("/login");
-      return;
-    }
+    if (!canStartCustomerAction()) return;
     if (!isAvailable) {
       setAddState("unavailable");
       return;

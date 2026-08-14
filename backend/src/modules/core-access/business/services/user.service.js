@@ -19,13 +19,12 @@ class UserService {
   //    - Hỗ trợ lọc và phân trang.
   //    - Trả về mảng UserModel đã mapping.
   // -----------------------------------------------------------------------
-  async listUsers({ page, limit, name, phone, role, status } = {}) {
+  async listUsers({ page, limit, search, role, status } = {}) {
     // Gọi repository để lấy dữ liệu thật từ Supabase
     const { users, total } = await userRepository.findAll({
       page: Number(page) || 1,
       limit: Number(limit) || 20,
-      name,
-      phone,
+      search,
       role,
       status,
     });
@@ -78,10 +77,14 @@ class UserService {
     let extraInfo = {};
     let orderHistory = [];
     let auditLogs = [];
+    let activityLogs = [];
 
     // Lấy thông tin bổ sung dựa trên vai trò
     if (user.vai_tro === 'Khach hang') {
-      orderHistory = await userRepository.getUserOrderHistory(userId);
+      [orderHistory, activityLogs] = await Promise.all([
+        userRepository.getUserOrderHistory(userId),
+        userRepository.getUserAuditLogs(userId),
+      ]);
     } else if (user.vai_tro === 'Nhan vien quan ly voucher' || user.vai_tro === 'Nguoi dai dien') {
       extraInfo = await userRepository.getUserCompanyInfo(user.ma_hsdn);
       auditLogs = await userRepository.getUserAuditLogs(userId);
@@ -109,6 +112,7 @@ class UserService {
       extraInfo,
       orderHistory,
       auditLogs,
+      activityLogs,
     };
   }
 

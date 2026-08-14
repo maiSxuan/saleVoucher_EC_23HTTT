@@ -6,7 +6,6 @@ import {
   AlertCircle,
   ArrowLeft,
   RefreshCw,
-  ShoppingBag,
 } from "lucide-react";
 
 const OTP_RESEND_SECONDS = 60;
@@ -181,17 +180,27 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-lg max-w-sm w-full p-6">
+        <Link
+          to="/"
+          className="flex flex-col items-center group mb-5"
+          aria-label="Về trang chủ Snow Voucher"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sky-400 to-blue-500 text-white flex items-center justify-center mb-2 shadow-md shadow-sky-200 group-hover:scale-105 transition-transform">
+            <span className="text-xl" aria-hidden="true">❄️</span>
+          </div>
+          <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-transparent">
+            Snow Voucher
+          </span>
+        </Link>
+
         {step === "form" && (
           <>
             <div className="text-center mb-6">
-              <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center mx-auto mb-2">
-                <ShoppingBag size={22} className="text-orange-600" />
-              </div>
               <h2 className="font-bold text-gray-900 text-lg">
                 Đăng ký tài khoản
               </h2>
               <p className="text-xs text-gray-400 mt-0.5">
-                Tạo tài khoản khách hàng EC Voucher
+                Tạo tài khoản khách hàng Snow Voucher
               </p>
             </div>
 

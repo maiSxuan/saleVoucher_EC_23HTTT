@@ -3,6 +3,7 @@
  * Chặn đầu và kiểm tra tính hợp lệ của địa chỉ email và máy chủ SMTP trước khi gửi.
  */
 const nodemailer = require("nodemailer");
+const QRCode = require("qrcode");
 const dns = require("dns").promises;
 const { loadGmail, loadAuthGmail } = require("../../config/environment");
 const AppError = require("../errors/AppError");
@@ -150,7 +151,14 @@ async function sendOtpEmail(toEmail, otp, type = "register") {
  * Send a transactional notification (voucher delivery, complaint result, ...).
  * Callers decide whether a delivery failure blocks their business workflow.
  */
-async function sendNotificationEmail(toEmail, { subject, title, message, voucherCode } = {}) {
+async function sendNotificationEmail(toEmail, {
+  subject,
+  title,
+  message,
+  voucherCode,
+  voucherDetails = null,
+  qrValue = null,
+} = {}) {
   await validateEmailDomain(toEmail);
 
   const mailerObj = getActiveTransporter("register");
@@ -165,9 +173,67 @@ async function sendNotificationEmail(toEmail, { subject, title, message, voucher
   const safeTitle = escapeHtml(title || "Thông báo từ EC Voucher");
   const safeMessage = escapeHtml(message || "Thông tin tài khoản của bạn vừa được cập nhật.");
   const safeVoucherCode = escapeHtml(voucherCode);
+  const formatDate = (value) => {
+    if (!value) return "Không giới hạn";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? escapeHtml(value) : date.toLocaleString("vi-VN");
+  };
+  const formatCurrency = (value) => {
+    if (value === null || value === undefined || value === "") return "Chưa cập nhật";
+    const amount = Number(value);
+    return Number.isFinite(amount) ? `${amount.toLocaleString("vi-VN")} đ` : "Chưa cập nhật";
+  };
   const codeBlock = voucherCode
     ? `<div style="margin:20px 0;padding:16px;text-align:center;border:1px solid #bfdbfe;border-radius:8px;background:#eff6ff;font-size:24px;font-weight:700;letter-spacing:3px;color:#1d4ed8">${safeVoucherCode}</div>`
     : "";
+  const voucherBlock = voucherDetails
+    ? `<div style="margin:20px 0;padding:16px;border:1px solid #e5e7eb;border-radius:10px;background:#f8fafc">
+        <div style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#64748b;margin-bottom:4px">THÔNG TIN VOUCHER ĐÃ MUA</div>
+        <div style="font-size:17px;font-weight:700;color:#0f172a;margin-bottom:12px">${escapeHtml(voucherDetails.name || "Voucher đã mua")}</div>
+        <table role="presentation" style="width:100%;border-collapse:collapse;font-size:14px;color:#475569">
+          <tr><td style="padding:5px 8px 5px 0">Mã đơn hàng</td><td style="padding:5px 0;font-weight:600;color:#0f172a">${escapeHtml(voucherDetails.orderId || "")}</td></tr>
+          <tr><td style="padding:5px 8px 5px 0">Mã voucher mua</td><td style="padding:5px 0;font-weight:600;color:#0f172a">${escapeHtml(voucherDetails.purchaseId || "")}</td></tr>
+          <tr><td style="padding:5px 8px 5px 0">Giá đã mua</td><td style="padding:5px 0;font-weight:600;color:#0f172a">${formatCurrency(voucherDetails.purchasePrice)}</td></tr>
+          <tr><td style="padding:5px 8px 5px 0">Trạng thái</td><td style="padding:5px 0;font-weight:600;color:#047857">${escapeHtml(voucherDetails.status || "Chưa sử dụng")}</td></tr>
+          <tr><td style="padding:5px 8px 5px 0">Phát hành lúc</td><td style="padding:5px 0;font-weight:600;color:#0f172a">${formatDate(voucherDetails.issuedAt)}</td></tr>
+          <tr><td style="padding:5px 8px 5px 0">Hiệu lực từ</td><td style="padding:5px 0;font-weight:600;color:#0f172a">${formatDate(voucherDetails.validFrom)}</td></tr>
+          <tr><td style="padding:5px 8px 5px 0">Hiệu lực đến</td><td style="padding:5px 0;font-weight:600;color:#0f172a">${formatDate(voucherDetails.validUntil)}</td></tr>
+        </table>
+        ${voucherDetails.conditions ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:13px;line-height:1.5;color:#64748b"><strong style="color:#334155">Điều kiện áp dụng:</strong> ${escapeHtml(voucherDetails.conditions)}</div>` : ""}
+      </div>`
+    : "";
+
+  let qrAttachment = null;
+  let qrBlock = "";
+  if (voucherCode && (qrValue || voucherDetails)) {
+    try {
+      const qrContent = String(qrValue || voucherCode).trim();
+      const qrCid = `voucher-qr-${String(voucherDetails?.purchaseId || Date.now()).replace(/[^a-zA-Z0-9]/g, "")}@snowvoucher`;
+      const qrBuffer = await QRCode.toBuffer(qrContent, {
+        type: "png",
+        errorCorrectionLevel: "H",
+        margin: 2,
+        width: 240,
+      });
+      qrAttachment = {
+        filename: "voucher-qr.png",
+        content: qrBuffer,
+        cid: qrCid,
+        contentType: "image/png",
+      };
+      qrBlock = `<div style="margin:20px 0;text-align:center">
+        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:8px">Mã QR voucher</div>
+        <img src="cid:${qrCid}" alt="Mã QR voucher" width="240" height="240" style="display:block;width:240px;height:240px;margin:0 auto;border:1px solid #e5e7eb;border-radius:10px" />
+        <div style="margin-top:8px;font-size:12px;color:#64748b">Đưa mã QR này cho nhân viên tại quầy để sử dụng.</div>
+      </div>`;
+    } catch (error) {
+      throw new AppError(
+        `Không thể tạo mã QR cho voucher (${error.message}).`,
+        500,
+        "QR_GENERATION_FAILED"
+      );
+    }
+  }
 
   try {
     return await mailerObj.transporter.sendMail({
@@ -177,9 +243,12 @@ async function sendNotificationEmail(toEmail, { subject, title, message, voucher
       html: `<div style="font-family:Arial,sans-serif;padding:20px;max-width:560px;margin:auto;border:1px solid #e5e7eb;border-radius:10px">
         <h2 style="color:#2563eb">${safeTitle}</h2>
         <p>${safeMessage}</p>
+        ${voucherBlock}
         ${codeBlock}
+        ${qrBlock}
         <p style="font-size:12px;color:#9ca3af">Đây là email tự động từ hệ thống EC Voucher.</p>
       </div>`,
+      attachments: qrAttachment ? [qrAttachment] : [],
     });
   } catch (err) {
     throw new AppError(

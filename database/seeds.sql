@@ -274,6 +274,7 @@ insert into HOSODN (
     ma_so_thue,
     dia_chi,
     giay_phep_kinh_doanh,
+    logo,
     ngay_tao,
     trang_thai,
     id_nguoi_dai_dien,
@@ -286,6 +287,7 @@ values
     '0310000001',
     '12 Nguyen Hue, TP. Ho Chi Minh',
     'https://example.local/licenses/am-thuc-sai-gon.pdf',
+    'https://upload.wikimedia.org/wikipedia/commons/3/38/Honda_logo.svg',
     now() - interval '280 days',
     'Dang hoat dong',
     '00000000-0000-0000-0000-000000000011',
@@ -297,6 +299,7 @@ values
     '0310000002',
     '25 Thanh Thai, TP. Ho Chi Minh',
     'https://example.local/licenses/spa-an-nhien.pdf',
+    'https://upload.wikimedia.org/wikipedia/commons/4/44/Toyota_Car_Logo.png',
     now() - interval '15 days',
     'Cho duyet',
     '00000000-0000-0000-0000-000000000021',
@@ -308,6 +311,7 @@ values
     '0310000003',
     '80 Vo Van Tan, TP. Ho Chi Minh',
     'https://example.local/licenses/giao-duc-tuong-lai.pdf',
+    'https://upload.wikimedia.org/wikipedia/commons/9/90/Mercedes-Logo.svg',
     now() - interval '35 days',
     'Tu choi',
     '00000000-0000-0000-0000-000000000031',
@@ -319,6 +323,7 @@ values
     '0310000004',
     '10 Pham Ngu Lao, TP. Ho Chi Minh',
     'https://example.local/licenses/du-lich-thanh-pho.pdf',
+    'https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg',
     now() - interval '230 days',
     'Tam khoa',
     '00000000-0000-0000-0000-000000000041',
@@ -1272,7 +1277,117 @@ values
     'Chinh sach hoan huy voucher',
     'Khach hang',
     'Dang hien thi',
-    'Viec huy va hoan tien phu thuoc dieu kien cua voucher hoac chinh sach san.',
+    $policy$## CHÍNH SÁCH HOÀN HỦY VÀ ĐỔI TRẢ VOUCHER
+
+Để đảm bảo quyền lợi tối đa cho Khách hàng khi sử dụng dịch vụ voucher, chúng tôi xin gửi đến Quý khách quy định chi tiết về việc hoàn, hủy và đổi trả voucher như sau:
+
+### 1. Điều Kiện Hoàn/Hủy Voucher
+Voucher chỉ được chấp nhận hoàn/hủy khi đáp ứng đầy đủ các điều kiện sau:
+* **Voucher chưa được sử dụng:** Chưa từng qua kích hoạt, quét mã QR/Barcode hoặc nhập mã thanh toán tại hệ thống/đối tác.
+* **Thời hạn hiệu lực:** Voucher vẫn còn thời hạn sử dụng tại thời điểm gửi yêu cầu hoàn hủy.
+* **Hình thức voucher áp dụng:** Chỉ áp dụng đối với các voucher **có quy định hoàn/hủy** tại thời điểm bán (được thể hiện rõ trong phần *Điều kiện áp dụng* của từng chương trình).
+* **Trường hợp bất khả kháng:** Do lỗi hệ thống, đối tác ngừng cung cấp dịch vụ hoặc thông tin voucher bị sai lệch so với mô tả.
+
+---
+
+### 2. Các Trường Hợp Không Hỗ Trợ Hoàn/Hủy
+Hệ thống **không hỗ trợ** hoàn tiền hoặc hủy voucher trong các trường hợp sau:
+* Voucher thuộc danh mục **"Không hoàn/hủy/đổi trả"** (được ghi rõ trong chi tiết voucher khi mua).
+* Voucher đã **hết hạn sử dụng**.
+* Voucher đã được **kích hoạt hoặc đổi/sử dụng thành công** một phần hoặc toàn bộ.
+* Khách hàng làm lộ/mất mã voucher dẫn đến việc người khác đã sử dụng mã.
+
+---
+
+### 3. Phương Thức Hoàn Tiền & Thời Gian Xử Lý
+
+Tùy theo hình thức thanh toán ban đầu, giá trị hoàn tiền sẽ được gửi trả qua các kênh tương ứng:
+
+| Phương thức thanh toán ban đầu | Phương thức hoàn tiền | Thời gian xử lý dự kiến |
+| :--- | :--- | :--- |
+| **Ví điện tử / Thẻ nội địa (NAPAS)** | Hoàn về Ví / Tài khoản ngân hàng ban đầu | **1 - 3 ngày** làm việc |
+| **Thẻ ghi nợ / Thẻ tín dụng (Visa, Master)** | Hoàn về hạn mức thẻ | **5 - 15 ngày** làm việc *(tùy ngân hàng)* |
+| **Điểm thưởng / Ví Voucher hệ thống** | Hoàn lại điểm/voucher tương ứng | **Trong vòng 24 giờ** |
+
+> **Lưu ý:** Số tiền hoàn trả là số tiền thực tế Khách hàng đã thanh toán (sau khi đã trừ các khuyến mãi, giảm giá khác nếu có).
+
+---
+
+### 4. Quy Trình Gửi Yêu Cầu Hoàn Hủy
+
+1. **Bước 1:** Khách hàng vào mục **"Ví Voucher / Đơn hàng của tôi"** trên App/Website -> Chọn Voucher cần hủy.
+2. **Bước 2:** Nhấn nút **"Yêu cầu hoàn/hủy"** và chọn lý do. *(Hoặc liên hệ hotline/email Chăm sóc khách hàng).*
+3. **Bước 3:** Bộ phận CSKH tiến hành kiểm tra trạng thái voucher trên hệ thống.
+4. **Bước 4:** Khách hàng nhận thông báo kết quả và tiến trình hoàn tiền qua Email/Push Notification.
+
+---
+
+### 5. Thông Tin Liên Hệ Hỗ Trợ
+
+Nếu có bất kỳ thắc mắc nào liên quan đến chính sách hoặc cần trợ giúp xử lý đơn hàng, Quý khách vui lòng liên hệ:
+* **Hotline:** [Số điện thoại của bạn]
+* **Email:** [Email hỗ trợ của bạn]
+* **Thời gian làm việc:** 08:00 – 21:00 (Tất cả các ngày trong tuần)$policy$,
+    now() - interval '60 days',
+    null,
+    now() - interval '65 days',
+    now() - interval '60 days',
+    '10000000-0000-0000-0000-000000000001'
+),
+(
+    '061f9472-2a69-4504-a514-791c891fe8b6',
+    'chinh_sach',
+    'Chinh sach danh cho doi tac tham gia he thong voucher',
+    'Doi tac',
+    'Dang hien thi',
+    $policy$## CHÍNH SÁCH DÀNH CHO ĐỐI TÁC THAM GIA HỆ THỐNG VOUCHER
+
+Chính sách này quy định các điều khoản, quyền lợi và trách nhiệm áp dụng cho các Doanh nghiệp, Thương hiệu và Nhà cung cấp (sau đây gọi tắt là **"Đối tác"**) khi đăng ký tham gia phát hành và kinh doanh voucher trên nền tảng của chúng tôi.
+
+---
+
+### 1. Điều Kiện & Quy Trình Tham Gia
+
+#### 1.1. Điều kiện đăng ký
+* Là doanh nghiệp, hộ kinh doanh hoặc thương hiệu có giấy phép kinh doanh hợp pháp.
+* Cung cấp đầy đủ thông tin pháp lý (Mã số thuế, Giấy phép đăng ký kinh doanh, Giấy ủy quyền thương hiệu nếu có).
+* Cam kết chất lượng sản phẩm/dịch vụ đạt chuẩn và đúng với mô tả trên voucher.
+
+#### 1.2. Quy trình 4 bước tham gia
+1. **Đăng ký tài khoản Đối tác:** Tạo hồ sơ doanh nghiệp trên hệ thống.
+2. **Xác minh & Duyệt hồ sơ:** Hệ thống kiểm tra và xác thực thông tin pháp lý trong vòng **24 - 48 giờ**.
+3. **Tạo chiến dịch Voucher:** Đối tác chủ động tạo mã voucher, thiết lập giá bán, số lượng và thời hạn sử dụng.
+4. **Phát hành & Quản lý:** Voucher được duyệt hiển thị công khai; Đối tác quản lý đơn hàng và đối soát qua trang Quản trị (Dashboard).
+
+---
+
+### 2. Mô Hình Chiết Khấu & Thanh Toán (Đối Soát)
+
+#### 2.1. Phí dịch vụ & Chiết khấu
+* **Phí duy trì nền tảng:** Miễn phí tạo gian hàng và niêm yết voucher.
+* **Phí hoa hồng/giao dịch:** Khấu trừ trực tiếp trên mỗi voucher được người dùng **đổi/sử dụng thành công** *(tỷ lệ cụ thể theo hợp đồng hợp tác)*.
+
+#### 2.2. Chu kỳ đối soát & Thanh toán
+* **Chu kỳ đối soát:** Thực hiện định kỳ **2 lần/tháng** (Vào ngày **15** và ngày **cuối tháng**).
+* **Điều kiện thanh toán:** Hệ thống tổng hợp các voucher có trạng thái `Đã sử dụng` (Redeemed) trong kỳ.
+* **Hình thức thanh toán:** Chuyển khoản trực tiếp vào tài khoản ngân hàng doanh nghiệp đã đăng ký của Đối tác trong vòng **3 - 5 ngày làm việc** kể từ ngày chốt đối soát.
+
+---
+
+### 3. Trách Nhiệm & Cam Kết Của Đối Tác
+
+* **Tiếp nhận & Phục vụ:** Đảm bảo chấp nhận mã voucher hợp lệ của khách hàng mà không có bất kỳ thái độ phân biệt đối xử nào so với khách hàng thanh toán thông thường.
+* **Đồng bộ trạng thái:** Thực hiện gạch nợ/quét mã QR voucher ngay tại thời điểm khách hàng sử dụng dịch vụ để tránh phát sinh khiếu nại.
+* **Bảo mật & Giá cả:** Không tự ý nâng giá niêm yết sản phẩm/dịch vụ trước khi áp dụng voucher hoặc thu thêm các khoản phí bất hợp lý ngoài quy định của chương trình.
+
+---
+
+### 4. Xử Lý Vi Phạm & Tạm Ngưng Hợp Tác
+
+Hệ thống có quyền tạm dừng chiến dịch hoặc khóa tài khoản Đối tác trong các trường hợp:
+* Tự ý từ chối phục vụ khách hàng sở hữu voucher hợp lệ mà không có lý do chính đáng.
+* Cung cấp sản phẩm/dịch vụ kém chất lượng, bị khách hàng khiếu nại nghiêm trọng nhiều lần.
+* Gian lận trạng thái voucher hoặc vi phạm các quy định pháp luật hiện hành.$policy$,
     now() - interval '60 days',
     null,
     now() - interval '65 days',

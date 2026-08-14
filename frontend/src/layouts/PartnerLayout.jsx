@@ -139,15 +139,15 @@ export function PartnerLayout({ children }) {
           >
             ☰
           </button>
-          <div className="flex items-center gap-2">
-            <span className="w-8 h-8 rounded-lg bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shadow-xs">
-              PV
+          <Link to="/" className="flex items-center gap-2 group" aria-label="Về trang chủ Snow Voucher">
+            <span className="w-8 h-8 rounded-lg bg-gradient-to-tr from-sky-400 to-blue-500 text-white font-bold flex items-center justify-center text-sm shadow-xs group-hover:scale-105 transition-transform">
+              ❄️
             </span>
             <div>
-              <h1 className="font-bold text-slate-900 text-sm leading-tight">Partner Portal</h1>
+              <h1 className="font-bold text-slate-900 text-sm leading-tight">Snow Voucher</h1>
               <p className="text-[11px] text-slate-500">Cổng Quản Lý Đối Tác</p>
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Top actions & User Info & Logout */}

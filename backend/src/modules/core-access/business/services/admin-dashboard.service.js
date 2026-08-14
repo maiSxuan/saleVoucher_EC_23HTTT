@@ -23,6 +23,9 @@ class AdminDashboardService {
       // Đơn hàng chờ xử lí
       pendingOrders: metrics.pendingOrders,
 
+      // Đơn hàng có khiếu nại đang chờ/đang xử lý
+      complaintOrders: metrics.complaintOrders,
+
       // Doanh thu (VND)
       totalRevenue: metrics.totalRevenue,
 
@@ -42,11 +45,20 @@ class AdminDashboardService {
       // Hàng đợi công việc cần xử lý
       workQueue: metrics.workQueue || {
         totalPending: 0,
-        pendingPartners: [],
-        pendingBranches: [],
-        pendingVouchers: [],
-        refundOrders: [],
-        failedGenOrders: [],
+        partnerManagement: {
+          counts: { pendingPartners: 0, branchChangeRequests: 0, profileChangeRequests: 0, pendingVouchers: 0 },
+          pendingPartners: [],
+          branchChangeRequests: [],
+          profileChangeRequests: [],
+          pendingVouchers: [],
+        },
+        customerRequests: {
+          counts: { cancelRequests: 0, complaints: 0, refundOrders: 0, failedGenOrders: 0 },
+          cancelRequests: [],
+          complaints: [],
+          refundOrders: [],
+          failedGenOrders: [],
+        },
       },
 
       // Metadata

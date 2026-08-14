@@ -1,12 +1,9 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useDeferredValue } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   Search,
   Tag,
   ShieldCheck,
-  Phone,
-  Mail,
-  MapPin,
   LogIn,
   ArrowRight,
   Sparkles,
@@ -15,12 +12,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Gift,
-  User,
-  LogOut,
+  UserPlus,
   ShoppingBag,
 } from "lucide-react";
 import { fetchSellingVouchers, fetchCategories } from "../../../../shared/api/catalogApi";
-import { getPartnersApi } from "../../../../shared/api/partnerApi";
 
 function cleanImageUrl(url) {
   if (!url || typeof url !== "string") return null;
@@ -53,39 +48,26 @@ export default function LandingPage() {
 
   const [vouchers, setVouchers] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [partners, setPartners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-
-  const [currentUser, setCurrentUser] = useState(null);
+  const deferredSearchQuery = useDeferredValue(searchQuery);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("user") || localStorage.getItem("ec_auth_user");
-      if (stored) {
-        setCurrentUser(JSON.parse(stored));
-      }
-    } catch (e) {}
-
     let ignore = false;
     setLoading(true);
 
     Promise.allSettled([
       fetchSellingVouchers(),
       fetchCategories(),
-      getPartnersApi(),
     ])
-      .then(([vRes, cRes, pRes]) => {
+      .then(([vRes, cRes]) => {
         if (ignore) return;
         if (vRes.status === "fulfilled" && Array.isArray(vRes.value)) {
           setVouchers(vRes.value);
         }
         if (cRes.status === "fulfilled" && Array.isArray(cRes.value)) {
           setCategories(cRes.value);
-        }
-        if (pRes.status === "fulfilled" && Array.isArray(pRes.value)) {
-          setPartners(pRes.value);
         }
       })
       .finally(() => {
@@ -96,15 +78,6 @@ export default function LandingPage() {
       ignore = true;
     };
   }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("user");
-    localStorage.removeItem("ec_auth_token");
-    localStorage.removeItem("ec_auth_user");
-    setCurrentUser(null);
-    navigate("/login");
-  };
 
   const scrollBrands = (direction) => {
     if (brandScrollRef.current) {
@@ -138,7 +111,22 @@ export default function LandingPage() {
       const giaBan = Number(v.gia_ban ?? v.salePrice ?? (giaGoc > 0 && v.gia_tri_giam ? giaGoc - Number(v.gia_tri_giam) : giaGoc));
 
       const hinhAnh = v.image || v.hinh_anh || v.hinh_anh_url || "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=600&auto=format&fit=crop";
-      const ngayTao = v.ngay_tao || v.tg_bat_dau_ban || v.createdAt || "";
+      const ngayTao = v.ngay_tao || v.tg_bat_dau_ban || v.startSaleDate || v.createdAt || "";
+      const rawBranches = Array.isArray(v.branches)
+        ? v.branches
+        : (v.voucher_cn || []).map((item) => item?.chinhanh).filter(Boolean);
+      const branches = rawBranches.map((branch) => ({
+        id: branch.id || branch.ma_chi_nhanh,
+        name: branch.name || branch.ten_chi_nhanh || "Chi nhánh",
+        address: branch.address || branch.dia_chi || "",
+        region: branch.region || branch.khu_vuc || "",
+      }));
+      const searchText = stripVietnameseAccents([
+        ten_voucher,
+        ten_dn,
+        categoryName,
+        ...branches.flatMap((branch) => [branch.name, branch.address, branch.region]),
+      ].join(" "));
 
       return {
         raw: v,
@@ -152,39 +140,42 @@ export default function LandingPage() {
         giaBan,
         hinhAnh,
         ngayTao,
+        branches,
+        searchText,
       };
     });
   }, [vouchers]);
 
-  // Read partner profiles directly from DB table hosodn (column `logo`)
+  // Catalog đã chứa đối tác + chi nhánh; không gọi thêm endpoint /partners nặng.
   const brandList = useMemo(() => {
     const map = new Map();
 
-    if (Array.isArray(partners)) {
-      partners.forEach((p) => {
-        const name = p.ten_dn || p.name;
-        if (name && !map.has(name.toLowerCase())) {
-          map.set(name.toLowerCase(), {
-            ma_hs: p.ma_hs || p.id,
-            ten_dn: name,
-            logo: p.logo,
-          });
-        }
-      });
-    }
-
     normalizedVouchers.forEach((v) => {
-      if (v.ten_dn && !map.has(v.ten_dn.toLowerCase())) {
-        map.set(v.ten_dn.toLowerCase(), {
+      if (!v.ten_dn) return;
+      const key = v.ten_dn.toLowerCase();
+      const current = map.get(key);
+      const branchTerms = v.branches.flatMap((branch) => [branch.name, branch.address, branch.region]);
+
+      if (!current) {
+        map.set(key, {
           ma_hs: v.ma_voucher,
           ten_dn: v.ten_dn,
           logo: v.logo_dn,
+          searchText: stripVietnameseAccents([v.ten_dn, ...branchTerms].join(" ")),
         });
+      } else {
+        current.searchText = stripVietnameseAccents(`${current.searchText} ${branchTerms.join(" ")}`);
       }
     });
 
     return Array.from(map.values());
-  }, [partners, normalizedVouchers]);
+  }, [normalizedVouchers]);
+
+  const visibleBrands = useMemo(() => {
+    const query = stripVietnameseAccents(deferredSearchQuery);
+    if (!query) return brandList;
+    return brandList.filter((brand) => brand.searchText.includes(query));
+  }, [brandList, deferredSearchQuery]);
 
   // Robust category matching function (UUID + exact text + accent-insensitive text match)
   const isVoucherInCategory = (v, target) => {
@@ -210,43 +201,41 @@ export default function LandingPage() {
     return false;
   };
 
-  // Helper to count vouchers for a specific category
-  const countVouchersForCategory = (cat) => {
-    const catId = cat.ma_danh_muc || cat.id;
-    const catName = cat.ten_danh_muc || cat.name || "";
-
-    return normalizedVouchers.filter((v) => {
-      if (catId && isVoucherInCategory(v, catId)) return true;
-      if (catName && isVoucherInCategory(v, catName)) return true;
-      return false;
-    }).length;
-  };
+  // Không đếm lại toàn bộ voucher ở mỗi lần gõ tìm kiếm.
+  const categoryCounts = useMemo(() => {
+    const counts = new Map();
+    categories.forEach((cat) => {
+      const catId = cat.ma_danh_muc || cat.id;
+      const catName = cat.ten_danh_muc || cat.name || "";
+      const key = String(catId || catName);
+      const count = normalizedVouchers.filter((v) => (
+        (catId && isVoucherInCategory(v, catId)) ||
+        (catName && isVoucherInCategory(v, catName))
+      )).length;
+      counts.set(key, count);
+    });
+    return counts;
+  }, [categories, normalizedVouchers]);
 
   // Filtered vouchers for landing page showcase
   const latestVouchers = useMemo(() => {
     let filtered = normalizedVouchers.filter((v) => isVoucherInCategory(v, selectedCategory));
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      const qClean = stripVietnameseAccents(q);
-      filtered = filtered.filter((v) => {
-        const titleClean = stripVietnameseAccents(v.ten_voucher);
-        const brandClean = stripVietnameseAccents(v.ten_dn);
-        const catClean = stripVietnameseAccents(v.categoryName);
-        return (
-          v.ten_voucher.toLowerCase().includes(q) ||
-          v.ten_dn.toLowerCase().includes(q) ||
-          v.categoryName.toLowerCase().includes(q) ||
-          titleClean.includes(qClean) ||
-          brandClean.includes(qClean) ||
-          catClean.includes(qClean)
-        );
-      });
+    if (deferredSearchQuery.trim()) {
+      const query = stripVietnameseAccents(deferredSearchQuery);
+      filtered = filtered.filter((v) => v.searchText.includes(query));
     }
 
     // Sort by newest creation date
     return filtered.sort((a, b) => new Date(b.ngayTao || 0) - new Date(a.ngayTao || 0));
-  }, [normalizedVouchers, selectedCategory, searchQuery]);
+  }, [normalizedVouchers, selectedCategory, deferredSearchQuery]);
+
+  const focusSearchResults = () => {
+    document.getElementById("latest-vouchers")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans selection:bg-sky-500 selection:text-white">
@@ -288,7 +277,9 @@ export default function LandingPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Tìm tên Voucher, Thương hiệu, Nhà hàng..."
+                onKeyDown={(e) => e.key === "Enter" && focusSearchResults()}
+                placeholder="Tìm voucher, đối tác hoặc chi nhánh..."
+                aria-label="Tìm voucher, đối tác hoặc chi nhánh"
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-slate-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-500 transition-all shadow-inner"
               />
             </div>
@@ -296,44 +287,35 @@ export default function LandingPage() {
 
           {/* Right Header Navigation & Auth Controls */}
           <div className="flex items-center gap-3 shrink-0">
-            {currentUser ? (
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (currentUser.vai_tro_he_thong === "ADMIN" || currentUser.vai_tro === "ADMIN") {
-                      navigate("/admin/overview");
-                    } else if (currentUser.vai_tro_he_thong?.includes("PARTNER") || currentUser.ma_hsdn) {
-                      navigate("/partner/reports");
-                    } else {
-                      navigate("/customer/vouchers/my");
-                    }
-                  }}
-                  className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 px-3.5 py-2 rounded-full text-xs font-bold text-slate-700 transition-all cursor-pointer"
-                >
-                  <User size={15} className="text-sky-600" />
-                  <span className="max-w-[120px] truncate">{currentUser.ho_ten || currentUser.ten_dang_nhap || "Tài khoản"}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors cursor-pointer"
-                  title="Đăng xuất"
-                >
-                  <LogOut size={17} />
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center">
-                <Link
-                  to="/login"
-                  className="flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold text-white bg-sky-500 hover:bg-sky-600 rounded-full shadow-md shadow-sky-500/25 hover:shadow-lg transition-all cursor-pointer"
-                >
-                  <LogIn size={15} />
-                  <span>Đăng nhập</span>
-                </Link>
-              </div>
-            )}
+            <Link
+              to="/customer/register"
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 rounded-full transition-all cursor-pointer"
+            >
+              <UserPlus size={15} />
+              <span>Đăng ký</span>
+            </Link>
+            <Link
+              to="/login"
+              className="flex items-center gap-1.5 px-3 sm:px-5 py-2.5 text-xs font-bold text-white bg-sky-500 hover:bg-sky-600 rounded-full shadow-md shadow-sky-500/25 hover:shadow-lg transition-all cursor-pointer"
+            >
+              <LogIn size={15} />
+              <span>Đăng nhập</span>
+            </Link>
+          </div>
+        </div>
+
+        <div className="md:hidden px-4 pb-3">
+          <div className="relative max-w-7xl mx-auto">
+            <Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && focusSearchResults()}
+              placeholder="Tìm voucher, đối tác hoặc chi nhánh..."
+              aria-label="Tìm voucher, đối tác hoặc chi nhánh"
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-100 focus:bg-white border border-slate-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-500 transition-all"
+            />
           </div>
         </div>
       </header>
@@ -450,14 +432,20 @@ export default function LandingPage() {
               className="flex-1 flex items-center gap-4 overflow-x-auto scroll-smooth py-3 px-1"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
-              {brandList.map((brand, idx) => {
+              {visibleBrands.length > 0 ? visibleBrands.map((brand, idx) => {
                 const name = brand.ten_dn || brand.name || "Doanh nghiệp";
                 const logo = cleanImageUrl(brand.logo);
 
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={brand.ma_hs || brand.id || idx}
+                    onClick={() => {
+                      setSearchQuery(name);
+                      focusSearchResults();
+                    }}
                     className="shrink-0 w-40 sm:w-44 bg-slate-50 hover:bg-white border border-slate-200 hover:border-sky-400 p-3.5 rounded-2xl transition-all duration-300 flex flex-col items-center justify-center text-center shadow-2xs hover:shadow-md hover:-translate-y-1 group cursor-pointer"
+                    title={`Xem voucher của ${name}`}
                   >
                     <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200 p-2 flex items-center justify-center shadow-xs overflow-hidden mb-2 group-hover:scale-105 transition-transform relative">
                       {logo ? (
@@ -465,6 +453,8 @@ export default function LandingPage() {
                           src={logo}
                           alt={name}
                           referrerPolicy="no-referrer"
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-contain"
                           onError={(e) => {
                             e.currentTarget.style.display = "none";
@@ -484,9 +474,15 @@ export default function LandingPage() {
                     <h3 className="font-bold text-slate-800 text-xs line-clamp-1 group-hover:text-sky-600 transition-colors">
                       {name}
                     </h3>
-                  </div>
+                  </button>
                 );
-              })}
+              }) : (
+                <div className="flex-1 py-8 text-center text-xs text-slate-400">
+                  {deferredSearchQuery.trim()
+                    ? "Không tìm thấy đối tác hoặc chi nhánh phù hợp."
+                    : "Đang tải đối tác từ catalog..."}
+                </div>
+              )}
             </div>
 
             <button
@@ -534,7 +530,7 @@ export default function LandingPage() {
                   const catId = cat.ma_danh_muc || cat.id;
                   const catName = cat.ten_danh_muc || cat.name || "";
 
-                  const count = countVouchersForCategory(cat);
+                  const count = categoryCounts.get(String(catId || catName)) || 0;
                   const isSelected =
                     (catId && selectedCategory === catId) ||
                     (catName && isVoucherInCategory({ categoryName: catName, ma_danh_muc: catId }, selectedCategory));
@@ -633,7 +629,15 @@ export default function LandingPage() {
                   return (
                     <div
                       key={v.ma_voucher}
-                      onClick={() => navigate(`/customer/vouchers/${v.ma_voucher}`)}
+                      onClick={() => navigate(`/vouchers/${v.ma_voucher}`)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          navigate(`/vouchers/${v.ma_voucher}`);
+                        }
+                      }}
+                      role="link"
+                      tabIndex={0}
                       className="shrink-0 w-64 sm:w-72 bg-white rounded-2xl border border-slate-200 hover:border-sky-400 overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between cursor-pointer hover:-translate-y-1 group"
                     >
                       {/* Voucher Image & Discount Badge */}
@@ -642,6 +646,8 @@ export default function LandingPage() {
                           src={cleanImageUrl(v.hinhAnh)}
                           alt={v.ten_voucher}
                           referrerPolicy="no-referrer"
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           onError={(e) => {
                             e.currentTarget.src = "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=600&auto=format&fit=crop";
@@ -653,6 +659,8 @@ export default function LandingPage() {
                               src={vLogo}
                               alt={v.ten_dn}
                               referrerPolicy="no-referrer"
+                              loading="lazy"
+                              decoding="async"
                               className="w-3.5 h-3.5 rounded-full object-cover"
                               onError={(e) => { e.currentTarget.style.display = 'none'; }}
                             />
@@ -734,57 +742,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FOOTER SECTION: Thông tin liên hệ & Điều khoản chính sách */}
-      <footer className="bg-slate-900 text-slate-300 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-          {/* Brand Info */}
-          <div className="md:col-span-4 space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-sky-400 to-blue-500 flex items-center justify-center text-white text-sm">
-                ❄️
-              </div>
-              <span className="font-extrabold text-lg text-white tracking-tight">
-                Snow Voucher
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400 leading-snug max-w-xs">
-              Sàn e-voucher hàng đầu Việt Nam. Cam kết 100% voucher chính hãng & đổi quà trực tiếp.
-            </p>
-          </div>
-
-          {/* Contact Information Requested */}
-          <div className="md:col-span-5 space-y-1.5 text-xs text-slate-300">
-            <div className="flex items-center gap-2">
-              <Mail size={13} className="text-sky-400 shrink-0" />
-              <span><strong className="text-slate-200">Email:</strong> nkngan23@clc.fitus.edu.vn</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Phone size={13} className="text-sky-400 shrink-0" />
-              <span><strong className="text-slate-200">SĐT:</strong> 0967456832</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <MapPin size={13} className="text-sky-400 shrink-0" />
-              <span><strong className="text-slate-200">Địa chỉ:</strong> 227 Nguyễn Văn Cừ, Chợ Quán, TP. Hồ Chí Minh</span>
-            </div>
-          </div>
-
-          {/* Terms & Policy Link Requested */}
-          <div className="md:col-span-3 flex flex-col md:items-end justify-center space-y-1">
-            <Link
-              to="/policy"
-              className="inline-flex items-center gap-1.5 text-xs text-sky-400 hover:text-sky-300 transition-colors font-bold py-1 cursor-pointer underline decoration-sky-500/40"
-            >
-              <ArrowRight size={14} />
-              <span>Điều khoản & Chính sách sàn</span>
-            </Link>
-          </div>
-        </div>
-
-        {/* Bottom copyright */}
-        <div className="border-t border-slate-800/80 py-2.5 px-4 text-center text-[11px] text-slate-500">
-          © 2026 Snow Voucher. All rights reserved. EC07-23HTTT-HCMUS.
-        </div>
-      </footer>
     </div>
   );
 }

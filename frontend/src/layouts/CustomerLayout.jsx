@@ -10,8 +10,6 @@ import {
   LogOut,
   Package,
   X,
-  FileText,
-  ShieldCheck,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -40,29 +38,20 @@ export default function CustomerLayout() {
   const [showMoreCategories, setShowMoreCategories] = useState(false);
   const cartCount = 0;
 
-  // Popup & Policies state
+  // Popup state
   const [popups, setPopups] = useState([]);
   const [currentPopupIndex, setCurrentPopupIndex] = useState(0);
-  const [policies, setPolicies] = useState([]);
-  const [selectedPolicy, setSelectedPolicy] = useState(null);
 
   useEffect(() => {
     fetchCategories()
       .then(setCategories)
       .catch(() => setCategories([]));
 
-    // Fetch popups and policies
+    // Fetch popups
     contentApi.list("popup")
       .then(res => {
         const active = (res.data || []).filter(p => p.status === 'visible' || !p.status);
         setPopups(active);
-      })
-      .catch(() => {});
-
-    contentApi.list("chinh_sach")
-      .then(res => {
-        const active = (res.data || []).filter(p => p.status === 'visible' || !p.status);
-        setPolicies(active);
       })
       .catch(() => {});
   }, []);
@@ -86,7 +75,6 @@ export default function CustomerLayout() {
 
   const activePopup = popups[currentPopupIndex];
   const popupImg = activePopup?.imageUrl || activePopup?.hinh_anh_url;
-  const policyImg = selectedPolicy?.imageUrl || selectedPolicy?.hinh_anh_url;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -97,11 +85,11 @@ export default function CustomerLayout() {
               onClick={() => navigate("/customer")}
               className="flex items-center gap-2 flex-shrink-0"
             >
-              <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center">
-                <Tag size={14} className="text-orange-500" />
+              <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                <span className="text-sm" aria-hidden="true">❄️</span>
               </div>
-              <span className="font-bold text-base hidden sm:block">
-                EC Voucher
+              <span className="font-extrabold text-base hidden sm:block">
+                Snow Voucher
               </span>
             </button>
 
@@ -256,51 +244,6 @@ export default function CustomerLayout() {
         />
       </main>
 
-      {/* Footer chứa Chính sách */}
-      <footer className="bg-white border-t border-gray-200 mt-auto py-8 px-4 text-gray-600 text-sm">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <div className="flex items-center gap-2 font-bold text-gray-900 text-base mb-2">
-              <div className="w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs">🏷️</div>
-              EC Voucher Platform
-            </div>
-            <p className="text-xs text-gray-500 leading-relaxed">
-              Nền tảng mua bán và phân phối voucher ưu đãi hàng đầu, kết nối khách hàng với hàng ngàn dịch vụ ẩm thực, giải trí, làm đẹp và du lịch chất lượng.
-            </p>
-          </div>
-          <div>
-            <h4 className="font-semibold text-gray-900 mb-3 text-xs uppercase tracking-wider">Chính sách & Quy định</h4>
-            <ul className="space-y-2">
-              <li>
-                <button
-                  onClick={() => navigate("/policy")}
-                  className="text-xs text-orange-600 font-semibold hover:underline transition-colors text-left flex items-center gap-1.5 cursor-pointer"
-                >
-                  <FileText size={12} className="text-orange-500" /> Điều khoản & Chính sách sàn
-                </button>
-              </li>
-              {policies.map(pol => (
-                <li key={pol.id}>
-                  <button
-                    onClick={() => setSelectedPolicy(pol)}
-                    className="text-xs text-gray-600 hover:text-orange-600 transition-colors text-left flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <FileText size={12} className="text-orange-500" /> {pol.title}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-semibold text-gray-900 mb-3 text-xs uppercase tracking-wider">Thông tin liên hệ</h4>
-            <p className="text-xs text-gray-600 mb-1"><strong>SĐT:</strong> 0967456832</p>
-            <p className="text-xs text-gray-600 mb-1"><strong>Email:</strong> nkngan23@clc.fitus.edu.vn</p>
-            <p className="text-xs text-gray-600 mb-1"><strong>Địa chỉ:</strong> 227 Nguyễn Văn Cừ, Chợ Quán, TP. Hồ Chí Minh</p>
-            <p className="text-xs text-gray-400 mt-3">© 2026 Snow Voucher. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
-
       {/* Popup Modal hỗ trợ chuyển đổi nhiều popup nếu có */}
       {activePopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-fadeIn">
@@ -351,45 +294,6 @@ export default function CustomerLayout() {
                   Đã hiểu
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Policy Detail Modal với hỗ trợ ảnh chính sách */}
-      {selectedPolicy && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl relative max-h-[85vh] flex flex-col">
-            <button
-              onClick={() => setSelectedPolicy(null)}
-              className="absolute top-4 right-4 z-20 p-2 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors backdrop-blur-sm"
-            >
-              <X size={16} />
-            </button>
-
-            {policyImg && (
-              <div className="w-full h-48 bg-gray-100 overflow-hidden relative flex-shrink-0">
-                <img src={policyImg} alt={selectedPolicy.title} className="w-full h-full object-cover" />
-              </div>
-            )}
-
-            <div className="p-6 flex-1 overflow-y-auto">
-              <div className="flex items-center gap-2 mb-3 text-orange-600">
-                <ShieldCheck size={22} />
-                <h3 className="text-lg font-bold text-gray-900">{selectedPolicy.title}</h3>
-              </div>
-              <div className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
-                {selectedPolicy.content}
-              </div>
-            </div>
-
-            <div className="p-4 bg-gray-50 border-t border-gray-100 text-right flex-shrink-0">
-              <button
-                onClick={() => setSelectedPolicy(null)}
-                className="px-5 py-2 bg-gray-900 text-white text-xs font-semibold rounded-xl hover:bg-gray-800 transition-colors"
-              >
-                Đóng
-              </button>
             </div>
           </div>
         </div>

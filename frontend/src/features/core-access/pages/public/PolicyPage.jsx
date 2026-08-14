@@ -1,404 +1,388 @@
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React from "react";
+import { Link } from "react-router-dom";
 import {
-  ShieldCheck,
   ArrowLeft,
-  FileText,
-  Clock,
-  Mail,
-  Phone,
-  MapPin,
   CheckCircle2,
-  Lock,
-  RefreshCw,
-  HelpCircle,
+  ChevronRight,
+  CircleAlert,
+  FileText,
+  Home,
+  Info,
   LogIn,
-  User,
+  MessageSquare,
+  RefreshCw,
+  ShieldCheck,
+  ShoppingBag,
   Sparkles,
+  Store,
+  User,
 } from "lucide-react";
-import { contentApi } from "../../../content-feedback/api/contentApi";
+import {
+  cancellationPolicy,
+  complaintPolicy,
+  customerPolicy,
+  decisionRows,
+  partnerPolicy,
+  policyNavigation,
+  principles,
+  refundPolicy,
+} from "./policyContent";
 
-// Inline Markdown parser for **bold**, *italic*, `code`, [link](url)
-function parseInlineMarkdown(str) {
-  if (!str) return "";
+const sectionThemes = {
+  cyan: {
+    icon: "bg-cyan-50 text-cyan-700 ring-cyan-100",
+    eyebrow: "text-cyan-700",
+    border: "border-cyan-100",
+  },
+  blue: {
+    icon: "bg-blue-50 text-blue-700 ring-blue-100",
+    eyebrow: "text-blue-700",
+    border: "border-blue-100",
+  },
+  amber: {
+    icon: "bg-amber-50 text-amber-700 ring-amber-100",
+    eyebrow: "text-amber-700",
+    border: "border-amber-100",
+  },
+  emerald: {
+    icon: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+    eyebrow: "text-emerald-700",
+    border: "border-emerald-100",
+  },
+  violet: {
+    icon: "bg-violet-50 text-violet-700 ring-violet-100",
+    eyebrow: "text-violet-700",
+    border: "border-violet-100",
+  },
+};
 
-  const parts = [];
-  const pattern = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/g;
-  let lastIndex = 0;
-  let key = 0;
-  let match;
+function getAccountAction() {
+  const token = localStorage.getItem("accessToken") || localStorage.getItem("ec_auth_token");
+  if (!token) return { to: "/login", label: "Đăng nhập", Icon: LogIn };
 
-  while ((match = pattern.exec(str)) !== null) {
-    if (match.index > lastIndex) {
-      parts.push(str.substring(lastIndex, match.index));
-    }
-
-    const token = match[0];
-    if (token.startsWith("**") && token.endsWith("**")) {
-      parts.push(<strong key={key++} className="font-extrabold text-slate-900">{token.slice(2, -2)}</strong>);
-    } else if (token.startsWith("*") && token.endsWith("*")) {
-      parts.push(<em key={key++} className="italic text-slate-800">{token.slice(1, -1)}</em>);
-    } else if (token.startsWith("`") && token.endsWith("`")) {
-      parts.push(<code key={key++} className="bg-slate-100 text-cyan-800 px-1.5 py-0.5 rounded text-xs font-mono">{token.slice(1, -1)}</code>);
-    } else if (token.startsWith("[") && token.includes("](")) {
-      const linkText = token.substring(1, token.indexOf("]"));
-      const linkUrl = token.substring(token.indexOf("(") + 1, token.length - 1);
-      parts.push(
-        <a key={key++} href={linkUrl} target="_blank" rel="noopener noreferrer" className="text-cyan-600 hover:text-cyan-700 underline font-semibold">
-          {linkText}
-        </a>
-      );
-    } else {
-      parts.push(token);
-    }
-
-    lastIndex = pattern.lastIndex;
+  let user = null;
+  try {
+    user = JSON.parse(localStorage.getItem("user") || localStorage.getItem("ec_auth_user") || "null");
+  } catch {
+    user = null;
   }
 
-  if (lastIndex < str.length) {
-    parts.push(str.substring(lastIndex));
-  }
+  const role = String(user?.role || user?.vai_tro || localStorage.getItem("role") || "").toUpperCase();
+  const to = role.includes("ADMIN")
+    ? "/admin"
+    : role.includes("PARTNER") || role.includes("DOI_TAC")
+      ? "/partner"
+      : "/customer";
 
-  return parts.length === 1 ? parts[0] : parts;
+  return { to, label: "Tài khoản", Icon: User };
 }
 
-// Markdown & HTML renderer function
-function renderFormattedContent(text) {
-  if (!text || typeof text !== "string") return null;
+function BulletList({ items = [], nested = false }) {
+  if (!items.length) return null;
 
-  // If text is already HTML format
-  if (/<[a-z][\s\S]*>/i.test(text)) {
-    return (
-      <div
-        className="prose prose-slate max-w-none text-slate-700 text-sm leading-relaxed space-y-3"
-        dangerouslySetInnerHTML={{ __html: text }}
-      />
-    );
-  }
-
-  // Parse Markdown lines
-  const lines = text.split("\n");
-  const elements = [];
-  let listItems = [];
-  let isOrderedList = false;
-
-  const flushList = (keyPrefix) => {
-    if (listItems.length > 0) {
-      if (isOrderedList) {
-        elements.push(
-          <ol key={`ol-${keyPrefix}`} className="list-decimal pl-6 space-y-1.5 text-slate-700 text-sm my-3 font-medium">
-            {listItems.map((item, i) => (
-              <li key={i}>{parseInlineMarkdown(item)}</li>
-            ))}
-          </ol>
+  return (
+    <ul className={`${nested ? "mt-2 pl-4" : "mt-4"} space-y-2.5`}>
+      {items.map((item, index) => {
+        const entry = typeof item === "string" ? { text: item } : item;
+        return (
+          <li key={`${entry.text}-${index}`} className="flex items-start gap-2.5 text-sm leading-6 text-slate-600">
+            <CheckCircle2 className={`${nested ? "mt-1.5 h-3.5 w-3.5" : "mt-1 h-4 w-4"} shrink-0 text-cyan-600`} />
+            <div>
+              <span>{entry.text}</span>
+              {entry.children ? <BulletList items={entry.children} nested /> : null}
+            </div>
+          </li>
         );
-      } else {
-        elements.push(
-          <ul key={`ul-${keyPrefix}`} className="list-disc pl-6 space-y-1.5 text-slate-700 text-sm my-3 font-medium">
-            {listItems.map((item, i) => (
-              <li key={i}>{parseInlineMarkdown(item)}</li>
-            ))}
-          </ul>
-        );
-      }
-      listItems = [];
-    }
-  };
+      })}
+    </ul>
+  );
+}
 
-  lines.forEach((line, index) => {
-    const trimmed = line.trim();
+function CaseCards({ cases = [] }) {
+  if (!cases.length) return null;
 
-    if (!trimmed) {
-      flushList(index);
-      return;
-    }
+  return (
+    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      {cases.map((item) => (
+        <div key={item.title} className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+          <h4 className="text-sm font-bold text-slate-900">{item.title}</h4>
+          {item.text ? <p className="mt-2 text-sm leading-6 text-slate-600">{item.text}</p> : null}
+          {item.intro ? <p className="mt-2 text-sm font-semibold text-slate-700">{item.intro}</p> : null}
+          {item.items ? <BulletList items={item.items} /> : null}
+        </div>
+      ))}
+    </div>
+  );
+}
 
-    // Headers
-    if (trimmed.startsWith("# ")) {
-      flushList(index);
-      elements.push(
-        <h1 key={index} className="text-2xl font-extrabold text-slate-900 mt-6 mb-3 border-b border-slate-200 pb-2">
-          {parseInlineMarkdown(trimmed.replace(/^#\s+/, ""))}
-        </h1>
-      );
-      return;
-    }
-    if (trimmed.startsWith("## ")) {
-      flushList(index);
-      elements.push(
-        <h2 key={index} className="text-xl font-bold text-slate-900 mt-5 mb-2 border-b border-slate-100 pb-1">
-          {parseInlineMarkdown(trimmed.replace(/^##\s+/, ""))}
-        </h2>
-      );
-      return;
-    }
-    if (trimmed.startsWith("### ")) {
-      flushList(index);
-      elements.push(
-        <h3 key={index} className="text-lg font-bold text-slate-800 mt-4 mb-2">
-          {parseInlineMarkdown(trimmed.replace(/^###\s+/, ""))}
-        </h3>
-      );
-      return;
-    }
+function PolicyBlock({ block }) {
+  const warning = block.tone === "warning";
 
-    // Bullet List (- or *)
-    if (/^[-*]\s+/.test(trimmed)) {
-      if (isOrderedList && listItems.length > 0) flushList(index);
-      isOrderedList = false;
-      listItems.push(trimmed.replace(/^[-*]\s+/, ""));
-      return;
-    }
+  return (
+    <article className={`rounded-2xl border p-5 sm:p-6 ${warning ? "border-amber-200 bg-amber-50/60" : "border-slate-200 bg-white"}`}>
+      <h3 className="text-base font-extrabold text-slate-900 sm:text-lg">{block.title}</h3>
+      {block.paragraphs?.map((paragraph) => (
+        <p key={paragraph} className="mt-3 text-sm leading-6 text-slate-600">
+          {paragraph}
+        </p>
+      ))}
+      {block.intro ? <p className="mt-3 text-sm font-semibold leading-6 text-slate-700">{block.intro}</p> : null}
+      {block.items ? <BulletList items={block.items} /> : null}
+      {block.cases ? <CaseCards cases={block.cases} /> : null}
+      {block.note ? (
+        <div className={`mt-4 flex items-start gap-2.5 rounded-xl px-4 py-3 text-sm leading-6 ${warning ? "bg-white/80 text-amber-900" : "bg-cyan-50 text-cyan-900"}`}>
+          <Info className="mt-1 h-4 w-4 shrink-0" />
+          <p>{block.note}</p>
+        </div>
+      ) : null}
+    </article>
+  );
+}
 
-    // Numbered List (1. 2.)
-    if (/^\d+\.\s+/.test(trimmed)) {
-      if (!isOrderedList && listItems.length > 0) flushList(index);
-      isOrderedList = true;
-      listItems.push(trimmed.replace(/^\d+\.\s+/, ""));
-      return;
-    }
+function PolicySection({ id, eyebrow, title, summary, icon: Icon, theme = "cyan", children }) {
+  const colors = sectionThemes[theme];
 
-    // Blockquote
-    if (trimmed.startsWith("> ")) {
-      flushList(index);
-      elements.push(
-        <blockquote key={index} className="border-l-4 border-cyan-500 pl-4 py-2.5 italic text-slate-700 bg-slate-50 rounded-r-xl my-3 font-medium">
-          {parseInlineMarkdown(trimmed.replace(/^>\s+/, ""))}
-        </blockquote>
-      );
-      return;
-    }
-
-    // Regular paragraph
-    flushList(index);
-    elements.push(
-      <p key={index} className="text-slate-700 text-sm leading-relaxed my-2">
-        {parseInlineMarkdown(trimmed)}
-      </p>
-    );
-  });
-
-  flushList("end");
-  return <div className="space-y-2">{elements}</div>;
+  return (
+    <section id={id} aria-labelledby={`${id}-title`} className={`scroll-mt-28 rounded-3xl border bg-white p-5 shadow-sm sm:p-8 ${colors.border}`}>
+      <div className="flex items-start gap-4 border-b border-slate-100 pb-5">
+        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ring-4 ${colors.icon}`}>
+          <Icon size={22} aria-hidden="true" />
+        </div>
+        <div>
+          <p className={`text-xs font-extrabold uppercase tracking-[0.18em] ${colors.eyebrow}`}>{eyebrow}</p>
+          <h2 id={`${id}-title`} className="mt-1 text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
+            {title}
+          </h2>
+          {summary ? <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">{summary}</p> : null}
+        </div>
+      </div>
+      <div className="mt-5 space-y-4">{children}</div>
+    </section>
+  );
 }
 
 export default function PolicyPage() {
-  const navigate = useNavigate();
-  const [policies, setPolicies] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState(null);
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("user") || localStorage.getItem("ec_auth_user");
-      if (stored) {
-        setCurrentUser(JSON.parse(stored));
-      }
-    } catch (e) {}
-
-    let ignore = false;
-    setLoading(true);
-
-    contentApi.list("chinh_sach")
-      .then((res) => {
-        if (!ignore && res && Array.isArray(res.data)) {
-          setPolicies(res.data);
-        }
-      })
-      .catch((e) => {
-        console.warn("[PolicyPage] Failed to fetch policy content:", e.message);
-      })
-      .finally(() => {
-        if (!ignore) setLoading(false);
-      });
-
-    return () => {
-      ignore = true;
-    };
-  }, []);
+  const accountAction = getAccountAction();
+  const AccountIcon = accountAction.Icon;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
-      {/* Top Banner Notice */}
-      <div className="bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-700 text-white text-xs py-2 px-4 text-center font-medium flex items-center justify-center gap-2">
-        <Sparkles size={14} className="text-yellow-300 animate-pulse" />
-        <span>Snow Voucher — Điều Khoản & Chính Sách Minh Bạch Hàng Đầu</span>
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
+      <div className="bg-gradient-to-r from-cyan-700 via-blue-700 to-indigo-800 px-4 py-2 text-center text-xs font-semibold text-white">
+        <span className="inline-flex items-center gap-2">
+          <Sparkles size={14} className="text-amber-300" aria-hidden="true" />
+          Văn bản chính thức áp dụng thống nhất trên Snow Voucher
+        </span>
       </div>
 
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white text-lg shadow-sm">
+      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
+          <Link to="/" className="flex min-w-0 items-center gap-2.5" aria-label="Snow Voucher - về trang chủ">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-lg text-white shadow-sm">
               ❄️
-            </div>
-            <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
-              Snow Voucher
             </span>
+            <span className="truncate text-lg font-black tracking-tight text-slate-900 sm:text-xl">Snow Voucher</span>
           </Link>
 
-          <div className="flex items-center gap-3">
-            <Link
-              to="/"
-              className="flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-cyan-600 bg-slate-100 hover:bg-slate-200/80 px-3.5 py-2 rounded-full transition-all"
-            >
-              <ArrowLeft size={14} />
-              <span>Quay lại Trang chủ</span>
+          <div className="flex items-center gap-2">
+            <Link to="/" className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-900">
+              <ArrowLeft size={14} aria-hidden="true" />
+              <span className="hidden sm:inline">Trang chủ</span>
             </Link>
-            {!currentUser && (
-              <Link
-                to="/login"
-                className="flex items-center gap-1 text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-700 px-3.5 py-2 rounded-full shadow-sm transition-all"
-              >
-                <LogIn size={14} />
-                <span>Đăng nhập</span>
-              </Link>
-            )}
+            <Link to={accountAction.to} className="inline-flex items-center gap-1.5 rounded-full bg-cyan-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-cyan-700">
+              <AccountIcon size={14} aria-hidden="true" />
+              {accountAction.label}
+            </Link>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-4xl mx-auto px-4 py-10 w-full space-y-8">
-        {/* Title Header */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-xs text-center space-y-3 relative overflow-hidden">
-          <div className="w-14 h-14 rounded-2xl bg-cyan-50 border border-cyan-200 text-cyan-600 flex items-center justify-center mx-auto text-2xl shadow-inner">
-            <ShieldCheck size={28} />
+      <main className="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-10">
+        <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-950 via-blue-950 to-cyan-900 px-6 py-9 text-white shadow-xl sm:px-10 sm:py-12">
+          <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-cyan-400/20 blur-3xl" aria-hidden="true" />
+          <div className="absolute -bottom-24 left-1/3 h-56 w-56 rounded-full bg-blue-500/20 blur-3xl" aria-hidden="true" />
+          <div className="relative max-w-4xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold text-cyan-100">
+              <ShieldCheck size={15} aria-hidden="true" />
+              Điều khoản minh bạch · Quy trình nhất quán
+            </div>
+            <h1 className="mt-5 text-3xl font-black leading-tight tracking-tight sm:text-5xl">
+              Điều Khoản & Chính Sách Sàn Snow Voucher
+            </h1>
+            <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-200 sm:text-base">
+              Chính sách này quy định quyền, nghĩa vụ và nguyên tắc xử lý giao dịch giữa Sàn, Khách hàng và Đối tác cung cấp voucher.
+            </p>
+            <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
+              Sàn đóng vai trò trung gian cung cấp nền tảng để Đối tác phát hành voucher và Khách hàng tìm kiếm, mua, nhận và sử dụng voucher.
+            </p>
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-            Điều Khoản & Chính Sách Sàn Snow Voucher
-          </h1>
-          <p className="text-sm text-slate-500 max-w-xl mx-auto">
-            Văn bản chính thức áp dụng cho tất cả Khách hàng và Đối tác đăng ký, mua bán và sử dụng e-voucher trên nền tảng Snow Voucher
-          </p>
-        </div>
 
-        {/* Policy Content Loaded from DB (table noidung, loai = 'chinh_sach') */}
-        {loading ? (
-          <div className="bg-white rounded-3xl border border-slate-200 p-8 space-y-4 animate-pulse">
-            <div className="h-6 bg-slate-100 rounded-lg w-1/3" />
-            <div className="h-4 bg-slate-100 rounded-lg w-full" />
-            <div className="h-4 bg-slate-100 rounded-lg w-5/6" />
-          </div>
-        ) : policies.length > 0 ? (
-          <div className="space-y-6">
-            {policies.map((item, idx) => (
-              <div
-                key={item.id || item.ma_nd || idx}
-                className="bg-white rounded-3xl border border-slate-200 p-8 shadow-xs space-y-4"
-              >
-                <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                  <div className="flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-full bg-cyan-100 text-cyan-700 font-bold text-sm flex items-center justify-center">
-                      {idx + 1}
-                    </span>
-                    <h2 className="text-xl font-bold text-slate-900">
-                      {item.title || item.tieu_de || "Chính sách nền tảng"}
-                    </h2>
-                  </div>
-                  {item.created_at && (
-                    <span className="text-xs text-slate-400 flex items-center gap-1">
-                      <Clock size={13} />
-                      {new Date(item.created_at).toLocaleDateString("vi-VN")}
-                    </span>
-                  )}
-                </div>
-
-                {item.imageUrl || item.hinh_anh_url ? (
-                  <img
-                    src={item.imageUrl || item.hinh_anh_url}
-                    alt={item.title || "Chính sách"}
-                    className="w-full max-h-80 object-cover rounded-2xl border border-slate-200"
-                  />
-                ) : null}
-
-                {/* Parsed Markdown & HTML content */}
-                <div className="pt-2">
-                  {renderFormattedContent(
-                    item.content || item.noi_dung || item.description || "Nội dung điều khoản đang được cập nhật."
-                  )}
-                </div>
+          <div className="relative mt-7 grid gap-3 sm:grid-cols-3">
+            {[
+              [ShoppingBag, "Khách hàng", "Quyền lợi mua và sử dụng voucher"],
+              [Store, "Đối tác", "Trách nhiệm cung cấp đúng cam kết"],
+              [ShieldCheck, "Snow Voucher", "Kiểm duyệt và xử lý minh bạch"],
+            ].map(([Icon, title, text]) => (
+              <div key={title} className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur-sm">
+                <Icon size={19} className="text-cyan-300" aria-hidden="true" />
+                <p className="mt-2 text-sm font-extrabold text-white">{title}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-300">{text}</p>
               </div>
             ))}
           </div>
-        ) : (
-          /* Rich Default Fallback Policy Document */
-          <div className="space-y-6">
-            {/* Section 1 */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-xs space-y-4">
-              <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
-                <div className="w-9 h-9 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center font-bold">
-                  <Lock size={18} />
-                </div>
-                <h2 className="text-lg font-bold text-slate-900">
-                  1. Chính sách bảo mật thông tin cá nhân (Privacy Policy)
-                </h2>
-              </div>
-              <div className="text-sm text-slate-600 space-y-2 leading-relaxed">
-                <p>
-                  Snow Voucher cam kết bảo vệ tuyệt đối thông tin cá nhân của người dùng bao gồm Họ tên, Số điện thoại, Email, Địa chỉ giao hàng và lịch sử giao dịch e-voucher.
-                </p>
-                <ul className="list-disc pl-5 space-y-1 text-xs text-slate-500">
-                  <li>Thông tin chỉ được sử dụng cho mục đích xác nhận đơn hàng, gửi mã voucher và chăm sóc khách hàng.</li>
-                  <li>Không chia sẻ thông tin cho bên thứ ba ngoại trừ các đơn vị đối tác cấp voucher chính thức.</li>
-                </ul>
-              </div>
-            </div>
+        </section>
 
-            {/* Section 2 */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-xs space-y-4">
-              <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-                  <RefreshCw size={18} />
-                </div>
-                <h2 className="text-lg font-bold text-slate-900">
-                  2. Quy định đổi trả & Sử dụng E-Voucher
-                </h2>
-              </div>
-              <div className="text-sm text-slate-600 space-y-2 leading-relaxed">
-                <p>
-                  Khách hàng sở hữu mã E-Voucher chính hãng có thể sử dụng tại toàn bộ các chi nhánh thuộc đối tác niêm yết trong thời gian hiệu lực của voucher.
-                </p>
-                <ul className="list-disc pl-5 space-y-1 text-xs text-slate-500">
-                  <li>Mã QR hoặc mã code voucher có giá trị đổi dịch vụ 01 lần duy nhất tại cửa hàng đối tác.</li>
-                  <li>Trường hợp gặp sự cố phát sinh lỗi mã (Lỗi sinh mã, lỗi thanh toán), hệ thống hỗ trợ hoàn tiền hoặc đổi mã mới trong vòng 24h.</li>
-                </ul>
-              </div>
-            </div>
-
-            {/* Section 3 */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-xs space-y-4">
-              <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
-                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-                  <CheckCircle2 size={18} />
-                </div>
-                <h2 className="text-lg font-bold text-slate-900">
-                  3. Quyền lợi & Trách nhiệm của Đối tác Doanh nghiệp
-                </h2>
-              </div>
-              <div className="text-sm text-slate-600 space-y-2 leading-relaxed">
-                <p>
-                  Các thương hiệu đối tác khi đăng ký phát hành voucher trên Snow Voucher phải tuân thủ nghiêm ngặt tính xác thực của thông tin chi nhánh, giá niêm yết và thời gian bán hàng.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 border-t border-slate-800 mt-12">
-        <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-          <div className="flex items-center gap-2">
-            <span className="text-base">❄️</span>
-            <span className="font-bold text-white">Snow Voucher</span>
-            <span>— Sàn Thương Mại Điện Tử E-Voucher</span>
-          </div>
-          <div>
-            Email: nkngan23@clc.fitus.edu.vn | Hotline: 0967456832
+        <div className="mt-6 rounded-2xl border border-cyan-200 bg-cyan-50 px-5 py-4 text-sm leading-6 text-cyan-950 shadow-sm">
+          <div className="flex items-start gap-3">
+            <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-cyan-700" aria-hidden="true" />
+            <p>
+              <strong>Nguyên tắc ưu tiên:</strong> nếu voucher không quy định, Chính sách Sàn được áp dụng. Nếu chính sách riêng của voucher có lợi hơn cho Khách hàng, điều khoản có lợi hơn đó được ưu tiên.
+            </p>
           </div>
         </div>
-      </footer>
+
+        <details className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:hidden">
+          <summary className="cursor-pointer list-none text-sm font-extrabold text-slate-900">Mục lục chính sách</summary>
+          <nav aria-label="Mục lục chính sách" className="mt-3 grid gap-1.5 sm:grid-cols-2">
+            {policyNavigation.map((item, index) => (
+              <a key={item.id} href={`#${item.id}`} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-slate-600 hover:bg-cyan-50 hover:text-cyan-800">
+                <span className="text-xs font-black text-cyan-600">{String(index + 1).padStart(2, "0")}</span>
+                {item.label}
+              </a>
+            ))}
+          </nav>
+        </details>
+
+        <div className="mt-6 grid items-start gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
+          <aside className="sticky top-24 hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:block">
+            <p className="px-3 pb-3 text-xs font-extrabold uppercase tracking-[0.16em] text-slate-400">Mục lục</p>
+            <nav aria-label="Mục lục chính sách" className="space-y-1">
+              {policyNavigation.map((item, index) => (
+                <a key={item.id} href={`#${item.id}`} className="group flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-cyan-50 hover:text-cyan-800">
+                  <span className="text-xs font-black text-cyan-600">{String(index + 1).padStart(2, "0")}</span>
+                  <span className="flex-1">{item.label}</span>
+                  <ChevronRight size={14} className="opacity-0 transition-opacity group-hover:opacity-100" aria-hidden="true" />
+                </a>
+              ))}
+            </nav>
+            <Link to="/" className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-3 py-2.5 text-xs font-bold text-white hover:bg-slate-800">
+              <Home size={14} aria-hidden="true" /> Về trang chủ
+            </Link>
+          </aside>
+
+          <div className="min-w-0 space-y-6">
+            <PolicySection
+              id="principles"
+              eyebrow="Phần I"
+              title="Nguyên tắc áp dụng chính sách"
+              summary="Cơ sở xác định chính sách nào được áp dụng cho mỗi giao dịch voucher."
+              icon={FileText}
+            >
+              <BulletList items={principles} />
+            </PolicySection>
+
+            <PolicySection
+              id="customer-policy"
+              eyebrow="Khối 1"
+              title="Chính sách giữa Khách hàng và Sàn"
+              summary="Quyền, nghĩa vụ và trách nhiệm trong quá trình tìm kiếm, mua, nhận và sử dụng voucher."
+              icon={ShoppingBag}
+              theme="blue"
+            >
+              {customerPolicy.map((block) => <PolicyBlock key={block.title} block={block} />)}
+            </PolicySection>
+
+            <PolicySection
+              id="partner-policy"
+              eyebrow="Khối 2"
+              title="Chính sách giữa Đối tác và Sàn"
+              summary="Điều kiện hoạt động và trách nhiệm của Đối tác từ lúc đăng voucher đến khi thực hiện quyền lợi."
+              icon={Store}
+              theme="violet"
+            >
+              {partnerPolicy.map((block) => <PolicyBlock key={block.title} block={block} />)}
+            </PolicySection>
+
+            <PolicySection
+              id="cancellation-policy"
+              eyebrow="Hủy"
+              title="Chính sách hủy đơn hàng"
+              summary="Phân biệt rõ quyền tự hủy trước thanh toán và quy trình xét duyệt sau thanh toán."
+              icon={CircleAlert}
+              theme="amber"
+            >
+              {cancellationPolicy.map((block) => <PolicyBlock key={block.title} block={block} />)}
+            </PolicySection>
+
+            <PolicySection
+              id="refund-policy"
+              eyebrow="Hoàn tiền"
+              title="Chính sách hoàn tiền"
+              summary="Hoàn tiền chỉ được thực hiện sau một quyết định hủy hoặc khiếu nại hợp lệ."
+              icon={RefreshCw}
+              theme="emerald"
+            >
+              {refundPolicy.map((block) => <PolicyBlock key={block.title} block={block} />)}
+            </PolicySection>
+
+            <PolicySection
+              id="complaint-policy"
+              eyebrow="Khiếu nại"
+              title="Chính sách khiếu nại"
+              summary="Snow Voucher ưu tiên khắc phục quyền lợi bằng mã hợp lệ trước khi xem xét hoàn tiền."
+              icon={MessageSquare}
+              theme="blue"
+            >
+              {complaintPolicy.map((block) => <PolicyBlock key={block.title} block={block} />)}
+            </PolicySection>
+
+            <PolicySection
+              id="decision-table"
+              eyebrow="Tra cứu nhanh"
+              title="Bảng tóm tắt quyết định hủy – hoàn – khiếu nại"
+              summary="Đối chiếu nhanh tình huống phổ biến và hướng xử lý tương ứng."
+              icon={CheckCircle2}
+              theme="cyan"
+            >
+              <div className="overflow-hidden rounded-2xl border border-slate-200">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[680px] border-collapse text-left text-sm">
+                    <caption className="sr-only">Bảng tình huống và cách xử lý hủy, hoàn tiền, khiếu nại</caption>
+                    <thead className="bg-slate-900 text-white">
+                      <tr>
+                        <th scope="col" className="w-[48%] px-5 py-4 font-bold">Tình huống</th>
+                        <th scope="col" className="px-5 py-4 font-bold">Cách xử lý</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 bg-white">
+                      {decisionRows.map(([situation, action], index) => (
+                        <tr key={situation} className={index % 2 ? "bg-slate-50/70" : "bg-white"}>
+                          <td className="px-5 py-4 font-semibold leading-6 text-slate-800">{situation}</td>
+                          <td className="px-5 py-4 leading-6 text-slate-600">{action}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </PolicySection>
+
+            <div className="rounded-3xl bg-gradient-to-r from-cyan-700 to-blue-700 p-6 text-white shadow-lg sm:p-8">
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-xl font-black">Cần hỗ trợ về giao dịch?</h2>
+                  <p className="mt-2 max-w-xl text-sm leading-6 text-cyan-50">
+                    Hãy đăng nhập để theo dõi đơn hàng, gửi yêu cầu hủy hoặc khiếu nại kèm thông tin giao dịch chính xác.
+                  </p>
+                </div>
+                <Link to={accountAction.to} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-cyan-800 shadow-sm hover:bg-cyan-50">
+                  <AccountIcon size={16} aria-hidden="true" /> {accountAction.label}
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { lazy } from "react";
 import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import App from "../App";
 import LoginPage from "../features/core-access/pages/auth/LoginPage";
@@ -6,48 +6,42 @@ import ProtectedRoute from "../shared/components/ProtectedRoute";
 import Forbidden from "../shared/components/Forbidden";
 import RegisterPage from "../features/customer-commerce/pages/customer/RegisterPage";
 import LogoutPage from "../features/core-access/pages/auth/LogoutPage";
-
-// Admin Portal Pages & Layout
-import AdminLayout from "../layouts/AdminLayout";
-import AdminDashboardPage from "../features/core-access/pages/admin/AdminDashboardPage";
-import PartnerManagementPage from "../features/partner-voucher/pages/admin/PartnerManagementPage";
-import PartnerDetailPage from "../features/partner-voucher/pages/admin/PartnerDetailPage";
-import VoucherApprovalListPage from "../features/partner-voucher/pages/admin/VoucherApprovalListPage";
-import VoucherApprovalDetailPage from "../features/partner-voucher/pages/admin/VoucherApprovalDetailPage";
-import UserListPage from "../features/core-access/pages/admin/UserListPage";
-import PartnerVoucherLookupPage from "../features/core-access/pages/partner/PartnerVoucherLookupPage";
-import ContentListPage from "../features/content-feedback/pages/admin/ContentListPage";
-import AdminReviewsPage from "../features/content-feedback/pages/admin/AdminReviewsPage";
-
-// Partner Portal Pages
-import PartnerRegisterPage from "../features/partner-voucher/pages/partner/PartnerRegisterPage";
-import PartnerProfilePage from "../features/partner-voucher/pages/partner/PartnerProfilePage";
-import BranchManagementPage from "../features/partner-voucher/pages/partner/BranchManagementPage";
-import VoucherListPage from "../features/partner-voucher/pages/partner/VoucherListPage";
-import VoucherFormPage from "../features/partner-voucher/pages/partner/VoucherFormPage";
-import PartnerVoucherDetailPage from "../features/partner-voucher/pages/partner/VoucherDetailPage";
-import PartnerReportsPage from "../features/partner-voucher/pages/partner/PartnerReportsPage";
-import StaffManagementPage from "../features/partner-voucher/pages/partner/StaffManagementPage";
-
-// Audit log page
-import AuditLogPage from "../features/partner-voucher/pages/admin/AuditLogPage";
-
-// Customer Portal Pages & Layout
-import CustomerLayout from "../layouts/CustomerLayout";
-import VoucherSearchPage from "../features/customer-commerce/pages/customer/VoucherSearchPage";
-import VoucherDetailPage from "../features/customer-commerce/pages/customer/VoucherDetailPage";
-import CartPage from "../features/customer-commerce/pages/customer/CartPage";
-import CheckoutPage from "../features/customer-commerce/pages/customer/CheckoutPage";
-import PaymentResultPage from "../features/customer-commerce/pages/customer/PaymentResultPage";
-import MyOrdersPage from "../features/customer-commerce/pages/customer/MyOrdersPage";
-import CustomerOrdersPage from "../features/customer-commerce/pages/customer/CustomerOrdersPage";
-import AdminOrdersPage from "../features/customer-commerce/pages/admin/AdminOrdersPage";
-import ProfilePage from "../features/customer-commerce/pages/customer/ProfilePage";
-import MyVoucherPage from "../features/core-access/pages/customer/MyVoucherPage";
-import IssuedVoucherDetailPage from "../features/core-access/pages/customer/IssuedVoucherDetailPage";
-import ArticleDetailPage from "../features/content-feedback/pages/customer/ArticleDetailPage";
 import LandingPage from "../features/core-access/pages/public/LandingPage";
-import PolicyPage from "../features/core-access/pages/public/PolicyPage";
+
+// Các màn hình ngoài luồng mở đầu được tách chunk để Landing/Login không phải tải
+// trước thư viện QR, biểu đồ và trình soạn thảo của toàn bộ portal.
+const AdminLayout = lazy(() => import("../layouts/AdminLayout"));
+const AdminDashboardPage = lazy(() => import("../features/core-access/pages/admin/AdminDashboardPage"));
+const PartnerManagementPage = lazy(() => import("../features/partner-voucher/pages/admin/PartnerManagementPage"));
+const PartnerDetailPage = lazy(() => import("../features/partner-voucher/pages/admin/PartnerDetailPage"));
+const VoucherApprovalListPage = lazy(() => import("../features/partner-voucher/pages/admin/VoucherApprovalListPage"));
+const VoucherApprovalDetailPage = lazy(() => import("../features/partner-voucher/pages/admin/VoucherApprovalDetailPage"));
+const UserListPage = lazy(() => import("../features/core-access/pages/admin/UserListPage"));
+const PartnerVoucherLookupPage = lazy(() => import("../features/core-access/pages/partner/PartnerVoucherLookupPage"));
+const ContentListPage = lazy(() => import("../features/content-feedback/pages/admin/ContentListPage"));
+const AdminReviewsPage = lazy(() => import("../features/content-feedback/pages/admin/AdminReviewsPage"));
+const PartnerRegisterPage = lazy(() => import("../features/partner-voucher/pages/partner/PartnerRegisterPage"));
+const PartnerProfilePage = lazy(() => import("../features/partner-voucher/pages/partner/PartnerProfilePage"));
+const BranchManagementPage = lazy(() => import("../features/partner-voucher/pages/partner/BranchManagementPage"));
+const VoucherListPage = lazy(() => import("../features/partner-voucher/pages/partner/VoucherListPage"));
+const VoucherFormPage = lazy(() => import("../features/partner-voucher/pages/partner/VoucherFormPage"));
+const PartnerVoucherDetailPage = lazy(() => import("../features/partner-voucher/pages/partner/VoucherDetailPage"));
+const PartnerReportsPage = lazy(() => import("../features/partner-voucher/pages/partner/PartnerReportsPage"));
+const StaffManagementPage = lazy(() => import("../features/partner-voucher/pages/partner/StaffManagementPage"));
+const AuditLogPage = lazy(() => import("../features/partner-voucher/pages/admin/AuditLogPage"));
+const CustomerLayout = lazy(() => import("../layouts/CustomerLayout"));
+const VoucherSearchPage = lazy(() => import("../features/customer-commerce/pages/customer/VoucherSearchPage"));
+const VoucherDetailPage = lazy(() => import("../features/customer-commerce/pages/customer/VoucherDetailPage"));
+const CartPage = lazy(() => import("../features/customer-commerce/pages/customer/CartPage"));
+const CheckoutPage = lazy(() => import("../features/customer-commerce/pages/customer/CheckoutPage"));
+const PaymentResultPage = lazy(() => import("../features/customer-commerce/pages/customer/PaymentResultPage"));
+const CustomerOrdersPage = lazy(() => import("../features/customer-commerce/pages/customer/CustomerOrdersPage"));
+const AdminOrdersPage = lazy(() => import("../features/customer-commerce/pages/admin/AdminOrdersPage"));
+const ProfilePage = lazy(() => import("../features/customer-commerce/pages/customer/ProfilePage"));
+const MyVoucherPage = lazy(() => import("../features/core-access/pages/customer/MyVoucherPage"));
+const IssuedVoucherDetailPage = lazy(() => import("../features/core-access/pages/customer/IssuedVoucherDetailPage"));
+const ArticleDetailPage = lazy(() => import("../features/content-feedback/pages/customer/ArticleDetailPage"));
+const PolicyPage = lazy(() => import("../features/core-access/pages/public/PolicyPage"));
 
 function PartnerHome() {
   try {
@@ -93,7 +87,7 @@ function PartnerOwnerOnlyRoute() {
   return <Outlet />;
 }
 
-const router = createBrowserRouter([
+const routes = [
   {
     path: "/login",
     element: <LoginPage />,
@@ -125,9 +119,12 @@ const router = createBrowserRouter([
 
   {
     path: "/",
-    element: <App />,
     children: [
       { index: true, element: <LandingPage /> },
+      {
+        path: "vouchers/:id",
+        element: <VoucherDetailPage publicView />,
+      },
 
       {
         path: "/customer",
@@ -252,6 +249,13 @@ const router = createBrowserRouter([
   {
     path: "*",
     element: <Navigate to="/login" replace />,
+  },
+];
+
+const router = createBrowserRouter([
+  {
+    element: <App />,
+    children: routes,
   },
 ]);
 

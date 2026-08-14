@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
 import Toast from "../../../../shared/components/Toast";
@@ -328,11 +328,25 @@ export function PartnerRegisterPage() {
     <div className="min-h-screen bg-slate-100 py-10 px-4">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Page Header */}
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">Đăng ký Hồ sơ Đối tác</h2>
-          <p className="text-sm text-slate-500 mt-1">
-            Khai báo tài khoản, thông tin doanh nghiệp & giấy phép kinh doanh để tham gia phát hành Voucher trên hệ thống
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">Đăng ký Hồ sơ Đối tác</h2>
+            <p className="text-sm text-slate-500 mt-1">
+              Khai báo tài khoản, thông tin doanh nghiệp & giấy phép kinh doanh để tham gia phát hành Voucher trên hệ thống
+            </p>
+          </div>
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2.5 self-start sm:self-auto group"
+            aria-label="Về trang chủ Snow Voucher"
+          >
+            <span className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-400 to-blue-500 text-white flex items-center justify-center text-lg shadow-md shadow-sky-200 group-hover:scale-105 transition-transform">
+              ❄️
+            </span>
+            <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-transparent">
+              Snow Voucher
+            </span>
+          </Link>
         </div>
 
         {/* Wizard Step Indicator Header */}

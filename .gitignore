@@ -148,8 +148,10 @@ gemini-code-1785250004304.md
 design.md
 db.md
 
-
-sequence_code/
-output_seq.md
-output_seqv2
-rules_seq_dia.md
+/task_X.md
+/codeX_done_QLDH.md
+/codeX_done.md
+AGENTS.md
+CLAUDE.md
+.claude/
+.gitnexus/

@@ -22,14 +22,6 @@ router.get(
   orderController.getAdminOrder.bind(orderController)
 );
 
-// GET /admin/orders/:id/logs — Lấy nhật ký hệ thống của riêng đơn hàng
-router.get(
-  '/:id/logs',
-  authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN),
-  orderController.getOrderLogs.bind(orderController)
-);
-
 // -----------------------------------------------------------------------
 // UC-ADM-05: XỬ LÝ YÊU CẦU HỦY
 // -----------------------------------------------------------------------

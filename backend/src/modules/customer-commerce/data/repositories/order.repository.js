@@ -354,7 +354,8 @@ class OrderRepository {
       const { data: compData } = await supabase
         .from('khieunai')
         .select('*')
-        .in('ma_voucher_mua', codeIds);
+        .in('ma_voucher_mua', codeIds)
+        .order('ngay_khieu_nai', { ascending: false });
       complaints = compData || [];
     }
 
@@ -393,12 +394,24 @@ class OrderRepository {
         reason: r.ly_do,
         processedAt: r.ngay_xu_ly,
       })),
-      complaints: complaints.map(k => ({
-        id: k.ma_khieu_nai,
-        content: k.noi_dung,
-        status: k.trang_thai,
-        createdAt: k.ngay_khieu_nai,
-      })),
+      complaints: complaints.map(k => {
+        const purchasedVoucher = (codes || []).find(c => c.ma_voucher_mua === k.ma_voucher_mua);
+        const orderItem = purchasedVoucher
+          ? items.find(item => item.voucherId === purchasedVoucher.ma_voucher)
+          : null;
+        return {
+          id: k.ma_khieu_nai,
+          voucherMuaId: k.ma_voucher_mua,
+          voucherId: purchasedVoucher?.ma_voucher || null,
+          voucherCode: purchasedVoucher?.voucher_code || null,
+          voucherName: orderItem?.voucherName || 'Voucher',
+          voucherImage: orderItem?.image || null,
+          content: k.noi_dung,
+          status: k.trang_thai,
+          createdAt: k.ngay_khieu_nai,
+          rejectReason: k.ly_do_tu_choi_kn || null,
+        };
+      }),
       codes: (codes || []).map(c => {
         const relatedComplaint = complaints.find(k => k.ma_voucher_mua === c.ma_voucher_mua);
         const relatedReview = reviews.find(r => r.ma_voucher_mua === c.ma_voucher_mua);
@@ -1412,12 +1425,30 @@ class OrderRepository {
 
     const { data: vm, error: voucherError } = await supabase
       .from('voucher_mua')
-      .select('ma_voucher_mua, ma_dh, voucher_code, trang_thai')
+      .select('ma_voucher_mua, ma_dh, ma_voucher, voucher_code, trang_thai, thoi_gian_sinh_ma')
       .eq('ma_voucher_mua', kn.ma_voucher_mua)
       .single();
     if (voucherError || !vm) throw new Error('Khiếu nại không liên kết voucher code hợp lệ');
 
+    const [voucherResult, orderItemResult] = await Promise.all([
+      supabase
+        .from('voucher')
+        .select('ten_voucher, dieu_kien_ap_dung, tg_bat_dau_ban, tg_ket_thuc_ban')
+        .eq('ma_voucher', vm.ma_voucher)
+        .maybeSingle(),
+      supabase
+        .from('chitietdonhang')
+        .select('gia_tai_thoi_diem_mua')
+        .eq('ma_dh', vm.ma_dh)
+        .eq('ma_voucher', vm.ma_voucher)
+        .maybeSingle(),
+    ]);
+    if (voucherResult.error) throw new Error(`Không thể tải thông tin voucher đã mua: ${voucherResult.error.message}`);
+    if (orderItemResult.error) throw new Error(`Không thể tải giá voucher đã mua: ${orderItemResult.error.message}`);
+
     const customer = await this.getOrderCustomerDeliveryContext(vm.ma_dh);
+    const voucher = voucherResult.data || {};
+    const orderItem = orderItemResult.data || {};
 
     return {
       complaintId: kn.ma_khieu_nai,
@@ -1428,6 +1459,18 @@ class OrderRepository {
       orderId: customer.orderId,
       customerName: customer.customerName,
       customerEmail: customer.customerEmail,
+      qrValue: vm.voucher_code,
+      voucherDetails: {
+        name: voucher.ten_voucher || 'Voucher đã mua',
+        orderId: vm.ma_dh,
+        purchaseId: vm.ma_voucher_mua,
+        purchasePrice: orderItem.gia_tai_thoi_diem_mua,
+        status: vm.trang_thai,
+        issuedAt: vm.thoi_gian_sinh_ma,
+        validFrom: voucher.tg_bat_dau_ban,
+        validUntil: voucher.tg_ket_thuc_ban,
+        conditions: voucher.dieu_kien_ap_dung,
+      },
     };
   }
 

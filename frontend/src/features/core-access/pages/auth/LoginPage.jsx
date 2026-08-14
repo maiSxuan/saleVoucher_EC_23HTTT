@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-  Shield,
   Eye,
   EyeOff,
   AlertCircle,
@@ -207,12 +206,18 @@ export default function LoginPage() {
 
         {/* Logo & Tiêu đề */}
         <div className="flex flex-col items-center mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center mb-3 shadow-lg shadow-indigo-200">
-            <Shield size={28} className="text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-            EC Voucher
-          </h1>
+          <Link
+            to="/"
+            className="flex flex-col items-center group"
+            aria-label="Về trang chủ Snow Voucher"
+          >
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-sky-400 to-blue-500 flex items-center justify-center mb-3 shadow-lg shadow-sky-200 group-hover:scale-105 transition-transform">
+              <span className="text-2xl" aria-hidden="true">❄️</span>
+            </div>
+            <h1 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              Snow Voucher
+            </h1>
+          </Link>
           <p className="text-sm text-gray-500 mt-1">
             {mode === "login" && "Hệ thống Đăng nhập"}
             {mode === "forgot-password" && "Quên mật khẩu (Bước 1/3)"}

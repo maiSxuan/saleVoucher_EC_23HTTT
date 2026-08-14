@@ -5,15 +5,15 @@ class UserController {
 
   // -----------------------------------------------------------------------
   // GET /admin/users — Lấy danh sách người dùng (Admin only)
-  // Query params: page, limit, name, phone, role, status
+  // Query params: page, limit, search (tên hoặc email), role, status
   // -----------------------------------------------------------------------
   async listUsers(req, res, next) {
     try {
-      // Đọc query params từ URL: ?page=1&limit=20&name=nguyen&role=Khach+hang
-      const { page, limit, name, phone, role, status } = req.query;
+      // Đọc query params từ URL: ?page=1&limit=20&search=nguyen&role=Khach+hang
+      const { page, limit, search, role, status } = req.query;
 
       // Gọi service — service sẽ query Supabase và áp dụng bộ lọc
-      const result = await this.userService.listUsers({ page, limit, name, phone, role, status });
+      const result = await this.userService.listUsers({ page, limit, search, role, status });
 
       // Trả về response chuẩn: success + data + pagination
       res.json({

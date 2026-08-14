@@ -6,7 +6,6 @@ import {
   Ticket,           // Icon duyệt voucher
   Users,            // Icon quản lý người dùng
   ScrollText,       // Icon nhật ký hệ thống
-  Shield,           // Icon logo admin
   LogOut,           // Icon đăng xuất
   ChevronLeft,      // Icon thu gọn sidebar
   Menu,             // Icon mở sidebar mobile
@@ -105,14 +104,14 @@ export function AdminLayout({ children }) {
         {/* Logo + nút thu gọn */}
         <div className="flex items-center px-4 py-4 border-b border-gray-200 min-h-[64px]">
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            {/* Logo shield */}
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0 shadow-sm">
-              <Shield size={16} className="text-white" />
+            {/* Logo Snow Voucher */}
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-sky-400 to-blue-500 flex items-center justify-center flex-shrink-0 shadow-sm text-sm">
+              ❄️
             </div>
             {/* Tên app — ẩn khi thu gọn sidebar */}
             {sidebarOpen && (
               <div className="min-w-0">
-                <div className="text-sm font-semibold text-gray-900 truncate">EC Voucher</div>
+                <div className="text-sm font-semibold text-gray-900 truncate">Snow Voucher</div>
                 <div className="text-xs text-gray-500">Admin Portal</div>
               </div>
             )}
