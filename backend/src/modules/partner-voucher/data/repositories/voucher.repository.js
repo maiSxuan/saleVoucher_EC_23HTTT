@@ -3,6 +3,9 @@ const VoucherModel = require("../models/voucher.model");
 
 const VOUCHERS_MEMORY_STORE = new Map();
 
+let CATEGORIES_CACHE = null;
+let CATEGORIES_CACHE_EXPIRES = 0;
+
 class VoucherRepository {
   async resolveCategoryUuid(catInput) {
     const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
@@ -25,9 +28,11 @@ class VoucherRepository {
 
   async resolvePartnerNamesMap() {
     try {
-      const { data: partnersData } = await supabase.from("hosodn").select("ma_hs, ten_dn, id_nguoi_dai_dien");
-      const { data: branchesData } = await supabase.from("chinhanh").select("ma_chi_nhanh, ma_hs");
-      const { data: linksData } = await supabase.from("voucher_cn").select("ma_voucher, ma_chi_nhanh");
+      const [{ data: partnersData }, { data: branchesData }, { data: linksData }] = await Promise.all([
+        supabase.from("hosodn").select("ma_hs, ten_dn, id_nguoi_dai_dien"),
+        supabase.from("chinhanh").select("ma_chi_nhanh, ma_hs"),
+        supabase.from("voucher_cn").select("ma_voucher, ma_chi_nhanh"),
+      ]);
 
       const partnerMap = new Map();
       (partnersData || []).forEach((p) => {
@@ -386,19 +391,19 @@ class VoucherRepository {
       if (error) {
         console.error("[VoucherRepository] update error:", error.message);
       } else if (data && Array.isArray(payload.ma_chi_nhanh)) {
-        try {
-          await supabase.from("voucher_cn").delete().eq("ma_voucher", id);
-          if (payload.ma_chi_nhanh.length > 0) {
-            const links = payload.ma_chi_nhanh.map((bId) => ({
-              ma_voucher: id,
-              ma_chi_nhanh: bId,
-            }));
-            await supabase.from("voucher_cn").insert(links);
-          }
-        } catch (linkErr) {
-          console.warn("[VoucherRepository] voucher_cn update warning:", linkErr.message);
+      try {
+        await supabase.from("voucher_cn").delete().eq("ma_voucher", id);
+        if (payload.ma_chi_nhanh.length > 0) {
+          const links = payload.ma_chi_nhanh.map((bId) => ({
+            ma_voucher: id,
+            ma_chi_nhanh: bId,
+          }));
+          await supabase.from("voucher_cn").insert(links);
         }
+      } catch (linkErr) {
+        console.warn("[VoucherRepository] voucher_cn update warning:", linkErr.message);
       }
+    }
     }
 
     const result = await this.findById(id);
@@ -425,6 +430,10 @@ class VoucherRepository {
   }
 
   async getVoucherCategories() {
+    const now = Date.now();
+    if (CATEGORIES_CACHE && now < CATEGORIES_CACHE_EXPIRES) {
+      return CATEGORIES_CACHE;
+    }
     try {
       const { data, error } = await supabase
         .from("danh_muc")
@@ -432,13 +441,15 @@ class VoucherRepository {
 
       if (error || !data) {
         console.error("Lỗi lấy danh mục từ Supabase:", error);
-        return [];
+        return CATEGORIES_CACHE || [];
       }
 
+      CATEGORIES_CACHE = data;
+      CATEGORIES_CACHE_EXPIRES = now + 5 * 60 * 1000; // 5 minute TTL cache
       return data;
     } catch (e) {
       console.error("Exception getVoucherCategories:", e.message);
-      return [];
+      return CATEGORIES_CACHE || [];
     }
   }
 }

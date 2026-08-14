@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LogOut, User, Lock } from "lucide-react";
+import {
+  LogOut,
+  User,
+  Lock,
+  ShieldAlert,
+  ArrowRight,
+  Building,
+  BarChart3,
+  QrCode,
+  Ticket,
+  Store,
+  Building2,
+  Users,
+} from "lucide-react";
 import Badge from "../shared/components/Badge";
 import { getPartnerByIdApi } from "../shared/api/partnerApi";
 
@@ -43,7 +56,13 @@ export function PartnerLayout({ children }) {
     fetchPartner();
   }, []);
 
-  const partnerStatus = partnerInfo?.trang_thai || "Cho duyet";
+  const partnerStatus =
+    partnerInfo?.trang_thai ||
+    currentUser?.trang_thai ||
+    currentUser?.trang_thai_hs ||
+    currentUser?.trang_thai_tai_khoan ||
+    "Dang hoat dong";
+
   const normStatus = (partnerStatus || "").toString().toLowerCase().trim();
   const isPartnerActive =
     normStatus === "dang hoat dong" ||
@@ -67,7 +86,7 @@ export function PartnerLayout({ children }) {
   }
 
   const userEmail = currentUser?.email || "";
-  
+
   let userRole =
     currentUser?.vai_tro_he_thong ||
     (currentUser?.role === "PARTNER_STAFF"
@@ -89,12 +108,12 @@ export function PartnerLayout({ children }) {
   };
 
   const allNavItems = [
-    { label: "Báo cáo", path: "/partner/reports", icon: "📊" },
-    { label: "Tra cứu & Đổi Voucher", path: "/partner/vouchers/lookup", icon: "🔍" },
-    { label: "Quản lý Voucher", path: "/partner/vouchers", icon: "🎟️" },
-    { label: "Chi nhánh", path: "/partner/branches", icon: "📍" },
-    { label: "Hồ sơ doanh nghiệp", path: "/partner/profile", icon: "🏢" },
-    { label: "Nhân viên", path: "/partner/staffs", icon: "👥" },
+    { label: "Báo cáo", path: "/partner/reports", icon: BarChart3 },
+    { label: "Tra cứu & Đổi Voucher", path: "/partner/vouchers/lookup", icon: QrCode },
+    { label: "Quản lý Voucher", path: "/partner/vouchers", icon: Ticket },
+    { label: "Chi nhánh", path: "/partner/branches", icon: Store },
+    { label: "Hồ sơ doanh nghiệp", path: "/partner/profile", icon: Building2 },
+    { label: "Nhân viên", path: "/partner/staffs", icon: Users },
   ];
 
   const isVoucherManager =
@@ -174,6 +193,24 @@ export function PartnerLayout({ children }) {
         </div>
       </header>
 
+      {/* Modern Sleek Status Warning Banner */}
+      {!loadingPartner && !isPartnerActive && (
+        <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white text-xs py-2.5 px-6 flex items-center justify-between gap-4 shadow-sm sticky top-16 z-20">
+          <div className="flex items-center gap-2 font-medium truncate">
+            <ShieldAlert className="w-4 h-4 shrink-0" />
+            <span>
+              Tài khoản doanh nghiệp chưa ở trạng thái <strong>Hoạt động</strong> (Hiện tại: <strong>{partnerStatus === "Cho duyet" ? "Chờ duyệt" : partnerStatus === "Tu choi" ? "Bị từ chối" : partnerStatus}</strong>). Một số tính năng bị tạm khóa.
+            </span>
+          </div>
+          <Link
+            to="/partner/profile"
+            className="shrink-0 bg-white/20 hover:bg-white/30 text-white font-bold px-3 py-1 rounded-lg transition-colors text-[11px] border border-white/30"
+          >
+            Hồ sơ doanh nghiệp & Gửi duyệt →
+          </Link>
+        </div>
+      )}
+
       {/* Main Container */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
@@ -182,24 +219,25 @@ export function PartnerLayout({ children }) {
             collapsed ? "w-16" : "w-64"
           } bg-white border-r border-slate-200 transition-all duration-200 flex flex-col shrink-0`}
         >
-          <div className="p-4 flex-1 space-y-1 overflow-y-auto">
+          <div className="p-4 flex-1 space-y-1.5 overflow-y-auto">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
               const isLockedItem = item.path !== "/partner/profile" && !isPartnerActive;
+              const IconComponent = item.icon;
 
               if (isLockedItem) {
                 return (
                   <button
                     key={item.path}
                     onClick={() => navigate("/partner/profile")}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg font-medium text-sm transition-colors text-slate-400 bg-slate-50 opacity-75 hover:bg-slate-100 cursor-not-allowed`}
-                    title="Tài khoản chưa ở trạng thái Hoạt động. Vui lòng vào Hồ sơ doanh nghiệp để gửi duyệt."
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all text-slate-400 bg-slate-50/50 hover:bg-amber-50/60 hover:text-amber-700 cursor-pointer group`}
+                    title="Tài khoản chưa kích hoạt. Vào Hồ sơ doanh nghiệp để xem thông tin & gửi duyệt."
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-base">{item.icon}</span>
+                      <IconComponent className="w-4 h-4 text-slate-400 shrink-0 group-hover:text-amber-600 transition-colors" />
                       {!collapsed && <span className="truncate">{item.label}</span>}
                     </div>
-                    {!collapsed && <Lock className="w-3.5 h-3.5 text-slate-400" />}
+                    {!collapsed && <Lock className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-600 transition-colors" />}
                   </button>
                 );
               }
@@ -208,13 +246,13 @@ export function PartnerLayout({ children }) {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition-colors ${
+                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
                     isActive
-                      ? "bg-emerald-50 text-emerald-700 font-semibold"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                      ? "bg-emerald-50 text-emerald-700 font-bold shadow-2xs border border-emerald-200/50"
+                      : "text-slate-600 hover:bg-slate-100/70 hover:text-slate-900"
                   }`}
                 >
-                  <span className="text-base">{item.icon}</span>
+                  <IconComponent className={`w-4 h-4 shrink-0 ${isActive ? "text-emerald-600" : "text-slate-400"}`} />
                   {!collapsed && <span className="truncate">{item.label}</span>}
                 </Link>
               );
@@ -225,37 +263,40 @@ export function PartnerLayout({ children }) {
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto p-8 bg-slate-50">
           {!loadingPartner && !isPartnerActive && !isProfilePage ? (
-            <div className="max-w-2xl mx-auto my-12 bg-white rounded-2xl border border-amber-200 p-8 shadow-sm text-center space-y-4">
-              <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-3xl">
-                🔒
+            <div className="max-w-xl mx-auto my-8 bg-white/90 backdrop-blur-md rounded-3xl border border-slate-200/80 p-8 shadow-xl shadow-amber-500/5 text-center space-y-5 transition-all">
+              <div className="w-16 h-16 bg-gradient-to-tr from-amber-500/10 to-amber-500/20 text-amber-600 rounded-2xl flex items-center justify-center mx-auto border border-amber-200/50 shadow-xs">
+                <ShieldAlert className="w-8 h-8" />
               </div>
-              <div className="flex justify-center">
-                <Badge status={partnerStatus} />
+
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200/60 text-xs font-semibold text-amber-700">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <span>Trạng thái: {partnerStatus === "Cho duyet" ? "Chờ duyệt" : partnerStatus === "Tu choi" ? "Bị từ chối" : partnerStatus}</span>
               </div>
-              <h2 className="text-xl font-bold text-slate-900">
-                Tài khoản doanh nghiệp chưa được kích hoạt
-              </h2>
-              <p className="text-sm text-slate-600 max-w-lg mx-auto leading-relaxed">
-                Tài khoản đối tác hiện đang ở trạng thái{" "}
-                <strong className="text-amber-800">
-                  "{partnerStatus === "Cho duyet" ? "Chờ duyệt" : partnerStatus === "Tu choi" ? "Bị từ chối" : partnerStatus}"
-                </strong>
-                . Tất cả các chức năng Quản lý Voucher, Chi nhánh, Nhân viên và Báo cáo tạm thời bị vô hiệu hóa.
-              </p>
+
+              <div className="space-y-2">
+                <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                  Tài khoản doanh nghiệp chưa được kích hoạt
+                </h2>
+                <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+                  Tất cả các chức năng Quản lý Voucher, Chi nhánh, Nhân viên và Báo cáo tạm thời bị vô hiệu hóa cho tới khi hồ sơ được phê duyệt.
+                </p>
+              </div>
+
               {partnerStatus === "Tu choi" && partnerInfo?.ly_do_tu_choi && (
-                <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 text-xs text-rose-800 text-left max-w-md mx-auto">
-                  <strong>Lý do Admin từ chối:</strong> {partnerInfo.ly_do_tu_choi}
+                <div className="bg-rose-50/90 border border-rose-200 rounded-2xl p-4 text-xs text-rose-800 text-left max-w-md mx-auto space-y-1">
+                  <span className="font-bold block">Lý do Admin từ chối:</span>
+                  <p>{partnerInfo.ly_do_tu_choi}</p>
                 </div>
               )}
-              <p className="text-xs text-slate-500">
-                Chỉ khi hồ sơ được Quản trị viên thẩm định và duyệt chuyển sang trạng thái <strong>Hoạt động</strong>, bạn mới có đầy đủ quyền sử dụng các chức năng.
-              </p>
+
               <div className="pt-2">
                 <Link
                   to="/partner/profile"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl transition-colors shadow-xs"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-sm rounded-xl transition-all shadow-md hover:shadow-lg transform active:scale-95"
                 >
-                  🏢 Đến Hồ sơ doanh nghiệp & Gửi duyệt
+                  <Building className="w-4 h-4" />
+                  <span>Hồ sơ doanh nghiệp & Gửi duyệt</span>
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
             </div>

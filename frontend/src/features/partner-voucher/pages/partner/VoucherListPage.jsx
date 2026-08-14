@@ -85,9 +85,15 @@ export function VoucherListPage() {
 
   useEffect(() => {
     async function loadData() {
-      const cats = await getCategoriesApi();
+      if (!savedState?.cachedVouchers) setLoading(true);
+      const partnerId = getLoggedInPartnerId();
+      const [cats, data] = await Promise.all([
+        getCategoriesApi(),
+        getVouchersByPartnerApi(partnerId),
+      ]);
       setCategories(cats || []);
-      await loadVouchers();
+      setVouchers(data || []);
+      setLoading(false);
     }
     loadData();
   }, []);

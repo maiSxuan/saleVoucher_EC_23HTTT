@@ -63,58 +63,55 @@ export function VoucherFormPage() {
         const u = JSON.parse(storedUser);
         return u.ma_hsdn || u.ma_hs || u.id || u.ma_nguoi_dung;
       }
-    } catch (e) {}
+    } catch (e) { }
     return null;
   };
 
   useEffect(() => {
     async function loadInitial() {
-      // 1. Fetch categories
-      const cates = await getCategoriesApi();
+      const partnerId = getLoggedInPartnerId();
+      const [cates, branches, existing] = await Promise.all([
+        getCategoriesApi(),
+        partnerId ? getBranchesByPartnerApi(partnerId) : Promise.resolve([]),
+        id ? getVoucherByIdApi(id) : Promise.resolve(null),
+      ]);
+
       if (cates && cates.length > 0) {
         setCategoriesList(cates);
-        if (!formData.ma_danh_muc) {
+      }
+
+      const activeOnly = (branches || []).filter((b) => b.trang_thai === "Dang hoat dong" || !b.trang_thai);
+      setActiveBranches(activeOnly);
+
+      if (id && existing) {
+        if (existing.trang_thai === "Ngung ban") {
+          navigate(`/partner/vouchers/${id}`);
+          return;
+        }
+        setVoucherStatus(existing.trang_thai || "");
+        const initQty = Number(existing.so_luong_phat_hanh) || 0;
+        setInitialQuantity(initQty);
+        setFormData({
+          ma_voucher: existing.ma_voucher,
+          ten_voucher: existing.ten_voucher || "",
+          mo_ta: existing.mo_ta || "",
+          ma_danh_muc: existing.ma_danh_muc || (cates && cates[0]?.ma_danh_muc) || "",
+          gia_goc: existing.gia_goc || "",
+          gia_ban: existing.gia_ban || "",
+          so_luong_phat_hanh: existing.so_luong_phat_hanh || "",
+          tg_bat_dau_ban: existing.tg_bat_dau_ban ? existing.tg_bat_dau_ban.slice(0, 16) : getTodayDateTimeLocal(),
+          tg_ket_thuc_ban: existing.tg_ket_thuc_ban ? existing.tg_ket_thuc_ban.slice(0, 16) : getFutureDateTimeLocal(30),
+          dieu_kien_ap_dung: existing.dieu_kien_ap_dung || "",
+          chinh_sach_hoan_huy: existing.chinh_sach_hoan_huy || "",
+          hinh_anh_url: existing.hinh_anh_url || "",
+          ma_chi_nhanh: existing.ma_chi_nhanh || [],
+        });
+      } else if (!id) {
+        if (cates && cates.length > 0) {
           setFormData((prev) => ({ ...prev, ma_danh_muc: cates[0]?.ma_danh_muc || "" }));
         }
-      }
-
-      // 2. Fetch partner branches
-      const partnerId = getLoggedInPartnerId();
-      if (partnerId) {
-        const branches = await getBranchesByPartnerApi(partnerId);
-        const activeOnly = (branches || []).filter((b) => b.trang_thai === "Dang hoat dong" || !b.trang_thai);
-        setActiveBranches(activeOnly);
-        if (!id && activeOnly.length > 0) {
+        if (activeOnly.length > 0) {
           setFormData((prev) => ({ ...prev, ma_chi_nhanh: activeOnly.map((b) => b.ma_chi_nhanh) }));
-        }
-      }
-
-      // 3. If editing, fetch voucher details
-      if (id) {
-        const existing = await getVoucherByIdApi(id);
-        if (existing) {
-          if (existing.trang_thai === "Ngung ban") {
-            navigate(`/partner/vouchers/${id}`);
-            return;
-          }
-          setVoucherStatus(existing.trang_thai || "");
-          const initQty = Number(existing.so_luong_phat_hanh) || 0;
-          setInitialQuantity(initQty);
-          setFormData({
-            ma_voucher: existing.ma_voucher,
-            ten_voucher: existing.ten_voucher || "",
-            mo_ta: existing.mo_ta || "",
-            ma_danh_muc: existing.ma_danh_muc || (cates && cates[0]?.ma_danh_muc) || "",
-            gia_goc: existing.gia_goc || "",
-            gia_ban: existing.gia_ban || "",
-            so_luong_phat_hanh: existing.so_luong_phat_hanh || "",
-            tg_bat_dau_ban: existing.tg_bat_dau_ban ? existing.tg_bat_dau_ban.slice(0, 16) : getTodayDateTimeLocal(),
-            tg_ket_thuc_ban: existing.tg_ket_thuc_ban ? existing.tg_ket_thuc_ban.slice(0, 16) : getFutureDateTimeLocal(30),
-            dieu_kien_ap_dung: existing.dieu_kien_ap_dung || "",
-            chinh_sach_hoan_huy: existing.chinh_sach_hoan_huy || "",
-            hinh_anh_url: existing.hinh_anh_url || "",
-            ma_chi_nhanh: existing.ma_chi_nhanh || [],
-          });
         }
       }
     }
@@ -214,54 +211,54 @@ export function VoucherFormPage() {
   };
 
   const executeSave = async (mode) => {
-  // mode: "draft" | "submit" | "update"
-  setLoading(true);
-  const partnerId = getLoggedInPartnerId();
+    // mode: "draft" | "submit" | "update"
+    setLoading(true);
+    const partnerId = getLoggedInPartnerId();
 
-  let targetStatus;
-  if (mode === "update") {
-    // Sửa voucher đã qua duyệt (Tam ngung, Dang ban, Da duyet...):
-    // chỉ cập nhật nội dung, KHÔNG đổi trạng thái, KHÔNG cần gửi duyệt lại
-    targetStatus = voucherStatus;
-  } else if (mode === "submit") {
-    targetStatus = "Cho duyet";
-  } else {
-    targetStatus = "Nhap";
-  }
+    let targetStatus;
+    if (mode === "update") {
+      // Sửa voucher đã qua duyệt (Tam ngung, Dang ban, Da duyet...):
+      // chỉ cập nhật nội dung, KHÔNG đổi trạng thái, KHÔNG cần gửi duyệt lại
+      targetStatus = voucherStatus;
+    } else if (mode === "submit") {
+      targetStatus = "Cho duyet";
+    } else {
+      targetStatus = "Nhap";
+    }
 
-  const targetKiemDuyet = mode === "update" ? "Da duyet" : targetStatus;
+    const targetKiemDuyet = mode === "update" ? "Da duyet" : targetStatus;
 
-  const saved = await saveVoucherApi({
-    ...formData,
-    ma_hs: partnerId,
-    trang_thai: targetStatus,
-    trang_thai_kiem_duyet: targetKiemDuyet,
-    ly_do_tu_choi: targetStatus === "Cho duyet" ? "" : formData.ly_do_tu_choi,
-  });
+    const saved = await saveVoucherApi({
+      ...formData,
+      ma_hs: partnerId,
+      trang_thai: targetStatus,
+      trang_thai_kiem_duyet: targetKiemDuyet,
+      ly_do_tu_choi: targetStatus === "Cho duyet" ? "" : formData.ly_do_tu_choi,
+    });
 
-  setLoading(false);
-  setToastMessage(
-    mode === "update"
-      ? "Đã cập nhật thông tin Voucher thành công!"
-      : mode === "submit"
-      ? isRejected
-        ? "Đã khắc phục thông tin & Gửi lại yêu cầu duyệt thành công!"
-        : "Gửi duyệt Voucher thành công!"
-      : "Lưu bản nháp thành công!"
-  );
-  setTimeout(() => {
-    navigate(`/partner/vouchers/${saved?.ma_voucher || id}`);
-  }, 1000);
-};
+    setLoading(false);
+    setToastMessage(
+      mode === "update"
+        ? "Đã cập nhật thông tin Voucher thành công!"
+        : mode === "submit"
+          ? isRejected
+            ? "Đã khắc phục thông tin & Gửi lại yêu cầu duyệt thành công!"
+            : "Gửi duyệt Voucher thành công!"
+          : "Lưu bản nháp thành công!"
+    );
+    setTimeout(() => {
+      navigate(`/partner/vouchers/${saved?.ma_voucher || id}`);
+    }, 1000);
+  };
 
-const handleSave = (mode) => {
-  if (!validate()) return;
-  if (mode === "submit") {
-    setShowSubmitModal(true);   // chỉ trạng thái Nhap/Tu choi mới cần confirm "gửi duyệt"
-  } else {
-    executeSave(mode);          // draft và update: lưu thẳng, không popup gửi duyệt
-  }
-};
+  const handleSave = (mode) => {
+    if (!validate()) return;
+    if (mode === "submit") {
+      setShowSubmitModal(true);   // chỉ trạng thái Nhap/Tu choi mới cần confirm "gửi duyệt"
+    } else {
+      executeSave(mode);          // draft và update: lưu thẳng, không popup gửi duyệt
+    }
+  };
   const discountPercent =
     formData.gia_goc && formData.gia_ban
       ? Math.round(((formData.gia_goc - formData.gia_ban) / formData.gia_goc) * 100)
@@ -471,9 +468,8 @@ const handleSave = (mode) => {
             {activeBranches.length > 0 && (
               <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
                 <label
-                  className={`flex items-center gap-2 text-xs font-bold text-slate-800 ${
-                    isTamNgung ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:text-blue-600"
-                  }`}
+                  className={`flex items-center gap-2 text-xs font-bold text-slate-800 ${isTamNgung ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:text-blue-600"
+                    }`}
                 >
                   <input
                     type="checkbox"
@@ -498,9 +494,8 @@ const handleSave = (mode) => {
               activeBranches.map((branch) => (
                 <label
                   key={branch.ma_chi_nhanh}
-                  className={`flex items-center gap-3 p-3 rounded-lg border border-slate-200 transition-colors ${
-                    isTamNgung ? "bg-slate-50 opacity-60 cursor-not-allowed" : "hover:bg-slate-50 cursor-pointer"
-                  }`}
+                  className={`flex items-center gap-3 p-3 rounded-lg border border-slate-200 transition-colors ${isTamNgung ? "bg-slate-50 opacity-60 cursor-not-allowed" : "hover:bg-slate-50 cursor-pointer"
+                    }`}
                 >
                   <input
                     type="checkbox"
@@ -556,21 +551,21 @@ const handleSave = (mode) => {
           </Button>
 
           <div className="flex items-center gap-3">
-  {id && !["Nhap", "Tu choi"].includes(voucherStatus) ? (
-  <Button variant="primary" onClick={() => handleSave("update")} loading={loading}>
-    Lưu thay đổi
-  </Button>
-) : (
-  <>
-    <Button variant="secondary" onClick={() => handleSave("draft")} loading={loading}>
-      Lưu bản nháp
-    </Button>
-    <Button variant="primary" onClick={() => handleSave("submit")} loading={loading}>
-      ✓ Lưu & Gửi duyệt ngay
-    </Button>
-  </>
-)}
-</div>
+            {id && !["Nhap", "Tu choi"].includes(voucherStatus) ? (
+              <Button variant="primary" onClick={() => handleSave("update")} loading={loading}>
+                Lưu thay đổi
+              </Button>
+            ) : (
+              <>
+                <Button variant="secondary" onClick={() => handleSave("draft")} loading={loading}>
+                  Lưu bản nháp
+                </Button>
+                <Button variant="primary" onClick={() => handleSave("submit")} loading={loading}>
+                  ✓ Lưu & Gửi duyệt ngay
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Modal Submit Approval Confirmation */}
