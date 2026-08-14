@@ -333,7 +333,7 @@ const handleSave = (mode) => {
                     const cateId = c.ma_danh_muc || c.id;
                     return (
                       <option key={cateId} value={cateId}>
-                        {formatCategoryName(c.ten_danh_muc)}
+                        {c.ten_danh_muc}
                       </option>
                     );
                   })}

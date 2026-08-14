@@ -224,7 +224,7 @@ export function VoucherApprovalListPage() {
                         </td>
 
                         {/* Danh mục */}
-                        <td className="px-3.5 py-3.5 text-slate-600">{formatCategoryName(v.ten_danh_muc)}</td>
+                        <td className="px-3.5 py-3.5 text-slate-600">{v.ten_danh_muc || "---"}</td>
 
                         {/* Giá gốc */}
                         <td className="px-3.5 py-3.5 font-medium text-slate-700">{giaGoc.toLocaleString("vi-VN")}đ</td>

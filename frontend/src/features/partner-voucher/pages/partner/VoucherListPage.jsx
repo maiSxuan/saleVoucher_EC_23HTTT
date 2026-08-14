@@ -8,7 +8,7 @@ import { getVouchersByPartnerApi, getCategoriesApi } from "../../../../shared/ap
 import { formatCategoryName } from "../../../../shared/utils/categoryFormatter";
 import { getVoucherPublicationStatus } from "../../../../shared/utils/publicationStatusHelper";
 
-const SESSION_KEY = "ec_partner_voucher_list_state_v1";
+const SESSION_KEY = "ec_partner_voucher_list_state_v2";
 
 const getSavedState = () => {
   try {
@@ -214,7 +214,7 @@ export function VoucherListPage() {
                 const catVal = c.ma_danh_muc || c.id || c.ten_danh_muc;
                 return (
                   <option key={catVal} value={catVal}>
-                    {formatCategoryName(c.ten_danh_muc)}
+                    {c.ten_danh_muc}
                   </option>
                 );
               })}
@@ -276,7 +276,7 @@ export function VoucherListPage() {
                               >
                                 {typeof v.ten_voucher === 'object' && v.ten_voucher !== null ? (v.ten_voucher.name || v.ten_voucher.ten_voucher || "Voucher") : v.ten_voucher}
                               </Link>
-                              <div className="text-xs text-gray-400 mt-0.5">{formatCategoryName(v.ten_danh_muc || v.ma_danh_muc)}</div>
+                              <div className="text-xs text-gray-400 mt-0.5">{v.ten_danh_muc || "---"}</div>
                             </div>
                           </div>
                         </td>

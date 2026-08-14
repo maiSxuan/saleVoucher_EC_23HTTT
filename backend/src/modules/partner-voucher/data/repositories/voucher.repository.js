@@ -4,10 +4,23 @@ const VoucherModel = require("../models/voucher.model");
 const VOUCHERS_MEMORY_STORE = new Map();
 
 class VoucherRepository {
-  normalizeCategoryUuid(catId) {
+  async resolveCategoryUuid(catInput) {
     const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-    if (catId && uuidRegex.test(catId)) return catId;
-    return "40000000-0000-0000-0000-000000000001";
+    if (catInput && uuidRegex.test(catInput)) return catInput;
+    if (catInput) {
+      const { data } = await supabase
+        .from("danh_muc")
+        .select("ma_danh_muc")
+        .ilike("ten_danh_muc", catInput.toString().trim())
+        .maybeSingle();
+      if (data?.ma_danh_muc) return data.ma_danh_muc;
+    }
+    const { data: firstCategory } = await supabase
+      .from("danh_muc")
+      .select("ma_danh_muc")
+      .limit(1)
+      .maybeSingle();
+    return firstCategory?.ma_danh_muc || "40000000-0000-0000-0000-000000000001";
   }
 
   async resolvePartnerNamesMap() {
@@ -238,7 +251,7 @@ class VoucherRepository {
       }
     }
 
-    const categoryUuid = this.normalizeCategoryUuid(payload.ma_danh_muc);
+    const categoryUuid = await this.resolveCategoryUuid(payload.ma_danh_muc);
 
     const dbPayload = {
       ten_voucher: payload.ten_voucher,
@@ -358,8 +371,8 @@ class VoucherRepository {
       updatePayload.so_luong_phat_hanh = Number(payload.so_luong_phat_hanh);
     }
 
-    if (payload.gia_goc !== undefined && payload.gia_ban !== undefined) {
-      updatePayload.gia_tri_giam = Math.max(0, Number(payload.gia_goc) - Number(payload.gia_ban));
+    if (payload.ma_danh_muc) {
+      updatePayload.ma_danh_muc = await this.resolveCategoryUuid(payload.ma_danh_muc);
     }
 
     if (Object.keys(updatePayload).length > 0) {
@@ -409,6 +422,24 @@ class VoucherRepository {
       ly_do_tu_choi: lyDoTuChoi || "",
     };
     return this.update(id, payload);
+  }
+
+  async getVoucherCategories() {
+    try {
+      const { data, error } = await supabase
+        .from("danh_muc")
+        .select("ma_danh_muc, ten_danh_muc, mo_ta");
+
+      if (error || !data) {
+        console.error("Lỗi lấy danh mục từ Supabase:", error);
+        return [];
+      }
+
+      return data;
+    } catch (e) {
+      console.error("Exception getVoucherCategories:", e.message);
+      return [];
+    }
   }
 }
 

@@ -6,11 +6,11 @@
 const STORAGE_KEY = "ec_voucher_mock_data_v1";
 
 const INITIAL_CATEGORIES = [
-  { id: "40000000-0000-0000-0000-000000000001", ten_danh_muc: "Ẩm thực & Nhà hàng", mo_ta: "Nhà hàng, quán ăn, buffet, đồ uống" },
-  { id: "40000000-0000-0000-0000-000000000002", ten_danh_muc: "Giải trí & Sân khấu", mo_ta: "Vé xem phim, khu vui chơi, concert, sự kiện" },
-  { id: "40000000-0000-0000-0000-000000000003", ten_danh_muc: "Làm đẹp & Spa", mo_ta: "Chăm sóc da, massage, salon tóc, nail" },
-  { id: "40000000-0000-0000-0000-000000000004", ten_danh_muc: "Du lịch & Khách sạn", mo_ta: "Khách sạn, resort, tour du lịch, nghỉ dưỡng" },
-  { id: "40000000-0000-0000-0000-000000000005", ten_danh_muc: "Mua sắm & Siêu thị", mo_ta: "Thời trang, điện máy, hàng tiêu dùng" },
+  { ma_danh_muc: "40000000-0000-0000-0000-000000000001", id: "40000000-0000-0000-0000-000000000001", ten_danh_muc: "Ăn uống", mo_ta: "Voucher nha hang, quan an va do uong." },
+  { ma_danh_muc: "40000000-0000-0000-0000-000000000002", id: "40000000-0000-0000-0000-000000000002", ten_danh_muc: "Sức khỏe và Làm đẹp", mo_ta: "Voucher spa, cham soc da va suc khoe." },
+  { ma_danh_muc: "40000000-0000-0000-0000-000000000003", id: "40000000-0000-0000-0000-000000000003", ten_danh_muc: "Vui chơi giải trí", mo_ta: "Voucher vui choi va su kien." },
+  { ma_danh_muc: "40000000-0000-0000-0000-000000000004", id: "40000000-0000-0000-0000-000000000004", ten_danh_muc: "Du lịch", mo_ta: "Voucher luu tru va trai nghiem du lich." },
+  { ma_danh_muc: "40000000-0000-0000-0000-000000000005", id: "40000000-0000-0000-0000-000000000005", ten_danh_muc: "Dịch vụ tiện ích", mo_ta: "Voucher dich vu tien ich." },
 ];
 
 const INITIAL_PARTNERS = [

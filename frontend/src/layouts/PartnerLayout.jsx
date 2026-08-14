@@ -88,7 +88,7 @@ export function PartnerLayout({ children }) {
     navigate("/login", { replace: true });
   };
 
-  const navItems = [
+  const allNavItems = [
     { label: "Báo cáo", path: "/partner/reports", icon: "📊" },
     { label: "Tra cứu & Đổi Voucher", path: "/partner/vouchers/lookup", icon: "🔍" },
     { label: "Quản lý Voucher", path: "/partner/vouchers", icon: "🎟️" },
@@ -96,6 +96,17 @@ export function PartnerLayout({ children }) {
     { label: "Hồ sơ doanh nghiệp", path: "/partner/profile", icon: "🏢" },
     { label: "Nhân viên", path: "/partner/staffs", icon: "👥" },
   ];
+
+  const isVoucherManager =
+    currentUser?.vai_tro_he_thong === "Nhan vien quan ly voucher" ||
+    currentUser?.role === "PARTNER_MANAGER" ||
+    currentUser?.role === "VOUCHER_MANAGER";
+
+  const navItems = isVoucherManager
+    ? allNavItems.filter((item) =>
+        ["/partner/reports", "/partner/vouchers/lookup", "/partner/vouchers"].includes(item.path)
+      )
+    : allNavItems;
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
