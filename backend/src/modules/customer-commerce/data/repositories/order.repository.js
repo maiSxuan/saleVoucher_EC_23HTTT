@@ -48,6 +48,19 @@ function sortByDateDesc(rows = [], key) {
   });
 }
 
+const REJECTED_REFUND_DISPLAY_STATUS = 'Huy yeu cau hoan tien';
+
+function getCustomerOrderDisplayStatus(orderStatus, cancelRequests = []) {
+  const latestCancelRequest = cancelRequests[0] || null;
+  if (
+    orderStatus === OrderStatus.DA_THANH_TOAN
+    && latestCancelRequest?.trang_thai === 'Da tu choi'
+  ) {
+    return REJECTED_REFUND_DISPLAY_STATUS;
+  }
+  return orderStatus;
+}
+
 function ensureBatchQuery(result, label) {
   if (result?.error) {
     throw new Error(`${label}: ${result.error.message}`);
@@ -226,6 +239,27 @@ class OrderRepository {
   // -----------------------------------------------------------------------
   async findCustomerOrders(accountId, { status, page = 1, limit = 10 } = {}) {
     const offset = (page - 1) * limit;
+    const filtersRejectedRefund = status === REJECTED_REFUND_DISPLAY_STATUS;
+    const filtersPaidOrders = status === OrderStatus.DA_THANH_TOAN;
+    let rejectedRefundOrderIds = [];
+
+    if (filtersRejectedRefund || filtersPaidOrders) {
+      const { data: rejectedRequests, error: rejectedRequestError } = await supabase
+        .from('yeucauhuy')
+        .select('ma_dh, donhang!inner(ma_tk_dat)')
+        .eq('trang_thai', 'Da tu choi')
+        .eq('donhang.ma_tk_dat', accountId);
+      if (rejectedRequestError) {
+        throw new Error(`Lỗi lọc đơn bị từ chối hoàn tiền: ${rejectedRequestError.message}`);
+      }
+      rejectedRefundOrderIds = uniqueValues(
+        (rejectedRequests || []).map((request) => request.ma_dh),
+      );
+
+      if (filtersRejectedRefund && rejectedRefundOrderIds.length === 0) {
+        return { orders: [], total: 0 };
+      }
+    }
 
     let query = supabase
       .from('donhang')
@@ -234,7 +268,16 @@ class OrderRepository {
       .order('ngay_dat', { ascending: false })
       .range(offset, offset + limit - 1);
 
-    if (status && status !== 'all') {
+    if (filtersRejectedRefund) {
+      query = query
+        .eq('trang_thai', OrderStatus.DA_THANH_TOAN)
+        .in('ma_dh', rejectedRefundOrderIds);
+    } else if (filtersPaidOrders) {
+      query = query.eq('trang_thai', status);
+      if (rejectedRefundOrderIds.length > 0) {
+        query = query.not('ma_dh', 'in', `(${rejectedRefundOrderIds.join(',')})`);
+      }
+    } else if (status && status !== 'all') {
       query = query.eq('trang_thai', status);
     }
 
@@ -272,6 +315,7 @@ class OrderRepository {
         id: dh.ma_dh,
         createdAt: dh.ngay_dat,
         orderStatus: dh.trang_thai,
+        displayStatus: getCustomerOrderDisplayStatus(dh.trang_thai, extra.cancelRequests),
         paymentStatus: latestPayment ? latestPayment.trang_thai : PaymentStatus.DANG_XU_LY,
         total: dh.tong_tien,
         cancelReason: dh.ly_do_huy,
@@ -374,6 +418,7 @@ class OrderRepository {
       id: dh.ma_dh,
       createdAt: dh.ngay_dat,
       orderStatus: dh.trang_thai,
+      displayStatus: getCustomerOrderDisplayStatus(dh.trang_thai, extra.cancelRequests),
       paymentStatus: latestPayment ? latestPayment.trang_thai : PaymentStatus.DANG_XU_LY,
       total: dh.tong_tien,
       cancelReason: dh.ly_do_huy,
@@ -550,7 +595,7 @@ class OrderRepository {
       const refunds = sortByDateDesc(
         payments
           .flatMap((payment) => relationRows(payment.hoantien))
-          .filter((refund) => ['Cho xu ly', 'Dang xu ly', 'Can kiem tra'].includes(refund.trang_thai)),
+          .filter((refund) => ['Cho xu ly', 'Dang xu ly', 'Can kiem tra', 'That bai'].includes(refund.trang_thai)),
         'ngay_xu_ly',
       );
       const codes = rawItems.flatMap((item) => relationRows(item.voucher_mua));
@@ -628,6 +673,9 @@ class OrderRepository {
             voucherName: order.voucherName,
             partnerName: order.partnerName,
             total: order.total,
+            hasUsedVoucherCode: order.codes.some(
+              (code) => code.status === VoucherCodeStatus.DA_SU_DUNG,
+            ),
           });
         }
         if (order.pendingRefund) {
@@ -1057,6 +1105,22 @@ class OrderRepository {
   // 7. CUSTOMER: TẠO YÊU CẦU HỦY (UC-ADM-05 luồng khách hàng)
   // -----------------------------------------------------------------------
   async createCancelRequest(maDh, lyDo, maTkKhach) {
+    const { data: usedCodes, error: usedCodesError } = await supabase
+      .from('voucher_mua')
+      .select('ma_voucher_mua')
+      .eq('ma_dh', maDh)
+      .eq('trang_thai', VoucherCodeStatus.DA_SU_DUNG)
+      .limit(1);
+    if (usedCodesError) {
+      throw new Error(`Không thể kiểm tra điều kiện hủy đơn: ${usedCodesError.message}`);
+    }
+    if (usedCodes?.length) {
+      const conflict = new Error('Đơn hàng có voucher đã sử dụng nên không thể yêu cầu hủy/hoàn tiền.');
+      conflict.status = 409;
+      conflict.errorCode = 'VOUCHER_ALREADY_USED';
+      throw conflict;
+    }
+
     const { data, error } = await supabase
       .from('yeucauhuy')
       .insert({
@@ -1086,13 +1150,19 @@ class OrderRepository {
       throw new Error('Chỉ xử lý yêu cầu hủy của đơn đã thanh toán và chưa chuyển sang hoàn tiền');
     }
 
-    const { data: usedCodes } = await supabase.from('voucher_mua')
+    const { data: usedCodes, error: usedCodesError } = await supabase.from('voucher_mua')
       .select('ma_voucher_mua')
       .eq('ma_dh', ycHuy.ma_dh)
       .eq('trang_thai', VoucherCodeStatus.DA_SU_DUNG)
       .limit(1);
+    if (usedCodesError) {
+      throw new Error(`Không thể kiểm tra điều kiện hoàn tiền: ${usedCodesError.message}`);
+    }
     if (usedCodes?.length) {
-      throw new Error('Voucher code đã được sử dụng nên không đủ điều kiện hủy/hoàn tiền');
+      const conflict = new Error('Đơn hàng có voucher đã sử dụng nên không đủ điều kiện hủy/hoàn tiền. Hãy từ chối yêu cầu hủy này.');
+      conflict.status = 409;
+      conflict.errorCode = 'VOUCHER_ALREADY_USED';
+      throw conflict;
     }
 
     // Lấy giao dịch thanh toán thành công
@@ -1195,27 +1265,50 @@ class OrderRepository {
   // 10. ADMIN: THỰC HIỆN HOÀN TIỀN QUA SANDBOX (UC-ADM-06)
   // -----------------------------------------------------------------------
   async executeRefundViaSandbox(maHoanTien, maTkAdmin, sandboxResult) {
-    // sandboxResult = { isSuccess, isTimeout, refundId, responseCode, gateway }
+    // sandboxResult = { isSuccess, isPending, isTimeout, refundId, responseCode, transactionStatus, gateway }
     const { data: ht } = await supabase.from('hoantien').select('*').eq('ma_hoan_tien', maHoanTien).single();
     if (!ht) throw new Error('Không tìm thấy bản ghi hoàn tiền');
 
     const now = new Date().toISOString();
+    const responseDetail = [sandboxResult.responseCode, sandboxResult.transactionStatus]
+      .filter((value, index, values) => value && values.indexOf(value) === index)
+      .join('/');
 
-    if (sandboxResult.isTimeout) {
-      // E3 — Không xác định được kết quả
-      const { error } = await supabase.from('hoantien')
-        .update({ trang_thai: 'Can kiem tra', ma_tk: maTkAdmin, ngay_xu_ly: now, ma_phan_hoi: sandboxResult.responseCode })
-        .eq('ma_hoan_tien', maHoanTien);
+    if (sandboxResult.isTimeout || sandboxResult.isPending) {
+      // Không xác định được kết quả hoặc cổng đang xử lý: tuyệt đối không gọi lại tự động.
+      const { data, error } = await supabase.from('hoantien')
+        .update({
+          trang_thai: 'Can kiem tra',
+          ma_tk: maTkAdmin,
+          ngay_xu_ly: now,
+          ma_gd_hoan: sandboxResult.refundId || null,
+          ma_phan_hoi: responseDetail || sandboxResult.responseCode,
+        })
+        .eq('ma_hoan_tien', maHoanTien)
+        .eq('trang_thai', 'Dang xu ly')
+        .select('ma_hoan_tien')
+        .maybeSingle();
       if (error) throw new Error(`Lỗi cập nhật trạng thái hoàn tiền: ${error.message}`);
+      if (!data) throw new Error('Trạng thái hoàn tiền đã thay đổi trong lúc cổng thanh toán xử lý');
       return { outcome: 'can_kiem_tra' };
     }
 
     if (!sandboxResult.isSuccess) {
-      // E2 — Sandbox từ chối
-      const { error } = await supabase.from('hoantien')
-        .update({ trang_thai: 'That bai', ma_tk: maTkAdmin, ngay_xu_ly: now, ma_phan_hoi: sandboxResult.responseCode })
-        .eq('ma_hoan_tien', maHoanTien);
+      // E2 — Cổng thanh toán từ chối dứt khoát.
+      const { data, error } = await supabase.from('hoantien')
+        .update({
+          trang_thai: 'That bai',
+          ma_tk: maTkAdmin,
+          ngay_xu_ly: now,
+          ma_gd_hoan: sandboxResult.refundId || null,
+          ma_phan_hoi: responseDetail || sandboxResult.responseCode,
+        })
+        .eq('ma_hoan_tien', maHoanTien)
+        .eq('trang_thai', 'Dang xu ly')
+        .select('ma_hoan_tien')
+        .maybeSingle();
       if (error) throw new Error(`Lỗi cập nhật trạng thái hoàn tiền: ${error.message}`);
+      if (!data) throw new Error('Trạng thái hoàn tiền đã thay đổi trong lúc cổng thanh toán xử lý');
       return { outcome: 'that_bai' };
     }
 
@@ -1240,7 +1333,7 @@ class OrderRepository {
             ma_tk: maTkAdmin,
             ngay_xu_ly: now,
             ma_gd_hoan: sandboxResult.refundId,
-            ma_phan_hoi: sandboxResult.responseCode,
+            ma_phan_hoi: responseDetail || sandboxResult.responseCode,
           })
             .eq('ma_hoan_tien', maHoanTien)
             .eq('trang_thai', 'Dang xu ly')
@@ -1329,7 +1422,7 @@ class OrderRepository {
           trang_thai: 'Can kiem tra',
           ma_tk: maTkAdmin,
           ma_gd_hoan: sandboxResult.refundId,
-          ma_phan_hoi: sandboxResult.responseCode,
+          ma_phan_hoi: responseDetail || sandboxResult.responseCode,
           ngay_xu_ly: now,
         })
         .eq('ma_hoan_tien', maHoanTien);

@@ -508,7 +508,7 @@ export default function CustomerOrdersPage() {
             </p>
           </div>
           <div>
-            <StatusBadge status={order.orderStatus} />
+            <StatusBadge status={order.displayStatus || order.orderStatus} />
           </div>
         </div>
 
@@ -1188,7 +1188,7 @@ export default function CustomerOrdersPage() {
                   </p>
                 </div>
                 <div>
-                  <StatusBadge status={order.orderStatus} />
+                  <StatusBadge status={order.displayStatus || order.orderStatus} />
                 </div>
               </div>
 

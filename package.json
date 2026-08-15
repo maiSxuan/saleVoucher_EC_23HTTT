@@ -1,6 +1,17 @@
 {
+  "name": "sale-voucher-platform",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --kill-others --names BACKEND,FRONTEND --prefix-colors yellow,cyan \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build"
+  },
   "dependencies": {
     "@tiptap/react": "^3.30.1",
     "@tiptap/starter-kit": "^3.30.1"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }

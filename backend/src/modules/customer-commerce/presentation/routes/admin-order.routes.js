@@ -49,6 +49,13 @@ router.post(
   orderController.executeRefund.bind(orderController)
 );
 
+router.post(
+  '/refunds/:id/reconcile',
+  authenticateMiddleware,
+  authorizeMiddleware(JWT_ROLES.ADMIN),
+  orderController.reconcileRefund.bind(orderController)
+);
+
 // -----------------------------------------------------------------------
 // UC-ADM-07: XỬ LÝ KHIẾU NẠI
 // -----------------------------------------------------------------------

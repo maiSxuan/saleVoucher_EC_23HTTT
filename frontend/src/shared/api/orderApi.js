@@ -181,6 +181,14 @@ export async function executeRefund(id) {
   return handleResponse(res);
 }
 
+export async function reconcileRefund(id) {
+  const res = await fetch(`${BASE_URL}/admin/orders/refunds/${id}/reconcile`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  return handleResponse(res);
+}
+
 export async function openComplaint(id) {
   const res = await fetch(`${BASE_URL}/admin/orders/complaints/${id}/open`, {
     method: "POST",

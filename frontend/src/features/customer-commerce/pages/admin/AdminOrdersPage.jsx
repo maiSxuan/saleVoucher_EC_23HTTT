@@ -22,6 +22,7 @@ import {
   approveCancelRequest,
   rejectCancelRequest,
   executeRefund,
+  reconcileRefund,
   reissueOrderCode,
   openComplaint,
   resendComplaintCode,
@@ -324,16 +325,22 @@ export default function AdminOrdersPage() {
   const handleExecuteRefund = async () => {
     try {
       setActionLoading('execute-refund');
-      toast.info('Đang gọi Sandbox hoàn tiền...');
+      toast.info('Đang gửi lệnh hoàn tiền đến cổng Sandbox...');
       const res = await executeRefund(activeRefundId);
-      if (res.data?.outcome === 'thanh_cong') {
-        toast.success(`Hoàn tiền thành công qua Sandbox! (Mã GD: ${res.data.refundId})`);
-      } else if (res.data?.outcome === 'that_bai') {
-        toast.error(`Sandbox từ chối hoàn tiền! (Lý do: ${res.data.responseCode})`);
-      } else if (res.data?.outcome === 'can_kiem_tra') {
-        toast.warning('Không nhận được phản hồi rõ ràng từ Sandbox. Vui lòng kiểm tra lại sau.');
-      } else if (res.data?.outcome === 'khong_ket_noi') {
-        toast.warning('Chưa kết nối được Sandbox. Yêu cầu vẫn ở trạng thái Chờ xử lý để có thể thử lại.');
+      const result = res.data || {};
+      const gatewayName = String(result.gateway || 'cổng thanh toán').toUpperCase();
+      const gatewayDetail = result.message || result.transactionStatus || result.responseCode;
+      if (result.outcome === 'thanh_cong') {
+        const deliveryNote = result.notificationSent === false
+          ? ' Tuy nhiên email thông báo cho khách hàng chưa gửi được.'
+          : '';
+        toast.success(`Đã hoàn tiền thành công qua ${gatewayName}. Mã hoàn: ${result.refundId || 'đang cập nhật'}.${deliveryNote}`);
+      } else if (result.outcome === 'that_bai') {
+        toast.error(`${gatewayName} từ chối hoàn tiền: ${gatewayDetail || 'không có mô tả'}.`);
+      } else if (result.outcome === 'can_kiem_tra') {
+        toast.warning(`Kết quả từ ${gatewayName} đang chờ xác minh (${gatewayDetail || 'chưa rõ trạng thái'}). Không gửi lại lệnh hoàn tiền.`);
+      } else if (result.outcome === 'khong_ket_noi') {
+        toast.warning(`Chưa gửi được lệnh tới ${gatewayName}: ${gatewayDetail || 'lỗi kết nối'}. Yêu cầu vẫn ở trạng thái Chờ xử lý để thử lại.`);
       } else {
         toast.success('Đã gọi API hoàn tiền.');
       }
@@ -364,6 +371,40 @@ export default function AdminOrdersPage() {
       await refreshCurrentData();
     } catch (e) {
       toast.error(e.message || 'Thao tác thất bại');
+    } finally {
+      setActionLoading('');
+    }
+  };
+
+  const handleReconcileRefund = async (refundId) => {
+    try {
+      setActionLoading(`reconcile-refund-${refundId}`);
+      toast.info('Đang kiểm tra trạng thái trên cổng Sandbox...');
+      const res = await reconcileRefund(refundId);
+      const result = res.data || {};
+      const gatewayName = String(result.gateway || 'cổng thanh toán').toUpperCase();
+      const gatewayDetail = result.message || result.transactionStatus || result.responseCode;
+
+      if (result.outcome === 'thanh_cong') {
+        const deliveryNote = result.notificationSent === false
+          ? ' Tuy nhiên email thông báo cho khách hàng chưa gửi được.'
+          : '';
+        toast.success(`Đối soát thành công: ${gatewayName} đã hoàn tiền. Mã hoàn: ${result.refundId}.${deliveryNote}`);
+      } else if (result.outcome === 'that_bai') {
+        toast.error(`${gatewayName} xác nhận hoàn tiền thất bại (${gatewayDetail || 'không có mô tả'}). Admin có thể dùng nút Hoàn tiền lại.`);
+      } else if (result.responseCode === 'VNPAY_QUERY_DUPLICATE') {
+        toast.info(result.message || 'VNPay đang giới hạn truy vấn lặp. Vui lòng đợi một lúc rồi kiểm tra lại.');
+      } else if (gatewayName === 'VNPAY' && ['05', '06'].includes(String(result.transactionStatus))) {
+        const statusText = result.transactionStatus === '05'
+          ? 'VNPay đã tiếp nhận và đang xử lý yêu cầu hoàn tiền.'
+          : 'VNPay đã chuyển yêu cầu hoàn tiền sang ngân hàng.';
+        toast.info(`${statusText} Đây không phải lỗi và không cần gửi lại lệnh refund.`);
+      } else {
+        toast.warning(`${gatewayName} chưa xác nhận kết quả cuối cùng (${gatewayDetail || 'chưa rõ trạng thái'}). Hệ thống giữ nguyên yêu cầu để tránh hoàn tiền hai lần.`);
+      }
+      await refreshCurrentData();
+    } catch (e) {
+      toast.error(e.message || 'Không thể đối soát trạng thái hoàn tiền');
     } finally {
       setActionLoading('');
     }
@@ -481,6 +522,10 @@ export default function AdminOrdersPage() {
     setActiveRequestId(item.id);
     setReasonInput('');
     if (!await loadDetail(item.orderId, 'refund')) return;
+    if (action === 'approve' && item.hasUsedVoucherCode) {
+      toast.warning('Đơn hàng có voucher đã sử dụng nên không thể hoàn tiền. Vui lòng từ chối yêu cầu hủy.');
+      return;
+    }
     if (action === 'approve') setApproveCancelModal(true);
     if (action === 'reject') setRejectCancelModal(true);
   };
@@ -509,6 +554,7 @@ export default function AdminOrdersPage() {
     const hasInconsistency = order.paymentStatus === 'Thanh cong' && order.voucherCodeStatus === 'Loi sinh ma';
     const errorCode = order.codes?.find((code) => code.status === 'Loi sinh ma');
     const canReissue = order.paymentStatus === 'Thanh cong' && Boolean(errorCode);
+    const hasUsedVoucherCode = order.codes?.some((code) => code.status === 'Da su dung');
     const paymentBadge = getPaymentStatusBadge(order.paymentStatus);
     const voucherBadge = getVoucherCodeStatusBadge(order.voucherCodeStatus);
     const activeRefund = order.refunds?.find((refund) => refund.id === activeRefundId) || null;
@@ -702,10 +748,20 @@ export default function AdminOrdersPage() {
                               <strong>{cr.status === 'Da chap nhan' ? 'Lý do chấp nhận:' : 'Lý do từ chối:'}</strong> {cr.processingReason}
                             </p>
                           )}
+                          {cr.status === 'Cho xu ly' && hasUsedVoucherCode && (
+                            <p className="mt-2 text-xs font-semibold text-amber-700">
+                              Không thể duyệt: đơn hàng có voucher đã sử dụng. Vui lòng từ chối yêu cầu hủy.
+                            </p>
+                          )}
                         </div>
                         {cr.status === 'Cho xu ly' && (
                           <div className="flex gap-2">
-                            <button onClick={() => { setReasonInput(''); setActiveRequestId(cr.id); setApproveCancelModal(true); }} className="px-3 py-1.5 bg-green-600 text-white rounded shadow-xs text-sm font-medium hover:bg-green-700">Duyệt</button>
+                            <button
+                              disabled={hasUsedVoucherCode}
+                              title={hasUsedVoucherCode ? 'Voucher đã sử dụng nên không đủ điều kiện hoàn tiền' : 'Duyệt yêu cầu hủy'}
+                              onClick={() => { setReasonInput(''); setActiveRequestId(cr.id); setApproveCancelModal(true); }}
+                              className="px-3 py-1.5 bg-green-600 text-white rounded shadow-xs text-sm font-medium hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                            >Duyệt</button>
                             <button onClick={() => { setReasonInput(''); setActiveRequestId(cr.id); setRejectCancelModal(true); }} className="px-3 py-1.5 bg-red-600 text-white rounded shadow-xs text-sm font-medium hover:bg-red-700">Từ chối</button>
                           </div>
                         )}
@@ -726,7 +782,7 @@ export default function AdminOrdersPage() {
                       <div key={rf.id} className="border border-gray-200 rounded-xl p-4 bg-gray-50 flex justify-between items-start">
                         <div>
                           <p className="text-sm text-gray-900 font-semibold mb-1">
-                            Trạng thái hoàn: <StatusBadge label={rf.status} variant={rf.status === 'Thanh cong' ? 'green' : (rf.status === 'Cho xu ly' ? 'amber' : 'red')} />
+                            Trạng thái hoàn: <StatusBadge label={rf.status} variant={rf.status === 'Thanh cong' ? 'green' : (rf.status === 'Cho xu ly' ? 'amber' : (rf.status === 'Can kiem tra' ? 'purple' : 'red'))} />
                           </p>
                           <p className="text-sm text-gray-700"><strong>Số tiền:</strong> {formatCurrency(rf.amount)} (Qua {rf.gateway || 'chưa xác định'})</p>
                           <p className="text-sm text-gray-700"><strong>Lý do:</strong> {rf.reason}</p>
@@ -734,11 +790,39 @@ export default function AdminOrdersPage() {
                           <p className="text-xs text-gray-500 mt-1">Nguồn: {rf.nguon} {rf.processedAt ? `| Xử lý lúc: ${new Date(rf.processedAt).toLocaleString('vi-VN')}` : ''}</p>
                           {rf.maGdHoan && <p className="text-xs text-blue-600 font-mono mt-1">Mã hoàn Sandbox: {rf.maGdHoan}</p>}
                           {rf.responseCode && <p className="text-xs text-gray-500 font-mono mt-1">Mã phản hồi: {rf.responseCode}</p>}
+                          {rf.status === 'Can kiem tra' && rf.responseCode === '00/05' && (
+                            <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-700">
+                              VNPay đã nhận lệnh hoàn tiền và đang xử lý. Không gửi lại refund; chỉ kiểm tra trạng thái sau một khoảng thời gian.
+                            </p>
+                          )}
+                          {rf.status === 'Can kiem tra' && rf.responseCode === '00/06' && (
+                            <p className="mt-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs leading-5 text-blue-700">
+                              VNPay đã chuyển yêu cầu hoàn tiền sang ngân hàng và đang chờ kết quả cuối cùng.
+                            </p>
+                          )}
                         </div>
-                        {rf.status === 'Cho xu ly' && (
+                        {['Cho xu ly', 'That bai'].includes(rf.status) && (
                           <div className="flex gap-2">
-                            <button onClick={() => { setActiveRefundId(rf.id); setExecuteRefundModal(true); }} className="px-3 py-1.5 bg-blue-600 text-white rounded shadow-xs text-sm font-medium hover:bg-blue-700 flex items-center gap-1">
-                              <RefreshCw size={14} /> Thực hiện hoàn tiền
+                            <button
+                              disabled={Boolean(actionLoading)}
+                              onClick={() => { setActiveRefundId(rf.id); setExecuteRefundModal(true); }}
+                              className={`flex items-center gap-1 rounded px-3 py-1.5 text-sm font-medium text-white shadow-xs disabled:cursor-not-allowed disabled:opacity-50 ${rf.status === 'That bai' ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                            >
+                              <RefreshCw size={14} /> {rf.status === 'That bai' ? 'Hoàn tiền lại' : 'Thực hiện hoàn tiền'}
+                            </button>
+                          </div>
+                        )}
+                        {rf.status === 'Can kiem tra' && (
+                          <div className="flex gap-2">
+                            <button
+                              disabled={Boolean(actionLoading)}
+                              onClick={() => handleReconcileRefund(rf.id)}
+                              className="flex items-center gap-1 rounded bg-purple-600 px-3 py-1.5 text-sm font-medium text-white shadow-xs hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {actionLoading === `reconcile-refund-${rf.id}`
+                                ? <Loader2 size={14} className="animate-spin" />
+                                : <RefreshCw size={14} />}
+                              {actionLoading === `reconcile-refund-${rf.id}` ? 'Đang kiểm tra...' : 'Kiểm tra trạng thái'}
                             </button>
                           </div>
                         )}
@@ -954,7 +1038,7 @@ export default function AdminOrdersPage() {
             <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 space-y-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h3 className="font-bold text-lg text-gray-900">Xác nhận hoàn tiền qua {activeGateway}</h3>
+                  <h3 className="font-bold text-lg text-gray-900">{activeRefund?.status === 'That bai' ? 'Xác nhận hoàn tiền lại' : 'Xác nhận hoàn tiền'} qua {activeGateway}</h3>
                   <p className="mt-1 text-sm text-gray-500">Merchant gửi yêu cầu Refund API trực tiếp đến cổng thanh toán.</p>
                 </div>
                 <span className="shrink-0 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">SANDBOX</span>
@@ -977,11 +1061,25 @@ export default function AdminOrdersPage() {
                 </div>
               </div>
 
+              {activeRefund?.status === 'That bai' && (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                  <p className="font-semibold">Lần hoàn tiền trước đã thất bại.</p>
+                  <p className="mt-1 text-xs leading-5">
+                    Hệ thống sẽ tạo một Request ID mới và gửi lại lệnh. Hãy kiểm tra giao dịch gốc trước khi xác nhận
+                    {activeRefund.responseCode ? ` (mã phản hồi trước: ${activeRefund.responseCode})` : ''}.
+                  </p>
+                </div>
+              )}
+
               <p className="text-xs leading-5 text-gray-500">Refund không mở lại trang checkout như lúc khách thanh toán. Sau khi xác nhận, backend sẽ gọi đúng API Sandbox, lưu mã refund/mã phản hồi và chỉ vô hiệu hóa voucher khi gateway báo thành công.</p>
               <div className="flex justify-end gap-2 pt-2">
                 <button disabled={Boolean(actionLoading)} onClick={() => setExecuteRefundModal(false)} className="px-4 py-2 border rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50">Hủy</button>
                 <button disabled={Boolean(actionLoading)} onClick={handleExecuteRefund} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 disabled:opacity-50">
-                  {actionLoading === 'execute-refund' ? `Đang gọi ${activeGateway} Sandbox...` : `Gửi yêu cầu đến ${activeGateway} Sandbox`}
+                  {actionLoading === 'execute-refund'
+                    ? `Đang gọi ${activeGateway} Sandbox...`
+                    : activeRefund?.status === 'That bai'
+                      ? `Hoàn tiền lại qua ${activeGateway}`
+                      : `Gửi yêu cầu đến ${activeGateway} Sandbox`}
                 </button>
               </div>
             </div>
@@ -1199,17 +1297,33 @@ export default function AdminOrdersPage() {
                     </div>
                     <div className="space-y-3">
                       {refundQueue.map((item) => (
-                        <ActionCard key={`${item.type}-${item.id}`} item={item} tone="red" label={item.type === 'refund' ? (item.status === 'Can kiem tra' ? 'Cần kiểm tra' : item.status === 'Dang xu ly' ? 'Đang hoàn tiền' : 'Chờ hoàn tiền') : 'Yêu cầu hủy'}>
+                        <ActionCard key={`${item.type}-${item.id}`} item={item} tone="red" label={item.type === 'refund' ? (item.status === 'Can kiem tra' ? 'Cần kiểm tra' : item.status === 'Dang xu ly' ? 'Đang hoàn tiền' : item.status === 'That bai' ? 'Hoàn tiền thất bại' : 'Chờ hoàn tiền') : 'Yêu cầu hủy'}>
                           <button onClick={() => loadDetail(item.orderId, 'refund')} className="inline-flex items-center justify-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50"><ExternalLink size={13} /> Xem đơn</button>
                           {item.type === 'cancel_request' ? (
                             <>
-                              <button onClick={() => openCancelAction(item, 'approve')} className="inline-flex items-center justify-center gap-1 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700"><RefreshCw size={13} /> Chấp nhận</button>
+                              <button
+                                disabled={item.hasUsedVoucherCode}
+                                title={item.hasUsedVoucherCode ? 'Voucher đã sử dụng nên không đủ điều kiện hoàn tiền' : 'Chấp nhận yêu cầu hủy'}
+                                onClick={() => openCancelAction(item, 'approve')}
+                                className="inline-flex items-center justify-center gap-1 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                              ><RefreshCw size={13} /> {item.hasUsedVoucherCode ? 'Không đủ điều kiện' : 'Chấp nhận'}</button>
                               <button onClick={() => openCancelAction(item, 'reject')} className="inline-flex items-center justify-center gap-1 rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700"><X size={13} /> Từ chối</button>
                             </>
-                          ) : item.status === 'Cho xu ly' ? (
-                            <button onClick={() => openRefundAction(item)} className="inline-flex items-center justify-center gap-1 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700"><RefreshCw size={13} /> Hoàn tiền</button>
+                          ) : ['Cho xu ly', 'That bai'].includes(item.status) ? (
+                            <button onClick={() => openRefundAction(item)} className={`inline-flex items-center justify-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold text-white ${item.status === 'That bai' ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}`}><RefreshCw size={13} /> {item.status === 'That bai' ? 'Hoàn tiền lại' : 'Hoàn tiền'}</button>
+                          ) : item.status === 'Can kiem tra' ? (
+                            <button
+                              disabled={Boolean(actionLoading)}
+                              onClick={() => handleReconcileRefund(item.id)}
+                              className="inline-flex items-center justify-center gap-1 rounded-lg bg-purple-600 px-3 py-2 text-xs font-semibold text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {actionLoading === `reconcile-refund-${item.id}`
+                                ? <Loader2 size={13} className="animate-spin" />
+                                : <RefreshCw size={13} />}
+                              {actionLoading === `reconcile-refund-${item.id}` ? 'Đang kiểm tra' : 'Kiểm tra trạng thái'}
+                            </button>
                           ) : (
-                            <span className="rounded-lg bg-red-100 px-3 py-2 text-center text-xs font-semibold text-red-600">{item.status === 'Can kiem tra' ? 'Đối soát cổng' : 'Đang xử lý'}</span>
+                            <span className="rounded-lg bg-red-100 px-3 py-2 text-center text-xs font-semibold text-red-600">Đang xử lý</span>
                           )}
                         </ActionCard>
                       ))}

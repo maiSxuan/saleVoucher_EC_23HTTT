@@ -182,8 +182,23 @@ class OrderController {
     try {
       const { id } = req.params; // ma_hoan_tien
       const adminAccountId = req.user.accountId || req.user.id;
-      const result = await orderService.executeRefund(id, adminAccountId);
+      const forwardedIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim();
+      const ipAddr = forwardedIp || req.ip || req.socket?.remoteAddress || '127.0.0.1';
+      const result = await orderService.executeRefund(id, adminAccountId, ipAddr);
       return res.json({ success: true, data: result, message: 'Đã xử lý hoàn tiền' });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async reconcileRefund(req, res, next) {
+    try {
+      const { id } = req.params;
+      const adminAccountId = req.user.accountId || req.user.id;
+      const forwardedIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim();
+      const ipAddr = forwardedIp || req.ip || req.socket?.remoteAddress || '127.0.0.1';
+      const result = await orderService.reconcileRefund(id, adminAccountId, ipAddr);
+      return res.json({ success: true, data: result, message: 'Đã đối soát trạng thái hoàn tiền' });
     } catch (e) {
       next(e);
     }

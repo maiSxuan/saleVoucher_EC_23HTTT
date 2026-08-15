@@ -11,6 +11,7 @@ const LogResult = require('../../../../common/constants/log-result');
 const { sendNotificationEmail } = require('../../../../common/utils/mailer');
 const vnpayGateway = require('./gateways/vnpay.gateway');
 const paypalGateway = require('./gateways/paypal.gateway');
+const crypto = require('crypto');
 
 class OrderService {
   // kiểm tra khả dụng, tính tổng tiền — CHƯA ghi DB
@@ -394,14 +395,44 @@ class OrderService {
   // -----------------------------------------------------------------------
   // UC-ADM-06: THỰC HIỆN HOÀN TIỀN QUA SANDBOX
   // -----------------------------------------------------------------------
-  async executeRefund(maHoanTien, adminAccountId) {
+  async executeRefund(maHoanTien, adminAccountId, ipAddr = '127.0.0.1') {
     const supabase = require('../../../../config/supabase');
     const { data: ht } = await supabase.from('hoantien').select('*').eq('ma_hoan_tien', maHoanTien).single();
     if (!ht) throw new Error('Không tìm thấy bản ghi hoàn tiền');
-    if (ht.trang_thai !== 'Cho xu ly') throw new Error('Hoàn tiền không ở trạng thái Chờ xử lý');
+    const retryableStatuses = ['Cho xu ly', 'That bai'];
+    if (!retryableStatuses.includes(ht.trang_thai)) {
+      throw new Error('Chỉ có thể hoàn tiền khi đang Chờ xử lý hoặc thử lại khi lần hoàn trước Thất bại');
+    }
+    const isRetry = ht.trang_thai === 'That bai';
+    const refundRequestId = isRetry ? crypto.randomUUID() : maHoanTien;
 
     const { data: payment } = await supabase.from('thanhtoan').select('*').eq('ma_thanh_toan', ht.ma_thanh_toan).single();
     if (!payment) throw new Error('Không tìm thấy giao dịch thanh toán gốc (E5)');
+    if (payment.trang_thai !== PaymentStatus.THANH_CONG) {
+      throw new Error('Chỉ được hoàn giao dịch thanh toán đã thành công');
+    }
+    if (Number(ht.so_tien) <= 0 || Number(ht.so_tien) !== Number(payment.so_tien)) {
+      throw new Error('Số tiền hoàn phải bằng đúng số tiền của giao dịch thanh toán gốc');
+    }
+
+    const { data: order, error: orderError } = await supabase.from('donhang')
+      .select('ma_dh, trang_thai')
+      .eq('ma_dh', payment.ma_dh)
+      .single();
+    if (orderError || !order) throw new Error('Không tìm thấy đơn hàng cần hoàn tiền');
+    if (order.trang_thai !== OrderStatus.CHO_HOAN_TIEN) {
+      throw new Error('Đơn hàng không còn ở trạng thái Chờ hoàn tiền');
+    }
+
+    const { data: usedCodes, error: usedCodeError } = await supabase.from('voucher_mua')
+      .select('ma_voucher_mua')
+      .eq('ma_dh', payment.ma_dh)
+      .eq('trang_thai', VoucherCodeStatus.DA_SU_DUNG)
+      .limit(1);
+    if (usedCodeError) throw new Error(`Không thể kiểm tra voucher đã sử dụng: ${usedCodeError.message}`);
+    if (usedCodes?.length) {
+      throw new Error('Đơn hàng có voucher đã sử dụng nên không đủ điều kiện hoàn tiền');
+    }
     const rawGateway = String(payment.phuong_thuc_tt || '').toLowerCase();
     const gateway = rawGateway.includes('paypal')
       ? 'paypal'
@@ -447,13 +478,20 @@ class OrderService {
       .from('hoantien')
       .update({ trang_thai: 'Dang xu ly', ma_tk: adminAccountId })
       .eq('ma_hoan_tien', maHoanTien)
-      .eq('trang_thai', 'Cho xu ly')
+      .in('trang_thai', retryableStatuses)
       .select('ma_hoan_tien')
       .maybeSingle();
     if (lockError) throw new Error(`Không thể khóa yêu cầu hoàn tiền: ${lockError.message}`);
     if (!lockedRefund) throw new Error('Yêu cầu hoàn tiền đang được xử lý bởi một thao tác khác');
 
-    let sandboxResult = { isSuccess: false, isTimeout: false, refundId: null, responseCode: 'UNKNOWN' };
+    let sandboxResult = {
+      isSuccess: false,
+      isPending: false,
+      isTimeout: false,
+      refundId: null,
+      responseCode: 'UNKNOWN',
+      gateway,
+    };
     try {
       if (gateway === 'vnpay') {
         sandboxResult = await vnpayGateway.refundPayment({
@@ -462,19 +500,19 @@ class OrderService {
           amount: ht.so_tien,
           reason: ht.ly_do,
           transactionDate: payment.thoi_gian_tt,
-          refundRequestId: maHoanTien,
+          refundRequestId,
           createBy: adminAccountId,
+          ipAddr,
         });
       } else if (gateway === 'paypal') {
         sandboxResult = await paypalGateway.refundCapture({
           captureId: maGdGoc,
-          amountVnd: ht.so_tien,
           reason: ht.ly_do,
-          refundRequestId: maHoanTien,
+          refundRequestId,
         });
       }
     } catch (err) {
-      if (!err.isTimeout) {
+      if (!err.isTimeout && !err.requestMayHaveReachedGateway) {
         // E1: lỗi trước khi gửi được lệnh refund (ví dụ không xác thực/kết nối
         // được Sandbox) phải trả bản ghi về Chờ xử lý để Admin có thể thử lại.
         await supabase.from('hoantien')
@@ -486,32 +524,240 @@ class OrderService {
           actorId: adminAccountId, actorRole: 'ADMIN',
           action: 'EXECUTE_REFUND_SANDBOX', targetType: 'hoantien', targetId: maHoanTien,
           result: LogResult.THAT_BAI,
-          before: { trang_thai: 'Cho xu ly' },
+          before: { trang_thai: ht.trang_thai },
           after: { outcome: 'khong_ket_noi', gateway, maGdGoc },
           reason: err.message,
         }, true);
 
-        return { outcome: 'khong_ket_noi', refundId: null, responseCode: err.message };
+        return {
+          outcome: 'khong_ket_noi',
+          gateway,
+          refundId: null,
+          responseCode: err.code || 'GATEWAY_NOT_CALLED',
+          message: err.message,
+        };
       }
-      sandboxResult = { isSuccess: false, isTimeout: true, refundId: null, responseCode: err.message };
+      sandboxResult = {
+        isSuccess: false,
+        isPending: false,
+        isTimeout: true,
+        refundId: null,
+        responseCode: err.code || 'GATEWAY_RESULT_UNKNOWN',
+        message: err.message,
+        gateway,
+      };
     }
 
     let outcome;
+    let persistenceMessage = null;
     try {
       const res = await orderRepository.executeRefundViaSandbox(maHoanTien, adminAccountId, sandboxResult);
       outcome = res.outcome;
     } catch (err) {
       outcome = err.outcome || 'can_kiem_tra';
+      persistenceMessage = err.message;
+    }
+
+    let notificationSent = null;
+    if (outcome === 'thanh_cong') {
+      notificationSent = true;
+      try {
+        const customer = await orderRepository.getOrderCustomerDeliveryContext(payment.ma_dh);
+        const formattedAmount = Number(ht.so_tien).toLocaleString('vi-VN');
+        await sendNotificationEmail(customer.customerEmail, {
+          subject: `Snow Voucher - Hoàn tiền đơn ${payment.ma_dh}`,
+          title: 'Hoàn tiền thành công',
+          message: `Chào ${customer.customerName || 'bạn'}, đơn ${payment.ma_dh} đã được hoàn ${formattedAmount} đ qua ${gateway.toUpperCase()}. Mã hoàn tiền: ${sandboxResult.refundId || 'đang cập nhật'}.`,
+        });
+      } catch (error) {
+        notificationSent = false;
+        await auditLogService.log({
+          actorId: adminAccountId,
+          actorRole: 'ADMIN',
+          action: 'NOTIFY_REFUND_COMPLETION',
+          targetType: 'hoantien',
+          targetId: maHoanTien,
+          result: LogResult.THAT_BAI,
+          reason: error.message,
+        });
+      }
     }
 
     await auditLogService.log({
       actorId: adminAccountId, actorRole: 'ADMIN',
       action: 'EXECUTE_REFUND_SANDBOX', targetType: 'hoantien', targetId: maHoanTien,
-      before: { trang_thai: 'Cho xu ly' },
-      after: { outcome, gateway, maGdGoc, refundId: sandboxResult.refundId, responseCode: sandboxResult.responseCode },
+      before: { trang_thai: ht.trang_thai },
+      after: {
+        outcome,
+        isRetry,
+        gateway,
+        maGdGoc,
+        refundId: sandboxResult.refundId,
+        responseCode: sandboxResult.responseCode,
+        transactionStatus: sandboxResult.transactionStatus || null,
+      },
+      reason: persistenceMessage || sandboxResult.message || null,
     }, true);
 
-    return { outcome, refundId: sandboxResult.refundId, responseCode: sandboxResult.responseCode };
+    return {
+      outcome,
+      gateway,
+      refundId: sandboxResult.refundId,
+      responseCode: sandboxResult.responseCode,
+      transactionStatus: sandboxResult.transactionStatus || null,
+      message: persistenceMessage || sandboxResult.message || null,
+      notificationSent,
+    };
+  }
+
+  // UC-ADM-06: ĐỐI SOÁT TRẠNG THÁI MỘT LỆNH HOÀN TIỀN ĐÃ GỬI
+  async reconcileRefund(maHoanTien, adminAccountId, ipAddr = '127.0.0.1') {
+    const supabase = require('../../../../config/supabase');
+    const { data: ht, error: refundError } = await supabase.from('hoantien')
+      .select('*')
+      .eq('ma_hoan_tien', maHoanTien)
+      .single();
+    if (refundError || !ht) throw new Error('Không tìm thấy bản ghi hoàn tiền');
+    if (ht.trang_thai !== 'Can kiem tra') {
+      throw new Error('Chỉ đối soát được giao dịch hoàn tiền ở trạng thái Cần kiểm tra');
+    }
+    if (!ht.ma_gd_hoan) {
+      const error = new Error('Chưa có mã hoàn tiền từ cổng thanh toán để đối soát');
+      error.status = 409;
+      throw error;
+    }
+
+    const { data: payment, error: paymentError } = await supabase.from('thanhtoan')
+      .select('*')
+      .eq('ma_thanh_toan', ht.ma_thanh_toan)
+      .single();
+    if (paymentError || !payment) throw new Error('Không tìm thấy giao dịch thanh toán gốc');
+
+    const rawGateway = String(payment.phuong_thuc_tt || '').toLowerCase();
+    const gateway = rawGateway.includes('paypal')
+      ? 'paypal'
+      : rawGateway.includes('vnpay')
+        ? 'vnpay'
+        : rawGateway;
+    if (!['vnpay', 'paypal'].includes(gateway)) {
+      throw new Error(`Cổng thanh toán không hợp lệ: ${payment.phuong_thuc_tt || 'không xác định'}`);
+    }
+
+    // Khóa ngắn hạn để hai quản trị viên không đối soát/cập nhật cùng lúc.
+    // Lệnh sau chỉ gọi QueryDR/GET refund status, không gửi lại lệnh refund.
+    const { data: lockedRefund, error: lockError } = await supabase.from('hoantien')
+      .update({ trang_thai: 'Dang xu ly', ma_tk: adminAccountId })
+      .eq('ma_hoan_tien', maHoanTien)
+      .eq('trang_thai', 'Can kiem tra')
+      .select('ma_hoan_tien')
+      .maybeSingle();
+    if (lockError) throw new Error(`Không thể khóa giao dịch đối soát: ${lockError.message}`);
+    if (!lockedRefund) throw new Error('Giao dịch hoàn tiền đang được đối soát bởi thao tác khác');
+
+    let sandboxResult;
+    try {
+      sandboxResult = gateway === 'vnpay'
+        ? await vnpayGateway.queryRefundStatus({
+          paymentId: payment.ma_thanh_toan,
+          refundId: ht.ma_gd_hoan,
+          transactionDate: payment.thoi_gian_tt,
+          ipAddr,
+        })
+        : await paypalGateway.queryRefundStatus({ refundId: ht.ma_gd_hoan });
+    } catch (error) {
+      await supabase.from('hoantien')
+        .update({ trang_thai: 'Can kiem tra' })
+        .eq('ma_hoan_tien', maHoanTien)
+        .eq('trang_thai', 'Dang xu ly');
+
+      await auditLogService.log({
+        actorId: adminAccountId,
+        actorRole: 'ADMIN',
+        action: 'RECONCILE_REFUND_SANDBOX',
+        targetType: 'hoantien',
+        targetId: maHoanTien,
+        result: LogResult.THAT_BAI,
+        before: { trang_thai: ht.trang_thai, ma_gd_hoan: ht.ma_gd_hoan },
+        after: { outcome: 'can_kiem_tra', gateway },
+        reason: error.message,
+      }, true);
+
+      return {
+        outcome: 'can_kiem_tra',
+        gateway,
+        refundId: ht.ma_gd_hoan,
+        responseCode: error.code || 'GATEWAY_QUERY_FAILED',
+        transactionStatus: null,
+        message: error.message,
+        notificationSent: null,
+      };
+    }
+
+    let outcome;
+    let persistenceMessage = null;
+    try {
+      const result = await orderRepository.executeRefundViaSandbox(
+        maHoanTien,
+        adminAccountId,
+        sandboxResult,
+      );
+      outcome = result.outcome;
+    } catch (error) {
+      outcome = error.outcome || 'can_kiem_tra';
+      persistenceMessage = error.message;
+    }
+
+    let notificationSent = null;
+    if (outcome === 'thanh_cong') {
+      notificationSent = true;
+      try {
+        const customer = await orderRepository.getOrderCustomerDeliveryContext(payment.ma_dh);
+        const formattedAmount = Number(ht.so_tien).toLocaleString('vi-VN');
+        await sendNotificationEmail(customer.customerEmail, {
+          subject: `Snow Voucher - Hoàn tiền đơn ${payment.ma_dh}`,
+          title: 'Hoàn tiền thành công',
+          message: `Chào ${customer.customerName || 'bạn'}, đơn ${payment.ma_dh} đã được hoàn ${formattedAmount} đ qua ${gateway.toUpperCase()}. Mã hoàn tiền: ${sandboxResult.refundId}.`,
+        });
+      } catch (error) {
+        notificationSent = false;
+        await auditLogService.log({
+          actorId: adminAccountId,
+          actorRole: 'ADMIN',
+          action: 'NOTIFY_REFUND_COMPLETION',
+          targetType: 'hoantien',
+          targetId: maHoanTien,
+          result: LogResult.THAT_BAI,
+          reason: error.message,
+        });
+      }
+    }
+
+    await auditLogService.log({
+      actorId: adminAccountId,
+      actorRole: 'ADMIN',
+      action: 'RECONCILE_REFUND_SANDBOX',
+      targetType: 'hoantien',
+      targetId: maHoanTien,
+      before: { trang_thai: ht.trang_thai, ma_gd_hoan: ht.ma_gd_hoan },
+      after: {
+        outcome,
+        gateway,
+        refundId: sandboxResult.refundId,
+        responseCode: sandboxResult.responseCode,
+        transactionStatus: sandboxResult.transactionStatus || null,
+      },
+      reason: persistenceMessage || sandboxResult.message || null,
+    }, true);
+
+    return {
+      outcome,
+      gateway,
+      refundId: sandboxResult.refundId,
+      responseCode: sandboxResult.responseCode,
+      transactionStatus: sandboxResult.transactionStatus || null,
+      message: persistenceMessage || sandboxResult.message || null,
+      notificationSent,
+    };
   }
 
   // UC-ADM-07: MỬ KHIẾU NẠI
