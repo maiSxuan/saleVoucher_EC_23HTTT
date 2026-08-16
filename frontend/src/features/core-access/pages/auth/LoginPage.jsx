@@ -59,7 +59,11 @@ export default function LoginPage() {
 
     const userRole = payload.user?.role;
     if (userRole === "ADMIN") navigate("/admin");
-    else if (userRole === "PARTNER_OWNER" || userRole === "PARTNER_STAFF")
+    else if (
+      userRole === "PARTNER_OWNER" ||
+      userRole === "PARTNER_STAFF" ||
+      userRole === "PARTNER_MANAGER"
+    )
       navigate("/partner");
     else navigate("/customer");
   };

@@ -27,6 +27,8 @@ export default function Header() {
         return <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-medium">Admin</span>;
       case 'PARTNER_OWNER':
         return <span className="bg-emerald-600 text-white text-xs px-2 py-1 rounded-full font-medium">Partner Owner</span>;
+      case 'PARTNER_MANAGER':
+        return <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded-full font-medium">Partner Manager</span>;
       case 'PARTNER_STAFF':
         return <span className="bg-emerald-500 text-white text-xs px-2 py-1 rounded-full font-medium">Partner Staff</span>;
       case 'CUSTOMER':
