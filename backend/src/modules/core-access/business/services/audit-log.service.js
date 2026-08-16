@@ -126,17 +126,40 @@ class AuditLogService {
   }
 
   /**
-   * Resolve specific role string (e.g. 'Nguoi dai dien', 'Nhan vien quan ly voucher', 'Admin')
+   * Normalize role string (DB Vietnamese or JWT) to clean standard role keys:
+   * 'PARTNER_OWNER', 'PARTNER_MANAGER', 'PARTNER_STAFF', 'ADMIN', 'CUSTOMER'
+   */
+  normalizeRoleToKey(roleStr) {
+    if (!roleStr || typeof roleStr !== "string") return null;
+    const r = roleStr.trim().toLowerCase();
+
+    if (r.includes("quan ly") || r.includes("manager") || r === "partner_manager" || r === "voucher_manager") {
+      return "PARTNER_MANAGER";
+    }
+    if (r.includes("dai dien") || r.includes("owner") || r === "partner_owner") {
+      return "PARTNER_OWNER";
+    }
+    if (r.includes("ban hang") || r.includes("staff") || r === "partner_staff") {
+      return "PARTNER_STAFF";
+    }
+    if (r.includes("admin")) {
+      return "ADMIN";
+    }
+    if (r.includes("khach hang") || r.includes("customer")) {
+      return "CUSTOMER";
+    }
+
+    return roleStr.toUpperCase();
+  }
+
+  /**
+   * Resolve specific role key (e.g. 'PARTNER_OWNER', 'PARTNER_MANAGER', 'ADMIN')
    * when actorRole is generic ('PARTNER') or null.
    */
   async resolveActorRole(actorId, actorRole = null) {
-    if (
-      actorRole &&
-      actorRole !== "PARTNER" &&
-      actorRole !== "PARTNER_STAFF" &&
-      actorRole !== "PARTNER_OWNER"
-    ) {
-      return actorRole;
+    let resolvedRole = this.normalizeRoleToKey(actorRole);
+    if (resolvedRole && resolvedRole !== "PARTNER") {
+      return resolvedRole;
     }
 
     if (actorId) {
@@ -156,14 +179,14 @@ class AuditLogService {
           .maybeSingle();
 
         if (user?.vai_tro) {
-          return user.vai_tro;
+          return this.normalizeRoleToKey(user.vai_tro);
         }
       } catch (e) {
         console.warn("[AuditLogService] resolveActorRole warning:", e.message);
       }
     }
 
-    return actorRole || "PARTNER";
+    return resolvedRole || "PARTNER";
   }
 
   /**
