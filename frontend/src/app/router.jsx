@@ -187,6 +187,7 @@ const routes = [
       <ProtectedRoute
         allowedRoles={[
           "PARTNER_OWNER",
+          "PARTNER_MANAGER",
           "PARTNER_STAFF",
           "Nguoi dai dien",
           "Nhan vien quan ly voucher",

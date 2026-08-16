@@ -91,9 +91,11 @@ export function PartnerLayout({ children }) {
     currentUser?.vai_tro_he_thong ||
     (currentUser?.role === "PARTNER_STAFF"
       ? "Nhân viên bán hàng"
-      : currentUser?.role === "PARTNER_OWNER"
-        ? "Người đại diện"
-        : "Đối tác");
+      : currentUser?.role === "PARTNER_MANAGER"
+        ? "Nhân viên quản lý voucher"
+        : currentUser?.role === "PARTNER_OWNER"
+          ? "Người đại diện"
+          : "Đối tác");
 
   if (typeof userRole === "object" && userRole !== null) {
     userRole = userRole.name || userRole.ten_vai_tro || JSON.stringify(userRole);

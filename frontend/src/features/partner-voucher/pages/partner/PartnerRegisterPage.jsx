@@ -239,7 +239,11 @@ export function PartnerRegisterPage() {
   };
 
   const handleBack = () => {
-    setCurrentStep((prev) => Math.max(prev - 1, 1));
+    if (currentStep > 1) {
+      setCurrentStep((prev) => prev - 1);
+    } else {
+      navigate("/login");
+    }
   };
 
   const handleSubmit = async () => {
@@ -851,7 +855,7 @@ export function PartnerRegisterPage() {
 
           {/* Navigation buttons */}
           <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
-            <Button variant="secondary" onClick={handleBack} disabled={currentStep === 1}>
+            <Button variant="secondary" onClick={handleBack}>
               ← Quay lại
             </Button>
 

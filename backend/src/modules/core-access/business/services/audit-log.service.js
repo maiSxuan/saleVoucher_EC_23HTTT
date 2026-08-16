@@ -126,6 +126,70 @@ class AuditLogService {
   }
 
   /**
+   * Normalize role string (DB Vietnamese or JWT) to clean standard role keys:
+   * 'PARTNER_OWNER', 'PARTNER_MANAGER', 'PARTNER_STAFF', 'ADMIN', 'CUSTOMER'
+   */
+  normalizeRoleToKey(roleStr) {
+    if (!roleStr || typeof roleStr !== "string") return null;
+    const r = roleStr.trim().toLowerCase();
+
+    if (r.includes("quan ly") || r.includes("manager") || r === "partner_manager" || r === "voucher_manager") {
+      return "PARTNER_MANAGER";
+    }
+    if (r.includes("dai dien") || r.includes("owner") || r === "partner_owner") {
+      return "PARTNER_OWNER";
+    }
+    if (r.includes("ban hang") || r.includes("staff") || r === "partner_staff") {
+      return "PARTNER_STAFF";
+    }
+    if (r.includes("admin")) {
+      return "ADMIN";
+    }
+    if (r.includes("khach hang") || r.includes("customer")) {
+      return "CUSTOMER";
+    }
+
+    return roleStr.toUpperCase();
+  }
+
+  /**
+   * Resolve specific role key (e.g. 'PARTNER_OWNER', 'PARTNER_MANAGER', 'ADMIN')
+   * when actorRole is generic ('PARTNER') or null.
+   */
+  async resolveActorRole(actorId, actorRole = null) {
+    let resolvedRole = this.normalizeRoleToKey(actorRole);
+    if (resolvedRole && resolvedRole !== "PARTNER") {
+      return resolvedRole;
+    }
+
+    if (actorId) {
+      try {
+        const { data: acc } = await supabase
+          .from("taikhoan")
+          .select("ma_nguoi_dung")
+          .or(`ma_tk.eq.${actorId},ma_nguoi_dung.eq.${actorId}`)
+          .maybeSingle();
+
+        const userId = acc?.ma_nguoi_dung || actorId;
+
+        const { data: user } = await supabase
+          .from("nguoidung")
+          .select("vai_tro")
+          .eq("ma_nguoi_dung", userId)
+          .maybeSingle();
+
+        if (user?.vai_tro) {
+          return this.normalizeRoleToKey(user.vai_tro);
+        }
+      } catch (e) {
+        console.warn("[AuditLogService] resolveActorRole warning:", e.message);
+      }
+    }
+
+    return resolvedRole || "PARTNER";
+  }
+
+  /**
    * Ghi một bản ghi audit log vào DB.
    * @param {object} params
    *  - actorId: uuid tài khoản hoặc người dùng thực hiện (sẽ tự resolve sang ma_tk)
@@ -158,8 +222,9 @@ class AuditLogService {
       setImmediate(async () => {
         try {
           const resolvedActorId = await this.resolveActorId(actorId, actorRole);
+          const resolvedActorRole = await this.resolveActorRole(actorId, actorRole);
           await auditLogRepository.create({
-            vai_tro_thuc_hien: actorRole,
+            vai_tro_thuc_hien: resolvedActorRole,
             hanh_dong: action,
             du_lieu_truoc: before,
             du_lieu_sau: after,
@@ -179,8 +244,9 @@ class AuditLogService {
     try {
       // Strict logging: synchronous execution
       const resolvedActorId = await this.resolveActorId(actorId, actorRole);
+      const resolvedActorRole = await this.resolveActorRole(actorId, actorRole);
       const logEntry = await auditLogRepository.create({
-        vai_tro_thuc_hien: actorRole,
+        vai_tro_thuc_hien: resolvedActorRole,
         hanh_dong: action,
         du_lieu_truoc: before,
         du_lieu_sau: after,
