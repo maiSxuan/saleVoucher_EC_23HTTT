@@ -51,7 +51,7 @@ class VoucherService {
     return await voucherRepository.findById(id);
   }
 
-  async createVoucher(payload, actorId = null) {
+  async createVoucher(payload, actorId = null, actorRole = null) {
     if (payload.hinh_anh_url && payload.hinh_anh_url.startsWith("data:")) {
       payload.hinh_anh_url = await uploadBase64ToSupabase(payload.hinh_anh_url, "vouchers");
     }
@@ -64,7 +64,7 @@ class VoucherService {
     try {
       await auditLogService.log({
         actorId: actorId || payload.actorId || payload.ma_tk || payload.ma_hs,
-        actorRole: "PARTNER",
+        actorRole: actorRole || "PARTNER",
         action: payload.trang_thai === "Cho duyet" ? "SUBMIT_VOUCHER_REVIEW" : "CREATE_VOUCHER_DRAFT",
         targetType: "VOUCHER",
         targetId: voucher.ma_voucher,
@@ -79,7 +79,7 @@ class VoucherService {
     return voucher;
   }
 
-  async updateVoucher(id, payload, actorId = null) {
+  async updateVoucher(id, payload, actorId = null, actorRole = null) {
     if (payload.hinh_anh_url && payload.hinh_anh_url.startsWith("data:")) {
       payload.hinh_anh_url = await uploadBase64ToSupabase(payload.hinh_anh_url, "vouchers");
     }
@@ -93,7 +93,7 @@ class VoucherService {
       const isSubmitReview = payload.trang_thai === "Cho duyet";
       await auditLogService.log({
         actorId: actorId || payload.actorId || payload.ma_tk || payload.ma_hs || id,
-        actorRole: "PARTNER",
+        actorRole: actorRole || "PARTNER",
         action: isSubmitReview ? "SUBMIT_VOUCHER_REVIEW" : "UPDATE_VOUCHER",
         targetType: "VOUCHER",
         targetId: id,
@@ -111,12 +111,12 @@ class VoucherService {
     return updated;
   }
 
-  async submitForReview(id, actorId = null) {
+  async submitForReview(id, actorId = null, actorRole = null) {
     const res = await voucherRepository.updateStatus(id, "Cho duyet", "Cho duyet");
     try {
       await auditLogService.log({
         actorId: actorId || id,
-        actorRole: "PARTNER",
+        actorRole: actorRole || "PARTNER",
         action: "SUBMIT_VOUCHER_REVIEW",
         targetType: "VOUCHER",
         targetId: id,
@@ -182,8 +182,25 @@ class VoucherService {
     return res;
   }
 
-  async updateVoucherStatus(id, status) {
-    return await voucherRepository.update(id, { trang_thai: status });
+  async updateVoucherStatus(id, status, actorId = null, actorRole = null) {
+    const existing = await voucherRepository.findById(id);
+    const updated = await voucherRepository.update(id, { trang_thai: status });
+    try {
+      await auditLogService.log({
+        actorId: actorId || id,
+        actorRole: actorRole || "PARTNER",
+        action: status === "Tam ngung" ? "PAUSE_VOUCHER" : "RESUME_VOUCHER",
+        targetType: "VOUCHER",
+        targetId: id,
+        before: existing ? { trang_thai: existing.trang_thai } : null,
+        after: { trang_thai: status },
+        result: "Thanh cong",
+        reason: `Cập nhật trạng thái voucher sang ${status}`,
+      });
+    } catch (e) {
+      console.warn("[VoucherService] Log updateVoucherStatus failed:", e.message);
+    }
+    return updated;
   }
 
   async getCategories() {

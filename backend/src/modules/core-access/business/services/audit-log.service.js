@@ -126,6 +126,47 @@ class AuditLogService {
   }
 
   /**
+   * Resolve specific role string (e.g. 'Nguoi dai dien', 'Nhan vien quan ly voucher', 'Admin')
+   * when actorRole is generic ('PARTNER') or null.
+   */
+  async resolveActorRole(actorId, actorRole = null) {
+    if (
+      actorRole &&
+      actorRole !== "PARTNER" &&
+      actorRole !== "PARTNER_STAFF" &&
+      actorRole !== "PARTNER_OWNER"
+    ) {
+      return actorRole;
+    }
+
+    if (actorId) {
+      try {
+        const { data: acc } = await supabase
+          .from("taikhoan")
+          .select("ma_nguoi_dung")
+          .or(`ma_tk.eq.${actorId},ma_nguoi_dung.eq.${actorId}`)
+          .maybeSingle();
+
+        const userId = acc?.ma_nguoi_dung || actorId;
+
+        const { data: user } = await supabase
+          .from("nguoidung")
+          .select("vai_tro")
+          .eq("ma_nguoi_dung", userId)
+          .maybeSingle();
+
+        if (user?.vai_tro) {
+          return user.vai_tro;
+        }
+      } catch (e) {
+        console.warn("[AuditLogService] resolveActorRole warning:", e.message);
+      }
+    }
+
+    return actorRole || "PARTNER";
+  }
+
+  /**
    * Ghi một bản ghi audit log vào DB.
    * @param {object} params
    *  - actorId: uuid tài khoản hoặc người dùng thực hiện (sẽ tự resolve sang ma_tk)
@@ -158,8 +199,9 @@ class AuditLogService {
       setImmediate(async () => {
         try {
           const resolvedActorId = await this.resolveActorId(actorId, actorRole);
+          const resolvedActorRole = await this.resolveActorRole(actorId, actorRole);
           await auditLogRepository.create({
-            vai_tro_thuc_hien: actorRole,
+            vai_tro_thuc_hien: resolvedActorRole,
             hanh_dong: action,
             du_lieu_truoc: before,
             du_lieu_sau: after,
@@ -179,8 +221,9 @@ class AuditLogService {
     try {
       // Strict logging: synchronous execution
       const resolvedActorId = await this.resolveActorId(actorId, actorRole);
+      const resolvedActorRole = await this.resolveActorRole(actorId, actorRole);
       const logEntry = await auditLogRepository.create({
-        vai_tro_thuc_hien: actorRole,
+        vai_tro_thuc_hien: resolvedActorRole,
         hanh_dong: action,
         du_lieu_truoc: before,
         du_lieu_sau: after,
