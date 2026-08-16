@@ -53,7 +53,7 @@ export default function CustomerLayout() {
         const active = (res.data || []).filter(p => p.status === 'visible' || !p.status);
         setPopups(active);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const visibleCategories = categories.slice(0, MAX_VISIBLE_CATEGORIES);
@@ -181,11 +181,10 @@ export default function CustomerLayout() {
           <div className="flex items-center gap-6 overflow-x-auto pb-2.5 pt-1 scrollbar-none text-base font-medium">
             <button
               onClick={() => selectCategory("Tất cả")}
-              className={`whitespace-nowrap py-1 border-b-2 transition-all ${
-                activeCategory === "Tất cả"
+              className={`whitespace-nowrap py-1 border-b-2 transition-all ${activeCategory === "Tất cả"
                   ? "border-white text-white font-semibold"
                   : "border-transparent text-white/80 hover:text-white"
-              }`}
+                }`}
             >
               Tất cả
             </button>
@@ -194,11 +193,10 @@ export default function CustomerLayout() {
               <button
                 key={cat.id}
                 onClick={() => selectCategory(cat.name)}
-                className={`whitespace-nowrap py-1 border-b-2 transition-all ${
-                  activeCategory === cat.name
+                className={`whitespace-nowrap py-1 border-b-2 transition-all ${activeCategory === cat.name
                     ? "border-white text-white font-semibold"
                     : "border-transparent text-white/80 hover:text-white"
-                }`}
+                  }`}
               >
                 {cat.name}
               </button>

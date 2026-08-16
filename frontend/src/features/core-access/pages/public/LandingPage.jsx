@@ -248,22 +248,22 @@ export default function LandingPage() {
 
       {/* Main Top Header Navbar */}
       <header className="bg-white/95 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
           {/* Logo & Website Title */}
-          <Link to="/" className="flex items-center gap-3 group shrink-0">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-sky-400 to-blue-500 flex items-center justify-center text-white shadow-md shadow-sky-500/20 group-hover:scale-105 transition-transform duration-300">
-              <span className="text-2xl">❄️</span>
+          <Link to="/" className="flex items-center gap-2 sm:gap-3 group shrink-0 min-w-0">
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-sky-400 to-blue-500 flex items-center justify-center text-white shadow-md shadow-sky-500/20 group-hover:scale-105 transition-transform duration-300 shrink-0">
+              <span className="text-xl sm:text-2xl">❄️</span>
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-2xl tracking-tight bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                <span className="font-extrabold text-lg sm:text-2xl tracking-tight bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 bg-clip-text text-transparent truncate">
                   Snow Voucher
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-widest bg-sky-100 text-sky-800 px-2 py-0.5 rounded-full border border-sky-200">
+                <span className="text-[10px] font-bold uppercase tracking-widest bg-sky-100 text-sky-800 px-2 py-0.5 rounded-full border border-sky-200 hidden sm:inline-block">
                   OFFICIAL
                 </span>
               </div>
-              <p className="text-[11px] font-semibold text-slate-400 tracking-wide">
+              <p className="text-[11px] font-semibold text-slate-400 tracking-wide hidden sm:block">
                 Chạm Tay Voucher Xịn — Săn Deal Giá Băng
               </p>
             </div>
@@ -286,19 +286,19 @@ export default function LandingPage() {
           </div>
 
           {/* Right Header Navigation & Auth Controls */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             <Link
               to="/customer/register"
-              className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 rounded-full transition-all cursor-pointer"
+              className="flex items-center gap-1 px-2.5 sm:px-4 py-2 text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 rounded-full transition-all cursor-pointer"
             >
-              <UserPlus size={15} />
-              <span>Đăng ký</span>
+              <UserPlus size={14} />
+              <span className="hidden sm:inline">Đăng ký</span>
             </Link>
             <Link
               to="/login"
-              className="flex items-center gap-1.5 px-3 sm:px-5 py-2.5 text-xs font-bold text-white bg-sky-500 hover:bg-sky-600 rounded-full shadow-md shadow-sky-500/25 hover:shadow-lg transition-all cursor-pointer"
+              className="flex items-center gap-1 px-3 sm:px-5 py-2 text-xs font-bold text-white bg-sky-500 hover:bg-sky-600 rounded-full shadow-md shadow-sky-500/25 hover:shadow-lg transition-all cursor-pointer whitespace-nowrap"
             >
-              <LogIn size={15} />
+              <LogIn size={14} />
               <span>Đăng nhập</span>
             </Link>
           </div>
@@ -421,7 +421,7 @@ export default function LandingPage() {
             <button
               type="button"
               onClick={() => scrollBrands("left")}
-              className="w-10 h-10 rounded-full border border-slate-200 bg-white hover:bg-slate-100 hover:border-sky-400 text-slate-600 hover:text-sky-600 flex items-center justify-center transition-all shadow-xs shrink-0 cursor-pointer"
+              className="w-10 h-10 rounded-full border border-slate-200 bg-white hover:bg-slate-100 hover:border-sky-400 text-slate-600 hover:text-sky-600 hidden sm:flex items-center justify-center transition-all shadow-xs shrink-0 cursor-pointer"
               title="Xem thương hiệu trước"
             >
               <ChevronLeft size={22} />
@@ -488,7 +488,7 @@ export default function LandingPage() {
             <button
               type="button"
               onClick={() => scrollBrands("right")}
-              className="w-10 h-10 rounded-full border border-slate-200 bg-white hover:bg-slate-100 hover:border-sky-400 text-slate-600 hover:text-sky-600 flex items-center justify-center transition-all shadow-xs shrink-0 cursor-pointer"
+              className="w-10 h-10 rounded-full border border-slate-200 bg-white hover:bg-slate-100 hover:border-sky-400 text-slate-600 hover:text-sky-600 hidden sm:flex items-center justify-center transition-all shadow-xs shrink-0 cursor-pointer"
               title="Xem thương hiệu tiếp theo"
             >
               <ChevronRight size={22} />
@@ -609,7 +609,7 @@ export default function LandingPage() {
               <button
                 type="button"
                 onClick={() => scrollVouchers("left")}
-                className="w-10 h-10 rounded-full border border-slate-200 bg-white hover:bg-slate-100 hover:border-sky-400 text-slate-600 hover:text-sky-600 flex items-center justify-center transition-all shadow-xs shrink-0 cursor-pointer"
+                className="w-10 h-10 rounded-full border border-slate-200 bg-white hover:bg-slate-100 hover:border-sky-400 text-slate-600 hover:text-sky-600 hidden sm:flex items-center justify-center transition-all shadow-xs shrink-0 cursor-pointer"
                 title="Xem voucher trước"
               >
                 <ChevronLeft size={22} />
@@ -716,7 +716,7 @@ export default function LandingPage() {
               <button
                 type="button"
                 onClick={() => scrollVouchers("right")}
-                className="w-10 h-10 rounded-full border border-slate-200 bg-white hover:bg-slate-100 hover:border-sky-400 text-slate-600 hover:text-sky-600 flex items-center justify-center transition-all shadow-xs shrink-0 cursor-pointer"
+                className="w-10 h-10 rounded-full border border-slate-200 bg-white hover:bg-slate-100 hover:border-sky-400 text-slate-600 hover:text-sky-600 hidden sm:flex items-center justify-center transition-all shadow-xs shrink-0 cursor-pointer"
                 title="Xem voucher tiếp theo"
               >
                 <ChevronRight size={22} />

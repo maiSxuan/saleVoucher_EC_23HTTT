@@ -227,10 +227,10 @@ export default function VoucherDetailPage({ publicView = false }) {
                 <span className="text-sm font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
                   <Store size={16} />
                   {typeof voucher.partner === "object" &&
-                  voucher.partner !== null
+                    voucher.partner !== null
                     ? voucher.partner.ten_dn ||
-                      voucher.partner.name ||
-                      "Đối tác"
+                    voucher.partner.name ||
+                    "Đối tác"
                     : voucher.partner || "Đối tác"}
                 </span>
               </div>
@@ -355,11 +355,10 @@ export default function VoucherDetailPage({ publicView = false }) {
                   <button
                     key={btn.key}
                     onClick={() => setSelectedRatingFilter(btn.key)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-                      selectedRatingFilter === btn.key
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${selectedRatingFilter === btn.key
                         ? 'bg-orange-500 text-white shadow-xs'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
+                      }`}
                   >
                     {btn.label}
                   </button>

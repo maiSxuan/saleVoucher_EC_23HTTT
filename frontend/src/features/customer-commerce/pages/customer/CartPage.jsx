@@ -253,26 +253,24 @@ export default function CartPage() {
             return (
               <div
                 key={item.voucherId}
-                className={`bg-white rounded-xl border p-3 flex items-center gap-3 transition-all ${
-                  item.status === "unavailable"
+                className={`bg-white rounded-xl border p-3 flex items-center gap-3 transition-all ${item.status === "unavailable"
                     ? "border-red-200 bg-gray-50 opacity-70"
                     : item.status === "qty_exceeded"
                       ? "border-amber-200"
                       : isChecked
                         ? "border-orange-300 bg-orange-50/20 shadow-sm"
                         : "border-gray-100"
-                }`}
+                  }`}
               >
                 {/* CHECKBOX CHỌN TỪNG MÓN */}
                 <input
                   type="checkbox"
                   checked={isChecked}
                   onChange={() => handleToggleItem(item.voucherId, item.status)}
-                  className={`w-4 h-4 rounded flex-shrink-0 ${
-                    item.status === "unavailable"
+                  className={`w-4 h-4 rounded flex-shrink-0 ${item.status === "unavailable"
                       ? "accent-gray-300 cursor-not-allowed"
                       : "accent-orange-500 cursor-pointer"
-                  }`}
+                    }`}
                 />
 
                 <img
