@@ -2,6 +2,14 @@ import { mockStore } from "../store/mockDataStore";
 
 const BACKEND_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || "/api"}`;
 
+function getAuthHeaders() {
+  const token = localStorage.getItem("accessToken");
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
 /**
  * Register partner representative account (Step 1)
  */
@@ -356,7 +364,9 @@ export async function getVouchersApi(query = {}) {
  */
 export async function getVouchersByPartnerApi(partnerId) {
   try {
-    const res = await fetch(`${BACKEND_BASE_URL}/vouchers/partner/${partnerId}`);
+    const res = await fetch(`${BACKEND_BASE_URL}/vouchers/partner/${partnerId}`, {
+      headers: getAuthHeaders(),
+    });
     if (res.ok) {
       const json = await res.json();
       if (json.success) return json.data;
@@ -372,7 +382,9 @@ export async function getVouchersByPartnerApi(partnerId) {
  */
 export async function getVoucherByIdApi(voucherId) {
   try {
-    const res = await fetch(`${BACKEND_BASE_URL}/vouchers/${voucherId}`);
+    const res = await fetch(`${BACKEND_BASE_URL}/vouchers/${voucherId}`, {
+      headers: getAuthHeaders(),
+    });
     if (res.ok) {
       const json = await res.json();
       if (json.success) return json.data;
@@ -394,7 +406,7 @@ export async function saveVoucherApi(voucherData) {
 
     const res = await fetch(url, {
       method,
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify(voucherData),
     });
     if (res.ok) {
@@ -414,7 +426,7 @@ export async function approveVoucherApi(voucherId, isHidden = false) {
   try {
     const res = await fetch(`${BACKEND_BASE_URL}/vouchers/${voucherId}/approve`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ isHidden }),
     });
     if (res.ok) {
@@ -434,7 +446,7 @@ export async function rejectVoucherApi(voucherId, reason = "") {
   try {
     const res = await fetch(`${BACKEND_BASE_URL}/vouchers/${voucherId}/reject`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ reason }),
     });
     if (res.ok) {
@@ -467,7 +479,7 @@ export async function createStaffApi(staffData) {
   try {
     const res = await fetch(`${BACKEND_BASE_URL}/staffs`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify(staffData),
     });
     const json = await res.json();
@@ -486,7 +498,7 @@ export async function updateStaffApi(staffId, staffData) {
   try {
     const res = await fetch(`${BACKEND_BASE_URL}/staffs/${staffId}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify(staffData),
     });
     const json = await res.json();
@@ -505,6 +517,7 @@ export async function deleteStaffApi(staffId) {
   try {
     const res = await fetch(`${BACKEND_BASE_URL}/staffs/${staffId}`, {
       method: "DELETE",
+      headers: getAuthHeaders(),
     });
     if (res.ok) {
       const json = await res.json();
@@ -524,7 +537,7 @@ export async function createPartnerProfileRequestApi(payload) {
   try {
     const res = await fetch(`${BACKEND_BASE_URL}/partners/profile-requests`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify(payload),
     });
     if (res.ok) {
