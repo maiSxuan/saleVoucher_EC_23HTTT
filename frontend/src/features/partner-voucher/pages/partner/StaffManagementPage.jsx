@@ -12,8 +12,10 @@ import {
   getPartnerByIdApi,
   getBranchesByPartnerApi,
 } from "../../../../shared/api/partnerApi";
+import { useTranslation } from "react-i18next";
 
 export function StaffManagementPage() {
+  const { t } = useTranslation();
   const [staffs, setStaffs] = useState([]);
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);

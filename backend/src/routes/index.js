@@ -15,10 +15,32 @@ const partnerReportRoutes = require("../modules/partner-voucher/presentation/rou
 const adminPartnerRoutes = require("../modules/partner-voucher/presentation/routes/admin-partner.routes");
 const adminVoucherRoutes = require("../modules/partner-voucher/presentation/routes/admin-voucher.routes");
 
+const translationService = require("../common/services/translation.service");
+
 // Register modules
 contentFeedbackModule.registerModule(router);
 coreAccessModule.registerModule(router);
 customerCommerceModule.registerModule(router);
+
+// Universal Translation Endpoint (On-The-Fly)
+router.post("/translate", async (req, res, next) => {
+  try {
+    const { text, texts, targetLang = "en" } = req.body;
+    if (texts && Array.isArray(texts)) {
+      const translatedList = await Promise.all(
+        texts.map((t) => translationService.translateText(t, targetLang))
+      );
+      return res.json({ success: true, data: translatedList });
+    }
+    if (text) {
+      const translated = await translationService.translateText(text, targetLang);
+      return res.json({ success: true, data: translated });
+    }
+    res.json({ success: true, data: text || texts || "" });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // Register partner-voucher routes (App.js mounts under /api -> /api/partners, etc.)
 router.use("/partners", partnerRoutes);

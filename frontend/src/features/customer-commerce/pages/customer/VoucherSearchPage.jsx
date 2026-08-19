@@ -11,8 +11,10 @@ import {
 import { fetchSellingVouchers } from "../../../../shared/api/catalogApi";
 import { contentApi } from "../../../../features/content-feedback/api/contentApi";
 import VoucherCard from "../../components/VoucherCard";
+import { useTranslation } from "react-i18next";
 
 export default function VoucherSearchPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [vouchers, setVouchers] = useState([]);
@@ -38,17 +40,23 @@ export default function VoucherSearchPage() {
 
   useEffect(() => {
     let ignore = false;
-    setLoading(true);
-    setErrorMsg("");
 
-    fetchSellingVouchers()
-      .then((data) => !ignore && setVouchers(data))
-      .catch(
-        () =>
-          !ignore &&
-          setErrorMsg("Không thể tải danh sách voucher. Vui lòng thử lại sau."),
-      )
-      .finally(() => !ignore && setLoading(false));
+    const loadVouchersData = () => {
+      setLoading(true);
+      setErrorMsg("");
+      fetchSellingVouchers()
+        .then((data) => !ignore && setVouchers(data))
+        .catch(
+          () =>
+            !ignore &&
+            setErrorMsg("Không thể tải danh sách voucher. Vui lòng thử lại sau."),
+        )
+        .finally(() => !ignore && setLoading(false));
+    };
+
+    loadVouchersData();
+
+    window.addEventListener("app_language_changed", loadVouchersData);
 
     // Fetch active banners and articles from content management
     contentApi
@@ -77,6 +85,7 @@ export default function VoucherSearchPage() {
 
     return () => {
       ignore = true;
+      window.removeEventListener("app_language_changed", loadVouchersData);
     };
   }, []);
 
@@ -222,16 +231,16 @@ export default function VoucherSearchPage() {
               : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
           }`}
         >
-          <SlidersHorizontal size={15} /> Bộ lọc
+          <SlidersHorizontal size={15} /> {t("common.filter", "Bộ lọc")}
         </button>
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
           className="border border-gray-200 rounded-xl px-3.5 py-2 text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-200"
         >
-          <option value="newest">Mới nhất</option>
-          <option value="price-asc">Giá tăng dần</option>
-          <option value="price-desc">Giá giảm dần</option>
+          <option value="newest">{t("voucher.sortNewest", "Mới nhất")}</option>
+          <option value="price-asc">{t("voucher.sortPriceAsc", "Giá tăng dần")}</option>
+          <option value="price-desc">{t("voucher.sortPriceDesc", "Giá giảm dần")}</option>
         </select>
         <span className="ml-auto text-sm text-gray-500 font-medium">
           {filtered.length} kết quả

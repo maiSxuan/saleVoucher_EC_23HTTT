@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import Badge from "../shared/components/Badge";
 import { getPartnerByIdApi } from "../shared/api/partnerApi";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "../shared/components/LanguageSwitcher";
 
 export function PartnerLayout({ children }) {
   const location = useLocation();
@@ -99,6 +101,8 @@ export function PartnerLayout({ children }) {
     userRole = userRole.name || userRole.ten_vai_tro || JSON.stringify(userRole);
   }
 
+  const { t } = useTranslation();
+
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("user");
@@ -108,12 +112,12 @@ export function PartnerLayout({ children }) {
   };
 
   const allNavItems = [
-    { label: "Báo cáo", path: "/partner/reports", icon: BarChart3 },
-    { label: "Tra cứu & Đổi Voucher", path: "/partner/vouchers/lookup", icon: QrCode },
-    { label: "Quản lý Voucher", path: "/partner/vouchers", icon: Ticket },
-    { label: "Chi nhánh", path: "/partner/branches", icon: Store },
-    { label: "Hồ sơ doanh nghiệp", path: "/partner/profile", icon: Building2 },
-    { label: "Nhân viên", path: "/partner/staffs", icon: Users },
+    { label: t("nav.reports", "Báo cáo"), path: "/partner/reports", icon: BarChart3 },
+    { label: t("nav.lookupVoucher", "Tra cứu & Đổi Voucher"), path: "/partner/vouchers/lookup", icon: QrCode },
+    { label: t("nav.manageVouchers", "Quản lý Voucher"), path: "/partner/vouchers", icon: Ticket },
+    { label: t("nav.branches", "Chi nhánh"), path: "/partner/branches", icon: Store },
+    { label: t("nav.partnerProfile", "Hồ sơ doanh nghiệp"), path: "/partner/profile", icon: Building2 },
+    { label: t("nav.staffs", "Nhân viên"), path: "/partner/staffs", icon: Users },
   ];
 
   const isVoucherManager =
@@ -182,13 +186,15 @@ export function PartnerLayout({ children }) {
 
           <div className="h-6 w-px bg-slate-200" />
 
+          <LanguageSwitcher className="[&_button]:!bg-slate-100 [&_button]:!text-slate-700 [&_button]:!border-slate-200 hover:[&_button]:!bg-slate-200" />
+
           <button
             onClick={handleLogout}
             className="flex items-center gap-1.5 px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 border border-rose-200 text-xs font-semibold rounded-xl transition-colors shadow-xs cursor-pointer"
             title="Đăng xuất khỏi hệ thống"
           >
             <LogOut className="w-3.5 h-3.5" />
-            <span>Đăng xuất</span>
+            <span>{t("nav.logout", "Đăng xuất")}</span>
           </button>
         </div>
       </header>

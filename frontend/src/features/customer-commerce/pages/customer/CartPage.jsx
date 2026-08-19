@@ -8,6 +8,7 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import {
   fetchCart,
   updateCartItemQuantity,
@@ -15,6 +16,7 @@ import {
 } from "../../../../shared/api/cartApi";
 
 export default function CartPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [cart, setCart] = useState(null);
@@ -70,7 +72,13 @@ export default function CartPage() {
       })
       .finally(() => setLoading(false));
   }
-  useEffect(loadCart, []);
+
+  useEffect(() => {
+    loadCart();
+
+    window.addEventListener("app_language_changed", loadCart);
+    return () => window.removeEventListener("app_language_changed", loadCart);
+  }, []);
 
   // --- LOGIC XỬ LÝ CHECKBOX ---
   const isAllSelected =

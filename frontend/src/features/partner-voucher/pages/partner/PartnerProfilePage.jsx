@@ -12,8 +12,10 @@ import {
   getPendingPartnerProfileRequestApi,
   changePartnerPasswordApi,
 } from "../../../../shared/api/partnerApi";
+import { useTranslation } from "react-i18next";
 
 export function PartnerProfilePage() {
+  const { t } = useTranslation();
   const [partner, setPartner] = useState(null);
   const [pendingProfileReq, setPendingProfileReq] = useState(null);
   const [loading, setLoading] = useState(true);

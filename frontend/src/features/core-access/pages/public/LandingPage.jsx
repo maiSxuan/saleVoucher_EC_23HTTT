@@ -16,6 +16,8 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { fetchSellingVouchers, fetchCategories } from "../../../../shared/api/catalogApi";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "../../../../shared/components/LanguageSwitcher";
 
 function cleanImageUrl(url) {
   if (!url || typeof url !== "string") return null;
@@ -42,6 +44,7 @@ function stripVietnameseAccents(str) {
 }
 
 export default function LandingPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const brandScrollRef = useRef(null);
   const voucherScrollRef = useRef(null);
@@ -55,27 +58,33 @@ export default function LandingPage() {
 
   useEffect(() => {
     let ignore = false;
-    setLoading(true);
 
-    Promise.allSettled([
-      fetchSellingVouchers(),
-      fetchCategories(),
-    ])
-      .then(([vRes, cRes]) => {
-        if (ignore) return;
-        if (vRes.status === "fulfilled" && Array.isArray(vRes.value)) {
-          setVouchers(vRes.value);
-        }
-        if (cRes.status === "fulfilled" && Array.isArray(cRes.value)) {
-          setCategories(cRes.value);
-        }
-      })
-      .finally(() => {
-        if (!ignore) setLoading(false);
-      });
+    const loadData = () => {
+      setLoading(true);
+      Promise.allSettled([
+        fetchSellingVouchers(),
+        fetchCategories(),
+      ])
+        .then(([vRes, cRes]) => {
+          if (ignore) return;
+          if (vRes.status === "fulfilled" && Array.isArray(vRes.value)) {
+            setVouchers(vRes.value);
+          }
+          if (cRes.status === "fulfilled" && Array.isArray(cRes.value)) {
+            setCategories(cRes.value);
+          }
+        })
+        .finally(() => {
+          if (!ignore) setLoading(false);
+        });
+    };
 
+    loadData();
+
+    window.addEventListener("app_language_changed", loadData);
     return () => {
       ignore = true;
+      window.removeEventListener("app_language_changed", loadData);
     };
   }, []);
 
@@ -242,7 +251,7 @@ export default function LandingPage() {
       {/* Top Banner Notice */}
       <div className="bg-gradient-to-r from-sky-400 via-sky-500 to-blue-500 text-white text-xs py-2 px-4 text-center font-medium flex items-center justify-center gap-2 shadow-inner">
         <Sparkles size={14} className="text-yellow-300 animate-pulse" />
-        <span>Chào mừng đến với <strong>Snow Voucher</strong> — Tuyết Vàng Ưu Đãi, Săn Deal Đóng Băng Giá Đỉnh Nhất 2026!</span>
+        <span>{t("landing.welcome", "Chào mừng đến với Snow Voucher — Tuyết Vàng Ưu Đãi, Săn Deal Đóng Băng Giá Đỉnh Nhất!")}</span>
         <Sparkles size={14} className="text-yellow-300 animate-pulse hidden sm:inline" />
       </div>
 
@@ -264,7 +273,7 @@ export default function LandingPage() {
                 </span>
               </div>
               <p className="text-[11px] font-semibold text-slate-400 tracking-wide">
-                Chạm Tay Voucher Xịn — Săn Deal Giá Băng
+                {t("landing.slogan", "Chạm Tay Voucher Xịn — Săn Deal Giá Băng")}
               </p>
             </div>
           </Link>
@@ -278,8 +287,8 @@ export default function LandingPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && focusSearchResults()}
-                placeholder="Tìm voucher, đối tác hoặc chi nhánh..."
-                aria-label="Tìm voucher, đối tác hoặc chi nhánh"
+                placeholder={t("nav.searchPlaceholder", "Tìm voucher, đối tác hoặc chi nhánh...")}
+                aria-label={t("nav.searchPlaceholder", "Tìm voucher, đối tác hoặc chi nhánh")}
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-slate-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-500 transition-all shadow-inner"
               />
             </div>
@@ -287,19 +296,20 @@ export default function LandingPage() {
 
           {/* Right Header Navigation & Auth Controls */}
           <div className="flex items-center gap-3 shrink-0">
+            <LanguageSwitcher className="[&_button]:!bg-slate-100 [&_button]:!text-slate-700 [&_button]:!border-slate-200 hover:[&_button]:!bg-slate-200" />
             <Link
               to="/customer/register"
               className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 rounded-full transition-all cursor-pointer"
             >
               <UserPlus size={15} />
-              <span>Đăng ký</span>
+              <span>{t("nav.register", "Đăng ký")}</span>
             </Link>
             <Link
               to="/login"
               className="flex items-center gap-1.5 px-3 sm:px-5 py-2.5 text-xs font-bold text-white bg-sky-500 hover:bg-sky-600 rounded-full shadow-md shadow-sky-500/25 hover:shadow-lg transition-all cursor-pointer"
             >
               <LogIn size={15} />
-              <span>Đăng nhập</span>
+              <span>{t("nav.login", "Đăng nhập")}</span>
             </Link>
           </div>
         </div>
@@ -406,13 +416,13 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="space-y-1">
             <span className="text-xs font-bold uppercase tracking-widest text-sky-600 bg-sky-50 px-3 py-1 rounded-full border border-sky-200">
-              Đối Tác Đồng Hành
+              {t("landing.partnerTitle", "Đối Tác Đồng Hành")}
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight pt-1">
-              Thương Hiệu Đối Tác Nổi Bật
+              {t("voucher.featuredBrands", "Thương Hiệu Đối Tác Nổi Bật")}
             </h2>
             <p className="text-sm text-slate-500">
-              Các doanh nghiệp & chuỗi cửa hàng chính hãng trên hệ thống Snow Voucher
+              {t("landing.partnerSub", "Các doanh nghiệp & chuỗi cửa hàng chính hãng trên hệ thống Snow Voucher")}
             </p>
           </div>
 
@@ -503,13 +513,13 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
               <span className="text-xs font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">
-                Phân Loại Ưu Đãi
+                {t("nav.categoryFilter", "Phân Loại Ưu Đãi")}
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-2">
-                Danh Mục Voucher Đang Mở Bán
+                {t("landing.categoryTitle", "Danh Mục Voucher Đang Mở Bán")}
               </h2>
               <p className="text-sm text-slate-500 mt-1">
-                Xem nhanh số lượng voucher chính hãng đang có sẵn theo từng ngành hàng
+                {t("landing.categorySub", "Xem nhanh số lượng voucher chính hãng đang có sẵn theo từng ngành hàng")}
               </p>
             </div>
 
@@ -519,7 +529,7 @@ export default function LandingPage() {
                 onClick={() => setSelectedCategory("all")}
                 className="text-xs font-bold text-sky-600 hover:text-sky-700 underline cursor-pointer self-start sm:self-auto"
               >
-                Hiển thị tất cả danh mục
+                {t("landing.showAllCategories", "Hiển thị tất cả danh mục")}
               </button>
             )}
           </div>

@@ -1,0 +1,218 @@
+sequenceDiagram
+    autonumber
+    actor Partner as [Actor] Partner
+    participant Page as [Pres] VoucherFormPage
+    participant Api as [Pres] saveVoucherApi
+    participant Ctrl as [Pres] VoucherController
+    participant Service as [Bus] VoucherService
+    participant SupaStorage as [Bus] uploadBase64ToSupabase
+    participant ExtStorage as [Data] Supabase Storage
+    participant Repo as [Data] VoucherRepository
+    participant BranchRepo as [Data] VoucherBranchRepository
+    participant Audit as [Bus] AuditLogService
+    participant AuditRepo as [Data] AuditLogRepository
+    participant DB as [Data] Supabase DB
+
+    Partner->>Page: submitForm(formData, mode)
+    Note over Partner,Page: Điền thông tin, chọn "Lưu nháp" hoặc "Lưu & Gửi duyệt"
+    Page->>Api: saveVoucherApi(payload)
+    Note over Page,Api: Đóng gói payload kèm ma_hs, trang_thai
+    Api->>Ctrl: POST /api/vouchers
+    Ctrl->>Service: createVoucher(payload, actorId)
+
+    alt payload.hinh_anh_url starts with "data:"
+        Service->>SupaStorage: uploadBase64ToSupabase(base64Str, "vouchers")
+        SupaStorage->>ExtStorage: upload(fileName, buffer)
+        ExtStorage-->>SupaStorage: return publicUrl
+        SupaStorage-->>Service: return publicUrl
+    end
+
+    Service->>Repo: create(payload)
+    Repo->>DB: INSERT INTO voucher
+    DB-->>Repo: return createdVoucherRow
+
+    opt if DB insert fails
+        Repo->>Repo: fallback VOUCHERS_MEMORY_STORE.set()
+    end
+    Repo-->>Service: return createdModel
+
+    opt if payload.ma_chi_nhanh exists
+        Service->>BranchRepo: setBranchesForVoucher(ma_voucher, branchIds)
+        BranchRepo->>DB: INSERT INTO voucher_cn
+    end
+
+    Service->>Audit: log({ action, targetType: "VOUCHER", targetId })
+    Note over Service,Audit: Action: SUBMIT_VOUCHER_REVIEW hoặc CREATE_VOUCHER_DRAFT
+    Audit->>AuditRepo: create(logEntry)
+    AuditRepo->>DB: INSERT INTO log_ht
+
+    Service-->>Ctrl: return createdVoucher
+    Ctrl-->>Page: res.status(201).json({ success: true, data })
+
+sequenceDiagram
+    autonumber
+    actor Partner as [Actor] Partner
+    participant DetailPage as [Pres] VoucherDetailPage
+    participant Api as [Pres] saveVoucherApi
+    participant Ctrl as [Pres] VoucherController
+    participant Service as [Bus] VoucherService
+    participant Repo as [Data] VoucherRepository
+    participant Audit as [Bus] AuditLogService
+    participant AuditRepo as [Data] AuditLogRepository
+    participant DB as [Data] Supabase DB
+
+    Partner->>DetailPage: clickPauseVoucher(voucherId)
+    Note over Partner, DetailPage: Bấm "Tạm ngưng" khi voucher đang Dang ban
+
+    DetailPage->>Api: saveVoucherApi({ ma_voucher, trang_thai: "Tam ngung", trang_thai_kiem_duyet: "Da duyet" })
+    Api->>Ctrl: PUT /api/vouchers/:id
+    Ctrl->>Service: updateVoucher(id, payload, actorId)
+
+    Service->>Repo: findById(id)
+    Note over Service, Repo: Lấy dữ liệu cũ để làm 'before' cho Audit Log
+
+    Service->>Repo: update(id, payload)
+    Repo->>DB: UPDATE voucher SET trang_thai = 'Tam ngung' WHERE ma_voucher = id
+    DB-->>Repo: return updatedRow
+    Repo-->>Service: return updatedVoucher
+
+    Service->>Audit: log({ action: "UPDATE_VOUCHER", before: { trang_thai: "Dang ban" }, after: { trang_thai: "Tam ngung" } })
+    Note over Audit: Tra cứu actorId sang ma_tk hợp lệ
+    Audit->>AuditRepo: create(logEntry)
+    AuditRepo->>DB: INSERT INTO log_ht
+
+    Service-->>Ctrl: return updatedVoucher
+    Ctrl-->>DetailPage: res.json({ success: true, data })
+
+sequenceDiagram
+    autonumber
+    actor User as [Actor] Partner / Admin
+    participant DetailPage as [Pres] VoucherDetailPage
+    participant Api as [Pres] saveVoucherApi
+    participant Ctrl as [Pres] VoucherController
+    participant Service as [Bus] VoucherService
+    participant Repo as [Data] VoucherRepository
+    participant Audit as [Bus] AuditLogService
+    participant AuditRepo as [Data] AuditLogRepository
+    participant DB as [Data] Supabase DB
+
+    User->>DetailPage: clickStopSelling(voucherId)
+    Note over User, DetailPage: Nhấn "Ngừng bán" khi trạng thái Dang ban/Tam ngung
+
+    DetailPage->>Api: saveVoucherApi({ ma_voucher, trang_thai: "Ngung ban", trang_thai_kiem_duyet: "Da duyet" })
+    Api->>Ctrl: PUT /api/vouchers/:id
+    Ctrl->>Service: updateVoucher(id, payload, actorId)
+
+    Service->>Repo: findById(id)
+    Note over Service, Repo: Lấy thông tin existing để làm 'before' cho Audit log
+
+    Service->>Repo: update(id, { trang_thai: "Ngung ban" })
+    Repo->>DB: UPDATE voucher SET trang_thai = 'Ngung ban' WHERE ma_voucher = id
+    DB-->>Repo: return updatedRow
+    Repo-->>Service: return updatedRow
+
+    Service->>Audit: log({ action: "UPDATE_VOUCHER", before: {trang_thai: existing.trang_thai}, after: {trang_thai: "Ngung ban"}, reason: "Cập nhật..." })
+    Audit->>AuditRepo: create(logEntry)
+    AuditRepo->>DB: INSERT INTO log_ht
+
+    Service-->>Ctrl: return updatedVoucher
+    Ctrl-->>DetailPage: res.json({ success: true, data })
+
+
+sequenceDiagram
+    autonumber
+    actor User as [Actor] Partner / Admin
+    participant DetailPage as [Pres] VoucherDetailPage
+    participant Api as [Pres] saveVoucherApi
+    participant Ctrl as [Pres] VoucherController
+    participant Service as [Bus] VoucherService
+    participant Repo as [Data] VoucherRepository
+    participant Audit as [Bus] AuditLogService
+    participant AuditRepo as [Data] AuditLogRepository
+    participant DB as [Data] Supabase DB
+
+    User->>DetailPage: clickResumeSelling(voucherId)
+    Note over User, DetailPage: Bấm "Mở bán lại" khi đang Tam ngung / Ngung ban
+
+    DetailPage->>Api: saveVoucherApi({ ma_voucher, trang_thai: "Dang ban", trang_thai_kiem_duyet: "Da duyet" })
+    Api->>Ctrl: PUT /api/vouchers/:id
+    Ctrl->>Service: updateVoucher(id, payload, actorId)
+
+    Service->>Repo: findById(id)
+    Service->>Repo: update(id, { trang_thai: "Dang ban" })
+    Repo->>DB: UPDATE voucher SET trang_thai = 'Dang ban' WHERE ma_voucher = id
+    DB-->>Repo: return updatedRow
+
+    Service->>Audit: log({ action: "UPDATE_VOUCHER", before: { trang_thai: existing.trang_thai }, after: { trang_thai: "Dang ban" } })
+    Audit->>AuditRepo: create(logEntry)
+    AuditRepo->>DB: INSERT INTO log_ht
+
+    Service-->>Ctrl: return updatedVoucher
+    Ctrl-->>DetailPage: res.json({ success: true, data })
+
+
+sequenceDiagram
+    autonumber
+    actor User as [Actor] Partner / Admin / Customer
+    participant ListPage as [Pres] VoucherListPage
+    participant Api as [Pres] getVouchersByPartnerApi
+    participant Ctrl as [Pres] VoucherController
+    participant Service as [Bus] VoucherService
+    participant Repo as [Data] VoucherRepository
+    participant PartnerRepo as [Data] PartnerRepository
+    participant DB as [Data] Supabase DB
+
+    User->>ListPage: openPage(partnerId, query)
+    ListPage->>Api: getVouchersByPartnerApi(partnerId, query)
+    Api->>Ctrl: GET /api/vouchers/partner/:partnerId
+    Ctrl->>Service: getVouchersByPartner(partnerId, query)
+    Service->>Repo: findByPartnerId(partnerId, query)
+
+    Repo->>PartnerRepo: findById(partnerId)
+    Note over Repo, PartnerRepo: Lấy thông tin ma_hs và ten_dn của đối tác
+
+    Repo->>DB: SELECT * FROM chinhanh WHERE ma_hs = targetMaHs
+    Repo->>DB: SELECT * FROM voucher_cn WHERE ma_chi_nhanh IN (...)
+    Repo->>DB: SELECT *, danh_muc(ten_danh_muc) FROM voucher WHERE ma_voucher IN (...)
+    DB-->>Repo: return voucherRows
+
+    loop for each voucher item
+        Note over Repo: Tính gia_ban = gia_goc - gia_tri_giam<br/>Tạo new VoucherModel(...) gán ten_dn, ten_danh_muc
+    end
+
+    Repo-->>Service: return VoucherModel[]
+    Service-->>Ctrl: return vouchers
+    Ctrl-->>ListPage: res.json({ success: true, data: vouchers })
+
+sequenceDiagram
+    autonumber
+    actor User as [Actor] Partner / Admin / Customer
+    participant DetailPage as [Pres] VoucherDetailPage
+    participant Api as [Pres] getVoucherByIdApi
+    participant Ctrl as [Pres] VoucherController
+    participant Service as [Bus] VoucherService
+    participant Repo as [Data] VoucherRepository
+    participant AuditRepo as [Data] AuditLogRepository
+    participant DB as [Data] Supabase DB
+
+    User->>DetailPage: selectVoucher(voucherId)
+    DetailPage->>Api: getVoucherByIdApi(voucherId)
+    Api->>Ctrl: GET /api/vouchers/:id
+    Ctrl->>Service: getVoucherById(id)
+    Service->>Repo: findById(id)
+
+    Repo->>DB: SELECT *, danh_muc(ten_danh_muc) FROM voucher WHERE ma_voucher = id
+    DB-->>Repo: return voucherData
+
+    Repo->>DB: SELECT ma_chi_nhanh FROM voucher_cn WHERE ma_voucher = id
+
+    opt if voucher status is "Tu choi" and ly_do_tu_choi is empty
+        Repo->>AuditRepo: getLatestRejectionReason("VOUCHER", id)
+        AuditRepo->>DB: SELECT ly_do_thuc_hien, du_lieu_sau FROM log_ht WHERE doi_tuong = 'VOUCHER' AND hanh_dong ILIKE '%REJECT%'
+        DB-->>AuditRepo: return rejectionReasonText
+        AuditRepo-->>Repo: return lyDoTuChoi
+    end
+
+    Repo-->>Service: return VoucherModel
+    Service-->>Ctrl: return voucher
+    Ctrl-->>DetailPage: res.json({ success: true, data: voucher })

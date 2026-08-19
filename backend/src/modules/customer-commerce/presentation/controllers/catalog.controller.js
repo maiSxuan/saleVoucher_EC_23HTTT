@@ -1,6 +1,10 @@
 /**
  * Purpose: Controller cho truy vấn catalog/voucher đang bán.
  */
+function normalizeLang(lang) {
+  return (lang || "").toLowerCase().startsWith("en") ? "en" : "vi";
+}
+
 class CatalogController {
   constructor(catalogQueryService) {
     this.catalogQueryService = catalogQueryService;
@@ -8,7 +12,10 @@ class CatalogController {
 
   async list(req, res, next) {
     try {
-      const result = await this.catalogQueryService.listCatalog(req.query);
+      const rawLang = req.query.lang || req.headers["accept-language"];
+      const lang = normalizeLang(rawLang);
+      const query = { ...req.query, lang };
+      const result = await this.catalogQueryService.listCatalog(query);
       res.json({ success: true, data: result });
     } catch (error) {
       next(error);
@@ -17,7 +24,10 @@ class CatalogController {
 
   async categories(req, res, next) {
     try {
-      const result = await this.catalogQueryService.listCategories();
+      const rawLang = req.query.lang || req.headers["accept-language"];
+      const lang = normalizeLang(rawLang);
+      const query = { ...req.query, lang };
+      const result = await this.catalogQueryService.listCategories(query);
       res.json({ success: true, data: result });
     } catch (error) {
       next(error);
@@ -26,8 +36,11 @@ class CatalogController {
 
   async detail(req, res, next) {
     try {
+      const rawLang = req.query.lang || req.headers["accept-language"];
+      const lang = normalizeLang(rawLang);
       const result = await this.catalogQueryService.getVoucherDetail(
         req.params.id,
+        lang
       );
       res.json({ success: true, data: result });
     } catch (error) {

@@ -22,12 +22,14 @@ class IssuedVoucherController {
   async getMyVouchers(req, res, next) {
     try {
       const accountId = req.user?.accountId;
+      const lang = req.query.lang || req.headers["accept-language"];
       const { page = 1, limit = 20, status } = req.query;
 
       const result = await this.service.getMyVouchers(accountId, {
         page: Number(page),
         limit: Number(limit),
         status: status || undefined,
+        lang,
       });
 
       res.json({ success: true, data: result });

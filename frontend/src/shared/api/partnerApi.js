@@ -123,7 +123,10 @@ export async function registerPartnerProfileApi(partnerData) {
  */
 export async function getCategoriesApi() {
   try {
-    const res = await fetch(`${BACKEND_BASE_URL}/vouchers/categories`);
+    const lang = localStorage.getItem("app_lang") || "vi";
+    const res = await fetch(`${BACKEND_BASE_URL}/vouchers/categories?lang=${lang}`, {
+      headers: { "Accept-Language": lang },
+    });
     if (res.ok) {
       const json = await res.json();
       if (json.success) return json.data;
@@ -339,8 +342,12 @@ export async function rejectBranchRequestApi(requestId, adminNote = "") {
  */
 export async function getVouchersApi(query = {}) {
   try {
-    const params = new URLSearchParams(query).toString();
-    const res = await fetch(`${BACKEND_BASE_URL}/vouchers${params ? `?${params}` : ""}`);
+    const lang = localStorage.getItem("app_lang") || "vi";
+    const queryWithLang = { lang, ...query };
+    const params = new URLSearchParams(queryWithLang).toString();
+    const res = await fetch(`${BACKEND_BASE_URL}/vouchers${params ? `?${params}` : ""}`, {
+      headers: { "Accept-Language": lang },
+    });
     if (res.ok) {
       const json = await res.json();
       if (json.success) return json.data;
@@ -356,7 +363,10 @@ export async function getVouchersApi(query = {}) {
  */
 export async function getVouchersByPartnerApi(partnerId) {
   try {
-    const res = await fetch(`${BACKEND_BASE_URL}/vouchers/partner/${partnerId}`);
+    const lang = localStorage.getItem("app_lang") || "vi";
+    const res = await fetch(`${BACKEND_BASE_URL}/vouchers/partner/${partnerId}?lang=${lang}`, {
+      headers: { "Accept-Language": lang },
+    });
     if (res.ok) {
       const json = await res.json();
       if (json.success) return json.data;
@@ -372,7 +382,10 @@ export async function getVouchersByPartnerApi(partnerId) {
  */
 export async function getVoucherByIdApi(voucherId) {
   try {
-    const res = await fetch(`${BACKEND_BASE_URL}/vouchers/${voucherId}`);
+    const lang = localStorage.getItem("app_lang") || "vi";
+    const res = await fetch(`${BACKEND_BASE_URL}/vouchers/${voucherId}?lang=${lang}`, {
+      headers: { "Accept-Language": lang },
+    });
     if (res.ok) {
       const json = await res.json();
       if (json.success) return json.data;

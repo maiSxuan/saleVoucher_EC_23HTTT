@@ -8,8 +8,10 @@ import {
   repayOrder,
   fetchCustomerOrderDetail,
 } from "../../../../shared/api/orderApi";
+import { useTranslation } from "react-i18next";
 
 export default function CheckoutPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const orderId = location.state?.orderId || null;

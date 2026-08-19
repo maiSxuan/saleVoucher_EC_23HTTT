@@ -21,36 +21,30 @@ import {
   RefreshCw,
   ShoppingBag,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { getMyVouchers } from "../../../../shared/api/issuedVoucherApi";
 
-const STATUS_OPTIONS = [
-  { value: "", label: "Tất cả" },
-  { value: "Chua su dung", label: "Chưa sử dụng" },
-  { value: "Da su dung", label: "Đã sử dụng" },
-  { value: "Het han", label: "Hết hạn" },
-  { value: "Loi sinh ma", label: "Lỗi phát hành" },
-];
-
 function StatusBadge({ status }) {
+  const { t } = useTranslation();
   const map = {
     "Chua su dung": {
       icon: <Clock className="w-3.5 h-3.5" />,
-      label: "Chưa sử dụng",
+      label: t("myVouchers.unused", "Chưa sử dụng"),
       cls: "bg-emerald-50 text-emerald-700 border-emerald-200",
     },
     "Da su dung": {
       icon: <CheckCircle2 className="w-3.5 h-3.5" />,
-      label: "Đã sử dụng",
+      label: t("myVouchers.used", "Đã sử dụng"),
       cls: "bg-slate-100 text-slate-500 border-slate-200",
     },
     "Het han": {
       icon: <XCircle className="w-3.5 h-3.5" />,
-      label: "Hết hạn",
+      label: t("myVouchers.expired", "Hết hạn"),
       cls: "bg-red-50 text-red-600 border-red-200",
     },
     "Loi sinh ma": {
       icon: <AlertCircle className="w-3.5 h-3.5" />,
-      label: "Lỗi phát hành",
+      label: t("myVouchers.issueError", "Lỗi phát hành"),
       cls: "bg-orange-50 text-orange-600 border-orange-200",
     },
   };
@@ -126,7 +120,16 @@ function VoucherCard({ vm, onClick }) {
 }
 
 export default function MyVoucherPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+
+  const STATUS_OPTIONS = [
+    { value: "", label: t("common.all", "Tất cả") },
+    { value: "Chua su dung", label: t("myVouchers.unused", "Chưa sử dụng") },
+    { value: "Da su dung", label: t("myVouchers.used", "Đã sử dụng") },
+    { value: "Het han", label: t("myVouchers.expired", "Hết hạn") },
+    { value: "Loi sinh ma", label: t("myVouchers.issueError", "Lỗi phát hành") },
+  ];
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -164,8 +167,8 @@ export default function MyVoucherPage() {
 
   // Lọc client-side theo search text
   const filtered = vouchers.filter((vm) => {
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
+    const q = search.toLowerCase().trim();
+    if (!q) return true;
     return (
       (vm.voucher_code || "").toLowerCase().includes(q) ||
       (vm.voucher?.ten_voucher || "").toLowerCase().includes(q) ||
@@ -182,7 +185,7 @@ export default function MyVoucherPage() {
             <QrCode className="w-5 h-5 text-orange-500" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-900">Voucher của tôi</h1>
+            <h1 className="text-xl font-bold text-slate-900">{t("nav.myVouchers", "Voucher của tôi")}</h1>
             <p className="text-sm text-slate-500">
               {pagination?.total ?? "—"} voucher
             </p>
@@ -192,7 +195,7 @@ export default function MyVoucherPage() {
           onClick={() => load(page)}
           disabled={loading}
           className="p-2 rounded-xl text-slate-400 hover:text-orange-500 hover:bg-orange-50 transition-colors"
-          title="Làm mới"
+          title={t("common.refresh", "Làm mới")}
         >
           <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
         </button>
@@ -219,7 +222,7 @@ export default function MyVoucherPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
         <input
           type="text"
-          placeholder="Tìm theo mã code, tên voucher, đối tác..."
+          placeholder={t("myVouchers.searchPlaceholder", "Tìm theo mã code, tên voucher, đối tác...")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full pl-9 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent bg-white"

@@ -8,6 +8,7 @@ import { RouterProvider } from "react-router-dom";
 import { AuthProvider } from "./app/auth-context";
 import { Toaster } from "sonner";
 import router from "./app/router";
+import "./shared/i18n/i18n";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
