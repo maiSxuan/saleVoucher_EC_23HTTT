@@ -19,9 +19,9 @@ export function Badge({ status, text, size = "md" }) {
       case "Ngung ban":
         return "bg-rose-50 text-rose-700 border-rose-200";
       case "Nhap":
-        return "bg-blue-50 text-blue-700 border-blue-200";
+        return "bg-sky-50 text-sky-700 border-sky-200";
       case "Het hang":
-        return "bg-purple-50 text-purple-700 border-purple-200";
+        return "bg-violet-50 text-violet-700 border-violet-200";
       case "Bao luu":
       case "Tam ngung":
       case "Tam an":

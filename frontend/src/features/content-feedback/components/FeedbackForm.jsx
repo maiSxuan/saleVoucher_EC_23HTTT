@@ -25,9 +25,9 @@ export default function FeedbackForm({ onSubmit, onCancel }) {
           value={content} 
           onChange={e => setContent(e.target.value)}
           placeholder="Mô tả vấn đề bạn gặp phải..."
-          className="w-full border border-gray-200 rounded-xl p-3 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-orange-300"
+          className="w-full border border-gray-200 rounded-xl p-3 text-sm mb-4 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <button onClick={handleSubmit} className="w-full bg-orange-500 text-white py-2 rounded-lg font-semibold text-sm">Gửi khiếu nại</button>
+        <button onClick={handleSubmit} className="w-full bg-sky-500 text-white py-2 rounded-lg font-semibold text-sm">Gửi khiếu nại</button>
       </div>
     </div>
   );

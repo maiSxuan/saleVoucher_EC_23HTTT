@@ -31,7 +31,7 @@ export default function ReviewListPage({ voucherPurchaseId = 'VOUCHER_ID_MOCK' }
         <h2 className="text-xl font-bold">Đánh giá sản phẩm</h2>
         <button 
           onClick={() => setShowReviewModal(true)}
-          className="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-orange-600"
+          className="bg-sky-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-sky-600"
         >
           Viết đánh giá
         </button>

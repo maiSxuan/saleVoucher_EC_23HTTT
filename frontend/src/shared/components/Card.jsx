@@ -2,12 +2,12 @@ import React from "react";
 
 export function Card({ children, title, subtitle, action, className = "", padding = true }) {
   return (
-    <div className={`bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden ${className}`}>
+    <div className={`bg-white rounded-xl border border-slate-200 shadow-card overflow-hidden ${className}`}>
       {(title || action) && (
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
           <div>
-            {title && <h3 className="text-base font-semibold text-slate-900">{title}</h3>}
-            {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
+            {title && <h3 className="text-base font-semibold text-snow-900">{title}</h3>}
+            {subtitle && <p className="text-xs text-snow-600 mt-0.5">{subtitle}</p>}
           </div>
           {action && <div className="flex items-center gap-2">{action}</div>}
         </div>

@@ -37,7 +37,7 @@ function IssuedVoucherMini({ vm, onClick }) {
     <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
       {/* Tên voucher */}
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-9 h-9 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+        <div className="w-9 h-9 bg-sky-100 rounded-xl flex items-center justify-center flex-shrink-0">
           <Ticket className="w-5 h-5 text-orange-500" />
         </div>
         <div className="min-w-0">
@@ -82,7 +82,7 @@ function IssuedVoucherMini({ vm, onClick }) {
       {/* Xem chi tiết */}
       <button
         onClick={onClick}
-        className="mt-4 w-full flex items-center justify-center gap-1.5 py-2 text-sm font-medium text-orange-600 hover:text-orange-700 border border-orange-200 hover:border-orange-400 rounded-xl transition-colors"
+        className="mt-4 w-full flex items-center justify-center gap-1.5 py-2 text-sm font-medium text-sky-600 hover:text-sky-700 border border-sky-200 hover:border-sky-400 rounded-xl transition-colors"
       >
         Xem chi tiết
         <ArrowRight className="w-3.5 h-3.5" />
@@ -183,7 +183,7 @@ export default function PaymentResultPage() {
 
         {/* A4: Lỗi phát hành */}
         {!loadingVouchers && issuePending && (
-          <div className="flex items-start gap-3 bg-orange-50 border border-orange-200 rounded-xl p-4 mb-5">
+          <div className="flex items-start gap-3 bg-sky-50 border border-sky-200 rounded-xl p-4 mb-5">
             <AlertCircle className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-semibold text-orange-700">
@@ -232,14 +232,14 @@ export default function PaymentResultPage() {
         <div className="flex flex-col gap-2">
           <button
             onClick={() => navigate("/customer/vouchers/my")}
-            className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 transition-colors"
+            className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-sky-500 text-white font-semibold rounded-xl hover:bg-sky-600 transition-colors"
           >
             <Ticket className="w-4 h-4" />
             Xem voucher của tôi
           </button>
           <button
             onClick={() => navigate("/customer/orders")}
-            className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl hover:border-orange-300 hover:text-orange-600 transition-colors"
+            className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl hover:border-sky-300 hover:text-sky-600 transition-colors"
           >
             <ShoppingBag className="w-4 h-4" />
             Lịch sử đơn hàng
@@ -269,7 +269,7 @@ export default function PaymentResultPage() {
       </p>
       <button
         onClick={() => navigate("/customer/cart")}
-        className="w-full px-4 py-3 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600"
+        className="w-full px-4 py-3 bg-sky-500 text-white font-semibold rounded-xl hover:bg-sky-600"
       >
         Quay lại giỏ hàng
       </button>

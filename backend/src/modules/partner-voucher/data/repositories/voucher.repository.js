@@ -29,7 +29,7 @@ class VoucherRepository {
   async resolvePartnerNamesMap() {
     try {
       const [{ data: partnersData }, { data: branchesData }, { data: linksData }] = await Promise.all([
-        supabase.from("hosodn").select("ma_hs, ten_dn, id_nguoi_dai_dien"),
+        supabase.from("hosodn").select("ma_hs, ten_dn"),
         supabase.from("chinhanh").select("ma_chi_nhanh, ma_hs"),
         supabase.from("voucher_cn").select("ma_voucher, ma_chi_nhanh"),
       ]);
@@ -37,7 +37,6 @@ class VoucherRepository {
       const partnerMap = new Map();
       (partnersData || []).forEach((p) => {
         if (p.ma_hs) partnerMap.set(p.ma_hs, p.ten_dn);
-        if (p.id_nguoi_dai_dien) partnerMap.set(p.id_nguoi_dai_dien, p.ten_dn);
       });
 
       const branchToHsMap = new Map();
@@ -133,7 +132,7 @@ class VoucherRepository {
 
       // 3. Filter memory store for vouchers created for this partner
       const memoryVouchers = Array.from(VOUCHERS_MEMORY_STORE.values()).filter(
-        (v) => v.ma_hs === targetMaHs || (partner?.id_nguoi_dai_dien && v.ma_hs === partner.id_nguoi_dai_dien)
+        (v) => v.ma_hs === targetMaHs
       );
 
       // 4. Query vouchers from Supabase DB matching the voucherIds

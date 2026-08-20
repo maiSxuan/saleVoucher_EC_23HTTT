@@ -3,7 +3,9 @@
  * Lưu các role, status, API base URL, etc.
  */
 export const ROLES = {
-  ADMIN: "admin",
+  Admin he thong: "admin-system",
+  Admin kiem duyet: "admin-moderation",
+  Admin van hanh: "admin-operation",
   STAFF: "staff",
   SELLER: "seller",
   CUSTOMER: "customer",

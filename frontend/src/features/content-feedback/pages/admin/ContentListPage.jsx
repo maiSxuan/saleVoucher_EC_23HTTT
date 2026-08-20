@@ -66,7 +66,7 @@ export default function ContentListPage() {
         noi_dung: formData.content, 
         hinh_anh_url: formData.imageUrl || null,
         trang_thai: 'Dang hien thi', 
-        matk_admin: 'UUID_ADMIN_EXAMPLE' 
+        matk_admin: 'UUID_MODERATION_EXAMPLE'
       });
       toast.success('Đã tạo nội dung mới thành công.');
     }
@@ -115,7 +115,7 @@ export default function ContentListPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-gray-900">
+    <div className="min-h-screen bg-snow-50 text-snow-900">
       <div className="p-6 max-w-7xl mx-auto">
         <div className="mb-5 flex items-center justify-between">
           <div>

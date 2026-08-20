@@ -2,7 +2,7 @@
  * Helper định dạng và xác định trạng thái hiển thị / công bố Voucher thống nhất toàn ứng dụng
  */
 export function getVoucherPublicationStatus(v) {
-  if (!v) return { label: "Bản nháp", color: "bg-blue-50 text-blue-700 border-blue-200", dot: "bg-blue-500", key: "Nhap" };
+  if (!v) return { label: "Bản nháp", color: "bg-sky-50 text-sky-700 border-sky-200", dot: "bg-sky-500", key: "Nhap" };
 
   const status = v.trang_thai || v.trang_thai_kiem_duyet || "";
 
@@ -16,7 +16,7 @@ export function getVoucherPublicationStatus(v) {
     return { label: "Bị từ chối", color: "bg-rose-50 text-rose-700 border-rose-200", dot: "bg-rose-500", key: "Tu choi" };
   }
   if (status === "Nhap") {
-    return { label: "Bản nháp", color: "bg-blue-50 text-blue-700 border-blue-200", dot: "bg-blue-500", key: "Nhap" };
+    return { label: "Bản nháp", color: "bg-sky-50 text-sky-700 border-sky-200", dot: "bg-sky-500", key: "Nhap" };
   }
   if (status === "Cho duyet") {
     return { label: "Chờ duyệt", color: "bg-amber-50 text-amber-700 border-amber-200", dot: "bg-amber-500", key: "Cho duyet" };
@@ -33,7 +33,7 @@ export function getVoucherPublicationStatus(v) {
   const total = Number(v.so_luong_phat_hanh) || 0;
 
   if (sold >= total && total > 0) {
-    return { label: "Hết hàng", color: "bg-purple-50 text-purple-700 border-purple-200", dot: "bg-purple-500", key: "Het hang" };
+    return { label: "Hết hàng", color: "bg-violet-50 text-violet-700 border-violet-200", dot: "bg-violet-500", key: "Het hang" };
   }
 
   if (v.tg_ket_thuc_ban) {
@@ -47,7 +47,7 @@ export function getVoucherPublicationStatus(v) {
     const start = new Date(v.tg_bat_dau_ban);
     // Allow a 1-hour buffer for timezone parsing (e.g. UTC vs Local Time)
     if (!isNaN(start.getTime()) && start.getTime() - now.getTime() > 60 * 60 * 1000) {
-      return { label: "Chờ mở bán", color: "bg-blue-50 text-blue-700 border-blue-200", dot: "bg-blue-500", key: "Cho mo ban" };
+      return { label: "Chờ mở bán", color: "bg-sky-50 text-sky-700 border-sky-200", dot: "bg-sky-500", key: "Cho mo ban" };
     }
   }
 

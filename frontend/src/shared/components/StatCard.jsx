@@ -2,7 +2,7 @@ import React from "react";
 
 export function StatCard({ title, value, change, changeType = "neutral", icon, subtitle }) {
   const getChangeColor = () => {
-    if (changeType === "increase") return "text-emerald-600 bg-emerald-50";
+    if (changeType === "increase") return "text-sky-700 bg-sky-50";
     if (changeType === "decrease") return "text-rose-600 bg-rose-50";
     return "text-slate-600 bg-slate-50";
   };

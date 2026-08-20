@@ -188,7 +188,7 @@ export default function AdminComplaintsPage() {
             onClick={() => setFilterStatus(tab.key)}
             className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
               filterStatus === tab.key
-                ? 'bg-orange-500 text-white shadow-sm'
+                ? 'bg-sky-500 text-white shadow-sm'
                 : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
             }`}
           >
@@ -273,7 +273,7 @@ export default function AdminComplaintsPage() {
                                   </button>
                                 )}
                                 {canRequestRefund && (
-                                  <button disabled={updatingId === c.id} onClick={() => { setReasonInput(''); setActiveComplaintId(c.id); setRefundModal(true); }} className="w-full text-right px-2.5 py-1.5 text-xs bg-amber-50 text-amber-700 font-semibold rounded-lg hover:bg-amber-100 disabled:opacity-40 transition-colors">
+                                  <button disabled={updatingId === c.id} onClick={() => { setReasonInput(''); setActiveComplaintId(c.id); setRefundModal(true); }} className="w-full text-right px-2.5 py-1.5 text-xs bg-sky-50 text-sky-700 font-semibold rounded-lg hover:bg-sky-100 disabled:opacity-40 transition-colors">
                                     Chấp nhận (Hoàn tiền)
                                   </button>
                                 )}
@@ -312,7 +312,7 @@ export default function AdminComplaintsPage() {
                     onClick={() => setCurrentPage(page)}
                     className={`w-8 h-8 rounded-lg text-xs font-semibold ${
                       currentPage === page
-                        ? 'bg-orange-500 text-white shadow-xs'
+                        ? 'bg-sky-500 text-white shadow-xs'
                         : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
                     }`}
                   >
@@ -344,7 +344,7 @@ export default function AdminComplaintsPage() {
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <button disabled={updatingId === activeComplaintId} onClick={() => { setRefundModal(false); setReasonInput(''); }} className="px-4 py-2 border rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50">Hủy</button>
-              <button disabled={updatingId === activeComplaintId} onClick={handleApproveRefund} className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-semibold hover:bg-amber-600 disabled:opacity-50">{updatingId === activeComplaintId ? 'Đang xử lý...' : 'Xác nhận'}</button>
+              <button disabled={updatingId === activeComplaintId} onClick={handleApproveRefund} className="px-4 py-2 bg-sky-500 text-white rounded-lg text-sm font-semibold hover:bg-sky-600 disabled:opacity-50">{updatingId === activeComplaintId ? 'Đang xử lý...' : 'Xác nhận'}</button>
             </div>
           </div>
         </div>

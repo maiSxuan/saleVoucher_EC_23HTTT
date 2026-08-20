@@ -247,9 +247,9 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans selection:bg-sky-500 selection:text-white">
+    <div className="min-h-screen bg-snow-50 text-snow-800 flex flex-col font-sans selection:bg-sky-500 selection:text-white">
       {/* Top Banner Notice */}
-      <div className="bg-gradient-to-r from-sky-400 via-sky-500 to-blue-500 text-white text-xs py-2 px-4 text-center font-medium flex items-center justify-center gap-2 shadow-inner">
+      <div className="bg-gradient-to-r from-sky-500 via-sky-600 to-cyan-600 text-white text-xs py-2 px-4 text-center font-medium flex items-center justify-center gap-2 shadow-inner">
         <Sparkles size={14} className="text-yellow-300 animate-pulse" />
         <span>{t("landing.welcome", "Chào mừng đến với Snow Voucher — Tuyết Vàng Ưu Đãi, Săn Deal Đóng Băng Giá Đỉnh Nhất!")}</span>
         <Sparkles size={14} className="text-yellow-300 animate-pulse hidden sm:inline" />
@@ -260,12 +260,15 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
           {/* Logo & Website Title */}
           <Link to="/" className="flex items-center gap-2 sm:gap-3 group shrink-0 min-w-0">
-            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-sky-400 to-blue-500 flex items-center justify-center text-white shadow-md shadow-sky-500/20 group-hover:scale-105 transition-transform duration-300 shrink-0">
-              <span className="text-xl sm:text-2xl">❄️</span>
-            </div>
+            <img
+              src="/snowflake.png"
+              alt=""
+              aria-hidden="true"
+              className="w-9 h-9 sm:w-11 sm:h-11 object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-300 shrink-0"
+            />
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-lg sm:text-2xl tracking-tight bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 bg-clip-text text-transparent truncate">
+                <span className="font-extrabold text-lg sm:text-2xl tracking-tight bg-gradient-to-r from-sky-600 via-cyan-600 to-sky-700 bg-clip-text text-transparent truncate">
                   Snow Voucher
                 </span>
                 <span className="text-[10px] font-bold uppercase tracking-widest bg-sky-100 text-sky-800 px-2 py-0.5 rounded-full border border-sky-200 hidden sm:inline-block">
@@ -330,19 +333,19 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section Banner with Sky Blue Background */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-sky-400 via-sky-500 to-blue-600 text-white py-16 px-4 sm:px-6 lg:px-8">
+      <section className="hero-snow-gradient relative overflow-hidden text-white py-16 px-4 sm:px-6 lg:px-8">
         <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
         
         <div className="max-w-7xl mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/20 border border-white/30 text-white text-xs font-semibold backdrop-blur-md shadow-xs">
-              <Flame size={14} className="text-yellow-300 animate-bounce" />
+              <Flame size={14} className="text-brand-accent-soft animate-bounce" />
               <span>Sàn Thương Mại Điện Tử E-Voucher Hàng Đầu Việt Nam</span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
               Snow Voucher <br />
-              <span className="bg-gradient-to-r from-yellow-200 via-amber-100 to-yellow-300 bg-clip-text text-transparent drop-shadow-xs">
+              <span className="text-white drop-shadow-xs">
                 Tuyết Vàng Ưu Đãi — Săn Deal Băng Giá!
               </span>
             </h1>
@@ -361,7 +364,7 @@ export default function LandingPage() {
               </a>
               <a
                 href="#brands"
-                className="px-6 py-3.5 rounded-full bg-sky-600/30 hover:bg-sky-600/50 text-white border border-white/30 font-bold text-sm backdrop-blur-md transition-all cursor-pointer"
+                className="px-6 py-3.5 rounded-full bg-sky-700/30 hover:bg-sky-700/40 text-white border border-white/30 font-bold text-sm backdrop-blur-md transition-all cursor-pointer"
               >
                 <span>Xem Thương Hiệu Đồng Hành</span>
               </a>
@@ -374,7 +377,7 @@ export default function LandingPage() {
                 <p className="text-xs text-sky-100 mt-0.5">Voucher Chính Hãng</p>
               </div>
               <div>
-                <p className="text-2xl font-black text-yellow-200">500+</p>
+                <p className="text-2xl font-black text-brand-accent-soft">500+</p>
                 <p className="text-xs text-sky-100 mt-0.5">Đối Tác Uy Tín</p>
               </div>
               <div>
@@ -386,21 +389,21 @@ export default function LandingPage() {
 
           {/* Hero Visual Card Carousel Mockup */}
           <div className="lg:col-span-5 relative flex justify-center">
-            <div className="w-full max-w-md bg-white/15 border border-white/30 rounded-3xl p-6 shadow-2xl backdrop-blur-xl relative space-y-5 text-white">
+            <div className="w-full max-w-md bg-white/90 border border-white rounded-3xl p-6 shadow-card backdrop-blur-xl relative space-y-5 text-snow-900">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-full bg-red-400" />
                   <span className="w-3 h-3 rounded-full bg-yellow-300" />
                   <span className="w-3 h-3 rounded-full bg-emerald-400" />
                 </div>
-                <span className="text-xs font-mono font-bold text-white bg-white/20 border border-white/30 px-2.5 py-1 rounded-full">
+                <span className="text-xs font-mono font-bold text-brand-accent-foreground bg-brand-accent-soft border border-brand-accent-border px-2.5 py-1 rounded-full">
                   ⚡ HOT DEAL AT SNOW VOUCHER!
                 </span>
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs text-sky-100">
-                  <span className="flex items-center gap-1.5 text-yellow-300 font-semibold">
+                <div className="flex items-center justify-between text-xs text-snow-600">
+                  <span className="flex items-center gap-1.5 text-semantic-success font-semibold">
                     <CheckCircle2 size={14} /> Mã QR Sử Dụng Trực Tiếp
                   </span>
                 </div>
@@ -430,7 +433,7 @@ export default function LandingPage() {
             <button
               type="button"
               onClick={() => scrollBrands("left")}
-              className="w-10 h-10 rounded-full border border-slate-200 bg-white hover:bg-slate-100 hover:border-sky-400 text-slate-600 hover:text-sky-600 hidden sm:flex items-center justify-center transition-all shadow-xs shrink-0 cursor-pointer"
+              className="w-10 h-10 rounded-full border border-slate-200 bg-white hover:bg-sky-50 hover:border-sky-400 text-slate-600 hover:text-sky-700 hidden sm:flex items-center justify-center transition-all shadow-xs shrink-0 cursor-pointer"
               title="Xem thương hiệu trước"
             >
               <ChevronLeft size={22} />
@@ -453,7 +456,7 @@ export default function LandingPage() {
                       setSearchQuery(name);
                       focusSearchResults();
                     }}
-                    className="shrink-0 w-40 sm:w-44 bg-slate-50 hover:bg-white border border-slate-200 hover:border-sky-400 p-3.5 rounded-2xl transition-all duration-300 flex flex-col items-center justify-center text-center shadow-2xs hover:shadow-md hover:-translate-y-1 group cursor-pointer"
+                    className="shrink-0 w-40 sm:w-44 bg-slate-50 hover:bg-sky-50 border border-slate-200 hover:border-sky-300 p-3.5 rounded-2xl transition-all duration-300 flex flex-col items-center justify-center text-center shadow-2xs hover:shadow-md hover:-translate-y-1 group cursor-pointer"
                     title={`Xem voucher của ${name}`}
                   >
                     <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200 p-2 flex items-center justify-center shadow-xs overflow-hidden mb-2 group-hover:scale-105 transition-transform relative">
@@ -474,7 +477,7 @@ export default function LandingPage() {
                         />
                       ) : null}
                       <div
-                        className="w-full h-full rounded-xl bg-gradient-to-tr from-sky-400 to-blue-500 text-white font-black text-xl flex items-center justify-center shadow-inner"
+                        className="w-full h-full rounded-xl bg-gradient-to-tr from-sky-500 to-sky-700 text-white font-black text-xl flex items-center justify-center shadow-inner"
                         style={{ display: logo ? "none" : "flex" }}
                       >
                         {brand.icon || name.charAt(0).toUpperCase()}
@@ -511,7 +514,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <span className="text-xs font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">
+              <span className="text-xs font-bold uppercase tracking-widest text-brand-accent-foreground bg-brand-accent-soft px-3 py-1 rounded-full border border-brand-accent-border">
                 {t("nav.categoryFilter", "Phân Loại Ưu Đãi")}
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-2">
@@ -557,7 +560,7 @@ export default function LandingPage() {
                       }}
                       className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between h-36 ${
                         isSelected
-                          ? "bg-gradient-to-br from-sky-500 to-blue-600 text-white border-sky-400 shadow-md shadow-sky-500/20 scale-102"
+                          ? "bg-gradient-to-br from-sky-500 to-sky-700 text-white border-sky-400 shadow-md shadow-sky-500/20 scale-102"
                           : "bg-white text-slate-800 border-slate-200 hover:border-sky-300 hover:shadow-md hover:-translate-y-0.5"
                       }`}
                     >
@@ -594,7 +597,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-100 pb-4">
             <div>
-              <span className="text-xs font-bold uppercase tracking-widest text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+              <span className="text-xs font-bold uppercase tracking-widest text-brand-accent-foreground bg-brand-accent-soft px-3 py-1 rounded-full border border-brand-accent-border">
                 Ưu Đãi Mới Cập Nhật
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-2">
@@ -679,7 +682,7 @@ export default function LandingPage() {
                           <span className="truncate max-w-[120px]">{v.ten_dn}</span>
                         </div>
                         {discountPercent > 0 && (
-                          <div className="absolute top-2.5 right-2.5 bg-red-600 text-white text-xs font-extrabold px-2.5 py-1 rounded-full shadow-md animate-pulse">
+                          <div className="absolute top-2.5 right-2.5 bg-brand-accent text-white text-xs font-extrabold px-2.5 py-1 rounded-full shadow-md animate-pulse">
                             -{discountPercent}%
                           </div>
                         )}

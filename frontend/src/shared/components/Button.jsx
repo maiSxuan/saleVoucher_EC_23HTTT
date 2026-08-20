@@ -16,15 +16,15 @@ export function Button({
 
   const variants = {
     primary:
-      "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm focus:ring-emerald-500 active:bg-emerald-800",
+      "bg-sky-600 hover:bg-sky-700 text-white shadow-sm focus:ring-sky-500 active:bg-sky-800",
     secondary:
-      "bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 shadow-sm focus:ring-emerald-500",
+      "bg-white border border-slate-300 text-slate-700 hover:bg-sky-50 shadow-sm focus:ring-sky-500",
     danger:
       "bg-rose-600 hover:bg-rose-700 text-white shadow-sm focus:ring-rose-500 active:bg-rose-800",
     success:
       "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm focus:ring-emerald-500 active:bg-emerald-800",
     outline:
-      "bg-transparent border border-emerald-600 text-emerald-600 hover:bg-emerald-50 focus:ring-emerald-500",
+      "bg-transparent border border-sky-600 text-sky-600 hover:bg-sky-50 focus:ring-sky-500",
     ghost:
       "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:ring-slate-400",
   };

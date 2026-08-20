@@ -51,6 +51,7 @@ Trong Supabase Dashboard, mở **SQL Editor -> New query**, rồi chạy lần l
 
 1. [20260812_admin_order_workflow.sql](migrations/20260812_admin_order_workflow.sql) để bổ sung schema cho luồng xử lý đơn hàng Admin.
 2. [20260812_query_performance_indexes.sql](migrations/20260812_query_performance_indexes.sql) để thêm index theo các truy vấn thực tế của backend.
+3. [20260819_admin_portal_roles.sql](migrations/20260819_admin_portal_roles.sql) để tách quyền Admin và thêm ba tài khoản portal.
 
 Migration index có thể chạy lại an toàn nhờ `IF NOT EXISTS`. Nên chạy lúc ít người dùng vì PostgreSQL sẽ khóa ghi ngắn hạn trên từng bảng trong lúc tạo index. Kết quả cuối script liệt kê toàn bộ index có tiền tố `idx_perf_` để kiểm tra.
 

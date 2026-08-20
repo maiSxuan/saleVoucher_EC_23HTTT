@@ -65,16 +65,15 @@ async function enrichUserPayload(account) {
   let tenDn = null;
 
   if (!maHsdn) {
-    const { data: hsByRep } = await supabase
-      .from("hosodn")
-      .select("ma_hs, ten_dn")
-      .eq("id_nguoi_dai_dien", account.nguoidung.ma_nguoi_dung)
+    const { data: currentUser } = await supabase
+      .from("nguoidung")
+      .select("ma_hsdn")
+      .eq("ma_nguoi_dung", account.nguoidung.ma_nguoi_dung)
       .maybeSingle();
-    if (hsByRep) {
-      maHsdn = hsByRep.ma_hs;
-      tenDn = hsByRep.ten_dn;
-    }
-  } else {
+    if (currentUser?.ma_hsdn) maHsdn = currentUser.ma_hsdn;
+  }
+
+  if (maHsdn) {
     const { data: hsData } = await supabase
       .from("hosodn")
       .select("ma_hs, ten_dn")
@@ -221,44 +220,7 @@ class AuthService {
     const dbVaiTro = account.nguoidung.vai_tro;
     const mappedRole = DB_TO_JWT[dbVaiTro] || "CUSTOMER";
 
-    // Lấy thông tin hồ sơ doanh nghiệp (nếu là người đại diện hoặc nhân viên đối tác)
-    let maHsdn = account.nguoidung.ma_hsdn || null;
-    let tenDn = null;
-
-    if (!maHsdn) {
-      const { data: hsByRep } = await supabase
-        .from("hosodn")
-        .select("ma_hs, ten_dn")
-        .eq("id_nguoi_dai_dien", account.nguoidung.ma_nguoi_dung)
-        .maybeSingle();
-      if (hsByRep) {
-        maHsdn = hsByRep.ma_hs;
-        tenDn = hsByRep.ten_dn;
-      }
-    } else {
-      const { data: hsData } = await supabase
-        .from("hosodn")
-        .select("ma_hs, ten_dn")
-        .eq("ma_hs", maHsdn)
-        .maybeSingle();
-      if (hsData) {
-        tenDn = hsData.ten_dn;
-      }
-    }
-
-    // Lấy thông tin chi nhánh của nhân viên nếu có
-    let branchInfo = null;
-    if (account.nguoidung.ma_chi_nhanh) {
-      const { data: bData } = await supabase
-        .from("chinhanh")
-        .select("ma_chi_nhanh, ten_chi_nhanh, dia_chi, khu_vuc, ma_hs")
-        .eq("ma_chi_nhanh", account.nguoidung.ma_chi_nhanh)
-        .maybeSingle();
-      if (bData) {
-        branchInfo = bData;
-        if (!maHsdn && bData.ma_hs) maHsdn = bData.ma_hs;
-      }
-    }
+    const { maHsdn, tenDn, branchInfo } = await enrichUserPayload(account);
 
     const userPayload = {
       id: account.nguoidung.ma_nguoi_dung,
@@ -481,43 +443,7 @@ class AuthService {
     const dbVaiTro = account.nguoidung.vai_tro;
     const mappedRole = DB_TO_JWT[dbVaiTro] || "CUSTOMER";
 
-    // Lấy thông tin hồ sơ doanh nghiệp (nếu là người đại diện hoặc nhân viên đối tác)
-    let maHsdn = account.nguoidung.ma_hsdn || null;
-    let tenDn = null;
-
-    if (!maHsdn) {
-      const { data: hsByRep } = await supabase
-        .from("hosodn")
-        .select("ma_hs, ten_dn")
-        .eq("id_nguoi_dai_dien", account.nguoidung.ma_nguoi_dung)
-        .maybeSingle();
-      if (hsByRep) {
-        maHsdn = hsByRep.ma_hs;
-        tenDn = hsByRep.ten_dn;
-      }
-    } else {
-      const { data: hsData } = await supabase
-        .from("hosodn")
-        .select("ma_hs, ten_dn")
-        .eq("ma_hs", maHsdn)
-        .maybeSingle();
-      if (hsData) {
-        tenDn = hsData.ten_dn;
-      }
-    }
-
-    let branchInfo = null;
-    if (account.nguoidung.ma_chi_nhanh) {
-      const { data: bData } = await supabase
-        .from("chinhanh")
-        .select("ma_chi_nhanh, ten_chi_nhanh, dia_chi, khu_vuc, ma_hs")
-        .eq("ma_chi_nhanh", account.nguoidung.ma_chi_nhanh)
-        .maybeSingle();
-      if (bData) {
-        branchInfo = bData;
-        if (!maHsdn && bData.ma_hs) maHsdn = bData.ma_hs;
-      }
-    }
+    const { maHsdn, tenDn, branchInfo } = await enrichUserPayload(account);
 
     const userPayload = {
       id: account.nguoidung.ma_nguoi_dung,
