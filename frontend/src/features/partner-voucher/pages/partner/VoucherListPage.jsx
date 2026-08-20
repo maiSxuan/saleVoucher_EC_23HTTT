@@ -161,7 +161,7 @@ export function VoucherListPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{t("partner.voucherListTitle", "Quản lý Voucher")}</h1>
-            <p className="text-sm text-gray-500 mt-1">Danh sách tất cả các chương trình ưu đãi của bạn.</p>
+            <p className="text-sm text-gray-500 mt-1">{t("partner.voucherListSubtitle", "Danh sách tất cả các chương trình ưu đãi của bạn.")}</p>
           </div>
           <button
             onClick={() => navigate("/partner/vouchers/new")}
@@ -209,7 +209,7 @@ export function VoucherListPage() {
               <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Tìm tên Voucher..."
+                placeholder={t("partner.searchVoucherPlaceholder", "Tìm tên Voucher...")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -220,12 +220,12 @@ export function VoucherListPage() {
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700"
             >
-              <option value="All">Tất cả danh mục</option>
+              <option value="All">{t("common.allCategories", "Tất cả danh mục")}</option>
               {categories.map((c) => {
                 const catVal = c.ma_danh_muc || c.id || c.ten_danh_muc;
                 return (
                   <option key={catVal} value={catVal}>
-                    {c.ten_danh_muc}
+                    {t(c.ten_danh_muc)}
                   </option>
                 );
               })}
@@ -233,12 +233,12 @@ export function VoucherListPage() {
           </div>
           {(searchQuery || selectedStatusTab !== "All" || selectedCategory !== "All") && (
             <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-xs text-gray-500">
-              <span>Đang lọc ra {totalVouchers} kết quả</span>
+              <span>{t("partner.filteringResults", `Đang lọc ra ${totalVouchers} kết quả`)}</span>
               <button
                 onClick={handleResetFilters}
                 className="flex items-center gap-1 text-rose-600 hover:text-rose-800 font-semibold cursor-pointer"
               >
-                <X size={14} /> Xóa bộ lọc
+                <X size={14} /> {t("common.clearFilters", "Xóa bộ lọc")}
               </button>
             </div>
           )}
@@ -247,11 +247,11 @@ export function VoucherListPage() {
         {/* Voucher Table */}
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-xs">
           {loading ? (
-            <div className="p-12 text-center text-gray-400">Đang tải danh sách voucher...</div>
+            <div className="p-12 text-center text-gray-400">{t("voucher.loadingList", "Đang tải danh sách voucher...")}</div>
           ) : paginatedVouchers.length === 0 ? (
             <div className="flex flex-col items-center py-16 text-gray-400">
               <Tag size={40} className="mb-2 text-gray-300" />
-              <p className="text-sm">Không tìm thấy Voucher nào phù hợp với bộ lọc.</p>
+              <p className="text-sm">{t("voucher.noMatchFilter", "Không tìm thấy Voucher nào phù hợp với bộ lọc.")}</p>
             </div>
           ) : (
             <div>
@@ -260,8 +260,8 @@ export function VoucherListPage() {
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     <th className="py-3.5 px-4">{t("partner.colVoucher", "Voucher")}</th>
-                    <th className="py-3.5 px-4">{t("voucher.status", "Trạng thái duyệt")}</th>
-                    <th className="py-3.5 px-4">{t("voucher.status", "Trạng thái công bố")}</th>
+                    <th className="py-3.5 px-4">{t("voucher.reviewStatus", "Trạng thái duyệt")}</th>
+                    <th className="py-3.5 px-4">{t("voucher.publishStatus", "Trạng thái công bố")}</th>
                     <th className="py-3.5 px-4">{t("partner.colPrice", "Giá bán")}</th>
                     <th className="py-3.5 px-4">{t("voucher.sold", "Đã bán")}</th>
                     <th className="py-3.5 px-4">{t("voucher.expiryDate", "Thời gian bán")}</th>
@@ -287,7 +287,7 @@ export function VoucherListPage() {
                               >
                                 {typeof v.ten_voucher === 'object' && v.ten_voucher !== null ? (v.ten_voucher.name || v.ten_voucher.ten_voucher || "Voucher") : v.ten_voucher}
                               </Link>
-                              <div className="text-xs text-gray-400 mt-0.5">{v.ten_danh_muc || "---"}</div>
+                              <div className="text-xs text-gray-400 mt-0.5">{t(v.ten_danh_muc) || "---"}</div>
                             </div>
                           </div>
                         </td>
@@ -304,7 +304,7 @@ export function VoucherListPage() {
                             return (
                               <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${pb.color}`}>
                                 <span className={`w-1.5 h-1.5 rounded-full ${pb.dot}`} />
-                                {pb.label}
+                                {t(pb.label)}
                               </span>
                             );
                           })()}
@@ -336,8 +336,8 @@ export function VoucherListPage() {
 
                         {/* Column 6: Selling Time */}
                         <td className="py-4 px-4 whitespace-nowrap text-xs text-gray-600 font-mono">
-                          <div>From: {formatDate(v.tg_bat_dau_ban)}</div>
-                          <div>To: {formatDate(v.tg_ket_thuc_ban)}</div>
+                          <div>{t("common.from", "Từ")}: {formatDate(v.tg_bat_dau_ban)}</div>
+                          <div>{t("common.to", "Đến")}: {formatDate(v.tg_ket_thuc_ban)}</div>
                         </td>
 
                         {/* Column 7: Action */}
@@ -346,7 +346,7 @@ export function VoucherListPage() {
                             to={`/partner/vouchers/${v.ma_voucher}`}
                             className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 font-semibold hover:bg-blue-50 px-2.5 py-1 rounded-lg transition-colors"
                           >
-                            <Eye size={14} /> Chi tiết
+                            <Eye size={14} /> {t("common.detail", "Chi tiết")}
                           </Link>
                         </td>
                       </tr>
@@ -360,7 +360,7 @@ export function VoucherListPage() {
             {totalVouchers > 0 && (
               <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50 text-sm">
                 <p className="text-xs text-gray-600">
-                  Trang {page} / {totalPages} (Tổng {totalVouchers} voucher)
+                  {t("common.page", "Trang")} {page} / {totalPages} ({t("partner.totalVouchersPrefix", "Tổng")} {totalVouchers} voucher)
                 </p>
                 <div className="flex gap-2">
                   <button
@@ -368,14 +368,14 @@ export function VoucherListPage() {
                     disabled={page <= 1}
                     className="px-3 py-1 bg-white border border-gray-300 rounded text-xs font-medium text-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-colors cursor-pointer"
                   >
-                    Trước
+                    {t("common.prev", "Trước")}
                   </button>
                   <button
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page >= totalPages}
                     className="px-3 py-1 bg-white border border-gray-300 rounded text-xs font-medium text-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-colors cursor-pointer"
                   >
-                    Sau
+                    {t("common.next", "Sau")}
                   </button>
                 </div>
               </div>

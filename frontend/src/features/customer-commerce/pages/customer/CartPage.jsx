@@ -39,10 +39,10 @@ export default function CartPage() {
       const updated = await removeCartItems([voucherId]);
       setCart(updated); // dùng luôn response từ server để đồng bộ, khỏi phải loadCart lại
       setSelectedIds((prev) => prev.filter((id) => id !== voucherId));
-      toast.success("Đã xóa voucher không khả dụng khỏi giỏ hàng.");
+      toast.success(t("cart.removeInvalidSuccess", "Đã xóa voucher không khả dụng khỏi giỏ hàng."));
     } catch (err) {
       console.error("Lỗi handleRemoveInvalidItem:", err);
-      toast.error("Không thể xóa voucher. Vui lòng thử lại.");
+      toast.error(t("cart.removeError", "Không thể xóa voucher. Vui lòng thử lại."));
     } finally {
       setRemovingIds((prev) => prev.filter((id) => id !== voucherId));
     }
@@ -68,7 +68,7 @@ export default function CartPage() {
       })
       .catch((err) => {
         console.error("Lỗi loadCart:", err);
-        setErrorMsg("Không thể tải giỏ hàng. Vui lòng thử lại sau.");
+        setErrorMsg(t("cart.fetchError", "Không thể tải giỏ hàng. Vui lòng thử lại sau."));
       })
       .finally(() => setLoading(false));
   }
@@ -126,7 +126,7 @@ export default function CartPage() {
     } catch (err) {
       setCart(previousCart);
       console.error("Lỗi handleQtyChange:", err);
-      setErrorMsg("Không thể cập nhật số lượng");
+      setErrorMsg(t("cart.updateQtyError", "Không thể cập nhật số lượng"));
     }
   };
 
@@ -137,12 +137,12 @@ export default function CartPage() {
     try {
       const updated = await removeCartItems(selectedIds);
       setCart(updated);
-      toast.success(`Đã xóa ${selectedIds.length} sản phẩm khỏi giỏ hàng.`);
+      toast.success(t("cart.deleteSelectedSuccess", `Đã xóa ${selectedIds.length} sản phẩm khỏi giỏ hàng.`));
       setSelectedIds([]);
       setShowDeleteModal(false);
     } catch (err) {
       console.error("Lỗi handleConfirmDeleteSelected:", err);
-      setErrorMsg("Có lỗi xảy ra khi xóa sản phẩm.");
+      setErrorMsg(t("cart.deleteError", "Có lỗi xảy ra khi xóa sản phẩm."));
     } finally {
       setDeleting(false);
     }
@@ -163,14 +163,14 @@ export default function CartPage() {
 
   const handleCheckout = () => {
     if (selectedIds.length === 0) {
-      toast.error("Vui lòng chọn ít nhất 1 voucher để thanh toán.");
+      toast.error(t("cart.selectAtLeastOne", "Vui lòng chọn ít nhất 1 voucher để thanh toán."));
       return;
     }
     const hasSelectedInvalid = selectedItems.some(
       (i) => i.status === "unavailable",
     );
     if (hasSelectedInvalid) {
-      toast.error("Vui lòng bỏ chọn các voucher không khả dụng.");
+      toast.error(t("cart.uncheckInvalid", "Vui lòng bỏ chọn các voucher không khả dụng."));
       return;
     }
 
@@ -187,12 +187,12 @@ export default function CartPage() {
   if (loading)
     return (
       <div className="py-16 text-center text-gray-400 text-sm">
-        Đang tải giỏ hàng...
+        {t("cart.loadingCart", "Đang tải giỏ hàng...")}
       </div>
     );
   if (errorMsg)
     return (
-      <div className="py-16 text-center text-red-500 text-sm">{errorMsg}</div>
+      <div className="py-16 text-center text-red-500 text-sm">{t(errorMsg)}</div>
     );
   if (!cart) return null;
 
@@ -200,15 +200,15 @@ export default function CartPage() {
     return (
       <div className="flex flex-col items-center py-20 text-gray-400">
         <ShoppingBag size={48} className="mb-3" />
-        <p className="text-lg font-medium text-gray-600 mb-1">Giỏ hàng trống</p>
+        <p className="text-lg font-medium text-gray-600 mb-1">{t("cart.emptyTitle", "Giỏ hàng trống")}</p>
         <p className="text-sm mb-5">
-          Thêm voucher yêu thích để bắt đầu mua sắm
+          {t("cart.emptySubtitle", "Thêm voucher yêu thích để bắt đầu mua sắm")}
         </p>
         <button
           onClick={() => navigate("/customer")}
           className="bg-orange-500 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-orange-600"
         >
-          Khám phá voucher
+          {t("cart.exploreVouchers", "Khám phá voucher")}
         </button>
       </div>
     );
@@ -226,8 +226,8 @@ export default function CartPage() {
             className="w-4 h-4 accent-orange-500 rounded cursor-pointer"
           />
           <h1 className="text-base font-bold text-gray-900 flex items-center gap-2">
-            <ShoppingCart size={17} /> Chọn tất cả ({selectedIds.length}/
-            {validItems.length} voucher hợp lệ)
+            <ShoppingCart size={17} /> {t("cart.selectAll", "Chọn tất cả")} ({selectedIds.length}/
+            {validItems.length} {t("cart.validVouchersSuffix", "voucher hợp lệ")})
           </h1>
         </div>
 
@@ -236,7 +236,7 @@ export default function CartPage() {
           disabled={selectedIds.length === 0}
           className="text-sm text-red-500 hover:text-red-700 disabled:text-gray-300 disabled:cursor-not-allowed flex items-center gap-1 font-medium transition-colors"
         >
-          <Trash2 size={15} /> Xóa mục đã chọn ({selectedIds.length})
+          <Trash2 size={15} /> {t("cart.deleteSelected", "Xóa mục đã chọn")} ({selectedIds.length})
         </button>
       </div>
 
@@ -247,8 +247,7 @@ export default function CartPage() {
             className="text-amber-600 mt-0.5 flex-shrink-0"
           />
           <p className="text-sm text-amber-700">
-            Một số voucher trong giỏ đã thay đổi trạng thái. Vui lòng kiểm tra
-            trước khi thanh toán.
+            {t("cart.invalidItemsWarning", "Một số voucher trong giỏ đã thay đổi trạng thái. Vui lòng kiểm tra trước khi thanh toán.")}
           </p>
         </div>
       )}
@@ -297,7 +296,7 @@ export default function CartPage() {
                     {typeof item.name === 'object' && item.name !== null ? item.name.name : item.name}
                   </button>
                   <p className="text-xs text-gray-400 mb-1">
-                    {typeof item.partner === 'object' && item.partner !== null ? (item.partner.ten_dn || item.partner.name || "Đối tác") : item.partner}
+                    {typeof item.partner === 'object' && item.partner !== null ? (item.partner.ten_dn || item.partner.name || t("partner.partner", "Đối tác")) : item.partner}
                   </p>
                   <p className="text-sm font-bold text-orange-600">
                     {item.salePrice.toLocaleString("vi-VN")}đ
@@ -306,7 +305,7 @@ export default function CartPage() {
                     <div className="flex items-center gap-2 mt-1.5">
                       <span className="text-xs text-red-500 flex items-center gap-1">
                         <AlertCircle size={11} />
-                        Không khả dụng
+                        {t("voucher.unavailable", "Không khả dụng")}
                       </span>
                       <button
                         onClick={() => handleRemoveInvalidItem(item.voucherId)}
@@ -314,15 +313,15 @@ export default function CartPage() {
                         className="text-xs font-medium text-white bg-red-500 hover:bg-red-600 active:bg-red-700 px-2.5 py-1 rounded-md transition-colors disabled:bg-red-300 disabled:cursor-wait"
                       >
                         {removingIds.includes(item.voucherId)
-                          ? "Đang xóa..."
-                          : "Xóa khỏi giỏ"}
+                          ? t("common.deleting", "Đang xóa...")
+                          : t("cart.removeFromCart", "Xóa khỏi giỏ")}
                       </button>
                     </div>
                   )}
                   {item.status === "qty_exceeded" && (
                     <span className="text-xs text-amber-600 flex items-center gap-1 mt-0.5">
                       <AlertCircle size={11} />
-                      Chỉ còn {item.remaining}
+                      {t("cart.onlyLeft", "Chỉ còn")} {item.remaining}
                     </span>
                   )}
                 </div>
@@ -365,17 +364,17 @@ export default function CartPage() {
         <div className="lg:col-span-1">
           <div className="bg-white rounded-xl border border-gray-200 p-4 sticky top-20 shadow-sm">
             <h3 className="font-semibold text-gray-900 mb-3">
-              Tóm tắt đơn hàng
+              {t("cart.orderSummaryTitle", "Tóm tắt đơn hàng")}
             </h3>
             <div className="space-y-2 mb-3">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Đã chọn:</span>
+                <span className="text-gray-500">{t("cart.selectedLabel", "Đã chọn:")}</span>
                 <span className="font-medium">
-                  {selectedTotalQty} voucher ({selectedIds.length} mục)
+                  {selectedTotalQty} voucher ({selectedIds.length} {t("cart.itemsSuffix", "mục")})
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Tạm tính:</span>
+                <span className="text-gray-500">{t("cart.subtotalLabel", "Tạm tính:")}</span>
                 <span className="font-semibold">
                   {selectedSubtotal.toLocaleString("vi-VN")}đ
                 </span>
@@ -383,7 +382,7 @@ export default function CartPage() {
             </div>
             <div className="border-t border-gray-100 pt-3 mb-4">
               <div className="flex justify-between font-bold text-base">
-                <span>Tổng thanh toán</span>
+                <span>{t("cart.totalPaymentLabel", "Tổng thanh toán")}</span>
                 <span className="text-orange-600">
                   {selectedSubtotal.toLocaleString("vi-VN")}đ
                 </span>
@@ -395,10 +394,10 @@ export default function CartPage() {
               className="w-full flex items-center justify-center gap-2 bg-orange-500 text-white py-2.5 rounded-xl font-semibold hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {checkingOut ? (
-                "Đang kiểm tra..."
+                t("common.checking", "Đang kiểm tra...")
               ) : (
                 <>
-                  <span>Tiến hành đặt mua</span>
+                  <span>{t("cart.proceedToPurchase", "Tiến hành đặt mua")}</span>
                   <ArrowRight size={16} />
                 </>
               )}
@@ -407,7 +406,7 @@ export default function CartPage() {
               onClick={() => navigate("/customer")}
               className="w-full text-center text-sm text-gray-500 hover:text-orange-500 mt-2"
             >
-              ← Tiếp tục mua sắm
+              ← {t("cart.continueShopping", "Tiếp tục mua sắm")}
             </button>
           </div>
         </div>
@@ -425,11 +424,10 @@ export default function CartPage() {
               <Trash2 size={24} />
             </div>
             <h3 className="font-bold text-gray-900 text-lg mb-1">
-              Xóa {selectedIds.length} sản phẩm?
+              {t("cart.deleteSelectedTitle", `Xóa ${selectedIds.length} sản phẩm?`)}
             </h3>
             <p className="text-sm text-gray-500 mb-5">
-              Bạn có chắc chắn muốn bỏ {selectedIds.length} voucher đã chọn khỏi
-              giỏ hàng không?
+              {t("cart.deleteSelectedBody", `Bạn có chắc chắn muốn bỏ ${selectedIds.length} voucher đã chọn khỏi giỏ hàng không?`)}
             </p>
             <div className="flex gap-3">
               <button
@@ -437,14 +435,14 @@ export default function CartPage() {
                 onClick={() => setShowDeleteModal(false)}
                 className="flex-1 border border-gray-300 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
               >
-                Hủy
+                {t("common.cancel", "Hủy")}
               </button>
               <button
                 disabled={deleting}
                 onClick={handleConfirmDeleteSelected}
                 className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
               >
-                {deleting ? "Đang xóa..." : "Xóa ngay"}
+                {deleting ? t("common.deleting", "Đang xóa...") : t("cart.deleteNow", "Xóa ngay")}
               </button>
             </div>
           </div>

@@ -136,13 +136,13 @@ export default function VoucherSearchPage() {
   if (loading)
     return (
       <div className="py-24 text-center text-gray-500 text-base font-medium">
-        Đang tìm kiếm voucher...
+        {t("voucher.searching", "Đang tìm kiếm voucher...")}
       </div>
     );
   if (errorMsg)
     return (
       <div className="py-24 text-center text-red-500 text-base font-medium">
-        {errorMsg}
+        {t(errorMsg)}
       </div>
     );
 
@@ -169,7 +169,7 @@ export default function VoucherSearchPage() {
 
           <div className="relative z-10 p-6 sm:p-10 max-w-xl">
             <span className="inline-block px-3 py-1 rounded-full bg-white/25 text-xs font-semibold uppercase tracking-wider mb-3 backdrop-blur-sm shadow-xs">
-              ✨ Tin nổi bật
+              {t("content.featuredNews", "✨ Tin nổi bật")}
             </span>
             <h1 className="text-2xl sm:text-4xl font-extrabold mb-3 leading-tight drop-shadow-md">
               {currentBanner.title}
@@ -189,7 +189,7 @@ export default function VoucherSearchPage() {
                   )
                 }
                 className="absolute left-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors backdrop-blur-sm z-20"
-                title="Banner trước"
+                title={t("content.prevBanner", "Banner trước")}
               >
                 <ChevronLeft size={20} />
               </button>
@@ -198,7 +198,7 @@ export default function VoucherSearchPage() {
                   setCurrentBannerIndex((prev) => (prev + 1) % banners.length)
                 }
                 className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors backdrop-blur-sm z-20"
-                title="Banner tiếp"
+                title={t("content.nextBanner", "Banner tiếp")}
               >
                 <ChevronRight size={20} />
               </button>
@@ -243,21 +243,21 @@ export default function VoucherSearchPage() {
           <option value="price-desc">{t("voucher.sortPriceDesc", "Giá giảm dần")}</option>
         </select>
         <span className="ml-auto text-sm text-gray-500 font-medium">
-          {filtered.length} kết quả
+          {filtered.length} {t("common.results", "kết quả")}
         </span>
       </div>
 
       {showFilters && (
         <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
           <p className="text-sm font-semibold text-gray-800 mb-2.5">
-            Khoảng giá
+            {t("voucher.priceRange", "Khoảng giá")}
           </p>
           <div className="flex gap-2.5 flex-wrap">
             {[
-              { value: "", label: "Tất cả" },
-              { value: "under200", label: "Dưới 200K" },
-              { value: "200-500", label: "200K–500K" },
-              { value: "over500", label: "Trên 500K" },
+              { value: "", label: t("common.all", "Tất cả") },
+              { value: "under200", label: t("voucher.under200", "Dưới 200K") },
+              { value: "200-500", label: t("voucher.range200to500", "200K–500K") },
+              { value: "over500", label: t("voucher.over500", "Trên 500K") },
             ].map((opt) => (
               <button
                 key={opt.value}
@@ -279,10 +279,10 @@ export default function VoucherSearchPage() {
       {filtered.length === 0 ? (
         <div className="bg-white rounded-3xl border border-gray-100 p-16 text-center text-gray-400">
           <p className="text-base font-semibold">
-            Không tìm thấy voucher phù hợp.
+            {t("voucher.noMatch", "Không tìm thấy voucher phù hợp.")}
           </p>
           <p className="text-sm mt-1">
-            Hãy thử tìm kiếm với từ khóa hoặc danh mục khác.
+            {t("voucher.noMatchSub", "Hãy thử tìm kiếm với từ khóa hoặc danh mục khác.")}
           </p>
         </div>
       ) : (
@@ -303,7 +303,7 @@ export default function VoucherSearchPage() {
           <div className="flex items-center gap-2 mb-6">
             <BookOpen className="text-orange-500" size={22} />
             <h2 className="text-xl font-bold text-gray-900">
-              Cẩm nang & Mẹo săn voucher
+              {t("content.guideTitle", "Cẩm nang & Mẹo săn voucher")}
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -327,7 +327,7 @@ export default function VoucherSearchPage() {
                   <div className="p-5 flex flex-col flex-1 justify-between">
                     <div>
                       <span className="inline-block px-2.5 py-1 rounded-md bg-orange-50 text-orange-600 text-xs font-semibold mb-2">
-                        Bài viết hữu ích
+                        {t("content.usefulArticle", "Bài viết hữu ích")}
                       </span>
                       <h3 className="font-bold text-gray-900 text-base mb-2 line-clamp-2 group-hover:text-orange-600 transition-colors">
                         {art.title}
@@ -341,10 +341,10 @@ export default function VoucherSearchPage() {
                         <Calendar size={12} />{" "}
                         {art.createdAt
                           ? new Date(art.createdAt).toLocaleDateString("vi-VN")
-                          : "Hôm nay"}
+                          : t("common.today", "Hôm nay")}
                       </span>
                       <span className="text-orange-600 font-semibold group-hover:underline">
-                        Đọc tiếp →
+                        {t("content.readMore", "Đọc tiếp →")}
                       </span>
                     </div>
                   </div>
