@@ -276,7 +276,7 @@ export default function LandingPage() {
                 </span>
               </div>
               <p className="text-[11px] font-semibold text-slate-400 tracking-wide hidden sm:block">
-                Chạm Tay Voucher Xịn — Săn Deal Giá Băng
+                {t("Chạm Tay Voucher Xịn — Săn Deal Giá Băng")}
               </p>
             </div>
           </Link>
@@ -299,19 +299,20 @@ export default function LandingPage() {
 
           {/* Right Header Navigation & Auth Controls */}
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+            <LanguageSwitcher />
             <Link
               to="/customer/register"
               className="flex items-center gap-1 px-2.5 sm:px-4 py-2 text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 rounded-full transition-all cursor-pointer"
             >
               <UserPlus size={14} />
-              <span className="hidden sm:inline">Đăng ký</span>
+              <span className="hidden sm:inline">{t("Đăng ký")}</span>
             </Link>
             <Link
               to="/login"
               className="flex items-center gap-1 px-3 sm:px-5 py-2 text-xs font-bold text-white bg-sky-500 hover:bg-sky-600 rounded-full shadow-md shadow-sky-500/25 hover:shadow-lg transition-all cursor-pointer whitespace-nowrap"
             >
               <LogIn size={14} />
-              <span>Đăng nhập</span>
+              <span>{t("Đăng nhập")}</span>
             </Link>
           </div>
         </div>
@@ -324,8 +325,8 @@ export default function LandingPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && focusSearchResults()}
-              placeholder="Tìm voucher, đối tác hoặc chi nhánh..."
-              aria-label="Tìm voucher, đối tác hoặc chi nhánh"
+              placeholder={t("nav.searchPlaceholder", "Tìm voucher, đối tác hoặc chi nhánh...")}
+              aria-label={t("nav.searchPlaceholder", "Tìm voucher, đối tác hoặc chi nhánh")}
               className="w-full pl-10 pr-4 py-2.5 bg-slate-100 focus:bg-white border border-slate-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-500 transition-all"
             />
           </div>
@@ -340,18 +341,18 @@ export default function LandingPage() {
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/20 border border-white/30 text-white text-xs font-semibold backdrop-blur-md shadow-xs">
               <Flame size={14} className="text-brand-accent-soft animate-bounce" />
-              <span>Sàn Thương Mại Điện Tử E-Voucher Hàng Đầu Việt Nam</span>
+              <span>{t("Sàn Thương Mại Điện Tử E-Voucher Hàng Đầu Việt Nam")}</span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
               Snow Voucher <br />
               <span className="text-white drop-shadow-xs">
-                Tuyết Vàng Ưu Đãi — Săn Deal Băng Giá!
+                {t("Tuyết Vàng Ưu Đãi — Săn Deal Băng Giá!")}
               </span>
             </h1>
 
             <p className="text-sky-50 text-base sm:text-lg max-w-2xl leading-relaxed">
-              Khám phá hàng ngàn mã giảm giá trực tuyến độc quyền từ các thương hiệu hàng đầu: Ẩm thực, Cà phê, Giải trí, Mua sắm. Thanh toán siêu tốc, nhận mã QR đổi quà tức thì tại chi nhánh!
+              {t("Khám phá hàng ngàn mã giảm giá trực tuyến độc quyền từ các thương hiệu hàng đầu: Ẩm thực, Cà phê, Giải trí, Mua sắm. Thanh toán siêu tốc, nhận mã QR đổi quà tức thì tại chi nhánh!")}
             </p>
 
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
@@ -359,14 +360,14 @@ export default function LandingPage() {
                 href="#latest-vouchers"
                 className="px-6 py-3.5 rounded-full bg-white hover:bg-sky-50 text-sky-800 font-extrabold text-sm shadow-xl shadow-sky-900/20 hover:shadow-2xl flex items-center gap-2 transition-all cursor-pointer"
               >
-                <span>Săn Deal Hot Ngay</span>
+                <span>{t("Săn Deal Hot Ngay")}</span>
                 <ArrowRight size={16} />
               </a>
               <a
                 href="#brands"
                 className="px-6 py-3.5 rounded-full bg-sky-700/30 hover:bg-sky-700/40 text-white border border-white/30 font-bold text-sm backdrop-blur-md transition-all cursor-pointer"
               >
-                <span>Xem Thương Hiệu Đồng Hành</span>
+                <span>{t("Xem Thương Hiệu Đồng Hành")}</span>
               </a>
             </div>
 
@@ -374,15 +375,15 @@ export default function LandingPage() {
             <div className="grid grid-cols-3 gap-4 pt-6 border-t border-white/20 max-w-md mx-auto lg:mx-0">
               <div>
                 <p className="text-2xl font-black text-white">100%</p>
-                <p className="text-xs text-sky-100 mt-0.5">Voucher Chính Hãng</p>
+                <p className="text-xs text-sky-100 mt-0.5">{t("Voucher Chính Hãng")}</p>
               </div>
               <div>
                 <p className="text-2xl font-black text-brand-accent-soft">500+</p>
-                <p className="text-xs text-sky-100 mt-0.5">Đối Tác Uy Tín</p>
+                <p className="text-xs text-sky-100 mt-0.5">{t("Đối Tác Uy Tín")}</p>
               </div>
               <div>
                 <p className="text-2xl font-black text-white">24/7</p>
-                <p className="text-xs text-sky-100 mt-0.5">Hỗ Trợ Siêu Tốc</p>
+                <p className="text-xs text-sky-100 mt-0.5">{t("Hỗ Trợ Siêu Tốc")}</p>
               </div>
             </div>
           </div>
@@ -404,7 +405,7 @@ export default function LandingPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs text-snow-600">
                   <span className="flex items-center gap-1.5 text-semantic-success font-semibold">
-                    <CheckCircle2 size={14} /> Mã QR Sử Dụng Trực Tiếp
+                    <CheckCircle2 size={14} /> {t("Mã QR Sử Dụng Trực Tiếp")}
                   </span>
                 </div>
               </div>
@@ -574,10 +575,10 @@ export default function LandingPage() {
                       </div>
                       <div>
                         <h3 className={`font-bold text-sm line-clamp-1 ${isSelected ? "text-white" : "text-slate-900"}`}>
-                          {catName}
+                          {t(catName)}
                         </h3>
                         <p className={`text-[11px] mt-0.5 font-medium ${isSelected ? "text-sky-100" : "text-slate-400"}`}>
-                          {count > 0 ? "Đang phát hành" : "Chờ cập nhật"}
+                          {count > 0 ? t("Đang phát hành") : t("Chờ cập nhật")}
                         </p>
                       </div>
                     </div>
@@ -585,7 +586,7 @@ export default function LandingPage() {
                 })
               : (
                 <div className="col-span-full py-8 text-center text-xs text-slate-400">
-                  Đang tải danh mục từ hệ thống...
+                  {t("Đang tải danh mục từ hệ thống...")}
                 </div>
               )}
           </div>
@@ -598,13 +599,13 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-100 pb-4">
             <div>
               <span className="text-xs font-bold uppercase tracking-widest text-brand-accent-foreground bg-brand-accent-soft px-3 py-1 rounded-full border border-brand-accent-border">
-                Ưu Đãi Mới Cập Nhật
+                {t("Ưu Đãi Mới Cập Nhật")}
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-2">
-                Các Voucher Mới Nhất
+                {t("Các Voucher Mới Nhất")}
               </h2>
               <p className="text-sm text-slate-500 mt-1">
-                Săn deal hot vừa phát hành với chiết khấu hấp dẫn
+                {t("Săn deal hot vừa phát hành với chiết khấu hấp dẫn")}
               </p>
             </div>
           </div>
@@ -691,11 +692,11 @@ export default function LandingPage() {
                       {/* Voucher Details */}
                       <div className="p-4 space-y-2">
                         <h3 className="font-bold text-slate-900 text-sm line-clamp-2 group-hover:text-sky-600 transition-colors leading-snug">
-                          {v.ten_voucher}
+                          {t(v.ten_voucher)}
                         </h3>
                         
                         <div className="text-xs text-slate-500 line-clamp-1">
-                          {v.categoryName}
+                          {t(v.categoryName)}
                         </div>
 
                         <div className="pt-2 flex items-baseline gap-2">
@@ -717,7 +718,7 @@ export default function LandingPage() {
                           className="w-full py-2.5 rounded-xl bg-sky-50 hover:bg-sky-600 text-sky-700 hover:text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                         >
                           <ShoppingBag size={14} />
-                          <span>Xem chi tiết & Săn Deal</span>
+                          <span>{t("Xem chi tiết & Săn Deal")}</span>
                         </button>
                       </div>
                     </div>
@@ -737,8 +738,8 @@ export default function LandingPage() {
           ) : (
             <div className="bg-slate-50 rounded-2xl border border-slate-200 p-12 text-center max-w-md mx-auto space-y-3">
               <Gift size={40} className="text-slate-300 mx-auto" />
-              <h3 className="font-bold text-slate-700">Chưa tìm thấy voucher phù hợp</h3>
-              <p className="text-xs text-slate-500">Hãy thử tìm kiếm với từ khóa khác hoặc bỏ chọn danh mục.</p>
+              <h3 className="font-bold text-slate-700">{t("Chưa tìm thấy voucher phù hợp")}</h3>
+              <p className="text-xs text-slate-500">{t("Hãy thử tìm kiếm với từ khóa khác hoặc bỏ chọn danh mục.")}</p>
               <button
                 type="button"
                 onClick={() => {
@@ -747,7 +748,7 @@ export default function LandingPage() {
                 }}
                 className="px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-full hover:bg-slate-800 cursor-pointer"
               >
-                Đặt lại bộ lọc
+                {t("Đặt lại bộ lọc")}
               </button>
             </div>
           )}

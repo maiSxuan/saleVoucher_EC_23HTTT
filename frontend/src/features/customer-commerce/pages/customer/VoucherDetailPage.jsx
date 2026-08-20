@@ -129,6 +129,12 @@ export default function VoucherDetailPage({ publicView = false }) {
   }, [id, t]);
 
   const handleAddToCart = async () => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      toast.error(t("Vui lòng đăng nhập để thực hiện mua voucher."));
+      navigate("/login");
+      return;
+    }
     const userRole = getStoredRole();
     if (!publicView && userRole && !isCustomerRole(userRole)) {
       toast.error(t("voucher.customerOnlyAction", "Chức năng mua voucher chỉ dành cho tài khoản Khách hàng."));
@@ -143,12 +149,22 @@ export default function VoucherDetailPage({ publicView = false }) {
       setTimeout(() => setAddState("idle"), 2500);
     } catch (err) {
       setAddState("unavailable");
-      setAddErrorMsg(err.message || t("voucher.statusChangedMsg", "Voucher vừa thay đổi trạng thái."));
-      toast.error(err.message || t("cart.addError", "Lỗi thêm giỏ hàng."));
+      const msg = t(err.message) || t("voucher.statusChangedMsg", "Voucher vừa thay đổi trạng thái.");
+      setAddErrorMsg(msg);
+      toast.error(msg);
+      if (err.message?.includes("token") || err.message?.includes("Token") || err.message?.includes("đăng nhập")) {
+        setTimeout(() => navigate("/login"), 1500);
+      }
     }
   };
 
   const handleBuyNow = async () => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      toast.error(t("Vui lòng đăng nhập để thực hiện mua voucher."));
+      navigate("/login");
+      return;
+    }
     const userRole = getStoredRole();
     if (!publicView && userRole && !isCustomerRole(userRole)) {
       toast.error(t("voucher.customerOnlyAction", "Chức năng mua voucher chỉ dành cho tài khoản Khách hàng."));
@@ -162,8 +178,12 @@ export default function VoucherDetailPage({ publicView = false }) {
     } catch (err) {
       setBuyingNow(false);
       setAddState("unavailable");
-      setAddErrorMsg(err.message || t("voucher.statusChangedMsg", "Voucher vừa thay đổi trạng thái."));
-      toast.error(err.message || t("cart.addError", "Lỗi thêm giỏ hàng."));
+      const msg = t(err.message) || t("voucher.statusChangedMsg", "Voucher vừa thay đổi trạng thái.");
+      setAddErrorMsg(msg);
+      toast.error(msg);
+      if (err.message?.includes("token") || err.message?.includes("Token") || err.message?.includes("đăng nhập")) {
+        setTimeout(() => navigate("/login"), 1500);
+      }
     }
   };
 

@@ -3,11 +3,14 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 function authHeaders() {
   const token = localStorage.getItem("accessToken");
   const lang = localStorage.getItem("app_lang") || "vi";
-  return {
+  const headers = {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
     "Accept-Language": lang,
   };
+  if (token && token !== "null" && token !== "undefined") {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
 }
 
 async function handleResponse(res, message) {
