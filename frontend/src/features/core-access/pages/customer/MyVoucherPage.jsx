@@ -66,6 +66,7 @@ function StatusBadge({ status }) {
 
 function VoucherCard({ vm, onClick }) {
   const { t } = useTranslation();
+  const v = vm.voucher || {};
   const issuedDate = vm.thoi_gian_sinh_ma
     ? new Date(vm.thoi_gian_sinh_ma).toLocaleDateString("vi-VN")
     : "—";

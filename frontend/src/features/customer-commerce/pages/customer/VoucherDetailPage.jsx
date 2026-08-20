@@ -24,6 +24,8 @@ const unavailableMsg = {
   suspended: "Voucher đang tạm ngưng bán.",
   stopped: "Voucher đã ngừng bán.",
   scheduled: "Voucher chưa đến thời gian bán.",
+  unavailable: "Voucher này hiện không khả dụng.",
+  out_of_stock: "Voucher này đã hết số lượng.",
 };
 
 function getBranchName(branch) {
@@ -185,10 +187,12 @@ export default function VoucherDetailPage({ publicView = false }) {
     );
 
   const branches = voucher.branches || [];
-  const totalQty = voucher.totalQuantity ?? voucher.so_luong_phat_hanh ?? 0;
-  const soldQty = voucher.soldQuantity ?? voucher.so_luong_da_ban ?? 0;
+  const totalQty = voucher.totalQty ?? voucher.totalQuantity ?? voucher.so_luong_phat_hanh ?? 0;
+  const soldQty = voucher.soldQty ?? voucher.soldQuantity ?? voucher.so_luong_da_ban ?? 0;
   const remaining = Math.max(0, totalQty - soldQty);
-  const isAvailable = voucher.availability === "available" && remaining > 0;
+  const isAvailable =
+    (voucher.availability === "selling" || voucher.availability === "available") &&
+    remaining > 0;
   const discountPct =
     voucher.originalPrice > voucher.salePrice
       ? Math.round(
@@ -257,7 +261,7 @@ export default function VoucherDetailPage({ publicView = false }) {
               </span>
               {discountPct > 0 && (
                 <span className="text-sm text-red-500 font-medium">
-                  {t("voucher.savings", "Tiết kiệm")}{" "}
+                  {t("Tiết kiệm")}{" "}
                   {(voucher.originalPrice - voucher.salePrice).toLocaleString(
                     "vi-VN",
                   )}
@@ -269,7 +273,7 @@ export default function VoucherDetailPage({ publicView = false }) {
             <div className="bg-gray-50 rounded-lg p-2.5">
               <div className="flex items-center gap-1 text-gray-400 text-sm mb-0.5">
                 <Clock size={11} />
-                {t("voucher.expiryDate", "Thời gian bán")}
+                {t("Thời gian bán")}
               </div>
               <p className="text-sm font-medium text-gray-700">
                 {new Date(voucher.startSaleDate).toLocaleDateString("vi-VN")} –{" "}
@@ -280,7 +284,7 @@ export default function VoucherDetailPage({ publicView = false }) {
             {branches.length > 0 && (
               <div>
                 <p className="text-sm font-semibold text-gray-500 mb-1 uppercase tracking-wide">
-                  {t("voucher.branchesApplied", "Chi nhánh áp dụng")}
+                  {t("Chi nhánh áp dụng")}
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {branches.map((branch, index) => (
@@ -300,7 +304,7 @@ export default function VoucherDetailPage({ publicView = false }) {
           {voucher.description && (
             <div className="bg-white rounded-xl border border-gray-100 p-4">
               <h3 className="font-semibold text-gray-900 mb-2 text-sm">
-                {t("voucher.description", "Mô tả chi tiết")}
+                {t("Mô tả chi tiết")}
               </h3>
               <p className="text-sm text-gray-600 leading-relaxed">
                 {voucher.description}
@@ -313,7 +317,7 @@ export default function VoucherDetailPage({ publicView = false }) {
               {voucher.conditions && (
                 <>
                   <h3 className="font-semibold text-gray-900 text-sm">
-                    {t("voucher.conditions", "Điều kiện áp dụng")}
+                    {t("Điều kiện áp dụng")}
                   </h3>
                   <p className="text-sm text-gray-600">{voucher.conditions}</p>
                 </>
@@ -321,7 +325,7 @@ export default function VoucherDetailPage({ publicView = false }) {
               {voucher.cancellationPolicy && (
                 <>
                   <h3 className="font-semibold text-gray-900 text-sm mt-2">
-                    {t("voucher.cancellationPolicy", "Chính sách hoàn hủy")}
+                    {t("Chính sách hoàn hủy")}
                   </h3>
                   <p className="text-sm text-gray-600">
                     {voucher.cancellationPolicy}
@@ -524,7 +528,12 @@ export default function VoucherDetailPage({ publicView = false }) {
             ) : (
               <div className="bg-gray-50 rounded-lg p-3 text-center text-sm text-gray-500">
                 <AlertCircle size={20} className="mx-auto mb-1 text-gray-400" />
-                {t(unavailableMsg[voucher.availability])}
+                {t(
+                  unavailableMsg[voucher.availability] ||
+                    (remaining <= 0
+                      ? "Voucher này đã hết số lượng."
+                      : "Voucher này hiện không khả dụng.")
+                )}
               </div>
             )}
           </div>

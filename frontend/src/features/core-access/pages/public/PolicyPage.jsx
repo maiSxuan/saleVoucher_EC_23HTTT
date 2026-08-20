@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -56,28 +57,8 @@ const sectionThemes = {
   },
 };
 
-function getAccountAction() {
-  const token = localStorage.getItem("accessToken") || localStorage.getItem("ec_auth_token");
-  if (!token) return { to: "/login", label: "Đăng nhập", Icon: LogIn };
-
-  let user = null;
-  try {
-    user = JSON.parse(localStorage.getItem("user") || localStorage.getItem("ec_auth_user") || "null");
-  } catch {
-    user = null;
-  }
-
-  const role = String(user?.role || user?.vai_tro || localStorage.getItem("role") || "").toUpperCase();
-  const to = role.includes("ADMIN")
-    ? "/admin"
-    : role.includes("PARTNER") || role.includes("DOI_TAC")
-      ? "/partner"
-      : "/customer";
-
-  return { to, label: "Tài khoản", Icon: User };
-}
-
 function BulletList({ items = [], nested = false }) {
+  const { t } = useTranslation();
   if (!items.length) return null;
 
   return (
@@ -88,7 +69,7 @@ function BulletList({ items = [], nested = false }) {
           <li key={`${entry.text}-${index}`} className="flex items-start gap-2.5 text-sm leading-6 text-slate-600">
             <CheckCircle2 className={`${nested ? "mt-1.5 h-3.5 w-3.5" : "mt-1 h-4 w-4"} shrink-0 text-cyan-600`} />
             <div>
-              <span>{entry.text}</span>
+              <span>{t(entry.text)}</span>
               {entry.children ? <BulletList items={entry.children} nested /> : null}
             </div>
           </li>
@@ -99,15 +80,16 @@ function BulletList({ items = [], nested = false }) {
 }
 
 function CaseCards({ cases = [] }) {
+  const { t } = useTranslation();
   if (!cases.length) return null;
 
   return (
     <div className="mt-4 grid gap-3 sm:grid-cols-2">
       {cases.map((item) => (
         <div key={item.title} className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-          <h4 className="text-sm font-bold text-slate-900">{item.title}</h4>
-          {item.text ? <p className="mt-2 text-sm leading-6 text-slate-600">{item.text}</p> : null}
-          {item.intro ? <p className="mt-2 text-sm font-semibold text-slate-700">{item.intro}</p> : null}
+          <h4 className="text-sm font-bold text-slate-900">{t(item.title)}</h4>
+          {item.text ? <p className="mt-2 text-sm leading-6 text-slate-600">{t(item.text)}</p> : null}
+          {item.intro ? <p className="mt-2 text-sm font-semibold text-slate-700">{t(item.intro)}</p> : null}
           {item.items ? <BulletList items={item.items} /> : null}
         </div>
       ))}
@@ -116,23 +98,24 @@ function CaseCards({ cases = [] }) {
 }
 
 function PolicyBlock({ block }) {
+  const { t } = useTranslation();
   const warning = block.tone === "warning";
 
   return (
     <article className={`rounded-2xl border p-5 sm:p-6 ${warning ? "border-amber-200 bg-amber-50/60" : "border-slate-200 bg-white"}`}>
-      <h3 className="text-base font-extrabold text-slate-900 sm:text-lg">{block.title}</h3>
+      <h3 className="text-base font-extrabold text-slate-900 sm:text-lg">{t(block.title)}</h3>
       {block.paragraphs?.map((paragraph) => (
         <p key={paragraph} className="mt-3 text-sm leading-6 text-slate-600">
-          {paragraph}
+          {t(paragraph)}
         </p>
       ))}
-      {block.intro ? <p className="mt-3 text-sm font-semibold leading-6 text-slate-700">{block.intro}</p> : null}
+      {block.intro ? <p className="mt-3 text-sm font-semibold leading-6 text-slate-700">{t(block.intro)}</p> : null}
       {block.items ? <BulletList items={block.items} /> : null}
       {block.cases ? <CaseCards cases={block.cases} /> : null}
       {block.note ? (
         <div className={`mt-4 flex items-start gap-2.5 rounded-xl px-4 py-3 text-sm leading-6 ${warning ? "bg-white/80 text-amber-900" : "bg-cyan-50 text-cyan-900"}`}>
           <Info className="mt-1 h-4 w-4 shrink-0" />
-          <p>{block.note}</p>
+          <p>{t(block.note)}</p>
         </div>
       ) : null}
     </article>
@@ -140,6 +123,7 @@ function PolicyBlock({ block }) {
 }
 
 function PolicySection({ id, eyebrow, title, summary, icon: Icon, theme = "cyan", children }) {
+  const { t } = useTranslation();
   const colors = sectionThemes[theme];
 
   return (
@@ -149,11 +133,11 @@ function PolicySection({ id, eyebrow, title, summary, icon: Icon, theme = "cyan"
           <Icon size={22} aria-hidden="true" />
         </div>
         <div>
-          <p className={`text-xs font-extrabold uppercase tracking-[0.18em] ${colors.eyebrow}`}>{eyebrow}</p>
+          <p className={`text-xs font-extrabold uppercase tracking-[0.18em] ${colors.eyebrow}`}>{t(eyebrow)}</p>
           <h2 id={`${id}-title`} className="mt-1 text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
-            {title}
+            {t(title)}
           </h2>
-          {summary ? <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">{summary}</p> : null}
+          {summary ? <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">{t(summary)}</p> : null}
         </div>
       </div>
       <div className="mt-5 space-y-4">{children}</div>
@@ -162,15 +146,29 @@ function PolicySection({ id, eyebrow, title, summary, icon: Icon, theme = "cyan"
 }
 
 export default function PolicyPage() {
-  const accountAction = getAccountAction();
-  const AccountIcon = accountAction.Icon;
+  const { t } = useTranslation();
+  const token = localStorage.getItem("accessToken") || localStorage.getItem("ec_auth_token");
+  let user = null;
+  try {
+    user = JSON.parse(localStorage.getItem("user") || localStorage.getItem("ec_auth_user") || "null");
+  } catch {
+    user = null;
+  }
+  const role = String(user?.role || user?.vai_tro || localStorage.getItem("role") || "").toUpperCase();
+  const accountTo = role.includes("ADMIN")
+    ? "/admin"
+    : role.includes("PARTNER") || role.includes("DOI_TAC")
+      ? "/partner"
+      : "/customer";
+  const accountLabel = token ? t("Tài khoản") : t("Đăng nhập");
+  const AccountIcon = token ? User : LogIn;
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
       <div className="bg-gradient-to-r from-cyan-700 via-blue-700 to-indigo-800 px-4 py-2 text-center text-xs font-semibold text-white">
         <span className="inline-flex items-center gap-2">
           <Sparkles size={14} className="text-amber-300" aria-hidden="true" />
-          Văn bản chính thức áp dụng thống nhất trên Snow Voucher
+          {t("Văn bản chính thức áp dụng thống nhất trên Snow Voucher")}
         </span>
       </div>
 
@@ -186,11 +184,11 @@ export default function PolicyPage() {
           <div className="flex items-center gap-2">
             <Link to="/" className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-900">
               <ArrowLeft size={14} aria-hidden="true" />
-              <span className="hidden sm:inline">Trang chủ</span>
+              <span className="hidden sm:inline">{t("Trang chủ")}</span>
             </Link>
-            <Link to={accountAction.to} className="inline-flex items-center gap-1.5 rounded-full bg-cyan-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-cyan-700">
+            <Link to={accountTo} className="inline-flex items-center gap-1.5 rounded-full bg-cyan-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-cyan-700">
               <AccountIcon size={14} aria-hidden="true" />
-              {accountAction.label}
+              {accountLabel}
             </Link>
           </div>
         </div>
@@ -203,16 +201,16 @@ export default function PolicyPage() {
           <div className="relative max-w-4xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold text-cyan-100">
               <ShieldCheck size={15} aria-hidden="true" />
-              Điều khoản minh bạch · Quy trình nhất quán
+              {t("Điều khoản minh bạch · Quy trình nhất quán")}
             </div>
             <h1 className="mt-5 text-3xl font-black leading-tight tracking-tight sm:text-5xl">
-              Điều Khoản & Chính Sách Sàn Snow Voucher
+              {t("Điều Khoản & Chính Sách Sàn Snow Voucher")}
             </h1>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-200 sm:text-base">
-              Chính sách này quy định quyền, nghĩa vụ và nguyên tắc xử lý giao dịch giữa Sàn, Khách hàng và Đối tác cung cấp voucher.
+              {t("Chính sách này quy định quyền, nghĩa vụ và nguyên tắc xử lý giao dịch giữa Sàn, Khách hàng và Đối tác cung cấp voucher.")}
             </p>
             <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
-              Sàn đóng vai trò trung gian cung cấp nền tảng để Đối tác phát hành voucher và Khách hàng tìm kiếm, mua, nhận và sử dụng voucher.
+              {t("Sàn đóng vai trò trung gian cung cấp nền tảng để Đối tác phát hành voucher và Khách hàng tìm kiếm, mua, nhận và sử dụng voucher.")}
             </p>
           </div>
 
@@ -224,8 +222,8 @@ export default function PolicyPage() {
             ].map(([Icon, title, text]) => (
               <div key={title} className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur-sm">
                 <Icon size={19} className="text-cyan-300" aria-hidden="true" />
-                <p className="mt-2 text-sm font-extrabold text-white">{title}</p>
-                <p className="mt-1 text-xs leading-5 text-slate-300">{text}</p>
+                <p className="mt-2 text-sm font-extrabold text-white">{t(title)}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-300">{t(text)}</p>
               </div>
             ))}
           </div>
@@ -235,18 +233,18 @@ export default function PolicyPage() {
           <div className="flex items-start gap-3">
             <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-cyan-700" aria-hidden="true" />
             <p>
-              <strong>Nguyên tắc ưu tiên:</strong> nếu voucher không quy định, Chính sách Sàn được áp dụng. Nếu chính sách riêng của voucher có lợi hơn cho Khách hàng, điều khoản có lợi hơn đó được ưu tiên.
+              <strong>{t("Nguyên tắc ưu tiên:")}</strong> {t("nếu voucher không quy định, Chính sách Sàn được áp dụng. Nếu chính sách riêng của voucher có lợi hơn cho Khách hàng, điều khoản có lợi hơn đó được ưu tiên.")}
             </p>
           </div>
         </div>
 
         <details className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:hidden">
-          <summary className="cursor-pointer list-none text-sm font-extrabold text-slate-900">Mục lục chính sách</summary>
-          <nav aria-label="Mục lục chính sách" className="mt-3 grid gap-1.5 sm:grid-cols-2">
+          <summary className="cursor-pointer list-none text-sm font-extrabold text-slate-900">{t("Mục lục chính sách")}</summary>
+          <nav aria-label={t("Mục lục chính sách")} className="mt-3 grid gap-1.5 sm:grid-cols-2">
             {policyNavigation.map((item, index) => (
               <a key={item.id} href={`#${item.id}`} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-slate-600 hover:bg-cyan-50 hover:text-cyan-800">
                 <span className="text-xs font-black text-cyan-600">{String(index + 1).padStart(2, "0")}</span>
-                {item.label}
+                {t(item.label)}
               </a>
             ))}
           </nav>
@@ -254,18 +252,18 @@ export default function PolicyPage() {
 
         <div className="mt-6 grid items-start gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
           <aside className="sticky top-24 hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:block">
-            <p className="px-3 pb-3 text-xs font-extrabold uppercase tracking-[0.16em] text-slate-400">Mục lục</p>
-            <nav aria-label="Mục lục chính sách" className="space-y-1">
+            <p className="px-3 pb-3 text-xs font-extrabold uppercase tracking-[0.16em] text-slate-400">{t("Mục lục")}</p>
+            <nav aria-label={t("Mục lục chính sách")} className="space-y-1">
               {policyNavigation.map((item, index) => (
                 <a key={item.id} href={`#${item.id}`} className="group flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-cyan-50 hover:text-cyan-800">
                   <span className="text-xs font-black text-cyan-600">{String(index + 1).padStart(2, "0")}</span>
-                  <span className="flex-1">{item.label}</span>
+                  <span className="flex-1">{t(item.label)}</span>
                   <ChevronRight size={14} className="opacity-0 transition-opacity group-hover:opacity-100" aria-hidden="true" />
                 </a>
               ))}
             </nav>
             <Link to="/" className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-3 py-2.5 text-xs font-bold text-white hover:bg-slate-800">
-              <Home size={14} aria-hidden="true" /> Về trang chủ
+              <Home size={14} aria-hidden="true" /> {t("Về trang chủ")}
             </Link>
           </aside>
 
@@ -346,18 +344,18 @@ export default function PolicyPage() {
               <div className="overflow-hidden rounded-2xl border border-slate-200">
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[680px] border-collapse text-left text-sm">
-                    <caption className="sr-only">Bảng tình huống và cách xử lý hủy, hoàn tiền, khiếu nại</caption>
+                    <caption className="sr-only">{t("Bảng tình huống và cách xử lý hủy, hoàn tiền, khiếu nại")}</caption>
                     <thead className="bg-slate-900 text-white">
                       <tr>
-                        <th scope="col" className="w-[48%] px-5 py-4 font-bold">Tình huống</th>
-                        <th scope="col" className="px-5 py-4 font-bold">Cách xử lý</th>
+                        <th scope="col" className="w-[48%] px-5 py-4 font-bold">{t("Tình huống")}</th>
+                        <th scope="col" className="px-5 py-4 font-bold">{t("Cách xử lý")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 bg-white">
                       {decisionRows.map(([situation, action], index) => (
                         <tr key={situation} className={index % 2 ? "bg-slate-50/70" : "bg-white"}>
-                          <td className="px-5 py-4 font-semibold leading-6 text-slate-800">{situation}</td>
-                          <td className="px-5 py-4 leading-6 text-slate-600">{action}</td>
+                          <td className="px-5 py-4 font-semibold leading-6 text-slate-800">{t(situation)}</td>
+                          <td className="px-5 py-4 leading-6 text-slate-600">{t(action)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -369,20 +367,19 @@ export default function PolicyPage() {
             <div className="rounded-3xl bg-gradient-to-r from-cyan-700 to-blue-700 p-6 text-white shadow-lg sm:p-8">
               <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="text-xl font-black">Cần hỗ trợ về giao dịch?</h2>
+                  <h2 className="text-xl font-black">{t("Cần hỗ trợ về giao dịch?")}</h2>
                   <p className="mt-2 max-w-xl text-sm leading-6 text-cyan-50">
-                    Hãy đăng nhập để theo dõi đơn hàng, gửi yêu cầu hủy hoặc khiếu nại kèm thông tin giao dịch chính xác.
+                    {t("Hãy đăng nhập để theo dõi đơn hàng, gửi yêu cầu hủy hoặc khiếu nại kèm thông tin giao dịch chính xác.")}
                   </p>
                 </div>
-                <Link to={accountAction.to} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-cyan-800 shadow-sm hover:bg-cyan-50">
-                  <AccountIcon size={16} aria-hidden="true" /> {accountAction.label}
+                <Link to={accountTo} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-cyan-800 shadow-sm hover:bg-cyan-50">
+                  <AccountIcon size={16} aria-hidden="true" /> {accountLabel}
                 </Link>
               </div>
             </div>
           </div>
         </div>
       </main>
-
     </div>
   );
 }
