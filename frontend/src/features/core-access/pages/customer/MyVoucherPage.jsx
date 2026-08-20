@@ -29,28 +29,28 @@ function StatusBadge({ status }) {
   const map = {
     "Chua su dung": {
       icon: <Clock className="w-3.5 h-3.5" />,
-      label: t("myVouchers.unused", "Chưa sử dụng"),
+      label: t("Chưa sử dụng"),
       cls: "bg-emerald-50 text-emerald-700 border-emerald-200",
     },
     "Da su dung": {
       icon: <CheckCircle2 className="w-3.5 h-3.5" />,
-      label: t("myVouchers.used", "Đã sử dụng"),
+      label: t("Đã sử dụng"),
       cls: "bg-slate-100 text-slate-500 border-slate-200",
     },
     "Het han": {
       icon: <XCircle className="w-3.5 h-3.5" />,
-      label: t("myVouchers.expired", "Hết hạn"),
+      label: t("Hết hạn"),
       cls: "bg-red-50 text-red-600 border-red-200",
     },
     "Loi sinh ma": {
       icon: <AlertCircle className="w-3.5 h-3.5" />,
-      label: t("myVouchers.issueError", "Lỗi phát hành"),
+      label: t("Lỗi phát hành"),
       cls: "bg-orange-50 text-orange-600 border-orange-200",
     },
   };
   const info = map[status] || {
     icon: <AlertCircle className="w-3.5 h-3.5" />,
-    label: status,
+    label: t(status),
     cls: "bg-gray-100 text-gray-500 border-gray-200",
   };
 
@@ -65,7 +65,7 @@ function StatusBadge({ status }) {
 }
 
 function VoucherCard({ vm, onClick }) {
-  const v = vm.voucher || {};
+  const { t } = useTranslation();
   const issuedDate = vm.thoi_gian_sinh_ma
     ? new Date(vm.thoi_gian_sinh_ma).toLocaleDateString("vi-VN")
     : "—";
@@ -97,7 +97,7 @@ function VoucherCard({ vm, onClick }) {
           {v.ten_voucher || "Voucher"}
         </p>
         <p className="text-xs text-slate-500 truncate">
-          {vm.partnerName || "Đối tác"}
+          {t(vm.partnerName) || t("Đối tác")}
         </p>
 
         {/* Code */}
@@ -109,7 +109,7 @@ function VoucherCard({ vm, onClick }) {
         </div>
 
         <p className="text-xs text-slate-400 mt-1">
-          Phát hành: {issuedDate} &nbsp;·&nbsp; HSD: {validUntil}
+          {t("Phát hành:")} {issuedDate} &nbsp;·&nbsp; {t("HSD:")} {validUntil}
         </p>
       </div>
 
@@ -124,11 +124,11 @@ export default function MyVoucherPage() {
   const navigate = useNavigate();
 
   const STATUS_OPTIONS = [
-    { value: "", label: t("common.all", "Tất cả") },
-    { value: "Chua su dung", label: t("myVouchers.unused", "Chưa sử dụng") },
-    { value: "Da su dung", label: t("myVouchers.used", "Đã sử dụng") },
-    { value: "Het han", label: t("myVouchers.expired", "Hết hạn") },
-    { value: "Loi sinh ma", label: t("myVouchers.issueError", "Lỗi phát hành") },
+    { value: "", label: t("Tất cả") },
+    { value: "Chua su dung", label: t("Chưa sử dụng") },
+    { value: "Da su dung", label: t("Đã sử dụng") },
+    { value: "Het han", label: t("Hết hạn") },
+    { value: "Loi sinh ma", label: t("Lỗi phát hành") },
   ];
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -153,12 +153,12 @@ export default function MyVoucherPage() {
         });
         setPage(p);
       } catch (err) {
-        setError(err.message || "Không thể tải danh sách voucher.");
+        setError(t(err.message || "Không thể tải danh sách voucher."));
       } finally {
         setLoading(false);
       }
     },
-    [status]
+    [status, t]
   );
 
   useEffect(() => {
@@ -185,7 +185,7 @@ export default function MyVoucherPage() {
             <QrCode className="w-5 h-5 text-orange-500" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-900">{t("nav.myVouchers", "Voucher của tôi")}</h1>
+            <h1 className="text-xl font-bold text-slate-900">{t("Voucher của tôi")}</h1>
             <p className="text-sm text-slate-500">
               {pagination?.total ?? "—"} voucher
             </p>
@@ -195,7 +195,7 @@ export default function MyVoucherPage() {
           onClick={() => load(page)}
           disabled={loading}
           className="p-2 rounded-xl text-slate-400 hover:text-orange-500 hover:bg-orange-50 transition-colors"
-          title={t("common.refresh", "Làm mới")}
+          title={t("Làm mới")}
         >
           <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
         </button>
@@ -222,7 +222,7 @@ export default function MyVoucherPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
         <input
           type="text"
-          placeholder={t("myVouchers.searchPlaceholder", "Tìm theo mã code, tên voucher, đối tác...")}
+          placeholder={t("Tìm theo mã code, tên voucher, đối tác...")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full pl-9 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent bg-white"
@@ -233,7 +233,7 @@ export default function MyVoucherPage() {
       {loading && (
         <div className="flex flex-col items-center py-16 gap-3">
           <RefreshCw className="w-8 h-8 text-orange-400 animate-spin" />
-          <p className="text-sm text-slate-500">Đang tải voucher...</p>
+          <p className="text-sm text-slate-500">{t("Đang tải voucher...")}</p>
         </div>
       )}
 
@@ -243,13 +243,13 @@ export default function MyVoucherPage() {
           <AlertCircle className="w-10 h-10 text-red-400" />
           <p className="text-sm text-red-600 font-medium">{error}</p>
           <p className="text-xs text-slate-400">
-            Không thể tải danh sách voucher. Vui lòng thử lại.
+            {t("Không thể tải danh sách voucher. Vui lòng thử lại.")}
           </p>
           <button
             onClick={() => load(1)}
             className="mt-2 px-4 py-2 text-sm font-medium bg-orange-500 text-white rounded-xl hover:bg-orange-600"
           >
-            Thử lại
+            {t("Thử lại")}
           </button>
         </div>
       )}
@@ -259,19 +259,19 @@ export default function MyVoucherPage() {
         <div className="flex flex-col items-center py-16 gap-3 text-center">
           <ShoppingBag className="w-12 h-12 text-slate-300" />
           <p className="text-base font-semibold text-slate-700">
-            {search ? "Không tìm thấy voucher phù hợp" : "Chưa có voucher nào"}
+            {search ? t("Không tìm thấy voucher phù hợp") : t("Chưa có voucher nào")}
           </p>
           <p className="text-sm text-slate-400">
             {search
-              ? "Thử thay đổi từ khóa tìm kiếm."
-              : "Mua voucher để nhận mã và sử dụng tại các chi nhánh đối tác."}
+              ? t("Thử thay đổi từ khóa tìm kiếm.")
+              : t("Mua voucher để nhận mã và sử dụng tại các chi nhánh đối tác.")}
           </p>
           {!search && (
             <button
               onClick={() => navigate("/customer")}
               className="mt-3 px-5 py-2.5 bg-orange-500 text-white text-sm font-semibold rounded-xl hover:bg-orange-600"
             >
-              Khám phá voucher
+              {t("Khám phá voucher")}
             </button>
           )}
         </div>

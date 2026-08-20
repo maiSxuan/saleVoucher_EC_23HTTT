@@ -491,7 +491,7 @@ export default function CustomerOrdersPage() {
       );
     }
     const order = selectedOrder;
-    if (!order) return <div>{t("orders.notFound", "Không tìm thấy đơn hàng")}</div>;
+    if (!order) return <div>{t("Không tìm thấy đơn hàng")}</div>;
 
     return (
       <div className="max-w-4xl mx-auto p-4 sm:p-6">
@@ -499,16 +499,16 @@ export default function CustomerOrdersPage() {
           onClick={() => setSelectedOrderId(null)}
           className="text-sm text-gray-500 mb-4 hover:text-gray-700 flex items-center gap-1 font-medium"
         >
-          ← {t("orders.backToList", "Danh sách đơn hàng")}
+          ← {t("Danh sách đơn hàng")}
         </button>
 
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2 bg-white p-4 rounded-xl border border-gray-100 shadow-xs">
           <div>
             <h1 className="text-base font-bold text-gray-900 font-mono">
-              {t("orders.orderIdLabel", "Mã đơn:")} {order.id}
+              {t("Mã đơn:")} {order.id}
             </h1>
             <p className="text-xs text-gray-500 mt-0.5">
-              {t("orders.orderDateLabel", "Ngày đặt:")} {new Date(order.createdAt).toLocaleString("vi-VN")}
+              {t("Ngày đặt:")} {new Date(order.createdAt).toLocaleString("vi-VN")}
             </p>
           </div>
           <div>
@@ -519,7 +519,7 @@ export default function CustomerOrdersPage() {
         {/* Items */}
         <div className="bg-white rounded-xl border border-gray-100 p-4 mb-4 shadow-xs">
           <h3 className="font-semibold text-gray-900 text-sm mb-3">
-            {t("orders.purchasedVouchers", "Voucher đã mua")}
+            {t("Voucher đã mua")}
           </h3>
           {order.items.map((item, idx) => (
             <div
@@ -542,7 +542,7 @@ export default function CustomerOrdersPage() {
                   {item.voucherName}
                 </p>
                 <p className="text-xs text-gray-400">
-                  {t("orders.partnerLabel", "Đối tác:")} {item.partnerName} · {t("orders.quantityLabel", "Số lượng:")} ×{item.quantity}
+                  {t("Đối tác:")} {item.partnerName} · {t("Số lượng:")} ×{item.quantity}
                 </p>
               </div>
               <p className="text-sm font-semibold text-gray-900">
@@ -551,7 +551,7 @@ export default function CustomerOrdersPage() {
             </div>
           ))}
           <div className="border-t border-gray-100 pt-3 flex justify-between font-bold text-base">
-            <span>{t("orders.totalLabel", "Tổng cộng")}</span>
+            <span>{t("Tổng cộng")}</span>
             <span className="text-orange-600">
               {order.total.toLocaleString("vi-VN")}đ
             </span>
@@ -563,13 +563,13 @@ export default function CustomerOrdersPage() {
               onClick={handleCancleOrderNoRefund}
               className="flex items-center justify-center gap-2 border border-orange-500 bg-orange-50 text-orange-600 hover:bg-orange-100 active:bg-orange-200 py-2.5 px-3 rounded-xl font-semibold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {t("orders.cancelOrderBtn", "Huỷ đơn hàng")}
+              {t("Huỷ đơn hàng")}
             </button>
             <button
               onClick={handleRepayOrder}
               className="flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white py-2.5 px-3 rounded-xl font-bold text-sm shadow-md hover:shadow-lg active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              {t("orders.repayBtn", "Thanh toán lại")}
+              {t("Thanh toán lại")}
             </button>
           </div>
         )}
@@ -578,7 +578,7 @@ export default function CustomerOrdersPage() {
         {order.codes.length > 0 && (
           <div className="bg-white rounded-xl border border-gray-100 p-4 mb-4 shadow-xs">
             <h3 className="font-semibold text-gray-900 text-sm mb-3 flex items-center gap-2">
-              <QrCode size={16} /> {t("orders.eVoucherCodeLabel", "Mã voucher điện tử (QR / Code)")}
+              <QrCode size={16} /> {t("Mã voucher điện tử (QR / Code)")}
             </h3>
             <div className="space-y-3">
               {order.codes.map((codeObj, idx) => (
@@ -589,7 +589,7 @@ export default function CustomerOrdersPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <p className="text-xs text-gray-500 mb-0.5">
-                        {t("orders.voucherNumberPrefix", "Mã số voucher")} #{idx + 1}
+                        {t("Mã số voucher")} #{idx + 1}
                       </p>
                       {codeObj.code ? (
                         <p className="font-mono text-base font-bold text-gray-900 tracking-wider">
@@ -598,7 +598,7 @@ export default function CustomerOrdersPage() {
                       ) : (
                         <p className="text-xs text-red-500 flex items-center gap-1 font-semibold">
                           <AlertCircle size={13} />
-                          {t("orders.systemGenError", "Lỗi sinh mã hệ thống")}
+                          {t("Lỗi sinh mã hệ thống")}
                         </p>
                       )}
                     </div>
@@ -612,11 +612,11 @@ export default function CustomerOrdersPage() {
                         <button
                           onClick={() => {
                             navigator.clipboard.writeText(codeObj.code);
-                            toast.success(t("orders.copiedMsg", "Đã sao chép mã voucher!"));
+                            toast.success(t("Đã sao chép mã voucher!"));
                           }}
                           className="text-xs text-orange-600 hover:text-orange-700 flex items-center gap-1 font-medium"
                         >
-                          <Copy size={13} /> {t("common.copy", "Sao chép")}
+                          <Copy size={13} /> {t("Sao chép")}
                         </button>
                       )}
                     </div>
@@ -625,7 +625,7 @@ export default function CustomerOrdersPage() {
                   <div className="mt-3 flex gap-2 flex-wrap">
                     {codeObj.hasReviewed && (
                       <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 text-[10px] px-2.5 py-1 rounded-md font-semibold border border-green-100">
-                        <Star size={12} className="fill-green-700" /> {t("orders.reviewedBadge", "Đã đánh giá")}
+                        <Star size={12} className="fill-green-700" /> {t("Đã đánh giá")}
                       </span>
                     )}
                     {codeObj.hasComplained && (
@@ -634,7 +634,7 @@ export default function CustomerOrdersPage() {
                           ? 'bg-blue-50 text-blue-700 border-blue-100'
                           : 'bg-red-50 text-red-700 border-red-100'
                       }`}>
-                        <MessageSquare size={12} /> {t("orders.complaintPrefix", "Khiếu nại:")} {t(COMPLAINT_STATUS_CONFIG[codeObj.complaintStatus]?.label || codeObj.complaintStatus)}
+                        <MessageSquare size={12} /> {t("Khiếu nại:")} {t(COMPLAINT_STATUS_CONFIG[codeObj.complaintStatus]?.label || codeObj.complaintStatus)}
                       </span>
                     )}
                   </div>
@@ -658,7 +658,7 @@ export default function CustomerOrdersPage() {
                   )}
                   {codeObj.usedBranch && (
                     <p className="text-xs text-gray-500 mt-2 font-medium">
-                      {t("orders.usedAtBranch", "Đã sử dụng tại chi nhánh:")}{" "}
+                      {t("Đã sử dụng tại chi nhánh:")}{" "}
                       <span className="text-gray-900">
                         {codeObj.usedBranch}
                       </span>
@@ -673,28 +673,28 @@ export default function CustomerOrdersPage() {
         {/* Progress Tracker for Cancel / Refund / Complaints */}
         {(order.cancelRequests?.length > 0 || order.refunds?.length > 0 || order.complaints?.length > 0) && (
           <div className="bg-white rounded-xl border border-gray-100 p-4 mb-4 shadow-xs">
-            <h3 className="font-semibold text-gray-900 text-sm mb-4">{t("orders.progressSectionTitle", "Tiến trình xử lý Yêu cầu & Hỗ trợ")}</h3>
+            <h3 className="font-semibold text-gray-900 text-sm mb-4">{t("Tiến trình xử lý Yêu cầu & Hỗ trợ")}</h3>
             <div className="relative border-l-2 border-gray-100 ml-3 space-y-6">
               {/* Request Phase */}
               {order.cancelRequests?.map(cr => (
                 <div key={cr.id} className="relative pl-5">
                   <div className="absolute w-3 h-3 bg-orange-500 rounded-full -left-[7px] top-1.5 border-2 border-white ring-4 ring-orange-50" />
                   <div className="flex justify-between items-start mb-1">
-                    <p className="text-sm font-semibold text-gray-800">{t("orders.customerCancelReqTitle", "Khách hàng yêu cầu hủy đơn")}</p>
+                    <p className="text-sm font-semibold text-gray-800">{t("Khách hàng yêu cầu hủy đơn")}</p>
                     <span className="text-xs text-gray-500">{new Date(cr.requestedAt).toLocaleString('vi-VN')}</span>
                   </div>
-                  <p className="text-xs text-gray-600 mb-1">{t("orders.reasonLabel", "Lý do:")} {t(cr.reason)}</p>
-                  <p className="text-xs font-medium text-orange-600">{t("orders.statusLabel", "Trạng thái:")} {t(cr.status)}</p>
+                  <p className="text-xs text-gray-600 mb-1">{t("Lý do:")} {t(cr.reason)}</p>
+                  <p className="text-xs font-medium text-orange-600">{t("Trạng thái:")} {t(cr.status)}</p>
                   {cr.status === 'Da tu choi' && cr.rejectReason && (
                     <div className="mt-2 p-2.5 bg-red-50 border border-red-100 rounded-lg">
-                      <p className="text-xs text-red-700 font-semibold">{t("orders.adminRejected", "Admin từ chối")}</p>
-                      <p className="text-xs text-red-600">{t("orders.reasonLabel", "Lý do:")} {t(cr.rejectReason)}</p>
+                      <p className="text-xs text-red-700 font-semibold">{t("Admin từ chối")}</p>
+                      <p className="text-xs text-red-600">{t("Lý do:")} {t(cr.rejectReason)}</p>
                     </div>
                   )}
                   {cr.status === 'Da chap nhan' && (cr.approvalReason || cr.processingReason) && (
                     <div className="mt-2 p-2.5 bg-green-50 border border-green-100 rounded-lg">
-                      <p className="text-xs text-green-700 font-semibold">{t("orders.adminAccepted", "Admin đã chấp nhận")}</p>
-                      <p className="text-xs text-green-600">{t("orders.reasonLabel", "Lý do:")} {t(cr.approvalReason || cr.processingReason)}</p>
+                      <p className="text-xs text-green-700 font-semibold">{t("Admin đã chấp nhận")}</p>
+                      <p className="text-xs text-green-600">{t("Lý do:")} {t(cr.approvalReason || cr.processingReason)}</p>
                     </div>
                   )}
                 </div>
@@ -709,16 +709,16 @@ export default function CustomerOrdersPage() {
                     'bg-blue-500 ring-blue-50'
                   }`} />
                   <div className="flex justify-between items-start mb-1">
-                    <p className="text-sm font-semibold text-gray-800">{t("orders.refundProcessingTitle", "Xử lý hoàn tiền")} ({rf.gateway})</p>
+                    <p className="text-sm font-semibold text-gray-800">{t("Xử lý hoàn tiền")} ({rf.gateway})</p>
                     <span className="text-xs text-gray-500">{new Date(rf.processedAt || Date.now()).toLocaleString('vi-VN')}</span>
                   </div>
-                  <p className="text-xs text-gray-600 mb-1">{t("orders.amountLabel", "Số tiền:")} <span className="font-semibold text-gray-800">{rf.amount.toLocaleString('vi-VN')}đ</span></p>
-                  <p className="text-xs text-gray-600 mb-1">{t("orders.noteLabel", "Ghi chú:")} {t(rf.reason)}</p>
+                  <p className="text-xs text-gray-600 mb-1">{t("Số tiền:")} <span className="font-semibold text-gray-800">{rf.amount.toLocaleString('vi-VN')}đ</span></p>
+                  <p className="text-xs text-gray-600 mb-1">{t("Ghi chú:")} {t(rf.reason)}</p>
                   <p className={`text-xs font-medium ${
                     rf.status === 'Thành công' ? 'text-green-600' : 
                     rf.status === 'Thất bại' ? 'text-red-600' : 
                     'text-blue-600'
-                  }`}>{t("orders.statusLabel", "Trạng thái:")} {t(rf.status)}</p>
+                  }`}>{t("Trạng thái:")} {t(rf.status)}</p>
                 </div>
               ))}
               {/* Complaints Phase */}
@@ -736,7 +736,7 @@ export default function CustomerOrdersPage() {
         {order.cancelReason && !order.cancelRequests?.length && !order.refunds?.length && (
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4 text-xs text-blue-900 space-y-1">
             <p className="font-semibold text-blue-950">
-              {t("orders.adminFeedbackLabel", "Ghi chú / Lý do hủy / Phản hồi từ Admin:")}
+              {t("Ghi chú / Lý do hủy / Phản hồi từ Admin:")}
             </p>
             <p className="text-blue-800">{t(order.cancelReason)}</p>
           </div>
@@ -750,14 +750,14 @@ export default function CustomerOrdersPage() {
                 disabled
                 className="w-full flex items-center justify-center gap-2 bg-gray-100 border border-gray-200 text-gray-500 py-2.5 rounded-xl text-sm font-semibold cursor-not-allowed"
               >
-                <CheckCircle2 size={16} /> {t("orders.cancelReqSentBtn", "Đã gửi yêu cầu hủy đơn")}
+                <CheckCircle2 size={16} /> {t("Đã gửi yêu cầu hủy đơn")}
               </button>
             ) : (
               <button
                 onClick={() => setShowCancelModal(true)}
                 className="w-full flex items-center justify-center gap-2 bg-red-50 border border-red-200 text-red-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-red-100 transition-colors"
               >
-                <XCircle size={16} /> {t("orders.requestCancelRefundBtn", "Yêu cầu hủy đơn & Hoàn tiền")}
+                <XCircle size={16} /> {t("Yêu cầu hủy đơn & Hoàn tiền")}
               </button>
             )}
           </div>
@@ -771,7 +771,7 @@ export default function CustomerOrdersPage() {
                 disabled
                 className="flex-1 flex items-center justify-center gap-2 border border-gray-200 bg-gray-50 text-gray-400 py-2.5 rounded-xl text-sm font-medium cursor-not-allowed"
               >
-                <CheckCircle2 size={15} /> {t("orders.allReviewedBtn", "Đã đánh giá tất cả")}
+                <CheckCircle2 size={15} /> {t("Đã đánh giá tất cả")}
               </button>
             ) : (
               <button
@@ -783,7 +783,7 @@ export default function CustomerOrdersPage() {
                 }}
                 className="flex-1 flex items-center justify-center gap-2 border border-orange-300 text-orange-600 py-2.5 rounded-xl text-sm font-medium hover:bg-orange-50 transition-colors"
               >
-                <Star size={15} /> {t("orders.writeReviewBtn", "Viết đánh giá")}
+                <Star size={15} /> {t("Viết đánh giá")}
               </button>
             )}
 
@@ -792,7 +792,7 @@ export default function CustomerOrdersPage() {
                 disabled
                 className="flex-1 flex items-center justify-center gap-2 border border-gray-200 bg-gray-50 text-gray-400 py-2.5 rounded-xl text-sm font-medium cursor-not-allowed"
               >
-                <CheckCircle2 size={15} /> {t("orders.allComplainedBtn", "Đã khiếu nại tất cả")}
+                <CheckCircle2 size={15} /> {t("Đã khiếu nại tất cả")}
               </button>
             ) : (
               <button
@@ -814,17 +814,17 @@ export default function CustomerOrdersPage() {
         {showReviewModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
             <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-5">
-              <h3 className="font-bold text-gray-900 mb-1">{t("orders.reviewModalTitle", "Viết đánh giá sản phẩm")}</h3>
-              <p className="text-xs text-gray-400 mb-3">{t("orders.reviewModalSubtitle", "Đánh giá chất lượng dịch vụ / voucher đã mua")}</p>
+              <h3 className="font-bold text-gray-900 mb-1">{t("Viết đánh giá sản phẩm")}</h3>
+              <p className="text-xs text-gray-400 mb-3">{t("Đánh giá chất lượng dịch vụ / voucher đã mua")}</p>
 
               <div className="mb-3">
-                <label className="block text-xs font-medium text-gray-700 mb-1">{t("orders.selectVoucherLabel", "Chọn mã voucher đánh giá")}</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">{t("Chọn mã voucher đánh giá")}</label>
                 <select value={selectedVoucherMuaId} onChange={e => setSelectedVoucherMuaId(e.target.value)} className="w-full border border-gray-300 rounded-lg p-2 text-xs">
                   {order.codes.map(c => {
                     const vid = c.id || c.voucherMuaId;
                     return (
                       <option key={vid} value={vid}>
-                        {c.code} ({t(codeStatusLabels[c.status] || c.status)}) {c.hasReviewed ? ` - ${t("orders.reviewedSuffix", "Đã đánh giá")}` : ''}
+                        {c.code} ({t(codeStatusLabels[c.status] || c.status)}) {c.hasReviewed ? ` - ${t("Đã đánh giá")}` : ''}
                       </option>
                     )
                   })}
@@ -842,7 +842,7 @@ export default function CustomerOrdersPage() {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold text-gray-800 truncate">{selectedItem.voucherName}</p>
-                        <p className="text-[11px] text-gray-500 truncate">{t("orders.codeLabel", "Mã:")} <span className="font-mono">{selectedCode.code}</span></p>
+                        <p className="text-[11px] text-gray-500 truncate">{t("Mã:")} <span className="font-mono">{selectedCode.code}</span></p>
                       </div>
                     </div>
                   );
@@ -878,7 +878,7 @@ export default function CustomerOrdersPage() {
                 value={reviewText}
                 onChange={(e) => setReviewText(e.target.value)}
                 disabled={order.codes.find(c => (c.id || c.voucherMuaId) === selectedVoucherMuaId)?.hasReviewed}
-                placeholder={t("orders.reviewPlaceholder", "Nhận xét chi tiết về trải nghiệm sử dụng...")}
+                placeholder={t("Nhận xét chi tiết về trải nghiệm sử dụng...")}
                 className={`w-full border border-gray-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-300 mb-4 ${
                   order.codes.find(c => (c.id || c.voucherMuaId) === selectedVoucherMuaId)?.hasReviewed ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''
                 }`}
@@ -888,7 +888,7 @@ export default function CustomerOrdersPage() {
                   onClick={() => setShowReviewModal(false)}
                   className="flex-1 border border-gray-300 py-2 rounded-lg text-sm text-gray-600"
                 >
-                  {t("common.cancel", "Hủy")}
+                  {t("Hủy")}
                 </button>
                 <button
                   onClick={handleSubmitReview}
@@ -899,7 +899,7 @@ export default function CustomerOrdersPage() {
                     : 'bg-orange-500 hover:bg-orange-600'
                   }`}
                 >
-                  {t("orders.submitReviewBtn", "Gửi đánh giá")}
+                  {t("Gửi đánh giá")}
                 </button>
               </div>
             </div>
@@ -916,14 +916,14 @@ export default function CustomerOrdersPage() {
               className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-5 sm:p-6 max-h-[90vh] overflow-y-auto"
             >
               <h3 id="complaint-modal-title" className="font-bold text-gray-900 text-lg mb-1">
-                {t("orders.complaintModalTitle", "Gửi khiếu nại voucher")}
+                {t("Gửi khiếu nại voucher")}
               </h3>
               <p className="text-sm text-gray-500 mb-4">
-                {t("orders.complaintModalSubtitle", "Chọn vấn đề theo chính sách hoặc mô tả trường hợp riêng của bạn.")}
+                {t("Chọn vấn đề theo chính sách hoặc mô tả trường hợp riêng của bạn.")}
               </p>
 
               <div className="mb-4">
-                <label htmlFor="complaint-voucher" className="block text-sm font-semibold text-gray-800 mb-1.5">{t("orders.voucherSupportLabel", "Voucher cần hỗ trợ")}</label>
+                <label htmlFor="complaint-voucher" className="block text-sm font-semibold text-gray-800 mb-1.5">{t("Voucher cần hỗ trợ")}</label>
                 <select
                   id="complaint-voucher"
                   value={selectedVoucherMuaId}
@@ -934,7 +934,7 @@ export default function CustomerOrdersPage() {
                     const vid = c.id || c.voucherMuaId;
                     return (
                       <option key={vid} value={vid} disabled={c.hasComplained}>
-                        {c.code} ({t(codeStatusLabels[c.status] || c.status)}) {c.hasComplained ? ` - ${t("orders.complainedSuffix", "Đã khiếu nại")}` : ''}
+                        {c.code} ({t(codeStatusLabels[c.status] || c.status)}) {c.hasComplained ? ` - ${t("Đã khiếu nại")}` : ''}
                       </option>
                     )
                   })}
@@ -952,7 +952,7 @@ export default function CustomerOrdersPage() {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold text-gray-800 truncate">{selectedItem.voucherName}</p>
-                        <p className="text-[11px] text-gray-500 truncate">{t("orders.codeLabel", "Mã:")} <span className="font-mono">{selectedCode.code}</span></p>
+                        <p className="text-[11px] text-gray-500 truncate">{t("Mã:")} <span className="font-mono">{selectedCode.code}</span></p>
                       </div>
                     </div>
                   );
@@ -961,8 +961,8 @@ export default function CustomerOrdersPage() {
 
               <div role="group" aria-labelledby="complaint-reason-options-label">
                 <div className="flex items-center justify-between gap-3 mb-2">
-                  <p id="complaint-reason-options-label" className="text-sm font-semibold text-gray-800">{t("orders.policyComplaintIssuesTitle", "Vấn đề theo chính sách khiếu nại")}</p>
-                  <span className="text-xs text-gray-400">{t("orders.selectMax1", "Chọn tối đa 1")}</span>
+                  <p id="complaint-reason-options-label" className="text-sm font-semibold text-gray-800">{t("Vấn đề theo chính sách khiếu nại")}</p>
+                  <span className="text-xs text-gray-400">{t("Chọn tối đa 1")}</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {COMPLAINT_REASON_OPTIONS.map((option) => {
@@ -987,7 +987,7 @@ export default function CustomerOrdersPage() {
               </div>
 
               <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-3">
-                <p className="text-xs font-semibold text-blue-900">{t("orders.afterSendProcessTitle", "Quy trình sau khi gửi")}</p>
+                <p className="text-xs font-semibold text-blue-900">{t("Quy trình sau khi gửi")}</p>
                 <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {COMPLAINT_PROCESS_STEPS.map((step, index) => (
                     <div key={step.title} className="rounded-lg bg-white/80 p-2">
@@ -997,12 +997,12 @@ export default function CustomerOrdersPage() {
                   ))}
                 </div>
                 <p className="mt-2 text-[11px] leading-4 text-blue-800">
-                  {t("orders.complaintRefundPolicyText", "Khiếu nại được hoàn tiền chỉ khi voucher hợp lệ, chưa sử dụng, không thể khắc phục bằng gửi lại/cấp lại mã và đáp ứng chính sách.")}
+                  {t("Khiếu nại được hoàn tiền chỉ khi voucher hợp lệ, chưa sử dụng, không thể khắc phục bằng gửi lại/cấp lại mã và đáp ứng chính sách.")}
                 </p>
               </div>
 
               <label htmlFor="complaint-detail" className="mt-4 mb-2 block text-sm font-semibold text-gray-800">
-                {t("orders.additionalDescriptionLabel", "Mô tả bổ sung")} <span className="font-normal text-gray-400">{t("orders.optionalIfTagSelected", "(không bắt buộc nếu đã chọn tag)")}</span>
+                {t("Mô tả bổ sung")} <span className="font-normal text-gray-400">{t("(không bắt buộc nếu đã chọn tag)")}</span>
               </label>
               <textarea
                 id="complaint-detail"
@@ -1010,7 +1010,7 @@ export default function CustomerOrdersPage() {
                 maxLength={1000}
                 value={feedbackText}
                 onChange={(e) => setFeedbackText(e.target.value)}
-                placeholder={t("orders.complaintDetailPlaceholder", "Không có tag phù hợp? Hãy mô tả vấn đề. Bạn cũng có thể bổ sung thời gian, chi nhánh hoặc thông tin liên quan cho tag đã chọn...")}
+                placeholder={t("Không có tag phù hợp? Hãy mô tả vấn đề. Bạn cũng có thể bổ sung thời gian, chi nhánh hoặc thông tin liên quan cho tag đã chọn...")}
                 className="w-full border border-gray-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
               <div className="mt-1 text-right text-[11px] text-gray-400">{feedbackText.length}/1000</div>
@@ -1022,7 +1022,7 @@ export default function CustomerOrdersPage() {
                   disabled={submittingComplaint}
                   className="flex-1 border border-gray-300 py-2.5 rounded-lg text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
                 >
-                  {t("common.close", "Đóng")}
+                  {t("Đóng")}
                 </button>
                 <button
                   type="button"
@@ -1038,7 +1038,7 @@ export default function CustomerOrdersPage() {
                     : 'bg-orange-500 hover:bg-orange-600'
                   }`}
                 >
-                  {submittingComplaint ? <span className="inline-flex items-center gap-2"><Loader2 size={15} className="animate-spin" /> {t("common.sending", "Đang gửi...")}</span> : t("orders.submitComplaintBtn", "Gửi khiếu nại")}
+                  {submittingComplaint ? <span className="inline-flex items-center gap-2"><Loader2 size={15} className="animate-spin" /> {t("Đang gửi...")}</span> : t("Gửi khiếu nại")}
                 </button>
               </div>
             </div>
@@ -1050,16 +1050,16 @@ export default function CustomerOrdersPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
             <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
               <h3 className="font-bold text-gray-900 text-lg mb-1">
-                {t("orders.cancelRefundModalTitle", "Yêu cầu hủy đơn & Hoàn tiền")}
+                {t("Yêu cầu hủy đơn & Hoàn tiền")}
               </h3>
               <p className="text-sm text-gray-500 mb-4">
-                {t("orders.cancelRefundModalSubtitle", "Chọn lý do phù hợp hoặc nhập lý do riêng của bạn bên dưới.")}
+                {t("Chọn lý do phù hợp hoặc nhập lý do riêng của bạn bên dưới.")}
               </p>
 
               <div role="group" aria-labelledby="cancel-reason-options-label">
                 <div className="flex items-center justify-between gap-3 mb-2">
-                  <p id="cancel-reason-options-label" className="text-sm font-semibold text-gray-800">{t("orders.policyCancelReasonsTitle", "Lý do theo chính sách")}</p>
-                  <span className="text-xs text-gray-400">{t("orders.selectMax1", "Chọn tối đa 1")}</span>
+                  <p id="cancel-reason-options-label" className="text-sm font-semibold text-gray-800">{t("Lý do theo chính sách")}</p>
+                  <span className="text-xs text-gray-400">{t("Chọn tối đa 1")}</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {CANCEL_REASON_OPTIONS.map((option) => {
@@ -1086,12 +1086,12 @@ export default function CustomerOrdersPage() {
               <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-800">
                 <AlertCircle size={15} className="mt-0.5 shrink-0" />
                 <p>
-                  {t("orders.cancelApprovalPolicyNote", "Yêu cầu được xét duyệt khi voucher chưa sử dụng, còn trong thời hạn hủy và đáp ứng chính sách của voucher hoặc Chính sách Sàn.")}
+                  {t("Yêu cầu được xét duyệt khi voucher chưa sử dụng, còn trong thời hạn hủy và đáp ứng chính sách của voucher hoặc Chính sách Sàn.")}
                 </p>
               </div>
 
               <label htmlFor="cancel-reason-detail" className="mt-4 mb-2 block text-sm font-semibold text-gray-800">
-                {t("orders.additionalInfoLabel", "Thông tin bổ sung")} <span className="font-normal text-gray-400">{t("orders.optionalIfTagSelected", "(không bắt buộc nếu đã chọn tag)")}</span>
+                {t("Thông tin bổ sung")} <span className="font-normal text-gray-400">{t("(không bắt buộc nếu đã chọn tag)")}</span>
               </label>
               <textarea
                 id="cancel-reason-detail"
@@ -1099,7 +1099,7 @@ export default function CustomerOrdersPage() {
                 maxLength={1000}
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
-                placeholder={t("orders.cancelDetailPlaceholder", "Không có tag phù hợp? Hãy nhập lý do của bạn. Bạn cũng có thể bổ sung chi tiết cho tag đã chọn...")}
+                placeholder={t("Không có tag phù hợp? Hãy nhập lý do của bạn. Bạn cũng có thể bổ sung chi tiết cho tag đã chọn...")}
                 className="w-full border border-gray-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
               <div className="mt-1 text-right text-[11px] text-gray-400">{cancelReason.length}/1000</div>
@@ -1110,7 +1110,7 @@ export default function CustomerOrdersPage() {
                   onClick={closeCancelModal}
                   className="flex-1 border border-gray-300 py-2.5 rounded-lg text-sm text-gray-600 hover:bg-gray-50"
                 >
-                  {t("common.close", "Đóng")}
+                  {t("Đóng")}
                 </button>
                 <button
                   type="button"
@@ -1118,7 +1118,7 @@ export default function CustomerOrdersPage() {
                   disabled={!selectedCancelReason && !cancelReason.trim()}
                   className="flex-1 bg-red-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
-                  {t("common.confirmSend", "Xác nhận gửi")}
+                  {t("Xác nhận gửi")}
                 </button>
               </div>
             </div>
@@ -1132,23 +1132,23 @@ export default function CustomerOrdersPage() {
     <div className="max-w-5xl mx-auto p-4 sm:p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <Package className="text-orange-500" size={24} /> {t("nav.myOrders", "Đơn hàng của tôi")}
+          <Package className="text-orange-500" size={24} /> {t("Đơn hàng của tôi")}
         </h1>
         <p className="text-sm text-gray-500 mt-1">
-          {t("orders.subtitle", "Quản lý và tra cứu trạng thái đơn hàng cùng mã voucher đã mua.")}
+          {t("Quản lý và tra cứu trạng thái đơn hàng cùng mã voucher đã mua.")}
         </p>
       </div>
 
       {/* Filter Tabs matching DB status values */}
       <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
         {[
-          { key: "all", label: t("common.all", "Tất cả") },
-          { key: "Cho thanh toan", label: t("orders.pendingPayment", "Chờ thanh toán") },
-          { key: "Da thanh toan", label: t("orders.paid", "Đã thanh toán") },
-          { key: "Cho hoan tien", label: t("orders.pendingRefund", "Chờ hoàn tiền") },
-          { key: "Da hoan tien", label: t("orders.refunded", "Đã hoàn tiền") },
-          { key: "Da huy", label: t("orders.cancelled", "Đã hủy") },
-          { key: "Huy yeu cau hoan tien", label: t("orders.refundRejected", "Từ chối hoàn tiền") },
+          { key: "all", label: t("Tất cả") },
+          { key: "Cho thanh toan", label: t("Chờ thanh toán") },
+          { key: "Da thanh toan", label: t("Đã thanh toán") },
+          { key: "Cho hoan tien", label: t("Chờ hoàn tiền") },
+          { key: "Da hoan tien", label: t("Đã hoàn tiền") },
+          { key: "Da huy", label: t("Đã hủy") },
+          { key: "Huy yeu cau hoan tien", label: t("Từ chối hoàn tiền") },
         ].map((f) => (
           <button
             key={f.key}
@@ -1168,10 +1168,10 @@ export default function CustomerOrdersPage() {
         <div className="flex flex-col items-center justify-center py-20 text-gray-400 bg-white rounded-2xl border border-gray-100">
           <Package size={48} className="mb-2 text-gray-300" />
           <p className="text-base font-medium text-gray-600">
-            {t("orders.emptyTitle", "Chưa có đơn hàng nào")}
+            {t("Chưa có đơn hàng nào")}
           </p>
           <p className="text-xs text-gray-400 mt-1">
-            {t("orders.emptySub", "Các đơn hàng bạn mua sẽ xuất hiện tại đây.")}
+            {t("Các đơn hàng bạn mua sẽ xuất hiện tại đây.")}
           </p>
         </div>
       ) : (
@@ -1201,11 +1201,11 @@ export default function CustomerOrdersPage() {
                   <span className="font-semibold text-gray-900">
                     {order.items.length}
                   </span>{" "}
-                  {t("orders.products", "sản phẩm")} ·{" "}
+                  {t("sản phẩm")} ·{" "}
                   <span className="font-semibold text-gray-900">
                     {order.codes.length}
                   </span>{" "}
-                  {t("orders.vouchers", "mã voucher")}
+                  {t("mã voucher")}
                 </div>
                 <div className="flex items-center gap-2">
                   <p className="text-base font-bold text-orange-600">
@@ -1223,8 +1223,8 @@ export default function CustomerOrdersPage() {
       {pagination.totalPages > 1 && (
         <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-4 py-3 mt-4">
           <p className="text-sm text-gray-500">
-            Trang {pagination.page} / {pagination.totalPages} (
-            {pagination.total} đơn hàng)
+            {t("Trang")} {pagination.page} / {pagination.totalPages} (
+            {pagination.total} {t("đơn hàng")})
           </p>
           <div className="flex gap-2">
             <button
@@ -1232,14 +1232,14 @@ export default function CustomerOrdersPage() {
               disabled={pagination.page <= 1}
               className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 font-medium"
             >
-              Trước
+              {t("Trước")}
             </button>
             <button
               onClick={() => loadOrders(pagination.page + 1)}
               disabled={pagination.page >= pagination.totalPages}
               className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 font-medium"
             >
-              Sau
+              {t("Sau")}
             </button>
           </div>
         </div>
