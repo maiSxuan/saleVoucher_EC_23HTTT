@@ -396,6 +396,16 @@ export default function CustomerOrdersPage() {
 
   useEffect(() => {
     loadOrders(1);
+
+    const handleLangChange = () => {
+      loadOrders(pagination.page || 1);
+      if (selectedOrderId) {
+        handleSelectOrder(selectedOrderId);
+      }
+    };
+
+    window.addEventListener("app_language_changed", handleLangChange);
+    return () => window.removeEventListener("app_language_changed", handleLangChange);
   }, [filterStatus]);
 
   const handleSelectOrder = async (orderId) => {
@@ -529,7 +539,7 @@ export default function CustomerOrdersPage() {
               {item.image ? (
                 <img
                   src={item.image}
-                  alt={item.voucherName}
+                  alt={t(item.voucherName)}
                   className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
                 />
               ) : (
@@ -539,10 +549,10 @@ export default function CustomerOrdersPage() {
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
-                  {item.voucherName}
+                  {t(item.voucherName)}
                 </p>
                 <p className="text-xs text-gray-400">
-                  {t("Đối tác:")} {item.partnerName} · {t("Số lượng:")} ×{item.quantity}
+                  {t("Đối tác:")} {t(item.partnerName)} · {t("Số lượng:")} ×{item.quantity}
                 </p>
               </div>
               <p className="text-sm font-semibold text-gray-900">

@@ -156,7 +156,7 @@ class VoucherIssuanceService {
    * @param {string} issuedVoucherId - ma_voucher_mua
    * @param {string} accountId - ma_tk người đang đăng nhập
    */
-  async getIssuedVoucherDetail(issuedVoucherId, accountId) {
+  async getIssuedVoucherDetail(issuedVoucherId, accountId, lang = null) {
     if (!issuedVoucherId) {
       const err = new Error('Thiếu mã voucher đã mua');
       err.status = 400;
@@ -191,7 +191,25 @@ class VoucherIssuanceService {
     }
 
     const enriched = await issuedVoucherRepository._enrichRows([vm]);
-    return enriched[0] || null;
+    const detail = enriched[0] || null;
+
+    if (detail && lang && lang.toLowerCase().startsWith("en")) {
+      if (detail.voucher) {
+        await translationService.translateVoucherFields(detail.voucher, undefined, "en");
+      }
+      if (detail.partnerName) {
+        detail.partnerName = await translationService.translateText(detail.partnerName, "en");
+      }
+      if (Array.isArray(detail.applicableBranches)) {
+        for (const b of detail.applicableBranches) {
+          if (b.branchName) b.branchName = await translationService.translateText(b.branchName, "en");
+          if (b.address) b.address = await translationService.translateText(b.address, "en");
+          if (b.area) b.area = await translationService.translateText(b.area, "en");
+        }
+      }
+    }
+
+    return detail;
   }
 }
 

@@ -96,7 +96,7 @@ function VoucherCard({ vm, onClick }) {
       {/* Nội dung */}
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-slate-800 truncate text-sm">
-          {v.ten_voucher || "Voucher"}
+          {t(v.ten_voucher) || "Voucher"}
         </p>
         <p className="text-xs text-slate-500 truncate">
           {t(vm.partnerName) || t("Đối tác")}
@@ -118,7 +118,7 @@ function VoucherCard({ vm, onClick }) {
       {/* CTA: toàn bộ card là nút, nhãn này làm hành động chính dễ nhận biết. */}
       {vm.trang_thai === "Chua su dung" ? (
         <span className="flex-shrink-0 rounded-xl bg-sky-600 px-3 py-2 text-xs font-bold text-white shadow-soft transition-colors group-hover:bg-sky-700">
-          Sử dụng
+          {t("Sử dụng")}
         </span>
       ) : (
         <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-sky-600 transition-colors flex-shrink-0" />
@@ -171,6 +171,10 @@ export default function MyVoucherPage() {
 
   useEffect(() => {
     load(1);
+
+    const handleLangChange = () => load(1);
+    window.addEventListener("app_language_changed", handleLangChange);
+    return () => window.removeEventListener("app_language_changed", handleLangChange);
   }, [load]);
 
   // Lọc client-side theo search text

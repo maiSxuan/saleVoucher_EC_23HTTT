@@ -62,8 +62,9 @@ class IssuedVoucherController {
     try {
       const accountId = req.user?.accountId;
       const { issuedId } = req.params;
+      const lang = req.query.lang || req.headers["accept-language"];
 
-      const data = await this.service.getIssuedVoucherDetail(issuedId, accountId);
+      const data = await this.service.getIssuedVoucherDetail(issuedId, accountId, lang);
       if (!data) {
         return res.status(404).json({ success: false, message: 'Không tìm thấy voucher này' });
       }

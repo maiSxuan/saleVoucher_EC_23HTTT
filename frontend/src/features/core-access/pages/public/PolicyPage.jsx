@@ -233,8 +233,8 @@ export default function PolicyPage() {
             ].map(([Icon, title, text]) => (
               <div key={title} className="rounded-2xl border border-sky-100 bg-white/90 p-4 shadow-sm backdrop-blur-sm">
                 <Icon size={19} className="text-sky-600" aria-hidden="true" />
-                <p className="mt-2 text-sm font-extrabold text-slate-900">{title}</p>
-                <p className="mt-1 text-xs leading-5 text-slate-600">{text}</p>
+                <p className="mt-2 text-sm font-extrabold text-slate-900">{t(title)}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-600">{t(text)}</p>
               </div>
             ))}
           </div>

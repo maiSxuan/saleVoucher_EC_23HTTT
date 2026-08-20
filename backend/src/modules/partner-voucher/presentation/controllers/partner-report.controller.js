@@ -8,7 +8,8 @@ class PartnerReportController {
 
   async getReport(req, res, next) {
     try {
-      const result = await this.partnerReportService.getReport(req.query);
+      const lang = req.query.lang || req.headers["accept-language"];
+      const result = await this.partnerReportService.getReport({ ...req.query, lang });
       res.json({ success: true, data: result });
     } catch (error) {
       next(error);

@@ -4,7 +4,7 @@
 const cartRepository = require("../../data/repositories/cart.repository");
 const catalogRepository = require("../../data/repositories/catalog.repository");
 const { computeAvailability } = require("./voucher-aivailability.util");
-const NotFoundError = require("../../../../common/errors/NotFoundError");
+const translationService = require("../../../../common/services/translation.service");
 
 function mapCartItem(row) {
   const v = row.voucher;
@@ -35,10 +35,17 @@ function mapCartItem(row) {
 
 class CartService {
   //truy xuất items giỏ hàng, tính tạm tính
-  async getCart(accountId) {
+  async getCart(accountId, lang = null) {
     const cartId = await cartRepository.findOrCreateCart(accountId);
     const rows = await cartRepository.getItems(cartId);
     const items = rows.filter((r) => r.voucher).map(mapCartItem);
+
+    if (lang && lang.toLowerCase().startsWith("en")) {
+      for (const item of items) {
+        if (item.name) item.name = await translationService.translateText(item.name, "en");
+        if (item.partner) item.partner = await translationService.translateText(item.partner, "en");
+      }
+    }
 
     const validItems = items.filter((i) => i.status === "valid");
     const subtotal = validItems.reduce(

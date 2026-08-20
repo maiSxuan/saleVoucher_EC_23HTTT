@@ -11,7 +11,7 @@ const LogResult = require("../../../../common/constants/log-result");
 const { sendNotificationEmail } = require("../../../../common/utils/mailer");
 const vnpayGateway = require("./gateways/vnpay.gateway");
 const paypalGateway = require("./gateways/paypal.gateway");
-const crypto = require("crypto");
+const translationService = require("../../../../common/services/translation.service");
 
 class OrderService {
   // kiểm tra khả dụng, tính tổng tiền — CHƯA ghi DB
@@ -157,10 +157,22 @@ class OrderService {
   }
 
   async getCustomerOrders(accountId, filters) {
-    return await orderRepository.findCustomerOrders(accountId, filters);
+    const result = await orderRepository.findCustomerOrders(accountId, filters);
+    const lang = filters?.lang;
+    if (lang && lang.toLowerCase().startsWith("en") && Array.isArray(result?.orders)) {
+      for (const order of result.orders) {
+        if (Array.isArray(order.items)) {
+          for (const item of order.items) {
+            if (item.voucherName) item.voucherName = await translationService.translateText(item.voucherName, "en");
+            if (item.partnerName) item.partnerName = await translationService.translateText(item.partnerName, "en");
+          }
+        }
+      }
+    }
+    return result;
   }
 
-  async getCustomerOrderById(accountId, orderId) {
+  async getCustomerOrderById(accountId, orderId, lang = null) {
     const order = await orderRepository.findCustomerOrderById(
       accountId,
       orderId,
@@ -169,6 +181,19 @@ class OrderService {
       const err = new Error("Không tìm thấy đơn hàng");
       err.statusCode = 404;
       throw err;
+    }
+    if (lang && lang.toLowerCase().startsWith("en")) {
+      if (Array.isArray(order.items)) {
+        for (const item of order.items) {
+          if (item.voucherName) item.voucherName = await translationService.translateText(item.voucherName, "en");
+          if (item.partnerName) item.partnerName = await translationService.translateText(item.partnerName, "en");
+        }
+      }
+      if (Array.isArray(order.codes)) {
+        for (const code of order.codes) {
+          if (code.usedBranch) code.usedBranch = await translationService.translateText(code.usedBranch, "en");
+        }
+      }
     }
     return order;
   }

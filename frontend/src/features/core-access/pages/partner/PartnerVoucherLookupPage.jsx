@@ -266,11 +266,11 @@ export default function PartnerVoucherLookupPage() {
                   Snow Voucher
                 </h1>
                 <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  POS Quầy Thu Ngân
+                  {t("staff.pos_counter", "POS Quầy Thu Ngân")}
                 </span>
               </div>
               <p className="text-xs text-slate-500 hidden sm:block">
-                Quầy đối soát & xác thực voucher tại chi nhánh
+                {t("staff.pos_counter_description", "Quầy đối soát & xác thực voucher tại chi nhánh")}
               </p>
             </div>
           </div>

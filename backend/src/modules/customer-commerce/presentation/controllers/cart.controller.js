@@ -8,7 +8,8 @@ class CartController {
 
   async getItems(req, res, next) {
     try {
-      const result = await this.cartService.getCart(req.user?.accountId);
+      const lang = req.query.lang || req.headers["accept-language"];
+      const result = await this.cartService.getCart(req.user?.accountId, lang);
       res.json({ success: true, data: result });
     } catch (error) {
       next(error);

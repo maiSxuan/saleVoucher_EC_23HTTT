@@ -6,6 +6,16 @@ const ALLOWED_VOUCHER_FIELDS = new Set([
   "dieu_kien_ap_dung",
   "chinh_sach_hoan_huy",
   "ten_danh_muc",
+  "ten_chi_nhanh",
+  "dia_chi",
+  "khu_vuc",
+  "ten_dn",
+  "tieu_de",
+  "noi_dung",
+  "name",
+  "description",
+  "conditions",
+  "cancellationPolicy",
 ]);
 
 function normalizeTargetLang(lang) {
@@ -144,9 +154,8 @@ class TranslationService {
       }
     }
 
-    // Translate danh_muc sub-object if present and field ten_danh_muc is in fields
+    // Translate danh_muc sub-object if present
     if (
-      fieldsToTranslate.includes("ten_danh_muc") &&
       voucher.danh_muc &&
       voucher.danh_muc.ten_danh_muc
     ) {
@@ -157,6 +166,25 @@ class TranslationService {
       voucher.danh_muc.ten_danh_muc = translatedCat;
       voucher.category = translatedCat;
       voucher.ten_danh_muc = translatedCat;
+    }
+
+    // Translate partner sub-object if present
+    if (voucher.partner && typeof voucher.partner === "object") {
+      if (voucher.partner.name) {
+        voucher.partner.name = await this.translateText(voucher.partner.name, lang);
+      }
+      if (voucher.partner.address) {
+        voucher.partner.address = await this.translateText(voucher.partner.address, lang);
+      }
+    }
+
+    // Translate branches sub-array if present
+    if (Array.isArray(voucher.branches)) {
+      for (const branch of voucher.branches) {
+        if (branch.name) branch.name = await this.translateText(branch.name, lang);
+        if (branch.address) branch.address = await this.translateText(branch.address, lang);
+        if (branch.region) branch.region = await this.translateText(branch.region, lang);
+      }
     }
 
     return voucher;

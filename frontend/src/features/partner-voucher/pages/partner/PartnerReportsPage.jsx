@@ -91,6 +91,10 @@ export function PartnerReportsPage() {
       await fetchReport();
     }
     init();
+
+    const handleLangChange = () => init();
+    window.addEventListener("app_language_changed", handleLangChange);
+    return () => window.removeEventListener("app_language_changed", handleLangChange);
   }, []);
 
   const handleUpdateReport = (e) => {
@@ -143,7 +147,7 @@ export function PartnerReportsPage() {
                 <option value="all">{t("Tất cả chương trình")}</option>
                 {vouchersList.map((v) => (
                   <option key={v.ma_voucher} value={v.ma_voucher}>
-                    {v.ten_voucher}
+                    {t(v.ten_voucher)}
                   </option>
                 ))}
               </select>
@@ -397,7 +401,7 @@ export function PartnerReportsPage() {
                     ) : (
                       filteredData.map((d) => (
                         <tr key={d.voucherId} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{d.voucherName}</td>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{t(d.voucherName)}</td>
                           <td className="px-4 py-3 text-sm text-gray-600">{d.issued.toLocaleString()}</td>
                           <td className="px-4 py-3 text-sm text-gray-600">{d.sold.toLocaleString()}</td>
                           <td className="px-4 py-3 text-sm text-gray-600">{d.used.toLocaleString()}</td>
@@ -435,7 +439,7 @@ export function PartnerReportsPage() {
                 <BarChart data={filteredData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
                   <XAxis type="number" tick={{ fontSize: 11 }} />
-                  <YAxis dataKey="voucherName" type="category" tick={{ fontSize: 10 }} width={140} />
+                  <YAxis dataKey="voucherName" type="category" tickFormatter={(val) => t(val)} tick={{ fontSize: 10 }} width={140} />
                   <Tooltip />
                   <Bar dataKey="issued" fill="#e2e8f0" name={t("Phát hành")} />
                   <Bar dataKey="sold" fill="var(--brand-primary)" name={t("Đã bán")} />

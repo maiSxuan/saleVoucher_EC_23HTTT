@@ -59,9 +59,10 @@ class OrderController {
     try {
       const accountId = req.user.accountId || req.user.id;
       const { status, page, limit } = req.query;
+      const lang = req.query.lang || req.headers["accept-language"];
       const pageNum = Number(page) || 1;
       const limitNum = Number(limit) || 10;
-      const result = await orderService.getCustomerOrders(accountId, { status, page: pageNum, limit: limitNum });
+      const result = await orderService.getCustomerOrders(accountId, { status, page: pageNum, limit: limitNum, lang });
       return paginatedResponse(res, result.orders, { page: pageNum, limit: limitNum, total: result.total });
     } catch (e) {
       next(e);
@@ -72,7 +73,8 @@ class OrderController {
     try {
       const accountId = req.user.accountId || req.user.id;
       const { id } = req.params;
-      const order = await orderService.getCustomerOrderById(accountId, id);
+      const lang = req.query.lang || req.headers["accept-language"];
+      const order = await orderService.getCustomerOrderById(accountId, id, lang);
       return res.json({ success: true, data: order });
     } catch (e) {
       next(e);

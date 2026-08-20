@@ -221,7 +221,7 @@ export default function IssuedVoucherDetailPage() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-bold text-lg leading-tight truncate">
-              {v.ten_voucher || "Voucher"}
+              {t(v.ten_voucher) || "Voucher"}
             </p>
             <p className="text-sm text-sky-100 mt-0.5">
               {t(vm.partnerName) || t("Đối tác")}
@@ -311,13 +311,13 @@ export default function IssuedVoucherDetailPage() {
                 <MapPin className="w-4 h-4 text-sky-400 flex-shrink-0 mt-0.5" />
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-slate-700 truncate">
-                    {b.branchName}
+                    {t(b.branchName)}
                   </p>
                   {b.address && (
-                    <p className="text-xs text-slate-400 truncate">{b.address}</p>
+                    <p className="text-xs text-slate-400 truncate">{t(b.address)}</p>
                   )}
                   {b.area && (
-                    <p className="text-xs text-sky-500">{b.area}</p>
+                    <p className="text-xs text-sky-500">{t(b.area)}</p>
                   )}
                 </div>
               </div>
