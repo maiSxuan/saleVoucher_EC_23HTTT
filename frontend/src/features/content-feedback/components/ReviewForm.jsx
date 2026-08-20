@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Star, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function ReviewForm({ onSubmit, onCancel }) {
+  const { t } = useTranslation();
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
 
@@ -14,7 +16,7 @@ export default function ReviewForm({ onSubmit, onCancel }) {
     const userId = user?.ma_nguoi_dung || user?.id;
     
     if (!userId) {
-      alert("Không tìm thấy thông tin tài khoản.");
+      alert(t("Không tìm thấy thông tin tài khoản."));
       return;
     }
     
@@ -26,7 +28,7 @@ export default function ReviewForm({ onSubmit, onCancel }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
       <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-5">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-gray-900">Viết đánh giá</h3>
+          <h3 className="font-bold text-gray-900">{t("Viết đánh giá")}</h3>
           <button onClick={onCancel}><X size={20} className="text-gray-400" /></button>
         </div>
         <div className="flex items-center gap-1 mb-4">
@@ -40,10 +42,10 @@ export default function ReviewForm({ onSubmit, onCancel }) {
           rows={4} 
           value={comment} 
           onChange={e => setComment(e.target.value)}
-          placeholder="Nhận xét về trải nghiệm..."
+          placeholder={t("Nhận xét về trải nghiệm...")}
           className="w-full border border-gray-200 rounded-xl p-3 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-orange-300"
         />
-        <button onClick={handleSubmit} className="w-full bg-orange-500 text-white py-2 rounded-lg font-semibold text-sm">Gửi đánh giá</button>
+        <button onClick={handleSubmit} className="w-full bg-orange-500 text-white py-2 rounded-lg font-semibold text-sm">{t("Gửi đánh giá")}</button>
       </div>
     </div>
   );

@@ -29,7 +29,7 @@ export default function VoucherCard({ voucher: v, onClick }) {
       <div className="p-4 flex flex-col flex-1 justify-between">
         <div>
           <p className="text-xs text-orange-600 font-semibold uppercase tracking-wider mb-1">
-            {typeof v.partner === 'object' && v.partner !== null ? (v.partner.ten_dn || v.partner.name || "Đối tác") : (v.partner || v.ten_dn || "Đối tác")}
+            {typeof v.partner === 'object' && v.partner !== null ? (v.partner.ten_dn || v.partner.name || t("Đối tác")) : (v.partner || v.ten_dn || t("Đối tác"))}
           </p>
           <p className="text-base font-bold text-gray-900 line-clamp-2 mb-3 group-hover:text-orange-600 transition-colors">
             {voucherName}
@@ -49,10 +49,10 @@ export default function VoucherCard({ voucher: v, onClick }) {
           <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-gray-50">
             {remaining <= 20 && remaining > 0 ? (
               <span className="text-red-500 font-semibold">
-                {t("voucher.remaining", "Còn lại")} {remaining}
+                {t("Còn lại")} {remaining}
               </span>
             ) : (
-              <span>{t("voucher.remaining", "Còn lại")} {remaining}</span>
+              <span>{t("Còn lại")} {remaining}</span>
             )}
             <div className="flex items-center gap-1">
               <Clock size={12} />
