@@ -114,12 +114,12 @@ export function PartnerLayout({ children }) {
   };
 
   const allNavItems = [
-    { label: t("nav.reports", "Báo cáo"), path: "/partner/reports", icon: BarChart3 },
-    { label: t("nav.lookupVoucher", "Tra cứu & Đổi Voucher"), path: "/partner/vouchers/lookup", icon: QrCode },
-    { label: t("nav.manageVouchers", "Quản lý Voucher"), path: "/partner/vouchers", icon: Ticket },
-    { label: t("nav.branches", "Chi nhánh"), path: "/partner/branches", icon: Store },
-    { label: t("nav.partnerProfile", "Hồ sơ doanh nghiệp"), path: "/partner/profile", icon: Building2 },
-    { label: t("nav.staffs", "Nhân viên"), path: "/partner/staffs", icon: Users },
+    { label: t("Báo cáo"), path: "/partner/reports", icon: BarChart3 },
+    { label: t("Tra cứu & Đổi Voucher"), path: "/partner/vouchers/lookup", icon: QrCode },
+    { label: t("Quản lý Voucher"), path: "/partner/vouchers", icon: Ticket },
+    { label: t("Chi nhánh"), path: "/partner/branches", icon: Store },
+    { label: t("Hồ sơ doanh nghiệp"), path: "/partner/profile", icon: Building2 },
+    { label: t("Nhân viên"), path: "/partner/staffs", icon: Users },
   ];
 
   const isVoucherManager =
@@ -141,7 +141,7 @@ export function PartnerLayout({ children }) {
           <button
             onClick={() => setCollapsed(!collapsed)}
             className="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
-            title="Đóng/Mở thanh điều hướng"
+            title={t("Đóng/Mở thanh điều hướng")}
           >
             ☰
           </button>
@@ -151,7 +151,7 @@ export function PartnerLayout({ children }) {
             </span>
             <div>
               <h1 className="font-bold text-slate-900 text-sm leading-tight">Snow Voucher</h1>
-              <p className="text-[11px] text-slate-500">Cổng Quản Lý Đối Tác</p>
+              <p className="text-[11px] text-slate-500">{t("Cổng Quản Lý Đối Tác")}</p>
             </div>
           </Link>
         </div>
@@ -161,7 +161,7 @@ export function PartnerLayout({ children }) {
           {/* Status Badge of Business Profile */}
           {partnerInfo && (
             <div className="hidden md:flex items-center gap-2 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200 text-xs">
-              <span className="text-slate-500 font-medium">Trạng thái tài khoản:</span>
+              <span className="text-slate-500 font-medium">{t("Trạng thái tài khoản:")}</span>
               <Badge status={partnerStatus} size="sm" />
             </div>
           )}
@@ -175,7 +175,7 @@ export function PartnerLayout({ children }) {
               <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                 <span>{userName}</span>
                 <span className="text-[10px] px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-200 font-medium">
-                  {userRole}
+                  {t(userRole)}
                 </span>
               </div>
               {userEmail && (
@@ -193,10 +193,10 @@ export function PartnerLayout({ children }) {
           <button
             onClick={handleLogout}
             className="flex items-center gap-1.5 px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 border border-rose-200 text-xs font-semibold rounded-xl transition-colors shadow-xs cursor-pointer"
-            title="Đăng xuất khỏi hệ thống"
+            title={t("Đăng xuất khỏi hệ thống")}
           >
             <LogOut className="w-3.5 h-3.5" />
-            <span>{t("nav.logout", "Đăng xuất")}</span>
+            <span>{t("Đăng xuất")}</span>
           </button>
         </div>
       </header>
@@ -207,14 +207,14 @@ export function PartnerLayout({ children }) {
           <div className="flex items-center gap-2 font-medium truncate">
             <ShieldAlert className="w-4 h-4 shrink-0" />
             <span>
-              Tài khoản doanh nghiệp chưa ở trạng thái <strong>Hoạt động</strong> (Hiện tại: <strong>{partnerStatus === "Cho duyet" ? "Chờ duyệt" : partnerStatus === "Tu choi" ? "Bị từ chối" : partnerStatus}</strong>). Một số tính năng bị tạm khóa.
+              {t("Tài khoản doanh nghiệp chưa ở trạng thái")} <strong>{t("Hoạt động")}</strong> ({t("Hiện tại:")} <strong>{partnerStatus === "Cho duyet" ? t("Chờ duyệt") : partnerStatus === "Tu choi" ? t("Bị từ chối") : t(partnerStatus)}</strong>). {t("Một số tính năng bị tạm khóa.")}
             </span>
           </div>
           <Link
             to="/partner/profile"
             className="shrink-0 bg-white/20 hover:bg-white/30 text-white font-bold px-3 py-1 rounded-lg transition-colors text-[11px] border border-white/30"
           >
-            Hồ sơ doanh nghiệp & Gửi duyệt →
+            {t("Hồ sơ doanh nghiệp & Gửi duyệt →")}
           </Link>
         </div>
       )}
@@ -239,7 +239,7 @@ export function PartnerLayout({ children }) {
                     key={item.path}
                     onClick={() => navigate("/partner/profile")}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all text-slate-400 bg-slate-50/50 hover:bg-amber-50/60 hover:text-amber-700 cursor-pointer group`}
-                    title="Tài khoản chưa kích hoạt. Vào Hồ sơ doanh nghiệp để xem thông tin & gửi duyệt."
+                    title={t("Tài khoản chưa kích hoạt. Vào Hồ sơ doanh nghiệp để xem thông tin & gửi duyệt.")}
                   >
                     <div className="flex items-center gap-3">
                       <IconComponent className="w-4 h-4 text-slate-400 shrink-0 group-hover:text-amber-600 transition-colors" />
@@ -278,21 +278,21 @@ export function PartnerLayout({ children }) {
 
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200/60 text-xs font-semibold text-amber-700">
                 <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                <span>Trạng thái: {partnerStatus === "Cho duyet" ? "Chờ duyệt" : partnerStatus === "Tu choi" ? "Bị từ chối" : partnerStatus}</span>
+                <span>{t("Trạng thái:")} {partnerStatus === "Cho duyet" ? t("Chờ duyệt") : partnerStatus === "Tu choi" ? t("Bị từ chối") : t(partnerStatus)}</span>
               </div>
 
               <div className="space-y-2">
                 <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                  Tài khoản doanh nghiệp chưa được kích hoạt
+                  {t("Tài khoản doanh nghiệp chưa được kích hoạt")}
                 </h2>
                 <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-                  Tất cả các chức năng Quản lý Voucher, Chi nhánh, Nhân viên và Báo cáo tạm thời bị vô hiệu hóa cho tới khi hồ sơ được phê duyệt.
+                  {t("Tất cả các chức năng Quản lý Voucher, Chi nhánh, Nhân viên và Báo cáo tạm thời bị vô hiệu hóa cho tới khi hồ sơ được phê duyệt.")}
                 </p>
               </div>
 
               {partnerStatus === "Tu choi" && partnerInfo?.ly_do_tu_choi && (
                 <div className="bg-rose-50/90 border border-rose-200 rounded-2xl p-4 text-xs text-rose-800 text-left max-w-md mx-auto space-y-1">
-                  <span className="font-bold block">Lý do Admin từ chối:</span>
+                  <span className="font-bold block">{t("Lý do Admin từ chối:")}</span>
                   <p>{partnerInfo.ly_do_tu_choi}</p>
                 </div>
               )}
@@ -303,7 +303,7 @@ export function PartnerLayout({ children }) {
                   className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-sm rounded-xl transition-all shadow-md hover:shadow-lg transform active:scale-95"
                 >
                   <Building className="w-4 h-4" />
-                  <span>Hồ sơ doanh nghiệp & Gửi duyệt</span>
+                  <span>{t("Hồ sơ doanh nghiệp & Gửi duyệt")}</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>

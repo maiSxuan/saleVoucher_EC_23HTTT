@@ -42,13 +42,13 @@ export function VoucherListPage() {
   }, [searchQuery, selectedStatusTab, selectedCategory]);
 
   const statusTabs = [
-    { key: "All", label: t("voucher.allStatus", "Tất cả") },
-    { key: "Nhap", label: t("voucher.draft", "Bản nháp") },
-    { key: "Cho duyet", label: t("voucher.pending", "Chờ duyệt") },
-    { key: "Dang ban", label: t("voucher.approved", "Đang bán") },
-    { key: "Tam ngung", label: t("voucher.paused", "Tạm ngưng") },
-    { key: "Ngung ban", label: t("voucher.stopped", "Ngừng bán") },
-    { key: "Tu choi", label: t("voucher.rejected", "Bị từ chối") },
+    { key: "All", label: t("Tất cả") },
+    { key: "Nhap", label: t("Bản nháp") },
+    { key: "Cho duyet", label: t("Chờ duyệt") },
+    { key: "Dang ban", label: t("Đang bán") },
+    { key: "Tam ngung", label: t("Tạm ngưng") },
+    { key: "Ngung ban", label: t("Ngừng bán") },
+    { key: "Tu choi", label: t("Bị từ chối") },
   ];
 
   const getLoggedInPartnerId = () => {
@@ -160,14 +160,14 @@ export function VoucherListPage() {
         {/* Title & Action Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{t("partner.voucherListTitle", "Quản lý Voucher")}</h1>
-            <p className="text-sm text-gray-500 mt-1">{t("partner.voucherListSubtitle", "Danh sách tất cả các chương trình ưu đãi của bạn.")}</p>
+            <h1 className="text-2xl font-bold text-gray-900">{t("Quản lý Voucher")}</h1>
+            <p className="text-sm text-gray-500 mt-1">{t("Danh sách tất cả các chương trình ưu đãi của bạn.")}</p>
           </div>
           <button
             onClick={() => navigate("/partner/vouchers/new")}
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer shadow-xs"
           >
-            <Plus size={16} /> {t("partner.createButton", "Tạo Voucher mới")}
+            <Plus size={16} /> {t("Tạo Voucher mới")}
           </button>
         </div>
 
@@ -209,7 +209,7 @@ export function VoucherListPage() {
               <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder={t("partner.searchVoucherPlaceholder", "Tìm tên Voucher...")}
+                placeholder={t("Tìm tên Voucher...")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -220,7 +220,7 @@ export function VoucherListPage() {
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700"
             >
-              <option value="All">{t("common.allCategories", "Tất cả danh mục")}</option>
+              <option value="All">{t("Tất cả danh mục")}</option>
               {categories.map((c) => {
                 const catVal = c.ma_danh_muc || c.id || c.ten_danh_muc;
                 return (
@@ -233,12 +233,12 @@ export function VoucherListPage() {
           </div>
           {(searchQuery || selectedStatusTab !== "All" || selectedCategory !== "All") && (
             <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-xs text-gray-500">
-              <span>{t("partner.filteringResults", `Đang lọc ra ${totalVouchers} kết quả`)}</span>
+              <span>{t("Đang lọc ra kết quả")}: {totalVouchers}</span>
               <button
                 onClick={handleResetFilters}
                 className="flex items-center gap-1 text-rose-600 hover:text-rose-800 font-semibold cursor-pointer"
               >
-                <X size={14} /> {t("common.clearFilters", "Xóa bộ lọc")}
+                <X size={14} /> {t("Xóa bộ lọc")}
               </button>
             </div>
           )}
@@ -247,11 +247,11 @@ export function VoucherListPage() {
         {/* Voucher Table */}
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-xs">
           {loading ? (
-            <div className="p-12 text-center text-gray-400">{t("voucher.loadingList", "Đang tải danh sách voucher...")}</div>
+            <div className="p-12 text-center text-gray-400">{t("Đang tải danh sách voucher...")}</div>
           ) : paginatedVouchers.length === 0 ? (
             <div className="flex flex-col items-center py-16 text-gray-400">
               <Tag size={40} className="mb-2 text-gray-300" />
-              <p className="text-sm">{t("voucher.noMatchFilter", "Không tìm thấy Voucher nào phù hợp với bộ lọc.")}</p>
+              <p className="text-sm">{t("Không tìm thấy Voucher nào phù hợp với bộ lọc.")}</p>
             </div>
           ) : (
             <div>
@@ -259,13 +259,13 @@ export function VoucherListPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    <th className="py-3.5 px-4">{t("partner.colVoucher", "Voucher")}</th>
-                    <th className="py-3.5 px-4">{t("voucher.reviewStatus", "Trạng thái duyệt")}</th>
-                    <th className="py-3.5 px-4">{t("voucher.publishStatus", "Trạng thái công bố")}</th>
-                    <th className="py-3.5 px-4">{t("partner.colPrice", "Giá bán")}</th>
-                    <th className="py-3.5 px-4">{t("voucher.sold", "Đã bán")}</th>
-                    <th className="py-3.5 px-4">{t("voucher.expiryDate", "Thời gian bán")}</th>
-                    <th className="py-3.5 px-4 text-right">{t("partner.colActions", "Thao tác")}</th>
+                    <th className="py-3.5 px-4">{t("Voucher")}</th>
+                    <th className="py-3.5 px-4">{t("Trạng thái duyệt")}</th>
+                    <th className="py-3.5 px-4">{t("Trạng thái công bố")}</th>
+                    <th className="py-3.5 px-4">{t("Giá bán")}</th>
+                    <th className="py-3.5 px-4">{t("Đã bán")}</th>
+                    <th className="py-3.5 px-4">{t("Thời gian bán")}</th>
+                    <th className="py-3.5 px-4 text-right">{t("Thao tác")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-sm">
@@ -336,8 +336,8 @@ export function VoucherListPage() {
 
                         {/* Column 6: Selling Time */}
                         <td className="py-4 px-4 whitespace-nowrap text-xs text-gray-600 font-mono">
-                          <div>{t("common.from", "Từ")}: {formatDate(v.tg_bat_dau_ban)}</div>
-                          <div>{t("common.to", "Đến")}: {formatDate(v.tg_ket_thuc_ban)}</div>
+                          <div>{t("Từ")}: {formatDate(v.tg_bat_dau_ban)}</div>
+                          <div>{t("Đến")}: {formatDate(v.tg_ket_thuc_ban)}</div>
                         </td>
 
                         {/* Column 7: Action */}
@@ -346,7 +346,7 @@ export function VoucherListPage() {
                             to={`/partner/vouchers/${v.ma_voucher}`}
                             className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 font-semibold hover:bg-blue-50 px-2.5 py-1 rounded-lg transition-colors"
                           >
-                            <Eye size={14} /> {t("common.detail", "Chi tiết")}
+                            <Eye size={14} /> {t("Chi tiết")}
                           </Link>
                         </td>
                       </tr>
@@ -360,7 +360,7 @@ export function VoucherListPage() {
             {totalVouchers > 0 && (
               <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50 text-sm">
                 <p className="text-xs text-gray-600">
-                  {t("common.page", "Trang")} {page} / {totalPages} ({t("partner.totalVouchersPrefix", "Tổng")} {totalVouchers} voucher)
+                  {t("Trang")} {page} / {totalPages} ({t("Tổng")} {totalVouchers} voucher)
                 </p>
                 <div className="flex gap-2">
                   <button
@@ -368,14 +368,14 @@ export function VoucherListPage() {
                     disabled={page <= 1}
                     className="px-3 py-1 bg-white border border-gray-300 rounded text-xs font-medium text-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-colors cursor-pointer"
                   >
-                    {t("common.prev", "Trước")}
+                    {t("Trước")}
                   </button>
                   <button
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page >= totalPages}
                     className="px-3 py-1 bg-white border border-gray-300 rounded text-xs font-medium text-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-colors cursor-pointer"
                   >
-                    {t("common.next", "Sau")}
+                    {t("Sau")}
                   </button>
                 </div>
               </div>
