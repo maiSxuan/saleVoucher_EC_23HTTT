@@ -12,7 +12,11 @@ function genOtp() {
 }
 
 async function uploadBase64ToSupabase(base64String, folder = "licenses") {
-  if (!base64String || typeof base64String !== "string" || !base64String.startsWith("data:")) {
+  if (
+    !base64String ||
+    typeof base64String !== "string" ||
+    !base64String.startsWith("data:")
+  ) {
     return base64String;
   }
   try {
@@ -22,7 +26,8 @@ async function uploadBase64ToSupabase(base64String, folder = "licenses") {
     const contentType = matches[1];
     const buffer = Buffer.from(matches[2], "base64");
     let ext = "png";
-    if (contentType.includes("jpeg") || contentType.includes("jpg")) ext = "jpg";
+    if (contentType.includes("jpeg") || contentType.includes("jpg"))
+      ext = "jpg";
     else if (contentType.includes("pdf")) ext = "pdf";
 
     const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
@@ -32,7 +37,10 @@ async function uploadBase64ToSupabase(base64String, folder = "licenses") {
       .upload(fileName, buffer, { contentType, upsert: true });
 
     if (error) {
-      console.warn("[PartnerService] Supabase storage upload warning:", error.message);
+      console.warn(
+        "[PartnerService] Supabase storage upload warning:",
+        error.message,
+      );
       return base64String;
     }
 
@@ -42,7 +50,10 @@ async function uploadBase64ToSupabase(base64String, folder = "licenses") {
 
     return publicUrlData.publicUrl;
   } catch (err) {
-    console.warn("[PartnerService] Failed to upload Base64 to Supabase Storage:", err.message);
+    console.warn(
+      "[PartnerService] Failed to upload Base64 to Supabase Storage:",
+      err.message,
+    );
     return base64String;
   }
 }
@@ -54,7 +65,7 @@ class PartnerService {
       partners.map(async (p) => {
         const branches = await branchRepository.findByPartnerId(p.ma_hs);
         return { ...p, branches };
-      })
+      }),
     );
     return result;
   }
@@ -90,7 +101,9 @@ class PartnerService {
     // Kiểm tra trùng lặp email/tài khoản trên hệ thống
     const isExisting = await partnerRepository.checkAccountExists(cleanEmail);
     if (isExisting) {
-      const err = new Error("Email hoặc tài khoản này đã được đăng ký trên hệ thống.");
+      const err = new Error(
+        "Email hoặc tài khoản này đã được đăng ký trên hệ thống.",
+      );
       err.status = 409;
       throw err;
     }
@@ -110,7 +123,10 @@ class PartnerService {
     try {
       await sendOtpEmail(cleanEmail, otp, "register");
     } catch (mailErr) {
-      console.warn("[PartnerService] Direct mailer send failed, OTP available in log/console:", mailErr.message);
+      console.warn(
+        "[PartnerService] Direct mailer send failed, OTP available in log/console:",
+        mailErr.message,
+      );
     }
 
     return {
@@ -129,7 +145,9 @@ class PartnerService {
     const pending = pendingPartnerRegistrations.get(cleanEmail);
 
     if (!pending) {
-      const err = new Error("Không tìm thấy yêu cầu đăng ký tài khoản hoặc đã hết hạn.");
+      const err = new Error(
+        "Không tìm thấy yêu cầu đăng ký tài khoản hoặc đã hết hạn.",
+      );
       err.status = 400;
       throw err;
     }
@@ -145,11 +163,15 @@ class PartnerService {
       pending.attempts += 1;
       if (pending.attempts >= 3) {
         pendingPartnerRegistrations.delete(cleanEmail);
-        const err = new Error("Nhập sai quá 3 lần. Vui lòng thực hiện đăng ký lại.");
+        const err = new Error(
+          "Nhập sai quá 3 lần. Vui lòng thực hiện đăng ký lại.",
+        );
         err.status = 400;
         throw err;
       }
-      const err = new Error(`Mã OTP không chính xác (${pending.attempts}/3 lần).`);
+      const err = new Error(
+        `Mã OTP không chính xác (${pending.attempts}/3 lần).`,
+      );
       err.status = 400;
       throw err;
     }
@@ -172,12 +194,19 @@ class PartnerService {
         action: "REGISTER_PARTNER_ACCOUNT",
         targetType: "TAIKHOAN",
         targetId: userAccount?.ma_tk || userAccount?.id,
-        after: { email: pending.email, ho_ten: pending.ho_ten, sdt: pending.sdt },
+        after: {
+          email: pending.email,
+          ho_ten: pending.ho_ten,
+          sdt: pending.sdt,
+        },
         result: "Thanh cong",
         reason: "Xác thực OTP tạo tài khoản đối tác thành công",
       });
     } catch (e) {
-      console.warn("[PartnerService] Log REGISTER_PARTNER_ACCOUNT failed:", e.message);
+      console.warn(
+        "[PartnerService] Log REGISTER_PARTNER_ACCOUNT failed:",
+        e.message,
+      );
     }
 
     return {
@@ -196,7 +225,9 @@ class PartnerService {
     const pending = pendingPartnerRegistrations.get(cleanEmail);
 
     if (!pending) {
-      const err = new Error("Không tìm thấy thông tin đăng ký. Vui lòng điền lại thông tin tài khoản.");
+      const err = new Error(
+        "Không tìm thấy thông tin đăng ký. Vui lòng điền lại thông tin tài khoản.",
+      );
       err.status = 400;
       throw err;
     }
@@ -225,33 +256,56 @@ class PartnerService {
   }
 
   async createPartner(payload, actorId = null) {
-    if (payload.giay_phep_kinh_doanh && payload.giay_phep_kinh_doanh.startsWith("data:")) {
-      payload.giay_phep_kinh_doanh = await uploadBase64ToSupabase(payload.giay_phep_kinh_doanh, "licenses");
+    if (
+      payload.giay_phep_kinh_doanh &&
+      payload.giay_phep_kinh_doanh.startsWith("data:")
+    ) {
+      payload.giay_phep_kinh_doanh = await uploadBase64ToSupabase(
+        payload.giay_phep_kinh_doanh,
+        "licenses",
+      );
     }
-    if (payload.logo && typeof payload.logo === "string" && payload.logo.startsWith("data:")) {
+    if (
+      payload.logo &&
+      typeof payload.logo === "string" &&
+      payload.logo.startsWith("data:")
+    ) {
       payload.logo = await uploadBase64ToSupabase(payload.logo, "logos");
     }
     const partner = await partnerRepository.create(payload);
     try {
       await auditLogService.log({
-        actorId: actorId || partner?.id_nguoi_dai_dien,
+        actorId: actorId || partner?.nguoi_dai_dien?.ma_nguoi_dung,
         actorRole: "PARTNER",
         action: "REGISTER_PARTNER_PROFILE",
         targetType: "HOSODN",
         targetId: partner?.ma_hs,
-        after: { ten_dn: payload.ten_dn, ma_so_thue: payload.ma_so_thue, trang_thai: "Cho duyet" },
+        after: {
+          ten_dn: payload.ten_dn,
+          ma_so_thue: payload.ma_so_thue,
+          trang_thai: "Cho duyet",
+        },
         result: "Thanh cong",
         reason: "Đăng ký hồ sơ doanh nghiệp ban đầu ở trạng thái Chờ duyệt",
       });
     } catch (e) {
-      console.warn("[PartnerService] Log REGISTER_PARTNER_PROFILE failed:", e.message);
+      console.warn(
+        "[PartnerService] Log REGISTER_PARTNER_PROFILE failed:",
+        e.message,
+      );
     }
     return partner;
   }
 
   async updatePartner(id, payload) {
-    if (payload.giay_phep_kinh_doanh && payload.giay_phep_kinh_doanh.startsWith("data:")) {
-      payload.giay_phep_kinh_doanh = await uploadBase64ToSupabase(payload.giay_phep_kinh_doanh, "licenses");
+    if (
+      payload.giay_phep_kinh_doanh &&
+      payload.giay_phep_kinh_doanh.startsWith("data:")
+    ) {
+      payload.giay_phep_kinh_doanh = await uploadBase64ToSupabase(
+        payload.giay_phep_kinh_doanh,
+        "licenses",
+      );
     }
     return await partnerRepository.update(id, payload);
   }
@@ -260,7 +314,11 @@ class PartnerService {
     const updated = await partnerRepository.updateStatus(id, "Dang hoat dong");
     const branches = await branchRepository.findByPartnerId(id);
     await Promise.all(
-      branches.map((b) => branchRepository.update(b.ma_chi_nhanh, { trang_thai: "Dang hoat dong" }))
+      branches.map((b) =>
+        branchRepository.update(b.ma_chi_nhanh, {
+          trang_thai: "Dang hoat dong",
+        }),
+      ),
     );
 
     // Ghi Audit Log Duyệt hồ sơ đối tác (BR-ADM-02)
@@ -268,16 +326,18 @@ class PartnerService {
       await auditLogService.log(
         {
           actorId: actorId,
-          actorRole: "ADMIN",
+          actorRole: "Admin kiem duyet",
           action: "APPROVE_PARTNER",
           targetType: "HOSODN",
           targetId: id,
           before: { trang_thai: "Cho duyet" },
           after: { trang_thai: "Dang hoat dong" },
           result: "Thanh cong",
-          reason: reason || "Admin phê duyệt hồ sơ đối tác sang trạng thái Đang hoạt động",
+          reason:
+            reason ||
+            "Admin phê duyệt hồ sơ đối tác sang trạng thái Đang hoạt động",
         },
-        true
+        true,
       );
     } catch (e) {
       console.warn("[PartnerService] Log APPROVE_PARTNER failed:", e.message);
@@ -294,7 +354,7 @@ class PartnerService {
       await auditLogService.log(
         {
           actorId: actorId,
-          actorRole: "ADMIN",
+          actorRole: "Admin kiem duyet",
           action: "REJECT_PARTNER",
           targetType: "HOSODN",
           targetId: id,
@@ -303,7 +363,7 @@ class PartnerService {
           result: "Thanh cong",
           reason: reason || "Admin từ chối duyệt hồ sơ đối tác",
         },
-        true
+        true,
       );
     } catch (e) {
       console.warn("[PartnerService] Log REJECT_PARTNER failed:", e.message);
@@ -320,18 +380,23 @@ class PartnerService {
       await auditLogService.log(
         {
           actorId: actorId,
-          actorRole: "ADMIN",
+          actorRole: "Admin kiem duyet",
           action: isLocking ? "LOCK_PARTNER" : "UNLOCK_PARTNER",
           targetType: "HOSODN",
           targetId: id,
           after: { trang_thai: status, ly_do_tu_choi: reason },
           result: "Thanh cong",
-          reason: reason || (isLocking ? "Admin tạm khóa đối tác" : "Admin mở khóa đối tác"),
+          reason:
+            reason ||
+            (isLocking ? "Admin tạm khóa đối tác" : "Admin mở khóa đối tác"),
         },
-        true
+        true,
       );
     } catch (e) {
-      console.warn("[PartnerService] Log LOCK/UNLOCK_PARTNER failed:", e.message);
+      console.warn(
+        "[PartnerService] Log LOCK/UNLOCK_PARTNER failed:",
+        e.message,
+      );
     }
 
     return updated;
@@ -343,16 +408,26 @@ class PartnerService {
   async createProfileRequest(payload, actorId = null) {
     const partnerProfileRequestRepo = require("../../data/repositories/partner-profile-request.repository");
 
-    if (payload.giay_phep_kinh_doanh_moi && payload.giay_phep_kinh_doanh_moi.startsWith("data:")) {
+    if (
+      payload.giay_phep_kinh_doanh_moi &&
+      payload.giay_phep_kinh_doanh_moi.startsWith("data:")
+    ) {
       try {
-        payload.giay_phep_kinh_doanh_moi = await uploadBase64ToSupabase(payload.giay_phep_kinh_doanh_moi, "licenses");
+        payload.giay_phep_kinh_doanh_moi = await uploadBase64ToSupabase(
+          payload.giay_phep_kinh_doanh_moi,
+          "licenses",
+        );
       } catch (e) {
         console.warn("[PartnerService] Upload license file error:", e.message);
       }
     }
 
     const rawLogoNew = payload.logo_new || payload.logo_moi || payload.logo;
-    if (rawLogoNew && typeof rawLogoNew === "string" && rawLogoNew.startsWith("data:")) {
+    if (
+      rawLogoNew &&
+      typeof rawLogoNew === "string" &&
+      rawLogoNew.startsWith("data:")
+    ) {
       try {
         payload.logo_new = await uploadBase64ToSupabase(rawLogoNew, "logos");
       } catch (e) {
@@ -389,10 +464,14 @@ class PartnerService {
           sdt_nguoi_dai_dien_moi: payload.sdt_nguoi_dai_dien_moi,
         },
         result: "Thanh cong",
-        reason: "Đối tác gửi Yêu cầu cập nhật thông tin hồ sơ doanh nghiệp đang chờ Admin duyệt",
+        reason:
+          "Đối tác gửi Yêu cầu cập nhật thông tin hồ sơ doanh nghiệp đang chờ Admin duyệt",
       });
     } catch (e) {
-      console.warn("[PartnerService] Log REQUEST_UPDATE_PARTNER_PROFILE failed:", e.message);
+      console.warn(
+        "[PartnerService] Log REQUEST_UPDATE_PARTNER_PROFILE failed:",
+        e.message,
+      );
     }
 
     return createdReq;
@@ -424,8 +503,10 @@ class PartnerService {
     if (req.ten_dn_moi) updateHosodnFields.ten_dn = req.ten_dn_moi;
     if (req.ma_so_thue_moi) updateHosodnFields.ma_so_thue = req.ma_so_thue_moi;
     if (req.dia_chi_moi) updateHosodnFields.dia_chi = req.dia_chi_moi;
-    if (req.giay_phep_kinh_doanh_moi) updateHosodnFields.giay_phep_kinh_doanh = req.giay_phep_kinh_doanh_moi;
-    if (req.logo_new || req.logo_moi || req.logo) updateHosodnFields.logo = req.logo_new || req.logo_moi || req.logo;
+    if (req.giay_phep_kinh_doanh_moi)
+      updateHosodnFields.giay_phep_kinh_doanh = req.giay_phep_kinh_doanh_moi;
+    if (req.logo_new || req.logo_moi || req.logo)
+      updateHosodnFields.logo = req.logo_new || req.logo_moi || req.logo;
 
     if (
       req.ho_ten_nguoi_dai_dien_moi ||
@@ -452,12 +533,17 @@ class PartnerService {
     }
 
     // 3. Đổi trạng thái yêu cầu thành 'Da duyet'
-    const res = await partnerProfileRequestRepo.updateStatus(reqId, "Da duyet", null, adminId);
+    const res = await partnerProfileRequestRepo.updateStatus(
+      reqId,
+      "Da duyet",
+      null,
+      adminId,
+    );
 
     // Ghi Audit Log Duyệt Yêu cầu Cập nhật Hồ sơ Doanh nghiệp
     try {
       await auditLogService.log({
-        actorRole: "ADMIN",
+        actorRole: "Admin kiem duyet",
         actorId: adminId,
         action: "APPROVE_PARTNER_PROFILE_REQUEST",
         targetType: "HOSODN",
@@ -467,7 +553,10 @@ class PartnerService {
         reason: "Admin phê duyệt Yêu cầu cập nhật hồ sơ doanh nghiệp",
       });
     } catch (e) {
-      console.warn("[PartnerService] Log APPROVE_PARTNER_PROFILE_REQUEST failed:", e.message);
+      console.warn(
+        "[PartnerService] Log APPROVE_PARTNER_PROFILE_REQUEST failed:",
+        e.message,
+      );
     }
 
     return res;
@@ -479,11 +568,16 @@ class PartnerService {
   async rejectProfileRequest(reqId, reason = "", adminId = null) {
     const partnerProfileRequestRepo = require("../../data/repositories/partner-profile-request.repository");
     const req = await partnerProfileRequestRepo.findById(reqId);
-    const res = await partnerProfileRequestRepo.updateStatus(reqId, "Tu choi", reason, adminId);
+    const res = await partnerProfileRequestRepo.updateStatus(
+      reqId,
+      "Tu choi",
+      reason,
+      adminId,
+    );
 
     try {
       await auditLogService.log({
-        actorRole: "ADMIN",
+        actorRole: "Admin kiem duyet",
         actorId: adminId,
         action: "REJECT_PARTNER_PROFILE_REQUEST",
         targetType: "HOSODN",
@@ -493,7 +587,10 @@ class PartnerService {
         reason: reason || "Admin từ chối Yêu cầu cập nhật hồ sơ doanh nghiệp",
       });
     } catch (e) {
-      console.warn("[PartnerService] Log REJECT_PARTNER_PROFILE_REQUEST failed:", e.message);
+      console.warn(
+        "[PartnerService] Log REJECT_PARTNER_PROFILE_REQUEST failed:",
+        e.message,
+      );
     }
 
     return res;
@@ -516,7 +613,11 @@ class PartnerService {
       throw err;
     }
 
-    return await partnerRepository.changePassword(partnerId, oldPassword, newPassword);
+    return await partnerRepository.changePassword(
+      partnerId,
+      oldPassword,
+      newPassword,
+    );
   }
 }
 

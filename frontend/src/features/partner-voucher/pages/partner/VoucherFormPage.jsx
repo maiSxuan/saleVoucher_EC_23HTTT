@@ -313,7 +313,7 @@ export function VoucherFormPage() {
                 placeholder={t("Ví dụ: Voucher Thưởng Thức Buffet Lẩu Nướng Hải Sản Cao Cấp")}
                 value={formData.ten_voucher}
                 onChange={(e) => setFormData({ ...formData, ten_voucher: e.target.value })}
-                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-400 focus:outline-none"
               />
               {errors.ten_voucher && <p className="text-xs text-rose-600 mt-1">{t(errors.ten_voucher)}</p>}
             </div>
@@ -326,7 +326,7 @@ export function VoucherFormPage() {
                 <select
                   value={formData.ma_danh_muc}
                   onChange={(e) => setFormData({ ...formData, ma_danh_muc: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-400 focus:outline-none bg-white"
                 >
                   {categoriesList.map((c) => {
                     const cateId = c.ma_danh_muc || c.id;
@@ -345,7 +345,7 @@ export function VoucherFormPage() {
                   type="text"
                   value={formData.hinh_anh_url}
                   onChange={(e) => setFormData({ ...formData, hinh_anh_url: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-400 focus:outline-none"
                 />
               </div>
             </div>
@@ -357,7 +357,7 @@ export function VoucherFormPage() {
                 placeholder={t("Mô tả trải nghiệm, các món ăn hoặc dịch vụ được hưởng...")}
                 value={formData.mo_ta}
                 onChange={(e) => setFormData({ ...formData, mo_ta: e.target.value })}
-                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-400 focus:outline-none"
               ></textarea>
             </div>
           </div>
@@ -377,7 +377,7 @@ export function VoucherFormPage() {
                   placeholder="890000"
                   value={formData.gia_goc}
                   onChange={(e) => setFormData({ ...formData, gia_goc: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-400 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500"
                 />
                 {errors.gia_goc && <p className="text-xs text-rose-600 mt-1">{t(errors.gia_goc)}</p>}
               </div>
@@ -392,7 +392,7 @@ export function VoucherFormPage() {
                   placeholder="599000"
                   value={formData.gia_ban}
                   onChange={(e) => setFormData({ ...formData, gia_ban: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-400 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500"
                 />
                 {errors.gia_ban && <p className="text-xs text-rose-600 mt-1">{t(errors.gia_ban)}</p>}
               </div>
@@ -406,7 +406,7 @@ export function VoucherFormPage() {
                   placeholder="500"
                   value={formData.so_luong_phat_hanh}
                   onChange={(e) => setFormData({ ...formData, so_luong_phat_hanh: e.target.value })}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-400 focus:outline-none"
                 />
                 {isTamNgung && initialQuantity > 0 && (
                   <p className="text-[11px] text-amber-700 mt-1 font-medium">
@@ -439,7 +439,7 @@ export function VoucherFormPage() {
                     setFormData({ ...formData, tg_bat_dau_ban: e.target.value });
                     if (errors.tg_bat_dau_ban) setErrors((prev) => ({ ...prev, tg_bat_dau_ban: "" }));
                   }}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-400 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500"
                 />
                 {errors.tg_bat_dau_ban && <p className="text-xs text-rose-600 mt-1 font-medium">{t(errors.tg_bat_dau_ban)}</p>}
               </div>
@@ -456,7 +456,7 @@ export function VoucherFormPage() {
                     setFormData({ ...formData, tg_ket_thuc_ban: e.target.value });
                     if (errors.tg_ket_thuc_ban) setErrors((prev) => ({ ...prev, tg_ket_thuc_ban: "" }));
                   }}
-                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500"
+                  className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-400 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500"
                 />
                 {errors.tg_ket_thuc_ban && <p className="text-xs text-rose-600 mt-1 font-medium">{t(errors.tg_ket_thuc_ban)}</p>}
               </div>
@@ -470,7 +470,7 @@ export function VoucherFormPage() {
             {activeBranches.length > 0 && (
               <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
                 <label
-                  className={`flex items-center gap-2 text-xs font-bold text-slate-800 ${isTamNgung ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:text-blue-600"
+                  className={`flex items-center gap-2 text-xs font-bold text-slate-800 ${isTamNgung ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:text-sky-700"
                     }`}
                 >
                   <input
@@ -478,12 +478,12 @@ export function VoucherFormPage() {
                     disabled={isTamNgung}
                     checked={isAllBranchesSelected}
                     onChange={handleSelectAllBranches}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                    className="w-4 h-4 text-sky-600 rounded focus:ring-sky-500"
                   />
                   <span>✓ {t("Chọn tất cả chi nhánh")} ({activeBranches.length})</span>
                 </label>
                 <span className="text-xs text-slate-500 font-medium">
-                  {t("Đã chọn:")} <strong className="text-blue-600 font-bold">{formData.ma_chi_nhanh.length}</strong> / {activeBranches.length} {t("chi nhánh")}
+                  {t("Đã chọn:")} <strong className="text-sky-700 font-bold">{formData.ma_chi_nhanh.length}</strong> / {activeBranches.length} {t("chi nhánh")}
                 </span>
               </div>
             )}
@@ -496,7 +496,7 @@ export function VoucherFormPage() {
               activeBranches.map((branch) => (
                 <label
                   key={branch.ma_chi_nhanh}
-                  className={`flex items-center gap-3 p-3 rounded-lg border border-slate-200 transition-colors ${isTamNgung ? "bg-slate-50 opacity-60 cursor-not-allowed" : "hover:bg-slate-50 cursor-pointer"
+                  className={`flex items-center gap-3 p-3 rounded-lg border border-slate-200 transition-colors ${isTamNgung ? "bg-slate-50 opacity-60 cursor-not-allowed" : "hover:bg-sky-50 cursor-pointer"
                     }`}
                 >
                   <input
@@ -504,7 +504,7 @@ export function VoucherFormPage() {
                     disabled={isTamNgung}
                     checked={formData.ma_chi_nhanh.includes(branch.ma_chi_nhanh)}
                     onChange={() => handleBranchToggle(branch.ma_chi_nhanh)}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                    className="w-4 h-4 text-sky-600 rounded focus:ring-sky-500"
                   />
                   <div>
                     <div className="text-sm font-bold text-slate-900">{branch.ten_chi_nhanh}</div>
@@ -530,7 +530,7 @@ export function VoucherFormPage() {
                 rows="2"
                 value={formData.dieu_kien_ap_dung}
                 onChange={(e) => setFormData({ ...formData, dieu_kien_ap_dung: e.target.value })}
-                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-400 focus:outline-none"
               ></textarea>
             </div>
 
@@ -540,7 +540,7 @@ export function VoucherFormPage() {
                 rows="2"
                 value={formData.chinh_sach_hoan_huy}
                 onChange={(e) => setFormData({ ...formData, chinh_sach_hoan_huy: e.target.value })}
-                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-400 focus:outline-none"
               ></textarea>
             </div>
           </div>

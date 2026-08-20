@@ -32,7 +32,7 @@ export default function ArticleDetailPage() {
     <div className="max-w-4xl mx-auto py-6 px-4">
       <button
         onClick={() => navigate(-1)}
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-orange-600 mb-6 transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-sky-600 mb-6 transition-colors"
       >
         <ArrowLeft size={16} /> Quay lại
       </button>

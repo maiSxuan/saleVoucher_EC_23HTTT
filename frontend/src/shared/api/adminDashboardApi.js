@@ -14,17 +14,9 @@ function authHeaders() {
 }
 
 /**
- * Lấy toàn bộ chỉ số tổng quan dashboard admin.
- * @returns {Promise<{
- *   totalUsers: number|null,
- *   activePartners: number|null,
- *   pendingPartners: number|null,
- *   activeVouchers: number|null,
- *   pendingVouchers: number|null,
- *   pendingOrders: number|null,
- *   totalRevenue: number|null,
- *   generatedAt: string
- * }>}
+ * Lấy chỉ số tổng quan thuộc phạm vi của role admin đang đăng nhập.
+ * Backend giữ nguyên nguồn dữ liệu dashboard và chỉ trả các trường role đó sở hữu.
+ * @returns {Promise<object>}
  */
 export async function fetchDashboardSummary() {
   const res = await fetch(`${BASE_URL}/dashboard`, {

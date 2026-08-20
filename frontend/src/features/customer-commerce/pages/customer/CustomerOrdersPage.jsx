@@ -197,7 +197,7 @@ function ComplaintProgress({ complaint }) {
               className="h-11 w-11 shrink-0 rounded-lg border border-gray-200 object-cover"
             />
           ) : (
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-orange-100 text-sm font-bold text-orange-600">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sm font-bold text-sky-600">
               V
             </div>
           )}
@@ -486,7 +486,7 @@ export default function CustomerOrdersPage() {
     if (loadingDetail) {
       return (
         <div className="flex justify-center items-center py-24">
-          <Loader2 className="animate-spin text-orange-500" size={32} />
+          <Loader2 className="animate-spin text-sky-500" size={32} />
         </div>
       );
     }
@@ -533,7 +533,7 @@ export default function CustomerOrdersPage() {
                   className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
                 />
               ) : (
-                <div className="w-12 h-12 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center font-bold">
+                <div className="w-12 h-12 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center font-bold">
                   V
                 </div>
               )}
@@ -552,7 +552,7 @@ export default function CustomerOrdersPage() {
           ))}
           <div className="border-t border-gray-100 pt-3 flex justify-between font-bold text-base">
             <span>{t("Tổng cộng")}</span>
-            <span className="text-orange-600">
+            <span className="text-sky-600">
               {order.total.toLocaleString("vi-VN")}đ
             </span>
           </div>
@@ -561,13 +561,13 @@ export default function CustomerOrdersPage() {
           <div className="flex items-center justify-end gap-3">
             <button
               onClick={handleCancleOrderNoRefund}
-              className="flex items-center justify-center gap-2 border border-orange-500 bg-orange-50 text-orange-600 hover:bg-orange-100 active:bg-orange-200 py-2.5 px-3 rounded-xl font-semibold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center gap-2 border border-sky-500 bg-sky-50 text-sky-600 hover:bg-sky-100 active:bg-sky-200 py-2.5 px-3 rounded-xl font-semibold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {t("Huỷ đơn hàng")}
             </button>
             <button
               onClick={handleRepayOrder}
-              className="flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white py-2.5 px-3 rounded-xl font-bold text-sm shadow-md hover:shadow-lg active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="flex items-center justify-center gap-2 bg-[#1E9EDB] hover:bg-[#1887BC] text-white py-2.5 px-3 rounded-xl font-bold text-sm shadow-md hover:shadow-lg active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               {t("Thanh toán lại")}
             </button>
@@ -614,7 +614,7 @@ export default function CustomerOrdersPage() {
                             navigator.clipboard.writeText(codeObj.code);
                             toast.success(t("Đã sao chép mã voucher!"));
                           }}
-                          className="text-xs text-orange-600 hover:text-orange-700 flex items-center gap-1 font-medium"
+                          className="text-xs text-sky-600 hover:text-sky-700 flex items-center gap-1 font-medium"
                         >
                           <Copy size={13} /> {t("Sao chép")}
                         </button>
@@ -678,13 +678,13 @@ export default function CustomerOrdersPage() {
               {/* Request Phase */}
               {order.cancelRequests?.map(cr => (
                 <div key={cr.id} className="relative pl-5">
-                  <div className="absolute w-3 h-3 bg-orange-500 rounded-full -left-[7px] top-1.5 border-2 border-white ring-4 ring-orange-50" />
+                  <div className="absolute w-3 h-3 bg-sky-500 rounded-full -left-[7px] top-1.5 border-2 border-white ring-4 ring-sky-50" />
                   <div className="flex justify-between items-start mb-1">
                     <p className="text-sm font-semibold text-gray-800">{t("Khách hàng yêu cầu hủy đơn")}</p>
                     <span className="text-xs text-gray-500">{new Date(cr.requestedAt).toLocaleString('vi-VN')}</span>
                   </div>
-                  <p className="text-xs text-gray-600 mb-1">{t("Lý do:")} {t(cr.reason)}</p>
-                  <p className="text-xs font-medium text-orange-600">{t("Trạng thái:")} {t(cr.status)}</p>
+                  <p className="text-xs text-gray-600 mb-1">Lý do: {cr.reason}</p>
+                  <p className="text-xs font-medium text-sky-600">{t("Trạng thái:")} {t(cr.status)}</p>
                   {cr.status === 'Da tu choi' && cr.rejectReason && (
                     <div className="mt-2 p-2.5 bg-red-50 border border-red-100 rounded-lg">
                       <p className="text-xs text-red-700 font-semibold">{t("Admin từ chối")}</p>
@@ -781,7 +781,7 @@ export default function CustomerOrdersPage() {
                   setSelectedVoucherMuaId(firstId);
                   setShowReviewModal(true);
                 }}
-                className="flex-1 flex items-center justify-center gap-2 border border-orange-300 text-orange-600 py-2.5 rounded-xl text-sm font-medium hover:bg-orange-50 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 border border-sky-300 text-sky-600 py-2.5 rounded-xl text-sm font-medium hover:bg-sky-50 transition-colors"
               >
                 <Star size={15} /> {t("Viết đánh giá")}
               </button>
@@ -834,11 +834,11 @@ export default function CustomerOrdersPage() {
                   const selectedItem = selectedCode ? order.items.find(i => i.voucherId === selectedCode.voucherId) : null;
                   if (!selectedCode || !selectedItem) return null;
                   return (
-                    <div className="mt-2 p-2 bg-orange-50/50 border border-orange-100 rounded-lg flex items-center gap-2.5">
+                    <div className="mt-2 p-2 bg-sky-50/50 border border-sky-100 rounded-lg flex items-center gap-2.5">
                       {selectedItem.image ? (
                         <img src={selectedItem.image} className="w-9 h-9 rounded-md object-cover flex-shrink-0" />
                       ) : (
-                        <div className="w-9 h-9 rounded-md bg-orange-100 text-orange-500 flex items-center justify-center text-xs font-bold">V</div>
+                        <div className="w-9 h-9 rounded-md bg-sky-100 text-sky-500 flex items-center justify-center text-xs font-bold">V</div>
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold text-gray-800 truncate">{selectedItem.voucherName}</p>
@@ -879,7 +879,7 @@ export default function CustomerOrdersPage() {
                 onChange={(e) => setReviewText(e.target.value)}
                 disabled={order.codes.find(c => (c.id || c.voucherMuaId) === selectedVoucherMuaId)?.hasReviewed}
                 placeholder={t("Nhận xét chi tiết về trải nghiệm sử dụng...")}
-                className={`w-full border border-gray-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-300 mb-4 ${
+                className={`w-full border border-gray-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4 ${
                   order.codes.find(c => (c.id || c.voucherMuaId) === selectedVoucherMuaId)?.hasReviewed ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''
                 }`}
               />
@@ -896,7 +896,7 @@ export default function CustomerOrdersPage() {
                   className={`flex-1 py-2 rounded-lg text-sm font-semibold text-white ${
                     order.codes.find(c => (c.id || c.voucherMuaId) === selectedVoucherMuaId)?.hasReviewed 
                     ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-orange-500 hover:bg-orange-600'
+                    : 'bg-sky-500 hover:bg-sky-600'
                   }`}
                 >
                   {t("Gửi đánh giá")}
@@ -928,7 +928,7 @@ export default function CustomerOrdersPage() {
                   id="complaint-voucher"
                   value={selectedVoucherMuaId}
                   onChange={e => setSelectedVoucherMuaId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
+                  className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300"
                 >
                   {order.codes.map(c => {
                     const vid = c.id || c.voucherMuaId;
@@ -944,11 +944,11 @@ export default function CustomerOrdersPage() {
                   const selectedItem = selectedCode ? order.items.find(i => i.voucherId === selectedCode.voucherId) : null;
                   if (!selectedCode || !selectedItem) return null;
                   return (
-                    <div className="mt-2 p-2 bg-orange-50/50 border border-orange-100 rounded-lg flex items-center gap-2.5">
+                    <div className="mt-2 p-2 bg-sky-50/50 border border-sky-100 rounded-lg flex items-center gap-2.5">
                       {selectedItem.image ? (
                         <img src={selectedItem.image} className="w-9 h-9 rounded-md object-cover flex-shrink-0" />
                       ) : (
-                        <div className="w-9 h-9 rounded-md bg-orange-100 text-orange-500 flex items-center justify-center text-xs font-bold">V</div>
+                        <div className="w-9 h-9 rounded-md bg-sky-100 text-sky-500 flex items-center justify-center text-xs font-bold">V</div>
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold text-gray-800 truncate">{selectedItem.voucherName}</p>
@@ -973,10 +973,10 @@ export default function CustomerOrdersPage() {
                         type="button"
                         aria-pressed={selected}
                         onClick={() => setSelectedComplaintReason(selected ? "" : option.id)}
-                        className={`rounded-full border px-3 py-2 text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-orange-300 ${
+                        className={`rounded-full border px-3 py-2 text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-sky-300 ${
                           selected
-                            ? "border-orange-500 bg-orange-50 text-orange-700 shadow-sm"
-                            : "border-gray-200 bg-white text-gray-600 hover:border-orange-300 hover:bg-orange-50/50"
+                            ? "border-sky-500 bg-sky-50 text-sky-700 shadow-sm"
+                            : "border-gray-200 bg-white text-gray-600 hover:border-sky-300 hover:bg-sky-50/50"
                         }`}
                       >
                         {selected ? "✓ " : ""}{t(option.label)}
@@ -1011,7 +1011,7 @@ export default function CustomerOrdersPage() {
                 value={feedbackText}
                 onChange={(e) => setFeedbackText(e.target.value)}
                 placeholder={t("Không có tag phù hợp? Hãy mô tả vấn đề. Bạn cũng có thể bổ sung thời gian, chi nhánh hoặc thông tin liên quan cho tag đã chọn...")}
-                className="w-full border border-gray-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-300"
+                className="w-full border border-gray-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-sky-300"
               />
               <div className="mt-1 text-right text-[11px] text-gray-400">{feedbackText.length}/1000</div>
 
@@ -1035,7 +1035,7 @@ export default function CustomerOrdersPage() {
                   className={`flex-1 py-2 rounded-lg text-sm font-semibold text-white ${
                     submittingComplaint || (!selectedComplaintReason && !feedbackText.trim()) || order.codes.find(c => (c.id || c.voucherMuaId) === selectedVoucherMuaId)?.hasComplained
                     ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-orange-500 hover:bg-orange-600'
+                    : 'bg-sky-500 hover:bg-sky-600'
                   }`}
                 >
                   {submittingComplaint ? <span className="inline-flex items-center gap-2"><Loader2 size={15} className="animate-spin" /> {t("Đang gửi...")}</span> : t("Gửi khiếu nại")}
@@ -1070,10 +1070,10 @@ export default function CustomerOrdersPage() {
                         type="button"
                         aria-pressed={selected}
                         onClick={() => setSelectedCancelReason(selected ? "" : option.id)}
-                        className={`rounded-full border px-3 py-2 text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-orange-300 ${
+                        className={`rounded-full border px-3 py-2 text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-sky-300 ${
                           selected
-                            ? "border-orange-500 bg-orange-50 text-orange-700 shadow-sm"
-                            : "border-gray-200 bg-white text-gray-600 hover:border-orange-300 hover:bg-orange-50/50"
+                            ? "border-sky-500 bg-sky-50 text-sky-700 shadow-sm"
+                            : "border-gray-200 bg-white text-gray-600 hover:border-sky-300 hover:bg-sky-50/50"
                         }`}
                       >
                         {selected ? "✓ " : ""}{t(option.label)}
@@ -1100,7 +1100,7 @@ export default function CustomerOrdersPage() {
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
                 placeholder={t("Không có tag phù hợp? Hãy nhập lý do của bạn. Bạn cũng có thể bổ sung chi tiết cho tag đã chọn...")}
-                className="w-full border border-gray-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-300"
+                className="w-full border border-gray-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-sky-300"
               />
               <div className="mt-1 text-right text-[11px] text-gray-400">{cancelReason.length}/1000</div>
 
@@ -1132,7 +1132,7 @@ export default function CustomerOrdersPage() {
     <div className="max-w-5xl mx-auto p-4 sm:p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <Package className="text-orange-500" size={24} /> {t("Đơn hàng của tôi")}
+          <Package className="text-sky-500" size={24} /> {t("Đơn hàng của tôi")}
         </h1>
         <p className="text-sm text-gray-500 mt-1">
           {t("Quản lý và tra cứu trạng thái đơn hàng cùng mã voucher đã mua.")}
@@ -1153,7 +1153,7 @@ export default function CustomerOrdersPage() {
           <button
             key={f.key}
             onClick={() => setFilterStatus(f.key)}
-            className={`whitespace-nowrap px-4 py-2 rounded-full text-xs font-semibold transition-all shadow-xs ${filterStatus === f.key ? "bg-orange-500 text-white shadow-sm" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"}`}
+            className={`whitespace-nowrap px-4 py-2 rounded-full text-xs font-semibold transition-all shadow-xs ${filterStatus === f.key ? "bg-sky-500 text-white shadow-sm" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"}`}
           >
             {f.label}
           </button>
@@ -1162,7 +1162,7 @@ export default function CustomerOrdersPage() {
 
       {loading ? (
         <div className="flex justify-center items-center py-24">
-          <Loader2 className="animate-spin text-orange-500" size={32} />
+          <Loader2 className="animate-spin text-sky-500" size={32} />
         </div>
       ) : orders.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-gray-400 bg-white rounded-2xl border border-gray-100">
@@ -1180,7 +1180,7 @@ export default function CustomerOrdersPage() {
             <div
               key={order.id}
               onClick={() => handleSelectOrder(order.id)}
-              className="bg-white border border-gray-200 rounded-xl p-4 sm:p-5 text-left hover:border-orange-300 hover:shadow-md transition-all cursor-pointer"
+              className="bg-white border border-gray-200 rounded-xl p-4 sm:p-5 text-left hover:border-sky-300 hover:shadow-md transition-all cursor-pointer"
             >
               <div className="flex items-start justify-between gap-2 mb-3">
                 <div>
@@ -1208,7 +1208,7 @@ export default function CustomerOrdersPage() {
                   {t("mã voucher")}
                 </div>
                 <div className="flex items-center gap-2">
-                  <p className="text-base font-bold text-orange-600">
+                  <p className="text-base font-bold text-sky-600">
                     {order.total.toLocaleString("vi-VN")}đ
                   </p>
                   <ChevronRight size={16} className="text-gray-400" />

@@ -165,7 +165,7 @@ export function VoucherListPage() {
           </div>
           <button
             onClick={() => navigate("/partner/vouchers/new")}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer shadow-xs"
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors cursor-pointer shadow-soft"
           >
             <Plus size={16} /> {t("Tạo Voucher mới")}
           </button>
@@ -185,14 +185,14 @@ export function VoucherListPage() {
                 onClick={() => setSelectedStatusTab(tab.key)}
                 className={`flex items-center gap-1.5 px-3 py-2 text-sm font-semibold border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
                   isActive
-                    ? "border-blue-600 text-blue-600"
+                    ? "border-sky-600 text-sky-700"
                     : "border-transparent text-gray-500 hover:text-gray-800"
                 }`}
               >
                 {tab.label}
                 <span
                   className={`text-xs px-2 py-0.5 rounded-full font-bold ${
-                    isActive ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-600"
+                    isActive ? "bg-sky-100 text-sky-800" : "bg-gray-100 text-gray-600"
                   }`}
                 >
                   {count}
@@ -212,13 +212,13 @@ export function VoucherListPage() {
                 placeholder={t("Tìm tên Voucher...")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-400"
               />
             </div>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700"
+              className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-400 bg-white text-gray-700"
             >
               <option value="All">{t("Tất cả danh mục")}</option>
               {categories.map((c) => {
@@ -283,7 +283,7 @@ export function VoucherListPage() {
                             <div>
                               <Link
                                 to={`/partner/vouchers/${v.ma_voucher}`}
-                                className="font-bold text-gray-900 hover:text-blue-600 line-clamp-1"
+                                className="font-bold text-gray-900 hover:text-sky-600 line-clamp-1"
                               >
                                 {typeof v.ten_voucher === 'object' && v.ten_voucher !== null ? (v.ten_voucher.name || v.ten_voucher.ten_voucher || "Voucher") : v.ten_voucher}
                               </Link>
@@ -323,7 +323,7 @@ export function VoucherListPage() {
                           </div>
                           <div className="w-24 bg-gray-100 rounded-full h-1.5 mt-1 overflow-hidden">
                             <div
-                              className="bg-blue-600 h-1.5 rounded-full"
+                              className="bg-sky-600 h-1.5 rounded-full"
                               style={{
                                 width: `${Math.min(
                                   100,
@@ -344,7 +344,7 @@ export function VoucherListPage() {
                         <td className="py-4 px-4 text-right whitespace-nowrap">
                           <Link
                             to={`/partner/vouchers/${v.ma_voucher}`}
-                            className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 font-semibold hover:bg-blue-50 px-2.5 py-1 rounded-lg transition-colors"
+                            className="inline-flex items-center gap-1 text-sm text-sky-600 hover:text-sky-800 font-semibold hover:bg-sky-50 px-2.5 py-1 rounded-lg transition-colors"
                           >
                             <Eye size={14} /> {t("Chi tiết")}
                           </Link>

@@ -140,7 +140,7 @@ function ActionCard({ item, tone, label, children }) {
 function StatusBadge({ label, variant = 'gray', dot = false }) {
   const colors = {
     green: 'bg-green-50 text-green-700 border-green-200',
-    blue: 'bg-blue-50 text-blue-700 border-blue-200',
+    blue: 'bg-sky-50 text-sky-700 border-sky-200',
     amber: 'bg-amber-50 text-amber-700 border-amber-200',
     red: 'bg-red-50 text-red-700 border-red-200',
     gray: 'bg-gray-50 text-gray-700 border-gray-200',
@@ -148,7 +148,7 @@ function StatusBadge({ label, variant = 'gray', dot = false }) {
   };
   const dotColors = {
     green: 'bg-green-500',
-    blue: 'bg-blue-500',
+    blue: 'bg-sky-500',
     amber: 'bg-amber-500',
     red: 'bg-red-500',
     gray: 'bg-gray-400',
@@ -588,7 +588,7 @@ export default function AdminOrdersPage() {
             </div>
             <div className="flex flex-wrap gap-2">
               {canReissue && (
-                <button onClick={() => { setActiveVoucherMuaId(errorCode.id); setReissueModal(true); }} className="flex items-center gap-1.5 px-3 py-2 text-sm bg-amber-500 text-white rounded-lg hover:bg-amber-600 font-medium shadow-xs">
+                <button onClick={() => { setActiveVoucherMuaId(errorCode.id); setReissueModal(true); }} className="flex items-center gap-1.5 px-3 py-2 text-sm bg-sky-500 text-white rounded-lg hover:bg-sky-600 font-medium shadow-xs">
                   Cấp lại mã mới
                 </button>
               )}
@@ -957,7 +957,7 @@ export default function AdminOrdersPage() {
                                     title: 'Cấp voucher code mới',
                                     description: 'Mã cũ sẽ bị vô hiệu hóa và hệ thống cấp một voucher code mới cho khách hàng. Thao tác này không thể hoàn tác.',
                                     confirmLabel: 'Xác nhận cấp mã mới',
-                                    confirmClass: 'bg-amber-500 hover:bg-amber-600',
+                                    confirmClass: 'bg-sky-500 hover:bg-sky-600',
                                   })}
                                   className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
                                 >
@@ -969,7 +969,7 @@ export default function AdminOrdersPage() {
                                 <button
                                   disabled={isProcessing}
                                   onClick={() => { setComplaintReasonInput(''); setActiveComplaintId(complaint.id); setComplaintRefundModal(true); }}
-                                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
+                                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-sky-500 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-600 disabled:opacity-50"
                                 >
                                   <RefreshCw size={13} /> Chấp nhận & hoàn tiền
                                 </button>
@@ -1093,7 +1093,7 @@ export default function AdminOrdersPage() {
               <p className="text-sm text-gray-600">Hệ thống sẽ vô hiệu hóa mã cũ bị lỗi và sinh mã QR mới liên kết với đơn hàng.</p>
               <div className="flex justify-end gap-2 pt-2">
                 <button disabled={Boolean(actionLoading)} onClick={() => { setReissueModal(false); setActiveVoucherMuaId(null); }} className="px-4 py-2 border rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50">Hủy</button>
-                <button disabled={Boolean(actionLoading)} onClick={handleReissueCode} className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-semibold hover:bg-amber-600 disabled:opacity-50">
+                <button disabled={Boolean(actionLoading)} onClick={handleReissueCode} className="px-4 py-2 bg-sky-500 text-white rounded-lg text-sm font-semibold hover:bg-sky-600 disabled:opacity-50">
                   {actionLoading === 'reissue-code' ? 'Đang cấp lại...' : 'Xác nhận cấp lại'}
                 </button>
               </div>
@@ -1182,7 +1182,7 @@ export default function AdminOrdersPage() {
                 <button
                   disabled={Boolean(actionLoading)}
                   onClick={handleApproveComplaintRefund}
-                  className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
+                  className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-600 disabled:opacity-50"
                 >
                   {actionLoading === `refund-complaint-${activeComplaintId}` ? 'Đang chuyển...' : 'Xác nhận chuyển hoàn tiền'}
                 </button>
@@ -1341,7 +1341,7 @@ export default function AdminOrdersPage() {
                       {codeErrorQueue.map((item) => (
                         <ActionCard key={item.id} item={item} tone="amber" label="Lỗi sinh mã">
                           <button onClick={() => loadDetail(item.orderId, 'codes')} className="inline-flex items-center justify-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50"><ExternalLink size={13} /> Xem đơn</button>
-                          <button onClick={() => openReissueAction(item)} className="inline-flex items-center justify-center gap-1 rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-600"><RotateCcw size={13} /> Cấp lại mã</button>
+                          <button onClick={() => openReissueAction(item)} className="inline-flex items-center justify-center gap-1 rounded-lg bg-sky-500 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-600"><RotateCcw size={13} /> Cấp lại mã</button>
                         </ActionCard>
                       ))}
                     </div>

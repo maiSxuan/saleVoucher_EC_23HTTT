@@ -4,23 +4,24 @@
  * allowedRoles: danh sách JWT_ROLES được phép truy cập route.
  *
  * Ví dụ dùng trong route:
- *   router.get('/admin/logs', authenticate, authorize('ADMIN'), auditLogController.list)
+ *   router.get('/admin/logs', authenticate, authorize('Admin he thong'), auditLogController.list)
  */
-const UnauthorizedError = require('../errors/UnauthorizedError');
-const ForbiddenError = require('../errors/ForbiddenError');
+const UnauthorizedError = require("../errors/UnauthorizedError");
+const ForbiddenError = require("../errors/ForbiddenError");
+const { JWT_ROLES } = require("../constants/roles");
 
 function authorizeMiddleware(...allowedRoles) {
   return (req, res, next) => {
     if (!req.user) {
-      return next(new UnauthorizedError('Vui lòng đăng nhập để tiếp tục.'));
+      return next(new UnauthorizedError("Vui lòng đăng nhập để tiếp tục."));
     }
 
     if (allowedRoles.length > 0 && !allowedRoles.includes(req.user.role)) {
       return next(
         new ForbiddenError(
           `Role '${req.user.role}' không có quyền truy cập tài nguyên này.`,
-          { requiredRoles: allowedRoles }
-        )
+          { requiredRoles: allowedRoles },
+        ),
       );
     }
 

@@ -28,17 +28,18 @@ import {
   principles,
   refundPolicy,
 } from "./policyContent";
+import { ADMIN_PORTAL_ROLES } from "../../../../shared/constants/admin-roles";
 
 const sectionThemes = {
   cyan: {
-    icon: "bg-cyan-50 text-cyan-700 ring-cyan-100",
-    eyebrow: "text-cyan-700",
-    border: "border-cyan-100",
+    icon: "bg-sky-50 text-sky-700 ring-sky-100",
+    eyebrow: "text-sky-700",
+    border: "border-sky-100",
   },
   blue: {
-    icon: "bg-blue-50 text-blue-700 ring-blue-100",
-    eyebrow: "text-blue-700",
-    border: "border-blue-100",
+    icon: "bg-sky-50 text-sky-700 ring-sky-100",
+    eyebrow: "text-sky-700",
+    border: "border-sky-100",
   },
   amber: {
     icon: "bg-amber-50 text-amber-700 ring-amber-100",
@@ -57,6 +58,27 @@ const sectionThemes = {
   },
 };
 
+function getAccountAction() {
+  const token = localStorage.getItem("accessToken") || localStorage.getItem("ec_auth_token");
+  if (!token) return { to: "/login", label: "Đăng nhập", Icon: LogIn };
+
+  let user = null;
+  try {
+    user = JSON.parse(localStorage.getItem("user") || localStorage.getItem("ec_auth_user") || "null");
+  } catch {
+    user = null;
+  }
+
+  const role = user?.role || localStorage.getItem("role") || "";
+  const to = ADMIN_PORTAL_ROLES.includes(role)
+    ? "/admin"
+    : role.includes("PARTNER") || role.includes("DOI_TAC")
+      ? "/partner"
+      : "/customer";
+
+  return { to, label: "Tài khoản", Icon: User };
+}
+
 function BulletList({ items = [], nested = false }) {
   const { t } = useTranslation();
   if (!items.length) return null;
@@ -67,7 +89,7 @@ function BulletList({ items = [], nested = false }) {
         const entry = typeof item === "string" ? { text: item } : item;
         return (
           <li key={`${entry.text}-${index}`} className="flex items-start gap-2.5 text-sm leading-6 text-slate-600">
-            <CheckCircle2 className={`${nested ? "mt-1.5 h-3.5 w-3.5" : "mt-1 h-4 w-4"} shrink-0 text-cyan-600`} />
+            <CheckCircle2 className={`${nested ? "mt-1.5 h-3.5 w-3.5" : "mt-1 h-4 w-4"} shrink-0 text-sky-600`} />
             <div>
               <span>{t(entry.text)}</span>
               {entry.children ? <BulletList items={entry.children} nested /> : null}
@@ -113,7 +135,7 @@ function PolicyBlock({ block }) {
       {block.items ? <BulletList items={block.items} /> : null}
       {block.cases ? <CaseCards cases={block.cases} /> : null}
       {block.note ? (
-        <div className={`mt-4 flex items-start gap-2.5 rounded-xl px-4 py-3 text-sm leading-6 ${warning ? "bg-white/80 text-amber-900" : "bg-cyan-50 text-cyan-900"}`}>
+        <div className={`mt-4 flex items-start gap-2.5 rounded-xl px-4 py-3 text-sm leading-6 ${warning ? "bg-white/80 text-amber-900" : "bg-sky-50 text-sky-900"}`}>
           <Info className="mt-1 h-4 w-4 shrink-0" />
           <p>{t(block.note)}</p>
         </div>
@@ -147,37 +169,26 @@ function PolicySection({ id, eyebrow, title, summary, icon: Icon, theme = "cyan"
 
 export default function PolicyPage() {
   const { t } = useTranslation();
-  const token = localStorage.getItem("accessToken") || localStorage.getItem("ec_auth_token");
-  let user = null;
-  try {
-    user = JSON.parse(localStorage.getItem("user") || localStorage.getItem("ec_auth_user") || "null");
-  } catch {
-    user = null;
-  }
-  const role = String(user?.role || user?.vai_tro || localStorage.getItem("role") || "").toUpperCase();
-  const accountTo = role.includes("ADMIN")
-    ? "/admin"
-    : role.includes("PARTNER") || role.includes("DOI_TAC")
-      ? "/partner"
-      : "/customer";
-  const accountLabel = token ? t("Tài khoản") : t("Đăng nhập");
-  const AccountIcon = token ? User : LogIn;
+  const accountAction = getAccountAction();
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
-      <div className="bg-gradient-to-r from-cyan-700 via-blue-700 to-indigo-800 px-4 py-2 text-center text-xs font-semibold text-white">
+    <div className="min-h-screen bg-snow-50 font-sans text-slate-800">
+      <div className="bg-gradient-to-r from-sky-600 via-sky-500 to-cyan-500 px-4 py-2 text-center text-xs font-semibold text-white">
         <span className="inline-flex items-center gap-2">
-          <Sparkles size={14} className="text-amber-300" aria-hidden="true" />
+          <Sparkles size={14} className="text-sky-100" aria-hidden="true" />
           {t("Văn bản chính thức áp dụng thống nhất trên Snow Voucher")}
         </span>
       </div>
 
-      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 shadow-sm backdrop-blur">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
           <Link to="/" className="flex min-w-0 items-center gap-2.5" aria-label="Snow Voucher - về trang chủ">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-lg text-white shadow-sm">
-              ❄️
-            </span>
+            <img
+              src="/snowflake.png"
+              alt=""
+              aria-hidden="true"
+              className="h-9 w-9 shrink-0 object-contain drop-shadow-sm"
+            />
             <span className="truncate text-lg font-black tracking-tight text-slate-900 sm:text-xl">Snow Voucher</span>
           </Link>
 
@@ -186,30 +197,30 @@ export default function PolicyPage() {
               <ArrowLeft size={14} aria-hidden="true" />
               <span className="hidden sm:inline">{t("Trang chủ")}</span>
             </Link>
-            <Link to={accountTo} className="inline-flex items-center gap-1.5 rounded-full bg-cyan-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-cyan-700">
-              <AccountIcon size={14} aria-hidden="true" />
-              {accountLabel}
+            <Link to={accountAction.to} className="inline-flex items-center gap-1.5 rounded-full bg-sky-600 px-3.5 py-2 text-xs font-bold text-white shadow-soft transition-colors hover:bg-sky-700">
+              <accountAction.Icon size={14} aria-hidden="true" />
+              {t(accountAction.label)}
             </Link>
           </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-10">
-        <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-950 via-blue-950 to-cyan-900 px-6 py-9 text-white shadow-xl sm:px-10 sm:py-12">
-          <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-cyan-400/20 blur-3xl" aria-hidden="true" />
-          <div className="absolute -bottom-24 left-1/3 h-56 w-56 rounded-full bg-blue-500/20 blur-3xl" aria-hidden="true" />
+        <section className="relative overflow-hidden rounded-[2rem] border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-cyan-50 px-6 py-9 text-slate-800 shadow-card sm:px-10 sm:py-12">
+          <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-sky-200/35 blur-3xl" aria-hidden="true" />
+          <div className="absolute -bottom-24 left-1/3 h-56 w-56 rounded-full bg-cyan-200/35 blur-3xl" aria-hidden="true" />
           <div className="relative max-w-4xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold text-cyan-100">
+            <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/80 px-3 py-1.5 text-xs font-bold text-sky-700">
               <ShieldCheck size={15} aria-hidden="true" />
               {t("Điều khoản minh bạch · Quy trình nhất quán")}
             </div>
-            <h1 className="mt-5 text-3xl font-black leading-tight tracking-tight sm:text-5xl">
-              {t("Điều Khoản & Chính Sách Sàn Snow Voucher")}
+            <h1 className="mt-5 text-3xl font-black leading-tight tracking-tight text-slate-900 sm:text-5xl">
+             {t("Điều Khoản & Chính Sách Sàn Snow Voucher")}
             </h1>
-            <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-200 sm:text-base">
+            <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
               {t("Chính sách này quy định quyền, nghĩa vụ và nguyên tắc xử lý giao dịch giữa Sàn, Khách hàng và Đối tác cung cấp voucher.")}
             </p>
-            <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
+            <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-500 sm:text-base">
               {t("Sàn đóng vai trò trung gian cung cấp nền tảng để Đối tác phát hành voucher và Khách hàng tìm kiếm, mua, nhận và sử dụng voucher.")}
             </p>
           </div>
@@ -220,18 +231,18 @@ export default function PolicyPage() {
               [Store, "Đối tác", "Trách nhiệm cung cấp đúng cam kết"],
               [ShieldCheck, "Snow Voucher", "Kiểm duyệt và xử lý minh bạch"],
             ].map(([Icon, title, text]) => (
-              <div key={title} className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur-sm">
-                <Icon size={19} className="text-cyan-300" aria-hidden="true" />
-                <p className="mt-2 text-sm font-extrabold text-white">{t(title)}</p>
-                <p className="mt-1 text-xs leading-5 text-slate-300">{t(text)}</p>
+              <div key={title} className="rounded-2xl border border-sky-100 bg-white/90 p-4 shadow-sm backdrop-blur-sm">
+                <Icon size={19} className="text-sky-600" aria-hidden="true" />
+                <p className="mt-2 text-sm font-extrabold text-slate-900">{title}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-600">{text}</p>
               </div>
             ))}
           </div>
         </section>
 
-        <div className="mt-6 rounded-2xl border border-cyan-200 bg-cyan-50 px-5 py-4 text-sm leading-6 text-cyan-950 shadow-sm">
+        <div className="mt-6 rounded-2xl border border-sky-200 bg-sky-50 px-5 py-4 text-sm leading-6 text-sky-900 shadow-sm">
           <div className="flex items-start gap-3">
-            <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-cyan-700" aria-hidden="true" />
+            <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-sky-700" aria-hidden="true" />
             <p>
               <strong>{t("Nguyên tắc ưu tiên:")}</strong> {t("nếu voucher không quy định, Chính sách Sàn được áp dụng. Nếu chính sách riêng của voucher có lợi hơn cho Khách hàng, điều khoản có lợi hơn đó được ưu tiên.")}
             </p>
@@ -372,8 +383,8 @@ export default function PolicyPage() {
                     {t("Hãy đăng nhập để theo dõi đơn hàng, gửi yêu cầu hủy hoặc khiếu nại kèm thông tin giao dịch chính xác.")}
                   </p>
                 </div>
-                <Link to={accountTo} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-cyan-800 shadow-sm hover:bg-cyan-50">
-                  <AccountIcon size={16} aria-hidden="true" /> {accountLabel}
+                <Link to={accountAction.to} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-cyan-800 shadow-sm hover:bg-cyan-50">
+                  <accountAction.Icon size={16} aria-hidden="true" /> {t(accountAction.label)}
                 </Link>
               </div>
             </div>

@@ -369,7 +369,7 @@ export default function VoucherDetailPage({ publicView = false }) {
                     key={btn.key}
                     onClick={() => setSelectedRatingFilter(btn.key)}
                     className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${selectedRatingFilter === btn.key
-                        ? 'bg-orange-500 text-white shadow-xs'
+                        ? 'bg-sky-500 text-white shadow-xs'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                   >
@@ -500,7 +500,7 @@ export default function VoucherDetailPage({ publicView = false }) {
                   <button
                     onClick={handleAddToCart}
                     disabled={addState === "checking"}
-                    className="flex items-center justify-center gap-2 border border-orange-500 bg-orange-50 text-orange-600 hover:bg-orange-100 active:bg-orange-200 py-2.5 px-3 rounded-xl font-semibold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center justify-center gap-2 border border-sky-500 bg-sky-50 text-sky-600 hover:bg-sky-100 active:bg-sky-200 py-2.5 px-3 rounded-xl font-semibold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <ShoppingCart size={18} />
                     <span className="truncate">
@@ -513,7 +513,7 @@ export default function VoucherDetailPage({ publicView = false }) {
                   <button
                     onClick={handleBuyNow}
                     disabled={buyingNow || addState === "checking"}
-                    className="flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white py-2.5 px-3 rounded-xl font-bold text-sm shadow-md hover:shadow-lg active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    className="flex items-center justify-center gap-2 bg-[#1E9EDB] hover:bg-[#1887BC] text-white py-2.5 px-3 rounded-xl font-bold text-sm shadow-md hover:shadow-lg active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   >
                     <span>{t("voucher.buyNowUpper", "MUA NGAY")}</span>
                   </button>

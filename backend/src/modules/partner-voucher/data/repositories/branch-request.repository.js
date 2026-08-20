@@ -24,13 +24,21 @@ class BranchRequestRepository {
         for (const r of data) {
           let reason = r.ly_do_tu_choi;
           if (!reason && r.trang_thai === "Tu choi") {
-            reason = await auditLogRepository.getLatestRejectionReason("CHINHANH", r.ma_chi_nhanh || r.ma_yc);
+            reason = await auditLogRepository.getLatestRejectionReason(
+              "CHINHANH",
+              r.ma_chi_nhanh || r.ma_yc,
+            );
           }
           results.push({
             ma_yeu_cau: r.ma_yc,
             ma_chi_nhanh: r.ma_chi_nhanh,
             ma_hs: r.chinhanh?.ma_hs || partnerId,
-            loai_yeu_cau: r.loai_yeu_cau === "CAP_NHAT" ? "Cap nhat" : r.loai_yeu_cau === "XOA" ? "Xoá" : "Them moi",
+            loai_yeu_cau:
+              r.loai_yeu_cau === "CAP_NHAT"
+                ? "Cap nhat"
+                : r.loai_yeu_cau === "XOA"
+                  ? "Xoá"
+                  : "Them moi",
             ten_chi_nhanh: r.chinhanh?.ten_chi_nhanh || r.ten_chi_nhanh_moi,
             khu_vuc: r.khu_vuc_moi || r.chinhanh?.khu_vuc,
             dia_chi: r.dia_chi_moi || r.chinhanh?.dia_chi,
@@ -58,14 +66,17 @@ class BranchRequestRepository {
     // 2. Initial branch additions are stored directly in chinhanh table
     const dbBranches = await branchRepository.findByPartnerId(partnerId);
     const nonActiveBranches = (dbBranches || []).filter(
-      (b) => b.trang_thai === "Cho duyet" || b.trang_thai === "Tu choi"
+      (b) => b.trang_thai === "Cho duyet" || b.trang_thai === "Tu choi",
     );
 
     for (const b of nonActiveBranches) {
       if (!results.some((r) => r.ma_chi_nhanh === b.ma_chi_nhanh)) {
         let reason = b.ly_do_tu_choi;
         if (!reason && b.trang_thai === "Tu choi") {
-          reason = await auditLogRepository.getLatestRejectionReason("CHINHANH", b.ma_chi_nhanh);
+          reason = await auditLogRepository.getLatestRejectionReason(
+            "CHINHANH",
+            b.ma_chi_nhanh,
+          );
         }
 
         results.push({
@@ -85,9 +96,15 @@ class BranchRequestRepository {
 
     // Include any memory store fallbacks
     for (const req of BRANCH_REQUESTS_STORE.values()) {
-      if (req.ma_hs === partnerId && !results.some((r) => r.ma_yeu_cau === req.ma_yeu_cau)) {
+      if (
+        req.ma_hs === partnerId &&
+        !results.some((r) => r.ma_yeu_cau === req.ma_yeu_cau)
+      ) {
         if (!req.ly_do_tu_choi && req.trang_thai === "Tu choi") {
-          req.ly_do_tu_choi = await auditLogRepository.getLatestRejectionReason("CHINHANH", req.ma_chi_nhanh || req.ma_yeu_cau);
+          req.ly_do_tu_choi = await auditLogRepository.getLatestRejectionReason(
+            "CHINHANH",
+            req.ma_chi_nhanh || req.ma_yeu_cau,
+          );
         }
         results.push(req);
       }
@@ -113,7 +130,12 @@ class BranchRequestRepository {
           ma_yeu_cau: data.ma_yc,
           ma_chi_nhanh: data.ma_chi_nhanh,
           ma_hs: data.ma_hs,
-          loai_yeu_cau: data.loai_yeu_cau === "CAP_NHAT" ? "Cap nhat" : data.loai_yeu_cau === "XOA" ? "Xoá" : "Them moi",
+          loai_yeu_cau:
+            data.loai_yeu_cau === "CAP_NHAT"
+              ? "Cap nhat"
+              : data.loai_yeu_cau === "XOA"
+                ? "Xoá"
+                : "Them moi",
           ten_chi_nhanh: data.chinhanh?.ten_chi_nhanh || data.ten_chi_nhanh_moi,
           khu_vuc: data.khu_vuc_moi || data.chinhanh?.khu_vuc,
           dia_chi: data.dia_chi_moi || data.chinhanh?.dia_chi,
@@ -161,7 +183,9 @@ class BranchRequestRepository {
    * - If 'Cap nhat' or 'Xoa': Insert into request table `yeu_cau_cap_nhat_chinhanh`
    */
   async create(payload) {
-    const isNewBranch = payload.loai_yeu_cau === "Them moi" || payload.loai_yeu_cau === "THEM_MOI";
+    const isNewBranch =
+      payload.loai_yeu_cau === "Them moi" ||
+      payload.loai_yeu_cau === "THEM_MOI";
 
     if (isNewBranch && !payload.ma_chi_nhanh) {
       // Rule: New branch addition inserts directly into base table `chinhanh` with status 'Cho duyet'
@@ -191,8 +215,12 @@ class BranchRequestRepository {
     // Branch update or delete: Insert into yeu_cau_cap_nhat_chinhanh
     const dbRecord = {
       ma_chi_nhanh: payload.ma_chi_nhanh,
-      loai_yeu_cau: payload.loai_yeu_cau === "Xoá" || payload.loai_yeu_cau === "XOA" ? "XOA" : "CAP_NHAT",
-      ten_chi_nhanh_moi: payload.du_lieu_de_xuat?.ten_chi_nhanh || payload.ten_chi_nhanh || null,
+      loai_yeu_cau:
+        payload.loai_yeu_cau === "Xoá" || payload.loai_yeu_cau === "XOA"
+          ? "XOA"
+          : "CAP_NHAT",
+      ten_chi_nhanh_moi:
+        payload.du_lieu_de_xuat?.ten_chi_nhanh || payload.ten_chi_nhanh || null,
       khu_vuc_moi: payload.du_lieu_de_xuat?.khu_vuc || payload.khu_vuc || null,
       dia_chi_moi: payload.du_lieu_de_xuat?.dia_chi || payload.dia_chi || null,
       trang_thai: "Cho duyet",
@@ -292,17 +320,27 @@ class BranchRequestRepository {
     // Ghi audit log vào log_ht
     try {
       await auditLogService.log({
-        actorRole: "ADMIN",
+        actorRole: "Admin kiem duyet",
         actorId: finalAdminId,
-        action: trang_thai === "Tu choi" ? "REJECT_BRANCH_REQUEST" : "APPROVE_BRANCH_REQUEST",
+        action:
+          trang_thai === "Tu choi"
+            ? "REJECT_BRANCH_REQUEST"
+            : "APPROVE_BRANCH_REQUEST",
         targetType: "CHINHANH",
         targetId: resultData?.ma_chi_nhanh || reqId,
         after: { trang_thai, ly_do_tu_choi: adminNote },
         result: "Thanh cong",
-        reason: adminNote || (trang_thai === "Tu choi" ? "Admin từ chối yêu cầu chi nhánh" : "Admin phê duyệt yêu cầu chi nhánh"),
+        reason:
+          adminNote ||
+          (trang_thai === "Tu choi"
+            ? "Admin từ chối yêu cầu chi nhánh"
+            : "Admin phê duyệt yêu cầu chi nhánh"),
       });
     } catch (e) {
-      console.warn("[BranchRequestRepo] Log branch update/reject failed:", e.message);
+      console.warn(
+        "[BranchRequestRepo] Log branch update/reject failed:",
+        e.message,
+      );
     }
 
     return resultData;
@@ -330,7 +368,10 @@ class BranchRequestRepository {
         });
       }
     } catch (e) {
-      console.warn("[BranchRequestRepo] getAllPendingRequestsMap DB warning:", e.message);
+      console.warn(
+        "[BranchRequestRepo] getAllPendingRequestsMap DB warning:",
+        e.message,
+      );
     }
 
     // 2. Pending new branch additions in base table chinhanh (trang_thai = 'Cho duyet')
@@ -345,7 +386,7 @@ class BranchRequestRepository {
           map.set(item.ma_hs, (map.get(item.ma_hs) || 0) + 1);
         });
       }
-    } catch (e) { }
+    } catch (e) {}
 
     // Include memory store
     for (const req of BRANCH_REQUESTS_STORE.values()) {

@@ -260,7 +260,7 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
             {partner.trang_thai === "Dang hoat dong" && (
               <button
                 onClick={() => setShowLockConfirmModal(true)}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold border border-amber-300 bg-amber-50 text-amber-800 rounded-lg hover:bg-amber-100 transition-colors cursor-pointer shadow-xs"
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold border border-sky-300 bg-sky-50 text-sky-800 rounded-lg hover:bg-sky-100 transition-colors cursor-pointer shadow-xs"
               >
                 <Lock size={15} /> Khóa đối tác
               </button>

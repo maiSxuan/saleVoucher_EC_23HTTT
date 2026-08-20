@@ -10,7 +10,7 @@ class StaffRepository {
     const { data: hosodn } = await supabase
       .from("hosodn")
       .select("ma_hs")
-      .or(`ma_hs.eq.${inputPartnerId},id_nguoi_dai_dien.eq.${inputPartnerId}`)
+      .eq("ma_hs", inputPartnerId)
       .maybeSingle();
 
     if (hosodn?.ma_hs) {

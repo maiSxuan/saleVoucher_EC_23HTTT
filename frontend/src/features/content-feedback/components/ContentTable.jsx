@@ -57,7 +57,7 @@ export default function ContentTable({ items, onEdit, onHide, onShow, onStop, on
                   <button onClick={() => onDelete && onDelete(item)} className="p-1.5 text-gray-400 hover:text-red-600" title="Xóa"><Trash2 size={14} /></button>
                 ) : (
                   <>
-                    {item.status !== 'hidden' && item.status !== 'stopped' && <button onClick={() => onHide(item)} className="p-1.5 text-gray-400 hover:text-amber-600" title="Tạm ẩn"><EyeOff size={14} /></button>}
+                    {item.status !== 'hidden' && item.status !== 'stopped' && <button onClick={() => onHide(item)} className="p-1.5 text-gray-400 hover:text-sky-600" title="Tạm ẩn"><EyeOff size={14} /></button>}
                     {item.status === 'hidden' && <button onClick={() => onShow(item)} className="p-1.5 text-gray-400 hover:text-green-600" title="Hiển thị"><Eye size={14} /></button>}
                     {item.status !== 'stopped' && <button onClick={() => onStop(item)} className="p-1.5 text-gray-400 hover:text-red-600" title="Ngừng"><StopCircle size={14} /></button>}
                   </>

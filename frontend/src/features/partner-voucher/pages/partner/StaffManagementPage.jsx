@@ -343,7 +343,7 @@ export function StaffManagementPage() {
                           </button>
                           <button
                             onClick={() => handleLock(staff)}
-                            className="p-1.5 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
+                            className="p-1.5 text-gray-600 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-colors cursor-pointer"
                             title={staff.trang_thai === "Dang hoat dong" ? t("Khóa tài khoản") : t("Mở khóa tài khoản")}
                           >
                             {staff.trang_thai === "Dang hoat dong" ? <Lock size={15} /> : <Unlock size={15} />}

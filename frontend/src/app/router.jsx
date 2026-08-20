@@ -42,6 +42,7 @@ const MyVoucherPage = lazy(() => import("../features/core-access/pages/customer/
 const IssuedVoucherDetailPage = lazy(() => import("../features/core-access/pages/customer/IssuedVoucherDetailPage"));
 const ArticleDetailPage = lazy(() => import("../features/content-feedback/pages/customer/ArticleDetailPage"));
 const PolicyPage = lazy(() => import("../features/core-access/pages/public/PolicyPage"));
+import { ADMIN_PORTAL_ROLES, ADMIN_ROLES, getAdminDefaultPath } from "../shared/constants/admin-roles";
 
 function PartnerHome() {
   try {
@@ -85,6 +86,15 @@ function PartnerOwnerOnlyRoute() {
     return <Navigate to="/login" replace />;
   }
   return <Outlet />;
+}
+
+function AdminHome() {
+  try {
+    const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+    return <Navigate to={getAdminDefaultPath(currentUser)} replace />;
+  } catch {
+    return <Navigate to="/login" replace />;
+  }
 }
 
 const routes = [
@@ -220,27 +230,39 @@ const routes = [
 
   {
     path: "/admin",
-    element: <ProtectedRoute allowedRoles={["ADMIN", "Admin"]} />,
+    element: <ProtectedRoute allowedRoles={ADMIN_PORTAL_ROLES} />,
     children: [
       {
         element: <AdminLayout />,
         children: [
-          { index: true, element: <Navigate to="/admin/overview" replace /> },
+          { index: true, element: <AdminHome /> },
           { path: "overview", element: <AdminDashboardPage /> },
-          { path: "partners", element: <PartnerManagementPage /> },
-          { path: "partners/:id", element: <PartnerDetailPage /> },
-          { path: "vouchers", element: <VoucherApprovalListPage /> },
-          { path: "vouchers/:id", element: <VoucherApprovalDetailPage /> },
-          { path: "orders", element: <AdminOrdersPage /> },
-          { path: "users", element: <UserListPage /> },
-          { path: "logs", element: <AuditLogPage /> },
           {
-            path: "audit-logs",
-            element: <Navigate to="/admin/logs" replace />,
+            element: <ProtectedRoute allowedRoles={[ADMIN_ROLES.SYSTEM]} />,
+            children: [
+              { path: "users", element: <UserListPage /> },
+              { path: "logs", element: <AuditLogPage /> },
+              { path: "audit-logs", element: <Navigate to="/admin/logs" replace /> },
+            ],
           },
-          { path: "contents", element: <ContentListPage /> },
-          { path: "complaints", element: <Navigate to="/admin/orders" replace /> },
-          { path: "reviews", element: <AdminReviewsPage /> },
+          {
+            element: <ProtectedRoute allowedRoles={[ADMIN_ROLES.MODERATION]} />,
+            children: [
+              { path: "partners", element: <PartnerManagementPage /> },
+              { path: "partners/:id", element: <PartnerDetailPage /> },
+              { path: "vouchers", element: <VoucherApprovalListPage /> },
+              { path: "vouchers/:id", element: <VoucherApprovalDetailPage /> },
+              { path: "contents", element: <ContentListPage /> },
+            ],
+          },
+          {
+            element: <ProtectedRoute allowedRoles={[ADMIN_ROLES.OPERATION]} />,
+            children: [
+              { path: "orders", element: <AdminOrdersPage /> },
+              { path: "complaints", element: <Navigate to="/admin/orders" replace /> },
+              { path: "reviews", element: <AdminReviewsPage /> },
+            ],
+          },
         ],
       },
     ],

@@ -55,14 +55,14 @@ async function getContentById(id) {
   return dto.buildContentDto(item);
 }
 
-async function getDefaultAdminAccountId() {
+async function getDefaultModerationAccountId() {
   const { data } = await supabase
     .from('taikhoan')
-    .select('ma_tk')
+    .select('ma_tk, nguoidung!inner(vai_tro)')
+    .eq('nguoidung.vai_tro', 'Admin kiem duyet')
     .limit(1)
     .maybeSingle();
-  if (data) return data.ma_tk;
-  return '10000000-0000-0000-0000-000000000001';
+  return data?.ma_tk || null;
 }
 
 // Tạo mới nội dung
@@ -77,8 +77,8 @@ async function createContent(payload, reqUser) {
   if (!trang_thai) trang_thai = 'Dang hien thi';
 
   let matk_admin = reqUser?.accountId || reqUser?.id || payload.matk_admin;
-  if (!matk_admin || matk_admin === 'UUID_ADMIN_EXAMPLE') {
-    matk_admin = await getDefaultAdminAccountId();
+  if (!matk_admin || matk_admin === 'UUID_MODERATION_EXAMPLE') {
+    matk_admin = await getDefaultModerationAccountId();
   }
 
   let hinh_anh_url = payload.hinh_anh_url || payload.imageUrl || null;

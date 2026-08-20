@@ -30,7 +30,7 @@ function StatusBadge({ status }) {
     "Chua su dung": {
       icon: <Clock className="w-3.5 h-3.5" />,
       label: t("Chưa sử dụng"),
-      cls: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      cls: "bg-semantic-success-soft text-semantic-success border-semantic-success-border",
     },
     "Da su dung": {
       icon: <CheckCircle2 className="w-3.5 h-3.5" />,
@@ -40,12 +40,12 @@ function StatusBadge({ status }) {
     "Het han": {
       icon: <XCircle className="w-3.5 h-3.5" />,
       label: t("Hết hạn"),
-      cls: "bg-red-50 text-red-600 border-red-200",
+      cls: "bg-semantic-error-soft text-semantic-error border-semantic-error-border",
     },
     "Loi sinh ma": {
       icon: <AlertCircle className="w-3.5 h-3.5" />,
       label: t("Lỗi phát hành"),
-      cls: "bg-orange-50 text-orange-600 border-orange-200",
+      cls: "bg-semantic-error-soft text-semantic-error border-semantic-error-border",
     },
   };
   const info = map[status] || {
@@ -75,12 +75,13 @@ function VoucherCard({ vm, onClick }) {
     : "—";
 
   return (
-    <div
+    <button
+      type="button"
       onClick={onClick}
-      className="group cursor-pointer flex items-center gap-4 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-orange-300 transition-all duration-200"
+      className="group w-full cursor-pointer flex items-center gap-4 bg-white border border-slate-200 rounded-2xl p-4 text-left shadow-card hover:shadow-soft hover:border-sky-300 transition-all duration-200"
     >
       {/* Ảnh hoặc icon */}
-      <div className="flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden bg-orange-50 flex items-center justify-center">
+      <div className="flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden bg-sky-50 flex items-center justify-center">
         {v.hinh_anh_url ? (
           <img
             src={v.hinh_anh_url}
@@ -88,7 +89,7 @@ function VoucherCard({ vm, onClick }) {
             className="w-full h-full object-cover"
           />
         ) : (
-          <Ticket className="w-7 h-7 text-orange-400" />
+          <Ticket className="w-7 h-7 text-sky-600" />
         )}
       </div>
 
@@ -103,7 +104,7 @@ function VoucherCard({ vm, onClick }) {
 
         {/* Code */}
         <div className="mt-1.5 flex items-center gap-2 flex-wrap">
-          <span className="font-mono text-xs font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200 tracking-wider">
+          <span className="font-mono text-xs font-bold text-brand-accent-foreground bg-brand-accent-soft px-2 py-0.5 rounded-md border border-brand-accent-border tracking-wider">
             {vm.voucher_code}
           </span>
           <StatusBadge status={vm.trang_thai} />
@@ -114,9 +115,15 @@ function VoucherCard({ vm, onClick }) {
         </p>
       </div>
 
-      {/* Arrow */}
-      <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-orange-400 transition-colors flex-shrink-0" />
-    </div>
+      {/* CTA: toàn bộ card là nút, nhãn này làm hành động chính dễ nhận biết. */}
+      {vm.trang_thai === "Chua su dung" ? (
+        <span className="flex-shrink-0 rounded-xl bg-sky-600 px-3 py-2 text-xs font-bold text-white shadow-soft transition-colors group-hover:bg-sky-700">
+          Sử dụng
+        </span>
+      ) : (
+        <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-sky-600 transition-colors flex-shrink-0" />
+      )}
+    </button>
   );
 }
 
@@ -182,8 +189,8 @@ export default function MyVoucherPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
-            <QrCode className="w-5 h-5 text-orange-500" />
+          <div className="w-10 h-10 bg-sky-100 rounded-xl flex items-center justify-center">
+            <QrCode className="w-5 h-5 text-sky-700" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-slate-900">{t("Voucher của tôi")}</h1>
@@ -195,7 +202,7 @@ export default function MyVoucherPage() {
         <button
           onClick={() => load(page)}
           disabled={loading}
-          className="p-2 rounded-xl text-slate-400 hover:text-orange-500 hover:bg-orange-50 transition-colors"
+          className="p-2 rounded-xl text-slate-400 hover:text-sky-700 hover:bg-sky-50 transition-colors"
           title={t("Làm mới")}
         >
           <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
@@ -209,8 +216,8 @@ export default function MyVoucherPage() {
             key={opt.value}
             onClick={() => setStatus(opt.value)}
             className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${status === opt.value
-                ? "bg-orange-500 text-white border-orange-500"
-                : "bg-white text-slate-600 border-slate-200 hover:border-orange-300"
+                ? "bg-sky-600 text-white border-sky-600 shadow-soft"
+                : "bg-white text-slate-600 border-slate-200 hover:border-sky-300 hover:text-sky-800"
               }`}
           >
             {opt.label}
@@ -226,14 +233,14 @@ export default function MyVoucherPage() {
           placeholder={t("Tìm theo mã code, tên voucher, đối tác...")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-9 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent bg-white"
+          className="w-full pl-9 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-500 bg-white"
         />
       </div>
 
       {/* Loading */}
       {loading && (
         <div className="flex flex-col items-center py-16 gap-3">
-          <RefreshCw className="w-8 h-8 text-orange-400 animate-spin" />
+          <RefreshCw className="w-8 h-8 text-sky-600 animate-spin" />
           <p className="text-sm text-slate-500">{t("Đang tải voucher...")}</p>
         </div>
       )}
@@ -241,14 +248,14 @@ export default function MyVoucherPage() {
       {/* Error */}
       {!loading && error && (
         <div className="flex flex-col items-center py-16 gap-3 text-center">
-          <AlertCircle className="w-10 h-10 text-red-400" />
-          <p className="text-sm text-red-600 font-medium">{error}</p>
+          <AlertCircle className="w-10 h-10 text-semantic-error" />
+          <p className="text-sm text-semantic-error font-medium">{error}</p>
           <p className="text-xs text-slate-400">
             {t("Không thể tải danh sách voucher. Vui lòng thử lại.")}
           </p>
           <button
             onClick={() => load(1)}
-            className="mt-2 px-4 py-2 text-sm font-medium bg-orange-500 text-white rounded-xl hover:bg-orange-600"
+            className="mt-2 px-4 py-2 text-sm font-medium bg-sky-600 text-white rounded-xl hover:bg-sky-700 shadow-soft"
           >
             {t("Thử lại")}
           </button>
@@ -270,7 +277,7 @@ export default function MyVoucherPage() {
           {!search && (
             <button
               onClick={() => navigate("/customer")}
-              className="mt-3 px-5 py-2.5 bg-orange-500 text-white text-sm font-semibold rounded-xl hover:bg-orange-600"
+              className="mt-3 px-5 py-2.5 bg-sky-600 text-white text-sm font-semibold rounded-xl hover:bg-sky-700 shadow-soft"
             >
               {t("Khám phá voucher")}
             </button>
@@ -302,8 +309,8 @@ export default function MyVoucherPage() {
                 key={p}
                 onClick={() => load(p)}
                 className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${p === page
-                    ? "bg-orange-500 text-white"
-                    : "bg-white text-slate-600 border border-slate-200 hover:border-orange-300"
+                    ? "bg-sky-600 text-white"
+                    : "bg-white text-slate-600 border border-slate-200 hover:border-sky-300 hover:text-sky-800"
                   }`}
               >
                 {p}

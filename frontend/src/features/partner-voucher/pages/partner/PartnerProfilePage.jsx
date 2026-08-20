@@ -95,7 +95,7 @@ export function PartnerProfilePage() {
     if (!file) return;
 
     if (file.size > 10 * 1024 * 1024) {
-      setToastMessage("Dung lượng file vượt quá 10MB. Vui lòng chọn tệp nhỏ hơn.");
+      setToastMessage(t("Dung lượng file vượt quá 10MB. Vui lòng chọn tệp nhỏ hơn."));
       return;
     }
 
@@ -103,7 +103,7 @@ export function PartnerProfilePage() {
     reader.onload = (evt) => {
       const dataUrl = evt.target.result;
       setFormData((prev) => ({ ...prev, giay_phep_kinh_doanh: dataUrl }));
-      setToastMessage(`Đã tải lên tệp "${file.name}" mới thành công!`);
+      setToastMessage(`${t("Đã tải lên tệp")} "${file.name}" ${t("mới thành công!")}`);
     };
     reader.readAsDataURL(file);
   };
@@ -113,7 +113,7 @@ export function PartnerProfilePage() {
     if (!file) return;
 
     if (file.size > 10 * 1024 * 1024) {
-      setToastMessage("Dung lượng tệp Logo vượt quá 10MB. Vui lòng chọn tệp nhỏ hơn.");
+      setToastMessage(t("Dung lượng tệp Logo vượt quá 10MB. Vui lòng chọn tệp nhỏ hơn."));
       return;
     }
 
@@ -121,7 +121,7 @@ export function PartnerProfilePage() {
     reader.onload = (evt) => {
       const dataUrl = evt.target.result;
       setFormData((prev) => ({ ...prev, logo: dataUrl }));
-      setToastMessage(`Đã tải lên tệp Logo "${file.name}" mới thành công!`);
+      setToastMessage(`${t("Đã tải lên tệp Logo")} "${file.name}" ${t("mới thành công!")}`);
     };
     reader.readAsDataURL(file);
   };
@@ -129,16 +129,16 @@ export function PartnerProfilePage() {
   const handleSave = async () => {
     if (!partner?.ma_hs) return;
     if (partner.trang_thai === "Cho duyet" || pendingProfileReq) {
-      setToastMessage("Hồ sơ đang ở trạng thái Chờ duyệt, tạm thời không thể chỉnh sửa.");
+      setToastMessage(t("Hồ sơ đang ở trạng thái Chờ duyệt, tạm thời không thể chỉnh sửa."));
       setIsEditing(false);
       return;
     }
     if (formData.sdt && !/^\d{10}$/.test(formData.sdt.trim())) {
-      setToastMessage("Số điện thoại phải bao gồm đúng 10 chữ số.");
+      setToastMessage(t("Số điện thoại phải bao gồm đúng 10 chữ số."));
       return;
     }
     if (formData.cccd && !/^\d{12}$/.test(formData.cccd.trim())) {
-      setToastMessage("Số CCCD phải bao gồm đúng 12 chữ số.");
+      setToastMessage(t("Số CCCD phải bao gồm đúng 12 chữ số."));
       return;
     }
 
@@ -159,9 +159,9 @@ export function PartnerProfilePage() {
         gioi_tinh: formData.gioi_tinh,
         trang_thai: "Cho duyet",
       });
-      setToastMessage("Đã gửi Yêu cầu Cập nhật Hồ sơ Doanh nghiệp tới Quản trị viên!");
+      setToastMessage(t("Đã gửi Yêu cầu Cập nhật Hồ sơ Doanh nghiệp tới Quản trị viên!"));
     } catch (e) {
-      setToastMessage("Gửi yêu cầu thất bại: " + e.message);
+      setToastMessage(t("Gửi yêu cầu thất bại: ") + e.message);
     }
     setSaving(false);
     setIsEditing(false);
@@ -170,26 +170,26 @@ export function PartnerProfilePage() {
 
   const handleChangePasswordConfirm = async () => {
     if (!passwordForm.oldPassword) {
-      setToastMessage("Vui lòng nhập mật khẩu hiện tại.");
+      setToastMessage(t("Vui lòng nhập mật khẩu hiện tại."));
       return;
     }
     if (!passwordForm.newPassword || passwordForm.newPassword.length < 6) {
-      setToastMessage("Mật khẩu mới phải có ít nhất 6 ký tự.");
+      setToastMessage(t("Mật khẩu mới phải có ít nhất 6 ký tự."));
       return;
     }
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setToastMessage("Mật khẩu xác nhận không trùng khớp.");
+      setToastMessage(t("Mật khẩu xác nhận không trùng khớp."));
       return;
     }
 
     setChangingPassword(true);
     try {
       await changePartnerPasswordApi(partner.ma_hs, passwordForm);
-      setToastMessage("Đổi mật khẩu thành công!");
+      setToastMessage(t("Đổi mật khẩu thành công!"));
       setShowPasswordModal(false);
       setPasswordForm({ oldPassword: "", newPassword: "", confirmPassword: "" });
     } catch (e) {
-      setToastMessage(e.message || "Đổi mật khẩu thất bại.");
+      setToastMessage(t(e.message || "Đổi mật khẩu thất bại."));
     }
     setChangingPassword(false);
   };
@@ -197,7 +197,7 @@ export function PartnerProfilePage() {
   if (loading) {
     return (
       <PartnerLayout>
-        <div className="p-8 text-center text-slate-500">Đang tải hồ sơ doanh nghiệp...</div>
+        <div className="p-8 text-center text-slate-500">{t("Đang tải hồ sơ doanh nghiệp...")}</div>
       </PartnerLayout>
     );
   }
@@ -205,7 +205,7 @@ export function PartnerProfilePage() {
   if (!partner) {
     return (
       <PartnerLayout>
-        <div className="p-8 text-center text-slate-500">Không tìm thấy thông tin đối tác.</div>
+        <div className="p-8 text-center text-slate-500">{t("Không tìm thấy thông tin đối tác.")}</div>
       </PartnerLayout>
     );
   }
@@ -419,7 +419,7 @@ export function PartnerProfilePage() {
                     {formData.logo ? (
                       <img
                         src={formData.logo}
-                        alt="Logo xem trước"
+                        alt={t("Logo xem trước")}
                         referrerPolicy="no-referrer"
                         className="w-24 h-24 object-contain rounded-xl border border-slate-300 shadow-xs bg-white p-1"
                       />
@@ -545,7 +545,7 @@ export function PartnerProfilePage() {
                     {partner.logo ? (
                       <img
                         src={partner.logo}
-                        alt="Logo doanh nghiệp"
+                        alt={t("Logo doanh nghiệp")}
                         referrerPolicy="no-referrer"
                         className="w-24 h-24 object-contain rounded-xl border border-slate-200 shadow-xs bg-white p-1"
                       />
@@ -566,7 +566,7 @@ export function PartnerProfilePage() {
                   <div className="flex items-center gap-4">
                     <img
                       src={partner.giay_phep_kinh_doanh || "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80"}
-                      alt="Giấy phép kinh doanh"
+                      alt={t("Giấy phép kinh doanh")}
                       className="w-24 h-24 object-cover rounded-xl border border-slate-200 shadow-xs"
                     />
                     <div className="text-xs space-y-1">

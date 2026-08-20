@@ -43,9 +43,9 @@ export default function ReviewForm({ onSubmit, onCancel }) {
           value={comment} 
           onChange={e => setComment(e.target.value)}
           placeholder={t("Nhận xét về trải nghiệm...")}
-          className="w-full border border-gray-200 rounded-xl p-3 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-orange-300"
+          className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <button onClick={handleSubmit} className="w-full bg-orange-500 text-white py-2 rounded-lg font-semibold text-sm">{t("Gửi đánh giá")}</button>
+        <button onClick={handleSubmit} className="w-full bg-sky-500 text-white py-2 rounded-lg font-semibold text-sm">{t("Gửi đánh giá")}</button>
       </div>
     </div>
   );

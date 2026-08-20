@@ -252,7 +252,7 @@ export function PartnerRegisterPage() {
     setLoading(true);
     try {
       await registerPartnerProfileApi({
-        id_nguoi_dai_dien: createdUser?.id || createdUser?.ma_nguoi_dung,
+        ma_nguoi_dung: createdUser?.id || createdUser?.ma_nguoi_dung,
         ten_dn: formData.ten_dn,
         ma_so_thue: formData.ma_so_thue,
         dia_chi: formData.dia_chi,
@@ -346,9 +346,12 @@ export function PartnerRegisterPage() {
             className="inline-flex items-center gap-2.5 self-start sm:self-auto group"
             aria-label="Về trang chủ Snow Voucher"
           >
-            <span className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-400 to-blue-500 text-white flex items-center justify-center text-lg shadow-md shadow-sky-200 group-hover:scale-105 transition-transform">
-              ❄️
-            </span>
+            <img
+              src="/snowflake.png"
+              alt=""
+              aria-hidden="true"
+              className="w-10 h-10 object-contain drop-shadow-md group-hover:scale-105 transition-transform"
+            />
             <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-transparent">
               Snow Voucher
             </span>

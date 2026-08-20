@@ -17,7 +17,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <Toaster position="bottom-right" richColors closeButton />
       <Suspense
         fallback={(
-          <div className="min-h-screen bg-slate-50 flex items-center justify-center text-sm font-medium text-slate-500">
+          <div className="min-h-screen bg-snow-50 flex items-center justify-center text-sm font-medium text-snow-500">
             Đang tải trang...
           </div>
         )}

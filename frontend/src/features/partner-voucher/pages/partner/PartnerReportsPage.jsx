@@ -109,23 +109,23 @@ export function PartnerReportsPage() {
   const kpis = [
     { label: t("Tổng doanh thu"), value: `${(totalRevenue / 1000000).toFixed(1)}M₫`, icon: <TrendingUp size={20} />, color: "emerald" },
     { label: t("Tổng voucher phát hành"), value: totalIssued.toLocaleString(), icon: <Tag size={20} />, color: "blue" },
-    { label: t("Tổng voucher đã bán"), value: totalSold.toLocaleString(), icon: <ShoppingCart size={20} />, color: "purple" },
+    { label: t("Tổng voucher đã bán"), value: totalSold.toLocaleString(), icon: <ShoppingCart size={20} />, color: "mint" },
     { label: t("Tỷ lệ sử dụng"), value: `${usageRate}%`, icon: <BarChart2 size={20} />, color: "amber" },
   ];
 
   const colorMap = {
-    emerald: "bg-emerald-50 border-emerald-200 text-emerald-600",
-    blue: "bg-blue-50 border-blue-200 text-blue-600",
-    purple: "bg-purple-50 border-purple-200 text-purple-600",
-    amber: "bg-amber-50 border-amber-200 text-amber-600",
+    emerald: "bg-white border-semantic-success-border text-semantic-success",
+    blue: "bg-white border-sky-200 text-sky-700",
+    mint: "bg-white border-brand-accent-border text-brand-accent-foreground",
+    amber: "bg-white border-semantic-warning-border text-semantic-warning",
   };
 
   return (
     <PartnerLayout>
       <div className="p-6 max-w-7xl mx-auto space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t("Báo cáo Đối tác")}</h1>
-          <p className="text-sm text-gray-500 mt-1">{t("Hiệu quả kinh doanh và phát hành voucher của doanh nghiệp")}</p>
+          <h1 className="text-2xl font-bold text-snow-900">{t("Báo cáo Đối tác")}</h1>
+          <p className="text-sm text-snow-600 mt-1">{t("Hiệu quả kinh doanh và phát hành voucher của doanh nghiệp")}</p>
         </div>
 
         {/* Filters Bar */}
@@ -133,12 +133,12 @@ export function PartnerReportsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div className="sm:col-span-2">
               <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                {t("Chương trình voucher")} <span className="text-red-500">*</span>
+                {t("Chương trình voucher")} <span className="text-semantic-error">*</span>
               </label>
               <select
                 value={selectedVoucherId}
                 onChange={(e) => setSelectedVoucherId(e.target.value)}
-                className="w-full h-11 border border-gray-200 rounded-xl px-3.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
+                className="w-full h-11 border border-slate-200 rounded-xl px-3.5 text-sm bg-snow-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-500 transition-colors"
               >
                 <option value="all">{t("Tất cả chương trình")}</option>
                 {vouchersList.map((v) => (
@@ -151,25 +151,25 @@ export function PartnerReportsPage() {
 
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                {t("Từ ngày")} <span className="text-red-500">*</span>
+                {t("Từ ngày")} <span className="text-semantic-error">*</span>
               </label>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full h-11 border border-gray-200 rounded-xl px-3.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
+                className="w-full h-11 border border-slate-200 rounded-xl px-3.5 text-sm bg-snow-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-500 transition-colors"
               />
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                {t("Đến ngày")} <span className="text-red-500">*</span>
+                {t("Đến ngày")} <span className="text-semantic-error">*</span>
               </label>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full h-11 border border-gray-200 rounded-xl px-3.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
+                className="w-full h-11 border border-slate-200 rounded-xl px-3.5 text-sm bg-snow-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-500 transition-colors"
               />
             </div>
           </div>
@@ -181,7 +181,7 @@ export function PartnerReportsPage() {
             </p>
             <button
               type="submit"
-              className="h-10 px-5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-colors cursor-pointer"
+              className="h-10 px-5 bg-sky-600 text-white rounded-xl text-sm font-semibold hover:bg-sky-700 transition-colors cursor-pointer shadow-soft"
             >
               {t("Cập nhật báo cáo")}
             </button>
@@ -191,7 +191,7 @@ export function PartnerReportsPage() {
         {/* Loading State */}
         {loading && (
           <div className="bg-white rounded-xl border border-gray-200 p-12 flex items-center justify-center text-gray-400 gap-3">
-            <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-sky-600 border-t-transparent rounded-full animate-spin" />
             <span className="text-sm">{t("Đang tải dữ liệu báo cáo...")}</span>
           </div>
         )}
@@ -227,13 +227,13 @@ export function PartnerReportsPage() {
 
         {/* Error State */}
         {!loading && emptyReason === "error" && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-8 flex flex-col items-center text-center">
-            <AlertCircle size={32} className="text-red-400 mb-3" />
-            <h3 className="font-semibold text-red-700 mb-1">{t("Không thể tải dữ liệu báo cáo")}</h3>
-            <p className="text-sm text-red-600 mb-4">{t("Lỗi kết nối máy chủ. Vui lòng thử lại.")}</p>
+          <div className="bg-semantic-error-soft border border-semantic-error-border rounded-xl p-8 flex flex-col items-center text-center">
+            <AlertCircle size={32} className="text-semantic-error mb-3" />
+            <h3 className="font-semibold text-semantic-error mb-1">{t("Không thể tải dữ liệu báo cáo")}</h3>
+            <p className="text-sm text-semantic-error mb-4">{t("Lỗi kết nối máy chủ. Vui lòng thử lại.")}</p>
             <button
               onClick={fetchReport}
-              className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-700 cursor-pointer"
+              className="flex items-center gap-2 bg-semantic-error text-white px-4 py-2 rounded-lg text-sm font-semibold hover:brightness-90 cursor-pointer"
             >
               <RotateCcw size={14} /> {t("Thử lại")}
             </button>
@@ -272,7 +272,7 @@ export function PartnerReportsPage() {
                     onClick={() => setTimelineMode("day")}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                       timelineMode === "day"
-                        ? "bg-white text-blue-600 shadow-xs font-bold"
+                        ? "bg-white text-sky-700 shadow-xs font-bold"
                         : "text-slate-600 hover:text-slate-900"
                     }`}
                   >
@@ -283,7 +283,7 @@ export function PartnerReportsPage() {
                     onClick={() => setTimelineMode("month")}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                       timelineMode === "month"
-                        ? "bg-white text-blue-600 shadow-xs font-bold"
+                        ? "bg-white text-sky-700 shadow-xs font-bold"
                         : "text-slate-600 hover:text-slate-900"
                     }`}
                   >
@@ -294,7 +294,7 @@ export function PartnerReportsPage() {
                     onClick={() => setTimelineMode("year")}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                       timelineMode === "year"
-                        ? "bg-white text-blue-600 shadow-xs font-bold"
+                        ? "bg-white text-sky-700 shadow-xs font-bold"
                         : "text-slate-600 hover:text-slate-900"
                     }`}
                   >
@@ -309,8 +309,8 @@ export function PartnerReportsPage() {
                   <AreaChart data={activeChartData} margin={{ top: 10, right: 15, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="partnerRevGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#0284c7" stopOpacity={0.2} />
-                        <stop offset="95%" stopColor="#0284c7" stopOpacity={0.0} />
+                        <stop offset="5%" stopColor="var(--brand-primary)" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="var(--brand-primary)" stopOpacity={0.0} />
                       </linearGradient>
                     </defs>
 
@@ -338,7 +338,7 @@ export function PartnerReportsPage() {
                               </div>
                               <div className="flex items-center justify-between gap-3 pt-1 border-t border-slate-800">
                                 <span className="text-slate-400">{t("Doanh thu:")}</span>
-                                <span className="font-bold text-emerald-400">
+                                <span className="font-bold text-brand-accent-soft">
                                   {Number(data.revenue).toLocaleString("vi-VN")} ₫
                                 </span>
                               </div>
@@ -357,11 +357,11 @@ export function PartnerReportsPage() {
                     <Area
                       type="monotone"
                       dataKey="revenue"
-                      stroke="#0284c7"
+                      stroke="var(--brand-primary)"
                       strokeWidth={2.5}
                       fill="url(#partnerRevGrad)"
-                      dot={{ r: 3.5, fill: "#0284c7", stroke: "#0284c7", strokeWidth: 1 }}
-                      activeDot={{ r: 6, fill: "#0284c7", stroke: "#ffffff", strokeWidth: 2 }}
+                      dot={{ r: 3.5, fill: "var(--brand-primary)", stroke: "var(--brand-primary)", strokeWidth: 1 }}
+                      activeDot={{ r: 6, fill: "var(--brand-primary)", stroke: "#ffffff", strokeWidth: 2 }}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -401,11 +401,11 @@ export function PartnerReportsPage() {
                           <td className="px-4 py-3 text-sm text-gray-600">{d.issued.toLocaleString()}</td>
                           <td className="px-4 py-3 text-sm text-gray-600">{d.sold.toLocaleString()}</td>
                           <td className="px-4 py-3 text-sm text-gray-600">{d.used.toLocaleString()}</td>
-                          <td className="px-4 py-3 text-sm font-medium text-emerald-700">{(d.revenue / 1000000).toFixed(1)}M₫</td>
+                          <td className="px-4 py-3 text-sm font-medium text-sky-700">{(d.revenue / 1000000).toFixed(1)}M₫</td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
                               <div className="flex-1 bg-gray-100 rounded-full h-1.5 max-w-16">
-                                <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${d.usageRate}%` }} />
+                                <div className="bg-semantic-success h-1.5 rounded-full" style={{ width: `${d.usageRate}%` }} />
                               </div>
                               <span className="text-sm font-medium text-gray-700">{d.usageRate}%</span>
                             </div>
@@ -419,7 +419,7 @@ export function PartnerReportsPage() {
                         <td className="px-4 py-3 text-sm text-gray-900">{totalIssued.toLocaleString()}</td>
                         <td className="px-4 py-3 text-sm text-gray-900">{totalSold.toLocaleString()}</td>
                         <td className="px-4 py-3 text-sm text-gray-900">{totalUsed.toLocaleString()}</td>
-                        <td className="px-4 py-3 text-sm text-emerald-700">{(totalRevenue / 1000000).toFixed(1)}M₫</td>
+                        <td className="px-4 py-3 text-sm text-sky-700">{(totalRevenue / 1000000).toFixed(1)}M₫</td>
                         <td className="px-4 py-3 text-sm text-gray-900">{usageRate}%</td>
                       </tr>
                     )}
@@ -438,8 +438,8 @@ export function PartnerReportsPage() {
                   <YAxis dataKey="voucherName" type="category" tick={{ fontSize: 10 }} width={140} />
                   <Tooltip />
                   <Bar dataKey="issued" fill="#e2e8f0" name={t("Phát hành")} />
-                  <Bar dataKey="sold" fill="#6366f1" name={t("Đã bán")} />
-                  <Bar dataKey="used" fill="#10b981" name={t("Đã sử dụng")} />
+                  <Bar dataKey="sold" fill="var(--brand-primary)" name={t("Đã bán")} />
+                  <Bar dataKey="used" fill="var(--brand-success)" name={t("Đã sử dụng")} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

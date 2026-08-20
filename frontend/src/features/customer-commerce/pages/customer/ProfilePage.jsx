@@ -119,13 +119,13 @@ export default function ProfilePage() {
       <div className="flex bg-white border border-gray-300 rounded-xl p-1 mb-5">
         <button
           onClick={() => setTab("info")}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-base font-medium transition-colors ${tab === "info" ? "bg-orange-500 text-white shadow-sm" : "text-gray-600"}`}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-base font-medium transition-colors ${tab === "info" ? "bg-sky-500 text-white shadow-sm" : "text-gray-600"}`}
         >
           <User size={18} /> {t("Hồ sơ cá nhân")}
         </button>
         <button
           onClick={() => setTab("password")}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-base font-medium transition-colors ${tab === "password" ? "bg-orange-500 text-white shadow-sm" : "text-gray-600"}`}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-base font-medium transition-colors ${tab === "password" ? "bg-sky-500 text-white shadow-sm" : "text-gray-600"}`}
         >
           <Lock size={18} /> {t("Đổi mật khẩu")}
         </button>
@@ -134,7 +134,7 @@ export default function ProfilePage() {
       {tab === "info" && (
         <div className="bg-white rounded-xl border border-gray-300 p-5 space-y-3">
           <div className="flex flex-col items-center mb-4">
-            <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center mb-2">
+            <div className="w-16 h-16 rounded-full bg-sky-100 flex items-center justify-center mb-2">
               <User size={28} className="text-orange-500" />
             </div>
             <p className="text-base font-semibold text-gray-900">
@@ -228,7 +228,7 @@ export default function ProfilePage() {
           <button
             onClick={handleSaveProfile}
             disabled={saving}
-            className="w-full flex items-center justify-center gap-2 bg-orange-500 text-white py-2.5 rounded-xl font-semibold text-base hover:bg-orange-600 disabled:opacity-50 mt-2"
+            className="w-full flex items-center justify-center gap-2 bg-sky-500 text-white py-2.5 rounded-xl font-semibold text-base hover:bg-sky-600 disabled:opacity-50 mt-2"
           >
             <Save size={15} /> {saving ? t("Đang lưu...") : t("Lưu thay đổi")}
           </button>
@@ -265,7 +265,7 @@ export default function ProfilePage() {
           <button
             onClick={handleChangePassword}
             disabled={changingPw}
-            className="w-full flex items-center justify-center gap-2 bg-orange-500 text-white py-2.5 rounded-xl font-semibold text-base hover:bg-orange-600 disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 bg-sky-500 text-white py-2.5 rounded-xl font-semibold text-base hover:bg-sky-600 disabled:opacity-50"
           >
             <Lock size={15} /> {changingPw ? t("Đang xử lý...") : t("Đổi mật khẩu")}
           </button>

@@ -2,7 +2,218 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  color-scheme: light;
+  /* Snow pastel sky palette: #E2F3FB → #B1E0F4 → #80CCEE → #53B7E8 → #1E9EDB. */
+  --brand-primary: #1e9edb;
+  --brand-primary-hover: #1887bc;
+  --brand-primary-active: #126c97;
+  --brand-primary-soft: #e2f3fb;
+  --brand-primary-rgb: 30 158 219;
+  --brand-primary-hover-rgb: 24 135 188;
+  --brand-primary-active-rgb: 18 108 151;
+  --brand-primary-soft-rgb: 226 243 251;
+
+  --brand-accent: #53b7e8;
+  --brand-accent-rgb: 83 183 232;
+  --brand-accent-soft: #e2f3fb;
+  --brand-accent-soft-rgb: 226 243 251;
+  --brand-accent-border: #b1e0f4;
+  --brand-accent-border-rgb: 177 224 244;
+  --brand-accent-foreground: #126c97;
+  --brand-accent-foreground-rgb: 18 108 151;
+
+  --brand-surface: #ffffff;
+  --brand-background: #f7fcfe;
+  --brand-surface-soft: #e2f3fb;
+  --brand-surface-rgb: 255 255 255;
+  --brand-background-rgb: 247 252 254;
+  --brand-surface-soft-rgb: 226 243 251;
+  --brand-text: #0f172a;
+  --brand-text-secondary: #475569;
+  --brand-text-muted: #64748b;
+  --brand-text-rgb: 15 23 42;
+  --brand-text-secondary-rgb: 71 85 105;
+  --brand-text-muted-rgb: 100 116 139;
+
+  --brand-success: #287a52;
+  --brand-success-soft: #e7f5ed;
+  --brand-success-border: #b7dfc8;
+  --brand-success-rgb: 40 122 82;
+  --brand-success-soft-rgb: 231 245 237;
+  --brand-success-border-rgb: 183 223 200;
+  --brand-warning: #9a5b13;
+  --brand-warning-soft: #fff4de;
+  --brand-warning-border: #efd29b;
+  --brand-warning-rgb: 154 91 19;
+  --brand-warning-soft-rgb: 255 244 222;
+  --brand-warning-border-rgb: 239 210 155;
+  --brand-error: #a63f4c;
+  --brand-error-soft: #fdecef;
+  --brand-error-border: #efbdc5;
+  --brand-error-rgb: 166 63 76;
+  --brand-error-soft-rgb: 253 236 239;
+  --brand-error-border-rgb: 239 189 197;
+  --brand-info: #1e9edb;
+  --brand-info-soft: #e2f3fb;
+  --brand-info-border: #b1e0f4;
+  --brand-info-rgb: 30 158 219;
+  --brand-info-soft-rgb: 226 243 251;
+  --brand-info-border-rgb: 177 224 244;
+
+  --brand-border: rgba(15, 23, 42, 0.08);
+  --brand-focus: #80ccee;
+}
+
+.theme-snow {
+  --color-primary: var(--brand-primary);
+  --color-primary-hover: var(--brand-primary-hover);
+  --color-primary-active: var(--brand-primary-active);
+  --color-primary-soft: var(--brand-primary-soft);
+  --color-accent: var(--brand-accent);
+  --color-accent-soft: var(--brand-accent-soft);
+  --color-accent-border: var(--brand-accent-border);
+  --color-accent-foreground: var(--brand-accent-foreground);
+  --color-surface: var(--brand-surface);
+  --color-background: var(--brand-background);
+  --color-surface-soft: var(--brand-surface-soft);
+  --color-text: var(--brand-text);
+  --color-text-secondary: var(--brand-text-secondary);
+  --color-text-muted: var(--brand-text-muted);
+  --color-success: var(--brand-success);
+  --color-success-soft: var(--brand-success-soft);
+  --color-success-border: var(--brand-success-border);
+  --color-warning: var(--brand-warning);
+  --color-warning-soft: var(--brand-warning-soft);
+  --color-warning-border: var(--brand-warning-border);
+  --color-error: var(--brand-error);
+  --color-error-soft: var(--brand-error-soft);
+  --color-error-border: var(--brand-error-border);
+  --color-info: var(--brand-info);
+  --color-info-soft: var(--brand-info-soft);
+  --color-info-border: var(--brand-info-border);
+  --color-border: var(--brand-border);
+  --color-focus: var(--brand-focus);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
+  min-height: 100vh;
   font-family: Inter, system-ui, sans-serif;
+  background: linear-gradient(
+    180deg,
+    var(--brand-background) 0%,
+    var(--brand-surface-soft) 100%
+  );
+  color: var(--brand-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+
+  body {
+    @apply bg-snow-50 text-snow-900;
+  }
+}
+
+@layer components {
+  .surface-card {
+    @apply rounded-xl border border-slate-200/80 bg-white shadow-card;
+  }
+
+  .surface-panel {
+    @apply rounded-2xl border border-slate-200/80 bg-snow-50;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition-all duration-200 hover:bg-brand-primary-hover active:bg-brand-primary-active focus:outline-none focus:ring-2 focus:ring-sky-300 focus:ring-offset-2;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-snow-700 transition-colors hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700;
+  }
+
+  .tag-success {
+    @apply inline-flex items-center gap-1 rounded-full border border-semantic-success-border bg-semantic-success-soft px-2.5 py-1 text-xs font-semibold text-semantic-success;
+  }
+
+  .tag-warning {
+    @apply inline-flex items-center gap-1 rounded-full border border-semantic-warning-border bg-semantic-warning-soft px-2.5 py-1 text-xs font-semibold text-semantic-warning;
+  }
+
+  .tag-error {
+    @apply inline-flex items-center gap-1 rounded-full border border-semantic-error-border bg-semantic-error-soft px-2.5 py-1 text-xs font-semibold text-semantic-error;
+  }
+
+  .tag-info {
+    @apply inline-flex items-center gap-1 rounded-full border border-semantic-info-border bg-semantic-info-soft px-2.5 py-1 text-xs font-semibold text-semantic-info;
+  }
+}
+
+@layer utilities {
+  .bg-app {
+    background-color: var(--color-background);
+  }
+
+  .bg-surface {
+    background-color: var(--color-surface);
+  }
+
+  .bg-surface-soft {
+    background-color: var(--color-surface-soft);
+  }
+
+  .text-primary {
+    color: var(--color-primary);
+  }
+
+  .text-secondary {
+    color: var(--color-text-secondary);
+  }
+
+  .text-brand {
+    color: var(--color-text);
+  }
+
+  .text-muted {
+    color: var(--color-text-muted);
+  }
+
+  .border-brand {
+    border-color: var(--color-border);
+  }
+
+  .badge-success {
+    background-color: var(--color-success-soft);
+    color: var(--color-success);
+  }
+
+  .badge-warning {
+    background-color: var(--color-warning-soft);
+    color: var(--color-warning);
+  }
+
+  .badge-error {
+    background-color: var(--color-error-soft);
+    color: var(--color-error);
+  }
+
+  .badge-info {
+    background-color: var(--color-info-soft);
+    color: var(--color-info);
+  }
+
+  .hero-snow-gradient {
+    background:
+      radial-gradient(circle at 82% 18%, rgba(255, 255, 255, 0.86), transparent 27%),
+      linear-gradient(118deg, #1e9edb 0%, #53b7e8 44%, #b1e0f4 76%, #e2f3fb 100%);
+  }
 }

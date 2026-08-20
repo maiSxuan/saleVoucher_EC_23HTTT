@@ -15,7 +15,7 @@ export function Toast({ message, type = "success", onClose, duration = 1500 }) {
     success: "bg-emerald-800 text-white border-emerald-700",
     error: "bg-rose-800 text-white border-rose-700",
     warning: "bg-amber-800 text-white border-amber-700",
-    info: "bg-blue-800 text-white border-blue-700",
+    info: "bg-sky-800 text-white border-sky-700",
   };
 
   return (
