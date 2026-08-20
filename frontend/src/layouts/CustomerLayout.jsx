@@ -55,6 +55,8 @@ export default function CustomerLayout() {
   useEffect(() => {
     loadCategories();
 
+    window.addEventListener("app_language_changed", loadCategories);
+
     // Fetch popups
     contentApi.list("popup")
       .then(res => {
@@ -62,6 +64,10 @@ export default function CustomerLayout() {
         setPopups(active);
       })
       .catch(() => { });
+
+    return () => {
+      window.removeEventListener("app_language_changed", loadCategories);
+    };
   }, []);
 
   const visibleCategories = categories.slice(0, MAX_VISIBLE_CATEGORIES);
@@ -110,7 +116,7 @@ export default function CustomerLayout() {
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && navigate("/customer")}
-                placeholder={t("nav.searchPlaceholder", "Tìm voucher ưu đãi...")}
+                placeholder={t("Tìm voucher ưu đãi...")}
                 className="w-full pl-9 pr-3 py-1.5 rounded-full text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
             </div>
@@ -122,7 +128,7 @@ export default function CustomerLayout() {
               className="relative flex items-center gap-1 bg-white/20 hover:bg-white/30 px-2.5 py-1.5 rounded-full transition-colors"
             >
               <ShoppingCart size={15} />
-              <span className="text-sm hidden sm:block">{t("nav.cart", "Giỏ hàng")}</span>
+              <span className="text-sm hidden sm:block">{t("Giỏ hàng")}</span>
               {cartCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-sm rounded-full w-4 h-4 flex items-center justify-center">
                   {cartCount}
@@ -146,23 +152,23 @@ export default function CustomerLayout() {
                   <div className="w-40 bg-white rounded-lg shadow-lg border border-gray-100 py-1">
                     <MenuLink
                       icon={User}
-                      label={t("nav.profile", "Hồ sơ")}
+                      label={t("Hồ sơ")}
                       onClick={() => navigate("/customer/profile")}
                     />
                     <MenuLink
                       icon={Package}
-                      label={t("nav.myOrders", "Đơn hàng")}
+                      label={t("Đơn hàng")}
                       onClick={() => navigate("/customer/orders")}
                     />
                     <MenuLink
                       icon={Tag}
-                      label={t("nav.myVouchers", "Voucher của tôi")}
+                      label={t("Voucher của tôi")}
                       onClick={() => navigate("/customer/vouchers/my")}
                     />
                     <hr className="my-1 border-gray-100" />
                     <MenuLink
                       icon={LogOut}
-                      label={t("nav.logout", "Đăng xuất")}
+                      label={t("Đăng xuất")}
                       onClick={handleLogout}
                       danger
                     />
@@ -175,13 +181,13 @@ export default function CustomerLayout() {
                   onClick={() => navigate("/login")}
                   className="text-sm bg-white text-orange-600 px-2.5 py-1.5 rounded-full font-semibold hover:bg-orange-50"
                 >
-                  {t("nav.login", "Đăng nhập")}
+                  {t("Đăng nhập")}
                 </button>
                 <button
                   onClick={() => navigate("/customer/register")}
                   className="text-sm bg-white/20 hover:bg-white/30 px-2.5 py-1.5 rounded-full hidden sm:block"
                 >
-                  {t("nav.register", "Đăng ký")}
+                  {t("Đăng ký")}
                 </button>
               </div>
             )}
@@ -196,7 +202,7 @@ export default function CustomerLayout() {
                   : "border-transparent text-white/80 hover:text-white"
                 }`}
             >
-              {t("nav.allCategories", "Tất cả")}
+              {t("Tất cả danh mục")}
             </button>
 
             {visibleCategories.map((cat) => (
@@ -208,7 +214,7 @@ export default function CustomerLayout() {
                     : "border-transparent text-white/80 hover:text-white"
                   }`}
               >
-                {cat.name}
+                {t(cat.name)}
               </button>
             ))}
 
@@ -218,7 +224,7 @@ export default function CustomerLayout() {
                   onClick={() => setShowMoreCategories((s) => !s)}
                   className="whitespace-nowrap flex items-center gap-1.5 py-1 text-white/80 hover:text-white font-medium"
                 >
-                  Danh mục khác <ChevronDown size={14} />
+                  {t("Danh mục khác")} <ChevronDown size={14} />
                 </button>
 
                 {showMoreCategories && (
@@ -229,7 +235,7 @@ export default function CustomerLayout() {
                         onClick={() => selectCategory(cat.name)}
                         className="w-full text-left px-4 py-2 text-base text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
                       >
-                        {cat.name}
+                        {t(cat.name)}
                       </button>
                     ))}
                   </div>
