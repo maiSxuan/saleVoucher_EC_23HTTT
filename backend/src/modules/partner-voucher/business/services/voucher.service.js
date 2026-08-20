@@ -2,6 +2,7 @@ const voucherRepository = require("../../data/repositories/voucher.repository");
 const voucherBranchRepository = require("../../data/repositories/voucher-branch.repository");
 const auditLogService = require("../../../core-access/business/services/audit-log.service");
 const supabase = require("../../../../config/supabase");
+const translationService = require("../../../../common/services/translation.service");
 
 async function uploadBase64ToSupabase(base64String, folder = "vouchers") {
   if (
@@ -50,16 +51,30 @@ async function uploadBase64ToSupabase(base64String, folder = "vouchers") {
 }
 
 class VoucherService {
-  async getVouchers(query) {
-    return await voucherRepository.findAll(query);
+  async getVouchers(query = {}) {
+    const data = await voucherRepository.findAll(query);
+    const lang = query?.lang;
+    if (lang === "en") {
+      return await translationService.translateVoucherFields(data, undefined, "en");
+    }
+    return data;
   }
 
-  async getVouchersByPartner(partnerId, query) {
-    return await voucherRepository.findByPartnerId(partnerId, query);
+  async getVouchersByPartner(partnerId, query = {}) {
+    const data = await voucherRepository.findByPartnerId(partnerId, query);
+    const lang = query?.lang;
+    if (lang && lang.toLowerCase().startsWith("en")) {
+      return await translationService.translateVoucherFields(data, undefined, "en");
+    }
+    return data;
   }
 
-  async getVoucherById(id) {
-    return await voucherRepository.findById(id);
+  async getVoucherById(id, lang = null) {
+    const data = await voucherRepository.findById(id);
+    if (data && lang && lang.toLowerCase().startsWith("en")) {
+      return await translationService.translateVoucherFields(data, undefined, "en");
+    }
+    return data;
   }
 
   async createVoucher(payload, actorId = null, actorRole = null) {
@@ -258,8 +273,12 @@ class VoucherService {
     return updated;
   }
 
-  async getCategories() {
-    return await voucherRepository.getVoucherCategories();
+  async getCategories(lang = null) {
+    const data = await voucherRepository.getVoucherCategories();
+    if (lang === "en") {
+      return await translationService.translateCategoryFields(data, "en");
+    }
+    return data;
   }
 }
 

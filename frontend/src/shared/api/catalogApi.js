@@ -1,7 +1,14 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
+function getCurrentLang() {
+  return localStorage.getItem("app_lang") || "vi";
+}
+
 export async function fetchSellingVouchers() {
-  const res = await fetch(`${BASE_URL}/catalog`);
+  const lang = getCurrentLang();
+  const res = await fetch(`${BASE_URL}/catalog?lang=${lang}`, {
+    headers: { "Accept-Language": lang },
+  });
   if (!res.ok) {
     // E1: Không thể truy xuất dữ liệu voucher
     throw new Error("Không thể tải danh sách voucher");
@@ -11,7 +18,10 @@ export async function fetchSellingVouchers() {
 }
 
 export async function fetchCategories() {
-  const res = await fetch(`${BASE_URL}/catalog/categories`);
+  const lang = getCurrentLang();
+  const res = await fetch(`${BASE_URL}/catalog/categories?lang=${lang}`, {
+    headers: { "Accept-Language": lang },
+  });
   if (!res.ok) {
     throw new Error("Không thể tải danh mục");
   }
@@ -20,7 +30,10 @@ export async function fetchCategories() {
 }
 
 export async function fetchVoucherDetail(id) {
-  const res = await fetch(`${BASE_URL}/catalog/${id}`);
+  const lang = getCurrentLang();
+  const res = await fetch(`${BASE_URL}/catalog/${id}?lang=${lang}`, {
+    headers: { "Accept-Language": lang },
+  });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error("Không thể tải thông tin voucher");
   const json = await res.json();

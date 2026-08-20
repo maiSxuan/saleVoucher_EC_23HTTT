@@ -3,8 +3,10 @@ import PartnerLayout from "../../../../layouts/PartnerLayout";
 import { BarChart2, TrendingUp, Tag, ShoppingCart, RotateCcw, AlertCircle, Info } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, ResponsiveContainer } from "recharts";
 import { getPartnerReportApi, getVouchersByPartnerApi } from "../../../../shared/api/partnerApi";
+import { useTranslation } from "react-i18next";
 
 export function PartnerReportsPage() {
+  const { t } = useTranslation();
   const formatDateYYYYMMDD = (d) => d.toISOString().slice(0, 10);
 
   const today = new Date();

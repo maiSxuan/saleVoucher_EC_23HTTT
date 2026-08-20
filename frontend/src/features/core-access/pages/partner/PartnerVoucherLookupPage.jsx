@@ -29,6 +29,7 @@ import {
   Info,
   DollarSign,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   verifyVoucherCode,
   redeemVoucherCode,
@@ -38,6 +39,7 @@ import {
 import QrScannerModal from '../../component/QrScannerModal';
 
 export default function PartnerVoucherLookupPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const searchInputRef = useRef(null);
 

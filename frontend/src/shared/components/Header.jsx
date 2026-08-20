@@ -1,7 +1,9 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export default function Header() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const userStr = localStorage.getItem("user");
   let user = null;
@@ -97,7 +99,7 @@ export default function Header() {
             onClick={handleLogout}
             className="text-red-600 font-medium hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors"
           >
-            Đăng xuất
+            {t("nav.logout", "Đăng xuất")}
           </button>
         </div>
       )}

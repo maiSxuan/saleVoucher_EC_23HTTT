@@ -12,8 +12,10 @@ import {
   getCategoriesApi,
 } from "../../../../shared/api/partnerApi";
 import { formatCategoryName } from "../../../../shared/utils/categoryFormatter";
+import { useTranslation } from "react-i18next";
 
 export function VoucherFormPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
 

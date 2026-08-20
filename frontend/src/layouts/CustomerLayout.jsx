@@ -20,6 +20,9 @@ import {
 } from "../shared/api/catalogApi";
 import { contentApi } from "../features/content-feedback/api/contentApi";
 
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "../shared/components/LanguageSwitcher";
+
 function getStoredUser() {
   try {
     return JSON.parse(localStorage.getItem("user"));
@@ -31,6 +34,7 @@ function getStoredUser() {
 const MAX_VISIBLE_CATEGORIES = 8;
 
 export default function CustomerLayout() {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const user = getStoredUser();
@@ -48,10 +52,16 @@ export default function CustomerLayout() {
   const [popups, setPopups] = useState([]);
   const [currentPopupIndex, setCurrentPopupIndex] = useState(0);
 
-  useEffect(() => {
+  const loadCategories = () => {
     fetchCategories()
       .then(setCategories)
       .catch(() => setCategories([]));
+  };
+
+  useEffect(() => {
+    loadCategories();
+
+    window.addEventListener("app_language_changed", loadCategories);
 
     fetchSellingVouchers()
       .then((vouchers) => {
@@ -100,6 +110,10 @@ export default function CustomerLayout() {
         setPopups(active);
       })
       .catch(() => { });
+
+    return () => {
+      window.removeEventListener("app_language_changed", loadCategories);
+    };
   }, []);
 
   const visibleCategories = categories.slice(0, MAX_VISIBLE_CATEGORIES);
@@ -159,17 +173,19 @@ export default function CustomerLayout() {
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && navigate("/customer")}
-                placeholder="Tìm voucher ưu đãi..."
+                placeholder={t("Tìm voucher ưu đãi...")}
                 className="w-full pl-9 pr-3 py-1.5 rounded-full text-base text-snow-900 bg-white focus:outline-none focus:ring-2 focus:ring-sky-300"
               />
             </div>
+
+            <LanguageSwitcher />
 
             <button
               onClick={() => navigate("/customer/cart")}
               className="relative flex items-center gap-1 bg-white/20 hover:bg-white/30 px-2.5 py-1.5 rounded-full transition-colors"
             >
               <ShoppingCart size={15} />
-              <span className="text-sm hidden sm:block">Giỏ hàng</span>
+              <span className="text-sm hidden sm:block">{t("Giỏ hàng")}</span>
               {cartCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-semantic-error text-white text-sm rounded-full w-4 h-4 flex items-center justify-center">
                   {cartCount}
@@ -193,23 +209,23 @@ export default function CustomerLayout() {
                   <div className="w-40 bg-white rounded-lg shadow-lg border border-gray-100 py-1">
                     <MenuLink
                       icon={User}
-                      label="Hồ sơ"
+                      label={t("Hồ sơ")}
                       onClick={() => navigate("/customer/profile")}
                     />
                     <MenuLink
                       icon={Package}
-                      label="Đơn hàng"
+                      label={t("Đơn hàng")}
                       onClick={() => navigate("/customer/orders")}
                     />
                     <MenuLink
                       icon={Tag}
-                      label="Voucher của tôi"
+                      label={t("Voucher của tôi")}
                       onClick={() => navigate("/customer/vouchers/my")}
                     />
                     <hr className="my-1 border-gray-100" />
                     <MenuLink
                       icon={LogOut}
-                      label="Đăng xuất"
+                      label={t("Đăng xuất")}
                       onClick={handleLogout}
                       danger
                     />
@@ -222,13 +238,13 @@ export default function CustomerLayout() {
                   onClick={() => navigate("/login")}
                   className="text-sm bg-white text-sky-700 px-2.5 py-1.5 rounded-full font-semibold hover:bg-sky-50"
                 >
-                  Đăng nhập
+                  {t("Đăng nhập")}
                 </button>
                 <button
                   onClick={() => navigate("/customer/register")}
                   className="text-sm bg-white/20 hover:bg-white/30 px-2.5 py-1.5 rounded-full hidden sm:block"
                 >
-                  Đăng ký
+                  {t("Đăng ký")}
                 </button>
               </div>
             )}
@@ -243,7 +259,7 @@ export default function CustomerLayout() {
                   : "border-transparent text-white/80 hover:text-white"
                 }`}
             >
-              Tất cả
+              {t("Tất cả danh mục")}
             </button>
 
             {visibleCategories.map((cat) => {
@@ -286,7 +302,7 @@ export default function CustomerLayout() {
                   aria-haspopup="menu"
                   aria-expanded={showMoreCategories}
                 >
-                  Danh mục khác
+                  {t("Danh mục khác")} 
                   <ChevronDown
                     size={14}
                     className="transition-transform group-hover/more:rotate-180"
