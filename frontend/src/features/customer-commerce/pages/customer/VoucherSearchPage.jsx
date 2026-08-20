@@ -33,6 +33,7 @@ export default function VoucherSearchPage() {
     setSearchValue,
     activeCategory,
     setActiveCategory,
+    activePartner = "",
     categories = [],
   } = useOutletContext();
 
@@ -110,29 +111,38 @@ export default function VoucherSearchPage() {
 
         const matchCat =
           activeCategory === "Tất cả" || v.category === activeCategory;
+        const matchPartner =
+          !activePartner || partnerStr === activePartner;
         let matchPrice = true;
         if (priceRange === "under200") matchPrice = v.salePrice < 200000;
         else if (priceRange === "200-500")
           matchPrice = v.salePrice >= 200000 && v.salePrice <= 500000;
         else if (priceRange === "over500") matchPrice = v.salePrice > 500000;
-        return matchSearch && matchCat && matchPrice;
+        return matchSearch && matchCat && matchPartner && matchPrice;
       })
       .sort((a, b) => {
         if (sortBy === "price-asc") return a.salePrice - b.salePrice;
         if (sortBy === "price-desc") return b.salePrice - a.salePrice;
         return 0;
       });
-  }, [vouchers, searchValue, activeCategory, priceRange, sortBy]);
+  }, [
+    vouchers,
+    searchValue,
+    activeCategory,
+    activePartner,
+    priceRange,
+    sortBy,
+  ]);
 
   if (loading)
     return (
-      <div className="py-24 text-center text-gray-500 text-base font-medium">
+      <div className="py-24 text-center text-snow-600 text-base font-medium">
         Đang tìm kiếm voucher...
       </div>
     );
   if (errorMsg)
     return (
-      <div className="py-24 text-center text-red-500 text-base font-medium">
+      <div className="py-24 text-center text-semantic-error text-base font-medium">
         {errorMsg}
       </div>
     );
@@ -155,7 +165,7 @@ export default function VoucherSearchPage() {
               <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-transparent" />
             </div>
           ) : (
-            <div className="absolute inset-0 z-0 bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 opacity-90" />
+            <div className="hero-snow-gradient absolute inset-0 z-0" />
           )}
 
           <div className="relative z-10 p-6 sm:p-10 max-w-xl">
@@ -218,8 +228,8 @@ export default function VoucherSearchPage() {
           onClick={() => setShowFilters((s) => !s)}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${
             showFilters
-              ? "bg-orange-50 border-orange-300 text-orange-700"
-              : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+              ? "bg-sky-50 border-sky-300 text-sky-800"
+              : "bg-white border-slate-200 text-snow-700 hover:bg-sky-50"
           }`}
         >
           <SlidersHorizontal size={15} /> Bộ lọc
@@ -227,20 +237,20 @@ export default function VoucherSearchPage() {
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
-          className="border border-gray-200 rounded-xl px-3.5 py-2 text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-200"
+          className="border border-slate-200 rounded-xl px-3.5 py-2 text-sm bg-white text-snow-700 focus:outline-none focus:ring-2 focus:ring-sky-300"
         >
           <option value="newest">Mới nhất</option>
           <option value="price-asc">Giá tăng dần</option>
           <option value="price-desc">Giá giảm dần</option>
         </select>
-        <span className="ml-auto text-sm text-gray-500 font-medium">
+        <span className="ml-auto text-sm text-snow-600 font-medium">
           {filtered.length} kết quả
         </span>
       </div>
 
       {showFilters && (
-        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
-          <p className="text-sm font-semibold text-gray-800 mb-2.5">
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-card">
+          <p className="text-sm font-semibold text-snow-800 mb-2.5">
             Khoảng giá
           </p>
           <div className="flex gap-2.5 flex-wrap">
@@ -255,8 +265,8 @@ export default function VoucherSearchPage() {
                 onClick={() => setPriceRange(opt.value)}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
                   priceRange === opt.value
-                    ? "bg-orange-500 text-white shadow-xs"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    ? "bg-sky-600 text-white shadow-soft"
+                    : "bg-snow-100 text-snow-600 hover:bg-sky-50 hover:text-sky-800"
                 }`}
               >
                 {opt.label}
@@ -268,7 +278,7 @@ export default function VoucherSearchPage() {
 
       {/* Danh sách Voucher */}
       {filtered.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-gray-100 p-16 text-center text-gray-400">
+        <div className="bg-white rounded-3xl border border-slate-200 p-16 text-center text-snow-500 shadow-card">
           <p className="text-base font-semibold">
             Không tìm thấy voucher phù hợp.
           </p>
@@ -290,10 +300,10 @@ export default function VoucherSearchPage() {
 
       {/* Khối Cẩm nang & Bài viết (Có đường dẫn sang trang chi tiết bài viết) */}
       {articles.length > 0 && (
-        <div className="mt-12 pt-8 border-t border-gray-200">
+        <div className="mt-12 pt-8 border-t border-slate-200">
           <div className="flex items-center gap-2 mb-6">
-            <BookOpen className="text-orange-500" size={22} />
-            <h2 className="text-xl font-bold text-gray-900">
+            <BookOpen className="text-brand-accent-foreground" size={22} />
+            <h2 className="text-xl font-bold text-snow-900">
               Cẩm nang & Mẹo săn voucher
             </h2>
           </div>
@@ -304,7 +314,7 @@ export default function VoucherSearchPage() {
                 <div
                   key={art.id}
                   onClick={() => navigate(`/customer/articles/${art.id}`)}
-                  className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between cursor-pointer group"
+                  className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-card hover:shadow-soft transition-shadow flex flex-col justify-between cursor-pointer group"
                 >
                   {artImg && (
                     <div className="w-full h-44 overflow-hidden bg-gray-100">
@@ -317,10 +327,10 @@ export default function VoucherSearchPage() {
                   )}
                   <div className="p-5 flex flex-col flex-1 justify-between">
                     <div>
-                      <span className="inline-block px-2.5 py-1 rounded-md bg-orange-50 text-orange-600 text-xs font-semibold mb-2">
+                      <span className="inline-block px-2.5 py-1 rounded-md bg-brand-accent-soft text-brand-accent-foreground text-xs font-semibold mb-2">
                         Bài viết hữu ích
                       </span>
-                      <h3 className="font-bold text-gray-900 text-base mb-2 line-clamp-2 group-hover:text-orange-600 transition-colors">
+                      <h3 className="font-bold text-snow-900 text-base mb-2 line-clamp-2 group-hover:text-sky-700 transition-colors">
                         {art.title}
                       </h3>
                       <p className="text-xs text-gray-600 line-clamp-3 leading-relaxed">
@@ -334,7 +344,7 @@ export default function VoucherSearchPage() {
                           ? new Date(art.createdAt).toLocaleDateString("vi-VN")
                           : "Hôm nay"}
                       </span>
-                      <span className="text-orange-600 font-semibold group-hover:underline">
+                      <span className="text-sky-700 font-semibold group-hover:underline">
                         Đọc tiếp →
                       </span>
                     </div>

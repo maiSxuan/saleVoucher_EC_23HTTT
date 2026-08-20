@@ -37,23 +37,24 @@ class AuditLogService {
           .maybeSingle();
         if (byUser) return byUser.ma_tk;
 
-        // 3. Try lookup via hosodn: ma_hs → id_nguoi_dai_dien → taikhoan.ma_tk
-        const { data: hosodn } = await supabase
-          .from("hosodn")
-          .select("id_nguoi_dai_dien")
-          .eq("ma_hs", actorId)
+        // 3. Try lookup via hosodn: ma_hs → nguoidung.ma_hsdn → taikhoan.ma_tk
+        const { data: representative } = await supabase
+          .from("nguoidung")
+          .select("ma_nguoi_dung")
+          .eq("ma_hsdn", actorId)
+          .eq("vai_tro", "Nguoi dai dien")
           .maybeSingle();
-        if (hosodn?.id_nguoi_dai_dien) {
+        if (representative?.ma_nguoi_dung) {
           const { data: byRep } = await supabase
             .from("taikhoan")
             .select("ma_tk")
-            .eq("ma_nguoi_dung", hosodn.id_nguoi_dai_dien)
+            .eq("ma_nguoi_dung", representative.ma_nguoi_dung)
             .limit(1)
             .maybeSingle();
           if (byRep) return byRep.ma_tk;
         }
 
-        // 4. Try lookup via chinhanh: ma_chi_nhanh → ma_hs → id_nguoi_dai_dien → taikhoan.ma_tk
+        // 4. Try lookup via chinhanh: ma_chi_nhanh → ma_hs → nguoidung.ma_hsdn → taikhoan.ma_tk
         const { data: chinhanh } = await supabase
           .from("chinhanh")
           .select("ma_hs")
@@ -63,7 +64,7 @@ class AuditLogService {
           return await this.resolveActorId(chinhanh.ma_hs, actorRole);
         }
 
-        // 5. Try lookup via voucher: ma_voucher → ma_hs → id_nguoi_dai_dien → taikhoan.ma_tk
+        // 5. Try lookup via voucher: ma_voucher → ma_hs → nguoidung.ma_hsdn → taikhoan.ma_tk
         const { data: voucher } = await supabase
           .from("voucher")
           .select("ma_hs")
@@ -73,7 +74,7 @@ class AuditLogService {
           return await this.resolveActorId(voucher.ma_hs, actorRole);
         }
 
-        // 6. Try lookup via yeu_cau_cap_nhat_hosodn: ma_yc → ma_hs → id_nguoi_dai_dien → taikhoan.ma_tk
+        // 6. Try lookup via yeu_cau_cap_nhat_hosodn: ma_yc → ma_hs → nguoidung.ma_hsdn → taikhoan.ma_tk
         const { data: reqProfile } = await supabase
           .from("yeu_cau_cap_nhat_hosodn")
           .select("ma_hs")
@@ -83,7 +84,7 @@ class AuditLogService {
           return await this.resolveActorId(reqProfile.ma_hs, actorRole);
         }
 
-        // 7. Try lookup via yeu_cau_cap_nhat_chinhanh: ma_yc → ma_hs → id_nguoi_dai_dien → taikhoan.ma_tk
+        // 7. Try lookup via yeu_cau_cap_nhat_chinhanh: ma_yc → ma_hs → nguoidung.ma_hsdn → taikhoan.ma_tk
         const { data: reqBranch } = await supabase
           .from("yeu_cau_cap_nhat_chinhanh")
           .select("ma_hs")
@@ -99,15 +100,19 @@ class AuditLogService {
 
     // 8. Default fallback if actorId is still null/unresolved
     try {
-      if (actorRole === "ADMIN" || actorRole === "ADMIN_ROOT") {
+      const adminDbRole = {
+        ADMIN_SYSTEM: "Admin he thong",
+        ADMIN_MODERATION: "Admin kiem duyet",
+        ADMIN_OPERATION: "Admin van hang",
+      }[actorRole];
+      if (adminDbRole) {
         const { data: adminAcc } = await supabase
           .from("taikhoan")
-          .select("ma_tk")
-          .ilike("thong_tin_dang_nhap", "%admin%")
+          .select("ma_tk, nguoidung!inner(vai_tro)")
+          .eq("nguoidung.vai_tro", adminDbRole)
           .limit(1)
           .maybeSingle();
         if (adminAcc?.ma_tk) return adminAcc.ma_tk;
-        return "10000000-0000-0000-0000-000000000001";
       }
 
       // Default fallback for PARTNER if null:
@@ -127,7 +132,8 @@ class AuditLogService {
 
   /**
    * Normalize role string (DB Vietnamese or JWT) to clean standard role keys:
-   * 'PARTNER_OWNER', 'PARTNER_MANAGER', 'PARTNER_STAFF', 'ADMIN', 'CUSTOMER'
+   * 'PARTNER_OWNER', 'PARTNER_MANAGER', 'PARTNER_STAFF',
+   * 'Admin he thong', 'Admin kiem duyet', 'Admin van hanh', 'CUSTOMER'
    */
   normalizeRoleToKey(roleStr) {
     if (!roleStr || typeof roleStr !== "string") return null;
@@ -142,8 +148,17 @@ class AuditLogService {
     if (r.includes("ban hang") || r.includes("staff") || r === "partner_staff") {
       return "PARTNER_STAFF";
     }
-    if (r.includes("admin")) {
-      return "ADMIN";
+    if (r === "Admin he thong" || r.includes("admin he thong")) {
+      return "Admin he thong";
+    }
+    if (r === "Admin kiem duyet" || r.includes("admin kiem duyet")) {
+      return "Admin kiem duyet";
+    }
+    if (r === "Admin van hanh" || r.includes("admin van hang")) {
+      return "Admin van hanh";
+    }
+    if (r === "admin") {
+      return "Admin he thong";
     }
     if (r.includes("khach hang") || r.includes("customer")) {
       return "CUSTOMER";
@@ -153,7 +168,7 @@ class AuditLogService {
   }
 
   /**
-   * Resolve specific role key (e.g. 'PARTNER_OWNER', 'PARTNER_MANAGER', 'ADMIN')
+   * Resolve specific role key (e.g. 'PARTNER_OWNER', 'PARTNER_MANAGER', 'Admin he thong')
    * when actorRole is generic ('PARTNER') or null.
    */
   async resolveActorRole(actorId, actorRole = null) {
@@ -193,7 +208,7 @@ class AuditLogService {
    * Ghi một bản ghi audit log vào DB.
    * @param {object} params
    *  - actorId: uuid tài khoản hoặc người dùng thực hiện (sẽ tự resolve sang ma_tk)
-   *  - actorRole: string role JWT (ví dụ: 'ADMIN')
+   *  - actorRole: string role JWT (ví dụ: 'Admin he thong')
    *  - action: string mô tả hành động (ví dụ: 'LOGIN', 'LOCK_USER')
    *  - targetType: string tên đối tượng (ví dụ: 'NGUOIDUNG', 'VOUCHER')
    *  - targetId: uuid của đối tượng bị tác động

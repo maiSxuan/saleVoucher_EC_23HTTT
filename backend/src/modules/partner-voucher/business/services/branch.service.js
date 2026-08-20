@@ -16,9 +16,13 @@ class BranchService {
 
     try {
       await auditLogService.log({
-        actorId: actorId || payload.actorId || payload.ma_hs || payload.ma_chi_nhanh,
+        actorId:
+          actorId || payload.actorId || payload.ma_hs || payload.ma_chi_nhanh,
         actorRole: "PARTNER",
-        action: payload.loai_yeu_cau === "Xoa" ? "REQUEST_DELETE_BRANCH" : "REQUEST_UPDATE_BRANCH",
+        action:
+          payload.loai_yeu_cau === "Xoa"
+            ? "REQUEST_DELETE_BRANCH"
+            : "REQUEST_UPDATE_BRANCH",
         targetType: "CHINHANH",
         targetId: payload.ma_chi_nhanh || payload.ma_hs,
         after: {
@@ -30,7 +34,10 @@ class BranchService {
         reason: "Đối tác gửi yêu cầu cập nhật/xóa chi nhánh",
       });
     } catch (e) {
-      console.warn("[BranchService] Log createBranchRequest failed:", e.message);
+      console.warn(
+        "[BranchService] Log createBranchRequest failed:",
+        e.message,
+      );
     }
 
     return createdReq;
@@ -74,12 +81,15 @@ class BranchService {
       }
     }
 
-    const res = await branchRequestRepository.updateStatus(requestId, "Da duyet");
+    const res = await branchRequestRepository.updateStatus(
+      requestId,
+      "Da duyet",
+    );
 
     try {
       await auditLogService.log({
         actorId: adminId,
-        actorRole: "ADMIN",
+        actorRole: "Admin kiem duyet",
         action: "APPROVE_BRANCH_REQUEST",
         targetType: "CHINHANH",
         targetId: req.ma_chi_nhanh,
@@ -88,7 +98,10 @@ class BranchService {
         reason: "Admin phê duyệt yêu cầu thay đổi thông tin chi nhánh",
       });
     } catch (e) {
-      console.warn("[BranchService] Log APPROVE_BRANCH_REQUEST failed:", e.message);
+      console.warn(
+        "[BranchService] Log APPROVE_BRANCH_REQUEST failed:",
+        e.message,
+      );
     }
 
     return res;
@@ -106,12 +119,16 @@ class BranchService {
       });
     }
 
-    const res = await branchRequestRepository.updateStatus(requestId, "Tu choi", adminNote);
+    const res = await branchRequestRepository.updateStatus(
+      requestId,
+      "Tu choi",
+      adminNote,
+    );
 
     try {
       await auditLogService.log({
         actorId: adminId,
-        actorRole: "ADMIN",
+        actorRole: "Admin kiem duyet",
         action: "REJECT_BRANCH_REQUEST",
         targetType: "CHINHANH",
         targetId: req?.ma_chi_nhanh || requestId,
@@ -120,7 +137,10 @@ class BranchService {
         reason: adminNote || "Admin từ chối yêu cầu chi nhánh",
       });
     } catch (e) {
-      console.warn("[BranchService] Log REJECT_BRANCH_REQUEST failed:", e.message);
+      console.warn(
+        "[BranchService] Log REJECT_BRANCH_REQUEST failed:",
+        e.message,
+      );
     }
 
     return res;

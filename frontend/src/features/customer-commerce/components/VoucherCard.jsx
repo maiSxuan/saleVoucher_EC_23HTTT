@@ -8,7 +8,7 @@ export default function VoucherCard({ voucher: v, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="bg-white rounded-2xl shadow-sm hover:shadow-lg border border-gray-100 overflow-hidden text-left transition-all duration-200 group flex flex-col h-full"
+      className="bg-white rounded-2xl shadow-card hover:shadow-soft border border-slate-200/80 overflow-hidden text-left transition-all duration-200 group flex flex-col h-full"
     >
       <div className="relative overflow-hidden">
         <img
@@ -25,25 +25,25 @@ export default function VoucherCard({ voucher: v, onClick }) {
 
       <div className="p-4 flex flex-col flex-1 justify-between">
         <div>
-          <p className="text-xs text-orange-600 font-semibold uppercase tracking-wider mb-1">
+          <p className="text-xs text-sky-600 font-semibold uppercase tracking-wider mb-1">
             {typeof v.partner === 'object' && v.partner !== null ? (v.partner.ten_dn || v.partner.name || "Đối tác") : (v.partner || "Đối tác")}
           </p>
-          <p className="text-base font-bold text-gray-900 line-clamp-2 mb-3 group-hover:text-orange-600 transition-colors">
+          <p className="text-base font-bold text-snow-900 line-clamp-2 mb-3 group-hover:text-sky-700 transition-colors">
             {typeof v.name === 'object' && v.name !== null ? v.name.name : v.name}
           </p>
         </div>
 
         <div>
           <div className="flex items-baseline gap-2 mb-2">
-            <p className="text-lg font-extrabold text-orange-600">
+            <p className="text-lg font-extrabold text-sky-700">
               {v.salePrice?.toLocaleString("vi-VN")}đ
             </p>
-            <p className="text-xs text-gray-400 line-through font-medium">
+            <p className="text-xs text-slate-400 line-through font-medium">
               {v.originalPrice?.toLocaleString("vi-VN")}đ
             </p>
           </div>
 
-          <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-gray-50">
+          <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
             {remaining <= 20 && remaining > 0 ? (
               <span className="text-red-500 font-semibold">
                 Còn lại {remaining}

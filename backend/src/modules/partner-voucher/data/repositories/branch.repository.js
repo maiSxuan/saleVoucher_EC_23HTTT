@@ -3,7 +3,7 @@ const BranchModel = require("../models/branch.model");
 
 class BranchRepository {
   /**
-   * Find branches by partner ID (ma_hs / id_nguoi_dai_dien / user ID) directly from Supabase DB
+   * Find branches by partner ID (ma_hs or ma_nguoi_dung) directly from Supabase DB.
    */
   async findByPartnerId(partnerId) {
     if (!partnerId || partnerId === "undefined" || partnerId === "null") return [];
@@ -16,7 +16,7 @@ class BranchRepository {
         const { data: hosodn } = await supabase
           .from("hosodn")
           .select("ma_hs")
-          .or(`ma_hs.eq.${partnerId},id_nguoi_dai_dien.eq.${partnerId}`)
+          .eq("ma_hs", partnerId)
           .maybeSingle();
 
         if (hosodn?.ma_hs) {

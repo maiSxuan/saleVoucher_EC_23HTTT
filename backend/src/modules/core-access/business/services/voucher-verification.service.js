@@ -139,26 +139,16 @@ class VoucherVerificationService {
 
     let maHsdn = actor.ma_hsdn || null;
 
-    // Nếu là Admin -> lấy tất cả chi nhánh
-    if (actor.role === 'ADMIN' || actor.vai_tro_he_thong === 'Quan tri he thong') {
-      const { data, error } = await supabase
-        .from('chinhanh')
-        .select('ma_chi_nhanh, ten_chi_nhanh, dia_chi, khu_vuc, trang_thai, ma_hs, hosodn(ten_dn)')
-        .order('ten_chi_nhanh', { ascending: true });
-      if (error) throw new Error(`Lỗi lấy danh sách chi nhánh: ${error.message}`);
-      return data || [];
-    }
-
-    // Nếu chưa có ma_hsdn và là người đại diện, tìm ma_hs qua id_nguoi_dai_dien
+    // Lấy lại quan hệ từ NGUOIDUNG nếu JWT chưa có ma_hsdn.
     if (!maHsdn) {
       const userId = actor.id || actor.ma_nguoi_dung;
       if (userId) {
-        const { data: hs } = await supabase
-          .from('hosodn')
-          .select('ma_hs, ten_dn')
-          .eq('id_nguoi_dai_dien', userId)
+        const { data: user } = await supabase
+          .from('nguoidung')
+          .select('ma_hsdn')
+          .eq('ma_nguoi_dung', userId)
           .maybeSingle();
-        if (hs) maHsdn = hs.ma_hs;
+        if (user?.ma_hsdn) maHsdn = user.ma_hsdn;
       }
     }
 

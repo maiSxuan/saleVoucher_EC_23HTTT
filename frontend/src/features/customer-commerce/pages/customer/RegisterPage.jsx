@@ -178,16 +178,19 @@ export default function RegisterPage() {
 
   // ================= UI =================
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-lg max-w-sm w-full p-6">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-cyan-50 flex items-center justify-center p-4">
+      <div className="bg-white border border-sky-100 rounded-2xl shadow-xl shadow-sky-900/10 max-w-sm w-full p-6">
         <Link
           to="/"
           className="flex flex-col items-center group mb-5"
           aria-label="Về trang chủ Snow Voucher"
         >
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sky-400 to-blue-500 text-white flex items-center justify-center mb-2 shadow-md shadow-sky-200 group-hover:scale-105 transition-transform">
-            <span className="text-xl" aria-hidden="true">❄️</span>
-          </div>
+          <img
+            src="/snowflake.png"
+            alt=""
+            aria-hidden="true"
+            className="w-12 h-12 object-contain mb-2 drop-shadow-md group-hover:scale-105 transition-transform"
+          />
           <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-transparent">
             Snow Voucher
           </span>
@@ -221,7 +224,7 @@ export default function RegisterPage() {
                   setLoginInfo(e.target.value);
                   clearErrors();
                 }}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 ${errors.loginInfo ? "border-red-400" : "border-gray-300"}`}
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 ${errors.loginInfo ? "border-red-400" : "border-gray-300"}`}
               />
               <Err field="loginInfo" />
             </div>
@@ -254,14 +257,14 @@ export default function RegisterPage() {
             <button
               onClick={handleRegister}
               disabled={loading}
-              className="w-full bg-orange-500 text-white py-2 rounded-lg text-sm font-semibold hover:bg-orange-600 disabled:opacity-60 mt-1"
+              className="w-full bg-sky-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 disabled:opacity-60 transition-colors mt-1"
             >
               {loading ? "Đang xử lý..." : "Đăng ký"}
             </button>
 
             <p className="text-center text-sm text-gray-500 mt-3">
               Đã có tài khoản?{" "}
-              <Link to="/login" className="text-orange-600 font-medium">
+              <Link to="/login" className="text-sky-700 hover:text-sky-800 font-medium transition-colors">
                 Đăng nhập
               </Link>
             </p>
@@ -296,7 +299,7 @@ export default function RegisterPage() {
                   clearErrors();
                 }}
                 maxLength={6}
-                className={`w-full border rounded-lg px-3 py-2 text-sm text-center tracking-widest focus:outline-none focus:ring-2 focus:ring-orange-500 ${errors.otp ? "border-red-400" : "border-gray-300"}`}
+                className={`w-full border rounded-lg px-3 py-2 text-sm text-center tracking-widest focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 ${errors.otp ? "border-red-400" : "border-gray-300"}`}
               />
               <Err field="otp" />
             </div>
@@ -308,7 +311,7 @@ export default function RegisterPage() {
                 <button
                   onClick={handleResendOtp}
                   disabled={loading}
-                  className="text-xs text-orange-600 flex items-center gap-1"
+                  className="text-xs text-sky-700 hover:text-sky-800 flex items-center gap-1 transition-colors"
                 >
                   <RefreshCw size={12} /> Gửi lại mã
                 </button>
@@ -318,7 +321,7 @@ export default function RegisterPage() {
             <button
               onClick={handleVerifyOtp}
               disabled={loading}
-              className="w-full bg-orange-500 text-white py-2 rounded-lg text-sm font-semibold hover:bg-orange-600 disabled:opacity-60"
+              className="w-full bg-sky-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 disabled:opacity-60 transition-colors"
             >
               {loading ? "Đang xác thực..." : "Xác nhận"}
             </button>
@@ -341,7 +344,7 @@ function PwField({ label, value, onChange, show, onToggle, error, required }) {
           type={show ? "text" : "password"}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={`w-full border rounded-lg px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 ${error ? "border-red-400" : "border-gray-300"}`}
+          className={`w-full border rounded-lg px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 ${error ? "border-red-400" : "border-gray-300"}`}
         />
         <button
           type="button"

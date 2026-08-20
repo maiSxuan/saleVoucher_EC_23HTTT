@@ -130,21 +130,24 @@ export function PartnerLayout({ children }) {
     : allNavItems;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
+    <div className="theme-snow min-h-screen bg-snow-50 flex flex-col font-sans text-snow-800">
       {/* Top Bar */}
-      <header className="h-16 bg-white border-b border-slate-200 sticky top-0 z-30 flex items-center justify-between px-6 shadow-xs">
+      <header className="h-16 bg-white border-b border-slate-200 sticky top-0 z-30 flex items-center justify-between px-6 shadow-card">
         <div className="flex items-center gap-4">
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
+            className="p-2 rounded-lg hover:bg-sky-50 text-slate-600 transition-colors cursor-pointer"
             title="Đóng/Mở thanh điều hướng"
           >
             ☰
           </button>
           <Link to="/" className="flex items-center gap-2 group" aria-label="Về trang chủ Snow Voucher">
-            <span className="w-8 h-8 rounded-lg bg-gradient-to-tr from-sky-400 to-blue-500 text-white font-bold flex items-center justify-center text-sm shadow-xs group-hover:scale-105 transition-transform">
-              ❄️
-            </span>
+            <img
+              src="/snowflake.png"
+              alt=""
+              aria-hidden="true"
+              className="w-8 h-8 object-contain drop-shadow-sm group-hover:scale-105 transition-transform"
+            />
             <div>
               <h1 className="font-bold text-slate-900 text-sm leading-tight">Snow Voucher</h1>
               <p className="text-[11px] text-slate-500">Cổng Quản Lý Đối Tác</p>
@@ -164,13 +167,13 @@ export function PartnerLayout({ children }) {
 
           {/* User Profile Badge */}
           <div className="flex items-center gap-2.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
-            <div className="w-8 h-8 rounded-lg bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-700 font-bold text-xs shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-sky-100 border border-sky-200 flex items-center justify-center text-sky-700 font-bold text-xs shrink-0">
               <User className="w-4 h-4" />
             </div>
             <div className="text-left hidden sm:block">
               <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                 <span>{userName}</span>
-                <span className="text-[10px] px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-200 font-medium">
+                <span className="text-[10px] px-1.5 py-0.5 bg-sky-50 text-sky-700 rounded-md border border-sky-200 font-medium">
                   {userRole}
                 </span>
               </div>
@@ -232,7 +235,7 @@ export function PartnerLayout({ children }) {
                   <button
                     key={item.path}
                     onClick={() => navigate("/partner/profile")}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all text-slate-400 bg-slate-50/50 hover:bg-amber-50/60 hover:text-amber-700 cursor-pointer group`}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all text-slate-400 bg-slate-50/50 hover:bg-sky-50/60 hover:text-sky-700 cursor-pointer group`}
                     title="Tài khoản chưa kích hoạt. Vào Hồ sơ doanh nghiệp để xem thông tin & gửi duyệt."
                   >
                     <div className="flex items-center gap-3">
@@ -250,11 +253,11 @@ export function PartnerLayout({ children }) {
                   to={item.path}
                   className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
                     isActive
-                      ? "bg-emerald-50 text-emerald-700 font-bold shadow-2xs border border-emerald-200/50"
+                      ? "bg-sky-50 text-sky-700 font-bold shadow-2xs border border-sky-200/50"
                       : "text-slate-600 hover:bg-slate-100/70 hover:text-slate-900"
                   }`}
                 >
-                  <IconComponent className={`w-4 h-4 shrink-0 ${isActive ? "text-emerald-600" : "text-slate-400"}`} />
+                  <IconComponent className={`w-4 h-4 shrink-0 ${isActive ? "text-sky-600" : "text-slate-400"}`} />
                   {!collapsed && <span className="truncate">{item.label}</span>}
                 </Link>
               );
@@ -294,7 +297,7 @@ export function PartnerLayout({ children }) {
               <div className="pt-2">
                 <Link
                   to="/partner/profile"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-sm rounded-xl transition-all shadow-md hover:shadow-lg transform active:scale-95"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 text-white font-bold text-sm rounded-xl transition-all shadow-md hover:shadow-lg transform active:scale-95"
                 >
                   <Building className="w-4 h-4" />
                   <span>Hồ sơ doanh nghiệp & Gửi duyệt</span>

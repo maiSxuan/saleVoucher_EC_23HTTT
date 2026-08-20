@@ -20,6 +20,7 @@ import {
   verifyOtpApi,
   resetPasswordApi,
 } from "../../../../shared/api/authApi";
+import { ADMIN_PORTAL_ROLES } from "../../../../shared/constants/admin-roles";
 
 export default function LoginPage() {
   // mode: 'login' | 'forgot-password' (Bước 1) | 'verify-otp' (Bước 2) | 'reset-password' (Bước 3)
@@ -58,7 +59,7 @@ export default function LoginPage() {
     persistSession(accessToken, payload.user, rfToken);
 
     const userRole = payload.user?.role;
-    if (userRole === "ADMIN") navigate("/admin");
+    if (ADMIN_PORTAL_ROLES.includes(userRole)) navigate("/admin");
     else if (
       userRole === "PARTNER_OWNER" ||
       userRole === "PARTNER_STAFF" ||
@@ -215,9 +216,12 @@ export default function LoginPage() {
             className="flex flex-col items-center group"
             aria-label="Về trang chủ Snow Voucher"
           >
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-sky-400 to-blue-500 flex items-center justify-center mb-3 shadow-lg shadow-sky-200 group-hover:scale-105 transition-transform">
-              <span className="text-2xl" aria-hidden="true">❄️</span>
-            </div>
+            <img
+              src="/snowflake.png"
+              alt=""
+              aria-hidden="true"
+              className="w-14 h-14 object-contain mb-3 drop-shadow-lg group-hover:scale-105 transition-transform"
+            />
             <h1 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
               Snow Voucher
             </h1>

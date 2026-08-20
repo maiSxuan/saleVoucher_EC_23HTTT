@@ -248,10 +248,15 @@ export default function PartnerVoucherLookupPage() {
           <div className="flex items-center gap-3.5">
             <Link
               to="/"
-              className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-400 to-blue-500 text-white flex items-center justify-center shadow-xs font-black text-base shrink-0 hover:scale-105 transition-transform"
+              className="w-10 h-10 shrink-0 hover:scale-105 transition-transform"
               aria-label="Về trang chủ Snow Voucher"
             >
-              ❄️
+              <img
+                src="/snowflake.png"
+                alt=""
+                aria-hidden="true"
+                className="w-full h-full object-contain drop-shadow-sm"
+              />
             </Link>
             <div>
               <div className="flex items-center gap-2">

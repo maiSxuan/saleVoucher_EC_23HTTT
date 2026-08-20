@@ -145,7 +145,7 @@ export default function CheckoutPage() {
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => setPayMethod("vnpay")}
-                className={`border rounded-xl p-3 flex flex-col items-center gap-1 text-sm transition-colors ${payMethod === "vnpay" ? "border-orange-500 bg-orange-50 text-orange-700" : "border-gray-200 text-gray-600"}`}
+                className={`border rounded-xl p-3 flex flex-col items-center gap-1 text-sm transition-colors ${payMethod === "vnpay" ? "border-sky-500 bg-sky-50 text-sky-700" : "border-gray-200 text-gray-600"}`}
               >
                 <Building2 size={20} />
                 <span className="font-medium">VNPay</span>
@@ -153,7 +153,7 @@ export default function CheckoutPage() {
               </button>
               <button
                 onClick={() => setPayMethod("paypal")}
-                className={`border rounded-xl p-3 flex flex-col items-center gap-1 text-sm transition-colors ${payMethod === "paypal" ? "border-orange-500 bg-orange-50 text-orange-700" : "border-gray-200 text-gray-600"}`}
+                className={`border rounded-xl p-3 flex flex-col items-center gap-1 text-sm transition-colors ${payMethod === "paypal" ? "border-sky-500 bg-sky-50 text-sky-700" : "border-gray-200 text-gray-600"}`}
               >
                 <Globe size={20} />
                 <span className="font-medium">PayPal</span>
@@ -195,7 +195,7 @@ export default function CheckoutPage() {
             <button
               onClick={handlePay}
               disabled={redirecting}
-              className="mt-4 w-full bg-orange-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-orange-600 disabled:opacity-60 flex items-center justify-center gap-2"
+              className="mt-4 w-full bg-sky-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-sky-600 disabled:opacity-60 flex items-center justify-center gap-2"
             >
               <CreditCard size={16} />{" "}
               {redirecting ? "Đang chuyển hướng..." : "Xác nhận thanh toán"}

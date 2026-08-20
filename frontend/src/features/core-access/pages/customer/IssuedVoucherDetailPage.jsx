@@ -56,7 +56,7 @@ function StatusBadge({ status }) {
     "Loi sinh ma": {
       icon: <AlertCircle className="w-4 h-4" />,
       label: "Lỗi phát hành",
-      cls: "bg-orange-50 text-orange-600 border-orange-300",
+      cls: "bg-rose-50 text-rose-600 border-rose-300",
     },
   };
   const cfg = configs[status] || {
@@ -136,7 +136,7 @@ export default function IssuedVoucherDetailPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center py-24 gap-3">
-        <RefreshCw className="w-8 h-8 text-orange-400 animate-spin" />
+        <RefreshCw className="w-8 h-8 text-sky-400 animate-spin" />
         <p className="text-sm text-slate-500">Đang tải thông tin voucher...</p>
       </div>
     );
@@ -160,7 +160,7 @@ export default function IssuedVoucherDetailPage() {
         <div className="flex flex-col gap-2">
           <button
             onClick={() => navigate("/customer/orders")}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-500 text-white text-sm font-semibold rounded-xl hover:bg-orange-600"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-sky-500 text-white text-sm font-semibold rounded-xl hover:bg-sky-600"
           >
             <ShoppingBag className="w-4 h-4" />
             Xem đơn hàng của tôi
@@ -202,7 +202,7 @@ export default function IssuedVoucherDetailPage() {
       </button>
 
       {/* Header card */}
-      <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-5 mb-4 text-white shadow-lg">
+      <div className="bg-[#1E9EDB] rounded-2xl p-5 mb-4 text-white shadow-lg">
         <div className="flex items-start gap-3">
           <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
             {v.hinh_anh_url ? (
@@ -219,7 +219,7 @@ export default function IssuedVoucherDetailPage() {
             <p className="font-bold text-lg leading-tight truncate">
               {v.ten_voucher || "Voucher"}
             </p>
-            <p className="text-sm text-orange-100 mt-0.5">
+            <p className="text-sm text-sky-100 mt-0.5">
               {vm.partnerName || "Đối tác"}
             </p>
             <div className="mt-2">
@@ -249,7 +249,7 @@ export default function IssuedVoucherDetailPage() {
           <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1.5">
             Mã Voucher
           </p>
-          <p className="font-mono font-bold text-lg text-orange-600 tracking-widest">
+          <p className="font-mono font-bold text-lg text-sky-600 tracking-widest">
             {vm.voucher_code}
           </p>
         </div>
@@ -293,7 +293,7 @@ export default function IssuedVoucherDetailPage() {
       {branches.length > 0 && (
         <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
-            <Building2 className="w-4 h-4 text-orange-500" />
+            <Building2 className="w-4 h-4 text-sky-500" />
             <h3 className="text-sm font-semibold text-slate-800">
               Chi nhánh áp dụng ({branches.length})
             </h3>
@@ -304,7 +304,7 @@ export default function IssuedVoucherDetailPage() {
                 key={b.branchId || idx}
                 className="flex items-start gap-2 p-2.5 bg-slate-50 rounded-xl"
               >
-                <MapPin className="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5" />
+                <MapPin className="w-4 h-4 text-sky-400 flex-shrink-0 mt-0.5" />
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-slate-700 truncate">
                     {b.branchName}
@@ -313,7 +313,7 @@ export default function IssuedVoucherDetailPage() {
                     <p className="text-xs text-slate-400 truncate">{b.address}</p>
                   )}
                   {b.area && (
-                    <p className="text-xs text-orange-500">{b.area}</p>
+                    <p className="text-xs text-sky-500">{b.area}</p>
                   )}
                 </div>
               </div>
@@ -327,7 +327,7 @@ export default function IssuedVoucherDetailPage() {
         {existingReview ? (
           <button
             onClick={() => setShowViewReviewModal(true)}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-amber-50 text-amber-700 border border-amber-200 text-sm font-medium rounded-xl hover:bg-amber-100 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-sky-50 text-sky-700 border border-sky-200 text-sm font-medium rounded-xl hover:bg-sky-100 transition-colors"
           >
             <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
             Xem đánh giá của bạn
@@ -335,7 +335,7 @@ export default function IssuedVoucherDetailPage() {
         ) : (
           <button
             onClick={() => setShowReviewModal(true)}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-orange-50 text-orange-600 border border-orange-200 text-sm font-medium rounded-xl hover:bg-orange-100 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-sky-50 text-sky-600 border border-sky-200 text-sm font-medium rounded-xl hover:bg-sky-100 transition-colors"
           >
             <Star className="w-4 h-4" />
             Viết đánh giá
@@ -344,14 +344,14 @@ export default function IssuedVoucherDetailPage() {
 
         <button
           onClick={() => navigate("/customer/vouchers/my")}
-          className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 text-sm font-medium text-slate-700 rounded-xl hover:border-orange-300 hover:text-orange-600 transition-colors"
+          className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 text-sm font-medium text-slate-700 rounded-xl hover:border-sky-300 hover:text-sky-600 transition-colors"
         >
           <Ticket className="w-4 h-4" />
           Xem tất cả voucher của tôi
         </button>
         <button
           onClick={() => navigate("/customer/orders")}
-          className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 text-sm font-medium text-slate-700 rounded-xl hover:border-orange-300 hover:text-orange-600 transition-colors"
+          className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 text-sm font-medium text-slate-700 rounded-xl hover:border-sky-300 hover:text-sky-600 transition-colors"
         >
           <ShoppingBag className="w-4 h-4" />
           Đơn hàng của tôi

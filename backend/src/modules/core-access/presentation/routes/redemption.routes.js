@@ -21,7 +21,6 @@ const controller = new RedemptionController(
 const ALLOWED_STAFF_ROLES = [
   JWT_ROLES.PARTNER_OWNER,
   JWT_ROLES.PARTNER_STAFF,
-  JWT_ROLES.ADMIN,
 ];
 
 // 1. Tra cứu / Xác minh tính hợp lệ voucher code (BR-PAR-05)

@@ -11,22 +11,26 @@ class PartnerRepository {
    */
   async findAll(query = {}) {
     try {
-      let dbQuery = supabase
-        .from("hosodn")
-        .select("*, nguoidung!id_nguoi_dai_dien(*)");
+      let dbQuery = supabase.from("hosodn").select("*");
 
       if (query.status && query.status !== "ALL") {
         dbQuery = dbQuery.eq("trang_thai", query.status);
       }
 
       // Execute queries in parallel for maximum performance
-      const [hosodnRes, chinhanhRes] = await Promise.all([
+      const [hosodnRes, chinhanhRes, representativesRes] = await Promise.all([
         dbQuery,
         supabase.from("chinhanh").select("ma_chi_nhanh, ma_hs, trang_thai, ten_chi_nhanh, dia_chi, khu_vuc"),
+        supabase.from("nguoidung").select("*").eq("vai_tro", "Nguoi dai dien"),
       ]);
 
       const data = hosodnRes.data || [];
       const branchesData = chinhanhRes.data || [];
+      const representativesByPartner = new Map(
+        (representativesRes.data || [])
+          .filter((representative) => representative.ma_hsdn)
+          .map((representative) => [representative.ma_hsdn, representative]),
+      );
 
       // Fetch pending branch change requests and profile update requests
       const branchRequestRepo = require("./branch-request.repository");
@@ -85,7 +89,7 @@ class PartnerRepository {
       }
 
       return uniquePartners.map((item) => {
-        const rep = item.nguoidung || item.nguoi_dai_dien || {};
+        const rep = representativesByPartner.get(item.ma_hs) || item.nguoi_dai_dien || {};
         const pBranches = branchesByPartner.get(item.ma_hs) || item.branches || [];
         
         // Active partner OR pending partner: Count all pending branch requests
@@ -102,11 +106,11 @@ class PartnerRepository {
           logo: item.logo || "",
           ngay_tao: item.ngay_tao || new Date().toISOString(),
           trang_thai: item.trang_thai || "Cho duyet",
-          id_nguoi_dai_dien: item.id_nguoi_dai_dien,
           ly_do_tu_choi: item.ly_do_tu_choi || "",
           branches: pBranches,
           pending_branch_requests: totalPendingReqs,
           nguoi_dai_dien: {
+            ma_nguoi_dung: rep.ma_nguoi_dung || null,
             ho_ten: rep.ho_ten || "Chưa cập nhật",
             sdt: rep.sdt || "",
             email: rep.email || "",
@@ -123,36 +127,48 @@ class PartnerRepository {
   }
 
   /**
-   * Find partner by ID (ma_hs) or user ID (id_nguoi_dai_dien)
+   * Find partner by ID (ma_hs) or its representative's ma_nguoi_dung.
    */
   async findById(id) {
     if (!id) return null;
     try {
       let { data } = await supabase
         .from("hosodn")
-        .select("*, nguoidung!id_nguoi_dai_dien(*)")
+        .select("*")
         .eq("ma_hs", id)
         .maybeSingle();
 
+      let repUser = null;
       if (!data) {
-        const { data: byRep } = await supabase
-          .from("hosodn")
-          .select("*, nguoidung!id_nguoi_dai_dien(*)")
-          .eq("id_nguoi_dai_dien", id)
+        const { data: representative } = await supabase
+          .from("nguoidung")
+          .select("*")
+          .eq("ma_nguoi_dung", id)
+          .eq("vai_tro", "Nguoi dai dien")
           .maybeSingle();
-        data = byRep;
+
+        if (representative?.ma_hsdn) {
+          const { data: byRep } = await supabase
+            .from("hosodn")
+            .select("*")
+            .eq("ma_hs", representative.ma_hsdn)
+            .maybeSingle();
+          data = byRep;
+          repUser = representative;
+        }
       }
 
       if (!data && REGISTERED_PARTNERS.has(id)) {
         data = REGISTERED_PARTNERS.get(id);
       }
 
-      let repUser = data?.nguoidung || data?.nguoi_dai_dien || null;
-      if (!repUser && id) {
+      repUser = repUser || data?.nguoi_dai_dien || null;
+      if (!repUser && data?.ma_hs) {
         const { data: userRecord } = await supabase
           .from("nguoidung")
           .select("*")
-          .or(`ma_nguoi_dung.eq.${id},ma_hsdn.eq.${id}`)
+          .eq("ma_hsdn", data.ma_hs)
+          .eq("vai_tro", "Nguoi dai dien")
           .maybeSingle();
 
         if (userRecord) {
@@ -187,10 +203,10 @@ class PartnerRepository {
         logo: fallbackData?.logo || "",
         ngay_tao: fallbackData?.ngay_tao || new Date().toISOString(),
         trang_thai: status,
-        id_nguoi_dai_dien: fallbackData?.id_nguoi_dai_dien || repUser?.ma_nguoi_dung || id,
         ly_do_tu_choi: lyDoTuChoi || "",
         branches: branches || fallbackData?.branches || [],
         nguoi_dai_dien: {
+          ma_nguoi_dung: repUser?.ma_nguoi_dung || null,
           ho_ten: repUser?.ho_ten || fallbackData?.nguoi_dai_dien?.ho_ten || "",
           sdt: repUser?.sdt || fallbackData?.nguoi_dai_dien?.sdt || "",
           email: repUser?.email || fallbackData?.nguoi_dai_dien?.email || "",
@@ -305,7 +321,7 @@ class PartnerRepository {
     if (!partner) {
       throw new Error("Không tìm thấy thông tin đối tác.");
     }
-    const repUserId = partner.id_nguoi_dai_dien || partner.nguoi_dai_dien?.ma_nguoi_dung;
+    const repUserId = partner.nguoi_dai_dien?.ma_nguoi_dung;
     let account = null;
 
     if (repUserId) {
@@ -350,6 +366,21 @@ class PartnerRepository {
   async create(payload) {
     await this.checkTaxCodeUniqueness(payload.ma_so_thue);
 
+    const representativeId = payload.ma_nguoi_dung;
+    if (!representativeId) {
+      throw new Error("Thiếu ma_nguoi_dung của người đại diện.");
+    }
+
+    const { data: representative, error: representativeError } = await supabase
+      .from("nguoidung")
+      .select("ma_nguoi_dung")
+      .eq("ma_nguoi_dung", representativeId)
+      .eq("vai_tro", "Nguoi dai dien")
+      .maybeSingle();
+    if (representativeError || !representative) {
+      throw new Error("ma_nguoi_dung phải thuộc người dùng có vai trò Người đại diện.");
+    }
+
     const generatedMaHs = crypto.randomUUID();
     const logoVal = payload.logo || null;
     const newPartner = {
@@ -360,8 +391,8 @@ class PartnerRepository {
       giay_phep_kinh_doanh: payload.giay_phep_kinh_doanh || "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80",
       logo: logoVal,
       trang_thai: "Cho duyet",
-      id_nguoi_dai_dien: payload.id_nguoi_dai_dien || null,
       nguoi_dai_dien: {
+        ma_nguoi_dung: representativeId,
         ho_ten: payload.ho_ten || "",
         sdt: payload.sdt || "",
         email: payload.email || "",
@@ -372,9 +403,6 @@ class PartnerRepository {
     };
 
     REGISTERED_PARTNERS.set(generatedMaHs, newPartner);
-    if (payload.id_nguoi_dai_dien) {
-      REGISTERED_PARTNERS.set(payload.id_nguoi_dai_dien, newPartner);
-    }
 
     try {
       const { data, error } = await supabase.from("hosodn").insert({
@@ -385,7 +413,6 @@ class PartnerRepository {
         giay_phep_kinh_doanh: newPartner.giay_phep_kinh_doanh,
         logo: logoVal,
         trang_thai: "Cho duyet",
-        id_nguoi_dai_dien: payload.id_nguoi_dai_dien || null,
       }).select().maybeSingle();
 
       if (error) {
@@ -397,7 +424,7 @@ class PartnerRepository {
       console.warn("[PartnerRepository.create] Supabase hosodn insert exception:", e.message);
     }
 
-    if (payload.id_nguoi_dai_dien) {
+    if (representativeId) {
       const repUpdate = { ma_hsdn: generatedMaHs };
       if (payload.ho_ten) repUpdate.ho_ten = payload.ho_ten;
       if (payload.sdt) repUpdate.sdt = payload.sdt;
@@ -409,7 +436,7 @@ class PartnerRepository {
       const { error: repErr } = await supabase
         .from("nguoidung")
         .update(repUpdate)
-        .eq("ma_nguoi_dung", payload.id_nguoi_dai_dien);
+        .eq("ma_nguoi_dung", representativeId);
 
       if (repErr) {
         console.error("[PartnerRepository.create] nguoidung update error:", repErr.message);
@@ -436,7 +463,7 @@ class PartnerRepository {
   async update(id, payload) {
     const currentPartner = await this.findById(id);
     const targetMaHs = currentPartner?.ma_hs || id;
-    const repUserId = currentPartner?.id_nguoi_dai_dien || (id !== targetMaHs ? id : null);
+    const repUserId = currentPartner?.nguoi_dai_dien?.ma_nguoi_dung || null;
 
     const hosodnUpdate = {};
     if (payload.ten_dn !== undefined) hosodnUpdate.ten_dn = payload.ten_dn;
@@ -461,15 +488,12 @@ class PartnerRepository {
     };
     updateMemory(targetMaHs);
     updateMemory(id);
-    if (repUserId) updateMemory(repUserId);
 
     if (Object.keys(hosodnUpdate).length > 0) {
-      let query = supabase.from("hosodn").update(hosodnUpdate);
-      if (targetMaHs && repUserId) {
-        query = query.or(`ma_hs.eq.${targetMaHs},id_nguoi_dai_dien.eq.${repUserId}`);
-      } else {
-        query = query.eq("ma_hs", targetMaHs);
-      }
+      const query = supabase
+        .from("hosodn")
+        .update(hosodnUpdate)
+        .eq("ma_hs", targetMaHs);
       const { error: hosodnError } = await query;
       if (hosodnError) {
         console.warn("[PartnerRepository.update] Supabase hosodn update warning:", hosodnError.message);
@@ -479,7 +503,7 @@ class PartnerRepository {
     }
 
     if (repUserId || payload.nguoi_dai_dien) {
-      const targetRepId = repUserId || currentPartner?.id_nguoi_dai_dien;
+      const targetRepId = repUserId;
       if (targetRepId) {
         const repData = payload.nguoi_dai_dien || {};
         const nguoidungUpdate = {};

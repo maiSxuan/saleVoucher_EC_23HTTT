@@ -10,8 +10,7 @@ const router = express.Router();
 const controller = new UserController(userService);
 
 // -----------------------------------------------------------------------
-// ADMIN ROUTES — Chỉ ADMIN được phép truy cập
-// Middleware chain: authenticate → authorize(ADMIN) → controller
+// ADMIN SYSTEM ROUTES — Chỉ Admin he thong được phép truy cập.
 // -----------------------------------------------------------------------
 
 // Lấy danh sách người dùng (có lọc + phân trang)
@@ -19,7 +18,7 @@ const controller = new UserController(userService);
 router.get(
   '/admin/users',
   authenticateMiddleware,                   // Bước 1: Kiểm tra JWT hợp lệ, gắn req.user
-  authorizeMiddleware(JWT_ROLES.ADMIN),     // Bước 2: Kiểm tra role phải là ADMIN
+  authorizeMiddleware(JWT_ROLES.ADMIN_SYSTEM),
   controller.listUsers.bind(controller)     // Bước 3: Gọi controller
 );
 
@@ -28,7 +27,7 @@ router.get(
 router.get(
   '/admin/users/:userId',
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN),
+  authorizeMiddleware(JWT_ROLES.ADMIN_SYSTEM),
   controller.getUserById.bind(controller)
 );
 
@@ -37,7 +36,7 @@ router.get(
 router.patch(
   '/admin/users/:userId/lock',
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN),
+  authorizeMiddleware(JWT_ROLES.ADMIN_SYSTEM),
   controller.lockUser.bind(controller)
 );
 
@@ -46,7 +45,7 @@ router.patch(
 router.patch(
   '/admin/users/:userId/unlock',
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN),
+  authorizeMiddleware(JWT_ROLES.ADMIN_SYSTEM),
   controller.unlockUser.bind(controller)
 );
 
@@ -55,7 +54,7 @@ router.patch(
 router.patch(
   '/admin/users/:userId/role',
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN),
+  authorizeMiddleware(JWT_ROLES.ADMIN_SYSTEM),
   controller.updateUserRole.bind(controller)
 );
 
@@ -63,7 +62,7 @@ router.patch(
 router.get(
   '/admin/branches',
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN, JWT_ROLES.PARTNER_OWNER, JWT_ROLES.PARTNER_STAFF),
+  authorizeMiddleware(JWT_ROLES.ADMIN_SYSTEM, JWT_ROLES.PARTNER_OWNER, JWT_ROLES.PARTNER_STAFF),
   controller.listBranches.bind(controller)
 );
 
@@ -71,7 +70,7 @@ router.get(
 router.get(
   '/admin/partners',
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN, JWT_ROLES.PARTNER_OWNER, JWT_ROLES.PARTNER_STAFF),
+  authorizeMiddleware(JWT_ROLES.ADMIN_SYSTEM, JWT_ROLES.PARTNER_OWNER, JWT_ROLES.PARTNER_STAFF),
   controller.listPartners.bind(controller)
 );
 

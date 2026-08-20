@@ -7,7 +7,7 @@ function App() {
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900">
+    <div className="theme-snow flex min-h-screen flex-col bg-snow-50 text-snow-900">
       <main className="min-w-0 flex-1">
         <Outlet />
       </main>

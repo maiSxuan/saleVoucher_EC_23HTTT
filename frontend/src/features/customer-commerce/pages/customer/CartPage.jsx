@@ -198,7 +198,7 @@ export default function CartPage() {
         </p>
         <button
           onClick={() => navigate("/customer")}
-          className="bg-orange-500 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-orange-600"
+          className="bg-sky-500 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-sky-600"
         >
           Khám phá voucher
         </button>
@@ -258,7 +258,7 @@ export default function CartPage() {
                     : item.status === "qty_exceeded"
                       ? "border-amber-200"
                       : isChecked
-                        ? "border-orange-300 bg-orange-50/20 shadow-sm"
+                        ? "border-sky-300 bg-sky-50/20 shadow-sm"
                         : "border-gray-100"
                   }`}
               >
@@ -284,7 +284,7 @@ export default function CartPage() {
                     onClick={() =>
                       navigate(`/customer/vouchers/${item.voucherId}`)
                     }
-                    className="text-sm font-semibold text-gray-900 hover:text-orange-600 text-left line-clamp-1"
+                    className="text-sm font-semibold text-gray-900 hover:text-sky-600 text-left line-clamp-1"
                   >
                     {typeof item.name === 'object' && item.name !== null ? item.name.name : item.name}
                   </button>
@@ -384,7 +384,7 @@ export default function CartPage() {
             <button
               onClick={handleCheckout}
               disabled={selectedIds.length === 0 || checkingOut}
-              className="w-full flex items-center justify-center gap-2 bg-orange-500 text-white py-2.5 rounded-xl font-semibold hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="w-full flex items-center justify-center gap-2 bg-sky-500 text-white py-2.5 rounded-xl font-semibold hover:bg-sky-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {checkingOut ? (
                 "Đang kiểm tra..."
@@ -397,7 +397,7 @@ export default function CartPage() {
             </button>
             <button
               onClick={() => navigate("/customer")}
-              className="w-full text-center text-sm text-gray-500 hover:text-orange-500 mt-2"
+              className="w-full text-center text-sm text-gray-500 hover:text-sky-500 mt-2"
             >
               ← Tiếp tục mua sắm
             </button>
