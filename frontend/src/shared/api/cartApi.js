@@ -2,10 +2,15 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 function authHeaders() {
   const token = localStorage.getItem("accessToken");
-  return {
+  const lang = localStorage.getItem("app_lang") || "vi";
+  const headers = {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
+    "Accept-Language": lang,
   };
+  if (token && token !== "null" && token !== "undefined") {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
 }
 
 async function handleResponse(res, message) {
@@ -17,7 +22,8 @@ async function handleResponse(res, message) {
 }
 
 export async function fetchCart() {
-  const res = await fetch(`${BASE_URL}/cart`, { headers: authHeaders() });
+  const lang = localStorage.getItem("app_lang") || "vi";
+  const res = await fetch(`${BASE_URL}/cart?lang=${lang}`, { headers: authHeaders() });
   return handleResponse(res, "Không thể fetch dữ liệu trong giỏ hàng");
 }
 

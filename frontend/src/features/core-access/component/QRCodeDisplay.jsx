@@ -11,18 +11,23 @@
 import React, { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import { Download, Copy, Check, QrCode as QrIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function QrCodeDisplay({
   value,
   size = 200,
-  title = 'Mã QR Voucher',
-  subtitle = 'Đưa mã này cho nhân viên quầy quét',
+  title,
+  subtitle,
   showDownload = true,
   className = '',
 }) {
+  const { t } = useTranslation();
   const canvasRef = useRef(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState(null);
+
+  const displayTitle = title || t('Mã QR Voucher');
+  const displaySubtitle = subtitle || t('Đưa mã này cho nhân viên tại quầy để sử dụng');
 
   useEffect(() => {
     if (!value || !canvasRef.current) return;
@@ -42,13 +47,13 @@ export default function QrCodeDisplay({
       (err) => {
         if (err) {
           console.error('[QrCodeDisplay] Lỗi sinh mã QR:', err);
-          setError('Không thể tạo mã QR');
+          setError(t('Không thể tạo mã QR'));
         } else {
           setError(null);
         }
       }
     );
-  }, [value, size]);
+  }, [value, size, t]);
 
   const handleCopy = async () => {
     if (!value) return;
@@ -78,11 +83,11 @@ export default function QrCodeDisplay({
       {/* Header */}
       <div className="flex items-center gap-2 mb-2 text-slate-800 font-semibold text-sm">
         <QrIcon className="w-4 h-4 text-emerald-600" />
-        <span>{title}</span>
+        <span>{t(displayTitle)}</span>
       </div>
 
-      {subtitle && (
-        <p className="text-xs text-slate-500 mb-3 text-center">{subtitle}</p>
+      {displaySubtitle && (
+        <p className="text-xs text-slate-500 mb-3 text-center">{t(displaySubtitle)}</p>
       )}
 
       {/* Canvas QR Code Thật */}
@@ -103,7 +108,7 @@ export default function QrCodeDisplay({
           type="button"
           onClick={handleCopy}
           className="p-1 text-slate-500 hover:text-emerald-600 transition-colors"
-          title="Sao chép mã"
+          title={t("Sao chép mã")}
         >
           {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
         </button>
@@ -117,7 +122,7 @@ export default function QrCodeDisplay({
           className="mt-3 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
         >
           <Download className="w-3.5 h-3.5" />
-          <span>Tải ảnh QR (.png)</span>
+          <span>{t("Tải ảnh QR (.png)")}</span>
         </button>
       )}
     </div>

@@ -11,8 +11,10 @@ import {
 import { fetchSellingVouchers } from "../../../../shared/api/catalogApi";
 import { contentApi } from "../../../../features/content-feedback/api/contentApi";
 import VoucherCard from "../../components/VoucherCard";
+import { useTranslation } from "react-i18next";
 
 export default function VoucherSearchPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [vouchers, setVouchers] = useState([]);
@@ -39,17 +41,23 @@ export default function VoucherSearchPage() {
 
   useEffect(() => {
     let ignore = false;
-    setLoading(true);
-    setErrorMsg("");
 
-    fetchSellingVouchers()
-      .then((data) => !ignore && setVouchers(data))
-      .catch(
-        () =>
-          !ignore &&
-          setErrorMsg("Không thể tải danh sách voucher. Vui lòng thử lại sau."),
-      )
-      .finally(() => !ignore && setLoading(false));
+    const loadVouchersData = () => {
+      setLoading(true);
+      setErrorMsg("");
+      fetchSellingVouchers()
+        .then((data) => !ignore && setVouchers(data))
+        .catch(
+          () =>
+            !ignore &&
+            setErrorMsg("Không thể tải danh sách voucher. Vui lòng thử lại sau."),
+        )
+        .finally(() => !ignore && setLoading(false));
+    };
+
+    loadVouchersData();
+
+    window.addEventListener("app_language_changed", loadVouchersData);
 
     // Fetch active banners and articles from content management
     contentApi
@@ -78,6 +86,7 @@ export default function VoucherSearchPage() {
 
     return () => {
       ignore = true;
+      window.removeEventListener("app_language_changed", loadVouchersData);
     };
   }, []);
 
@@ -137,13 +146,13 @@ export default function VoucherSearchPage() {
   if (loading)
     return (
       <div className="py-24 text-center text-snow-600 text-base font-medium">
-        Đang tìm kiếm voucher...
+        {t("Đang tìm kiếm voucher...")}
       </div>
     );
   if (errorMsg)
     return (
       <div className="py-24 text-center text-semantic-error text-base font-medium">
-        {errorMsg}
+        {t(errorMsg)}
       </div>
     );
 
@@ -170,7 +179,7 @@ export default function VoucherSearchPage() {
 
           <div className="relative z-10 p-6 sm:p-10 max-w-xl">
             <span className="inline-block px-3 py-1 rounded-full bg-white/25 text-xs font-semibold uppercase tracking-wider mb-3 backdrop-blur-sm shadow-xs">
-              ✨ Tin nổi bật
+              {t("✨ Tin nổi bật")}
             </span>
             <h1 className="text-2xl sm:text-4xl font-extrabold mb-3 leading-tight drop-shadow-md">
               {currentBanner.title}
@@ -190,7 +199,7 @@ export default function VoucherSearchPage() {
                   )
                 }
                 className="absolute left-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors backdrop-blur-sm z-20"
-                title="Banner trước"
+                title={t("Banner trước")}
               >
                 <ChevronLeft size={20} />
               </button>
@@ -199,7 +208,7 @@ export default function VoucherSearchPage() {
                   setCurrentBannerIndex((prev) => (prev + 1) % banners.length)
                 }
                 className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors backdrop-blur-sm z-20"
-                title="Banner tiếp"
+                title={t("Banner tiếp")}
               >
                 <ChevronRight size={20} />
               </button>
@@ -232,33 +241,33 @@ export default function VoucherSearchPage() {
               : "bg-white border-slate-200 text-snow-700 hover:bg-sky-50"
           }`}
         >
-          <SlidersHorizontal size={15} /> Bộ lọc
+          <SlidersHorizontal size={15} /> {t("Bộ lọc")}
         </button>
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
           className="border border-slate-200 rounded-xl px-3.5 py-2 text-sm bg-white text-snow-700 focus:outline-none focus:ring-2 focus:ring-sky-300"
         >
-          <option value="newest">Mới nhất</option>
-          <option value="price-asc">Giá tăng dần</option>
-          <option value="price-desc">Giá giảm dần</option>
+          <option value="newest">{t("Mới nhất")}</option>
+          <option value="price-asc">{t("Giá tăng dần")}</option>
+          <option value="price-desc">{t("Giá giảm dần")}</option>
         </select>
         <span className="ml-auto text-sm text-snow-600 font-medium">
-          {filtered.length} kết quả
+          {filtered.length} {t("kết quả")}
         </span>
       </div>
 
       {showFilters && (
         <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-card">
           <p className="text-sm font-semibold text-snow-800 mb-2.5">
-            Khoảng giá
+            {t("Khoảng giá")}
           </p>
           <div className="flex gap-2.5 flex-wrap">
             {[
-              { value: "", label: "Tất cả" },
-              { value: "under200", label: "Dưới 200K" },
-              { value: "200-500", label: "200K–500K" },
-              { value: "over500", label: "Trên 500K" },
+              { value: "", label: t("Tất cả") },
+              { value: "under200", label: t("Dưới 200K") },
+              { value: "200-500", label: t("200K–500K") },
+              { value: "over500", label: t("Trên 500K") },
             ].map((opt) => (
               <button
                 key={opt.value}
@@ -280,10 +289,10 @@ export default function VoucherSearchPage() {
       {filtered.length === 0 ? (
         <div className="bg-white rounded-3xl border border-slate-200 p-16 text-center text-snow-500 shadow-card">
           <p className="text-base font-semibold">
-            Không tìm thấy voucher phù hợp.
+            {t("Không tìm thấy voucher phù hợp.")}
           </p>
           <p className="text-sm mt-1">
-            Hãy thử tìm kiếm với từ khóa hoặc danh mục khác.
+            {t("Hãy thử tìm kiếm với từ khóa hoặc danh mục khác.")}
           </p>
         </div>
       ) : (
@@ -304,7 +313,7 @@ export default function VoucherSearchPage() {
           <div className="flex items-center gap-2 mb-6">
             <BookOpen className="text-brand-accent-foreground" size={22} />
             <h2 className="text-xl font-bold text-snow-900">
-              Cẩm nang & Mẹo săn voucher
+              {t("Cẩm nang & Mẹo săn voucher")}
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -328,7 +337,7 @@ export default function VoucherSearchPage() {
                   <div className="p-5 flex flex-col flex-1 justify-between">
                     <div>
                       <span className="inline-block px-2.5 py-1 rounded-md bg-brand-accent-soft text-brand-accent-foreground text-xs font-semibold mb-2">
-                        Bài viết hữu ích
+                        {t("Bài viết hữu ích")}
                       </span>
                       <h3 className="font-bold text-snow-900 text-base mb-2 line-clamp-2 group-hover:text-sky-700 transition-colors">
                         {art.title}
@@ -342,10 +351,10 @@ export default function VoucherSearchPage() {
                         <Calendar size={12} />{" "}
                         {art.createdAt
                           ? new Date(art.createdAt).toLocaleDateString("vi-VN")
-                          : "Hôm nay"}
+                          : t("Hôm nay")}
                       </span>
                       <span className="text-sky-700 font-semibold group-hover:underline">
-                        Đọc tiếp →
+                         {t("Đọc tiếp →")}
                       </span>
                     </div>
                   </div>

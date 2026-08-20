@@ -35,22 +35,24 @@ import ReviewForm from "../../../content-feedback/components/ReviewForm";
 import { useReview } from "../../../content-feedback/hooks/useReview";
 import { reviewApi } from "../../../content-feedback/api/reviewApi";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 function StatusBadge({ status }) {
+  const { t } = useTranslation();
   const configs = {
     "Chua su dung": {
       icon: <Clock className="w-4 h-4" />,
-      label: "Chưa sử dụng",
+      label: t("Chưa sử dụng"),
       cls: "bg-emerald-50 text-emerald-700 border-emerald-300",
     },
     "Da su dung": {
       icon: <CheckCircle2 className="w-4 h-4" />,
-      label: "Đã sử dụng",
+      label: t("Đã sử dụng"),
       cls: "bg-slate-100 text-slate-500 border-slate-300",
     },
     "Het han": {
       icon: <XCircle className="w-4 h-4" />,
-      label: "Hết hạn",
+      label: t("Hết hạn"),
       cls: "bg-red-50 text-red-600 border-red-300",
     },
     "Loi sinh ma": {
@@ -61,7 +63,7 @@ function StatusBadge({ status }) {
   };
   const cfg = configs[status] || {
     icon: <AlertCircle className="w-4 h-4" />,
-    label: status || "Không xác định",
+    label: t(status) || t("Không xác định"),
     cls: "bg-gray-100 text-gray-500 border-gray-200",
   };
 
@@ -76,13 +78,14 @@ function StatusBadge({ status }) {
 }
 
 function InfoRow({ icon, label, value }) {
+  const { t } = useTranslation();
   if (!value) return null;
   return (
     <div className="flex items-start gap-3 py-3 border-b border-slate-100 last:border-0">
       <div className="mt-0.5 text-slate-400">{icon}</div>
       <div>
         <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">
-          {label}
+          {t(label)}
         </p>
         <p className="text-sm text-slate-700 mt-0.5">{value}</p>
       </div>
@@ -91,6 +94,7 @@ function InfoRow({ icon, label, value }) {
 }
 
 export default function IssuedVoucherDetailPage() {
+  const { t } = useTranslation();
   const { issuedId } = useParams();
   const navigate = useNavigate();
   const [vm, setVm] = useState(null);
@@ -106,13 +110,13 @@ export default function IssuedVoucherDetailPage() {
     try {
       await createReview({ ...reviewData, ma_voucher_mua: issuedId });
       setShowReviewModal(false);
-      toast.success('Đã gửi đánh giá!');
+      toast.success(t('Đã gửi đánh giá!'));
       // Refresh existing review
       reviewApi.getByPurchaseId(issuedId)
         .then((rev) => setExistingReview(rev))
         .catch(() => { });
     } catch (err) {
-      toast.error(err.message || 'Gửi đánh giá thất bại');
+      toast.error(t(err.message || 'Gửi đánh giá thất bại'));
     }
   };
 
@@ -123,21 +127,21 @@ export default function IssuedVoucherDetailPage() {
     getIssuedVoucherDetail(issuedId)
       .then((data) => setVm(data))
       .catch((err) =>
-        setError(err.message || "Không thể tải thông tin voucher.")
+        setError(t(err.message || "Không thể tải thông tin voucher."))
       )
       .finally(() => setLoading(false));
 
     reviewApi.getByPurchaseId(issuedId)
       .then((rev) => setExistingReview(rev))
       .catch(() => setExistingReview(null));
-  }, [issuedId]);
+  }, [issuedId, t]);
 
   // Loading
   if (loading) {
     return (
       <div className="flex flex-col items-center py-24 gap-3">
         <RefreshCw className="w-8 h-8 text-sky-400 animate-spin" />
-        <p className="text-sm text-slate-500">Đang tải thông tin voucher...</p>
+        <p className="text-sm text-slate-500">{t("Đang tải thông tin voucher...")}</p>
       </div>
     );
   }
@@ -148,14 +152,14 @@ export default function IssuedVoucherDetailPage() {
       <div className="max-w-md mx-auto px-4 py-16 text-center">
         <AlertCircle className="w-14 h-14 text-red-400 mx-auto mb-4" />
         <h2 className="text-lg font-bold text-slate-800 mb-2">
-          Không thể tải voucher
+          {t("Không thể tải voucher")}
         </h2>
         <p className="text-sm text-slate-500 mb-6">
-          {error || "Không tìm thấy voucher này."}
+          {t(error) || t("Không tìm thấy voucher này.")}
         </p>
         {/* A7.3 — Hướng dẫn truy cập "Đơn hàng của tôi" */}
         <p className="text-xs text-slate-400 mb-4">
-          Voucher của bạn vẫn được lưu. Bạn có thể xem lại tại mục "Đơn hàng của tôi".
+          {t("Voucher của bạn vẫn được lưu. Bạn có thể xem lại tại mục \"Đơn hàng của tôi\".")}
         </p>
         <div className="flex flex-col gap-2">
           <button
@@ -163,13 +167,13 @@ export default function IssuedVoucherDetailPage() {
             className="flex items-center justify-center gap-2 px-4 py-2.5 bg-sky-500 text-white text-sm font-semibold rounded-xl hover:bg-sky-600"
           >
             <ShoppingBag className="w-4 h-4" />
-            Xem đơn hàng của tôi
+            {t("Xem đơn hàng của tôi")}
           </button>
           <button
             onClick={() => navigate(-1)}
             className="px-4 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900"
           >
-            Quay lại
+            {t("Quay lại")}
           </button>
         </div>
       </div>
@@ -198,7 +202,7 @@ export default function IssuedVoucherDetailPage() {
         className="flex items-center gap-1.5 text-slate-500 hover:text-slate-800 text-sm mb-5 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
-        Quay lại
+        {t("Quay lại")}
       </button>
 
       {/* Header card */}
@@ -217,10 +221,10 @@ export default function IssuedVoucherDetailPage() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-bold text-lg leading-tight truncate">
-              {v.ten_voucher || "Voucher"}
+              {t(v.ten_voucher) || "Voucher"}
             </p>
             <p className="text-sm text-sky-100 mt-0.5">
-              {vm.partnerName || "Đối tác"}
+              {t(vm.partnerName) || t("Đối tác")}
             </p>
             <div className="mt-2">
               <StatusBadge status={vm.trang_thai} />
@@ -235,8 +239,8 @@ export default function IssuedVoucherDetailPage() {
           <QrCodeDisplay
             value={qrValue}
             size={220}
-            title="Mã QR Voucher"
-            subtitle="Đưa mã này cho nhân viên tại quầy để sử dụng"
+            title={t("Mã QR Voucher")}
+            subtitle={t("Đưa mã này cho nhân viên tại quầy để sử dụng")}
             showDownload={true}
           />
         </div>
@@ -247,7 +251,7 @@ export default function IssuedVoucherDetailPage() {
         {/* Mã code */}
         <div className="py-4 border-b border-slate-100">
           <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1.5">
-            Mã Voucher
+            {t("Mã Voucher")}
           </p>
           <p className="font-mono font-bold text-lg text-sky-600 tracking-widest">
             {vm.voucher_code}
@@ -258,7 +262,7 @@ export default function IssuedVoucherDetailPage() {
           icon={<Calendar className="w-4 h-4" />}
           label="Thời hạn sử dụng"
           value={
-            validFrom ? `${validFrom} → ${validUntil}` : `Đến ${validUntil}`
+            validFrom ? `${validFrom} → ${validUntil}` : `${t("Đến")} ${validUntil}`
           }
         />
         <InfoRow
@@ -269,13 +273,13 @@ export default function IssuedVoucherDetailPage() {
         <InfoRow
           icon={<FileText className="w-4 h-4" />}
           label="Điều kiện sử dụng"
-          value={v.dieu_kien_ap_dung || "Áp dụng tại các chi nhánh được chỉ định."}
+          value={t(v.dieu_kien_ap_dung) || t("Áp dụng tại các chi nhánh được chỉ định.")}
         />
         {vm.mo_ta && (
           <InfoRow
             icon={<FileText className="w-4 h-4" />}
             label="Mô tả"
-            value={v.mo_ta}
+            value={t(v.mo_ta)}
           />
         )}
 
@@ -295,7 +299,7 @@ export default function IssuedVoucherDetailPage() {
           <div className="flex items-center gap-2 mb-3">
             <Building2 className="w-4 h-4 text-sky-500" />
             <h3 className="text-sm font-semibold text-slate-800">
-              Chi nhánh áp dụng ({branches.length})
+              {t("Chi nhánh áp dụng")} ({branches.length})
             </h3>
           </div>
           <div className="flex flex-col gap-2">
@@ -307,13 +311,13 @@ export default function IssuedVoucherDetailPage() {
                 <MapPin className="w-4 h-4 text-sky-400 flex-shrink-0 mt-0.5" />
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-slate-700 truncate">
-                    {b.branchName}
+                    {t(b.branchName)}
                   </p>
                   {b.address && (
-                    <p className="text-xs text-slate-400 truncate">{b.address}</p>
+                    <p className="text-xs text-slate-400 truncate">{t(b.address)}</p>
                   )}
                   {b.area && (
-                    <p className="text-xs text-sky-500">{b.area}</p>
+                    <p className="text-xs text-sky-500">{t(b.area)}</p>
                   )}
                 </div>
               </div>
@@ -330,7 +334,7 @@ export default function IssuedVoucherDetailPage() {
             className="flex items-center justify-center gap-2 px-4 py-3 bg-sky-50 text-sky-700 border border-sky-200 text-sm font-medium rounded-xl hover:bg-sky-100 transition-colors"
           >
             <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
-            Xem đánh giá của bạn
+            {t("Xem đánh giá của bạn")}
           </button>
         ) : (
           <button
@@ -338,7 +342,7 @@ export default function IssuedVoucherDetailPage() {
             className="flex items-center justify-center gap-2 px-4 py-3 bg-sky-50 text-sky-600 border border-sky-200 text-sm font-medium rounded-xl hover:bg-sky-100 transition-colors"
           >
             <Star className="w-4 h-4" />
-            Viết đánh giá
+            {t("Viết đánh giá")}
           </button>
         )}
 
@@ -347,14 +351,14 @@ export default function IssuedVoucherDetailPage() {
           className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 text-sm font-medium text-slate-700 rounded-xl hover:border-sky-300 hover:text-sky-600 transition-colors"
         >
           <Ticket className="w-4 h-4" />
-          Xem tất cả voucher của tôi
+          {t("Xem tất cả voucher của tôi")}
         </button>
         <button
           onClick={() => navigate("/customer/orders")}
           className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 text-sm font-medium text-slate-700 rounded-xl hover:border-sky-300 hover:text-sky-600 transition-colors"
         >
           <ShoppingBag className="w-4 h-4" />
-          Đơn hàng của tôi
+          {t("Đơn hàng của tôi")}
         </button>
       </div>
 
@@ -365,7 +369,7 @@ export default function IssuedVoucherDetailPage() {
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
             <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
               <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-              Đánh giá của bạn
+              {t("Đánh giá của bạn")}
             </h3>
             <div className="flex items-center gap-1 mb-2">
               {[1, 2, 3, 4, 5].map((s) => (
@@ -375,19 +379,19 @@ export default function IssuedVoucherDetailPage() {
                   className={s <= (existingReview.rating || 5) ? "text-yellow-500 fill-yellow-500" : "text-gray-300"}
                 />
               ))}
-              <span className="text-sm font-semibold text-slate-700 ml-2">{existingReview.rating} / 5 sao</span>
+              <span className="text-sm font-semibold text-slate-700 ml-2">{existingReview.rating} / 5 {t("sao")}</span>
             </div>
             <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-xl mb-4">
-              {existingReview.comment || "Không có nội dung."}
+              {existingReview.comment || t("Không có nội dung.")}
             </p>
             <p className="text-xs text-slate-400 mb-5">
-              Ngày đánh giá: {existingReview.createdAt ? new Date(existingReview.createdAt).toLocaleString("vi-VN") : "—"}
+              {t("Ngày đánh giá:")} {existingReview.createdAt ? new Date(existingReview.createdAt).toLocaleString("vi-VN") : "—"}
             </p>
             <button
               onClick={() => setShowViewReviewModal(false)}
               className="w-full py-2.5 bg-slate-900 text-white font-semibold text-sm rounded-xl hover:bg-slate-800"
             >
-              Đóng
+              {t("Đóng")}
             </button>
           </div>
         </div>

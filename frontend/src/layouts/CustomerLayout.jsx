@@ -20,6 +20,9 @@ import {
 } from "../shared/api/catalogApi";
 import { contentApi } from "../features/content-feedback/api/contentApi";
 
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "../shared/components/LanguageSwitcher";
+
 function getStoredUser() {
   try {
     return JSON.parse(localStorage.getItem("user"));
@@ -31,6 +34,7 @@ function getStoredUser() {
 const MAX_VISIBLE_CATEGORIES = 8;
 
 export default function CustomerLayout() {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const user = getStoredUser();
@@ -48,10 +52,16 @@ export default function CustomerLayout() {
   const [popups, setPopups] = useState([]);
   const [currentPopupIndex, setCurrentPopupIndex] = useState(0);
 
-  useEffect(() => {
+  const loadCategories = () => {
     fetchCategories()
       .then(setCategories)
       .catch(() => setCategories([]));
+  };
+
+  useEffect(() => {
+    loadCategories();
+
+    window.addEventListener("app_language_changed", loadCategories);
 
     fetchSellingVouchers()
       .then((vouchers) => {
@@ -100,6 +110,10 @@ export default function CustomerLayout() {
         setPopups(active);
       })
       .catch(() => { });
+
+    return () => {
+      window.removeEventListener("app_language_changed", loadCategories);
+    };
   }, []);
 
   const visibleCategories = categories.slice(0, MAX_VISIBLE_CATEGORIES);
@@ -159,17 +173,19 @@ export default function CustomerLayout() {
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && navigate("/customer")}
-                placeholder="Tìm voucher ưu đãi..."
+                placeholder={t("Tìm voucher ưu đãi...")}
                 className="w-full pl-9 pr-3 py-1.5 rounded-full text-base text-snow-900 bg-white focus:outline-none focus:ring-2 focus:ring-sky-300"
               />
             </div>
+
+            <LanguageSwitcher />
 
             <button
               onClick={() => navigate("/customer/cart")}
               className="relative flex items-center gap-1 bg-white/20 hover:bg-white/30 px-2.5 py-1.5 rounded-full transition-colors"
             >
               <ShoppingCart size={15} />
-              <span className="text-sm hidden sm:block">Giỏ hàng</span>
+              <span className="text-sm hidden sm:block">{t("Giỏ hàng")}</span>
               {cartCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-semantic-error text-white text-sm rounded-full w-4 h-4 flex items-center justify-center">
                   {cartCount}
@@ -193,23 +209,23 @@ export default function CustomerLayout() {
                   <div className="w-40 bg-white rounded-lg shadow-lg border border-gray-100 py-1">
                     <MenuLink
                       icon={User}
-                      label="Hồ sơ"
+                      label={t("Hồ sơ")}
                       onClick={() => navigate("/customer/profile")}
                     />
                     <MenuLink
                       icon={Package}
-                      label="Đơn hàng"
+                      label={t("Đơn hàng")}
                       onClick={() => navigate("/customer/orders")}
                     />
                     <MenuLink
                       icon={Tag}
-                      label="Voucher của tôi"
+                      label={t("Voucher của tôi")}
                       onClick={() => navigate("/customer/vouchers/my")}
                     />
                     <hr className="my-1 border-gray-100" />
                     <MenuLink
                       icon={LogOut}
-                      label="Đăng xuất"
+                      label={t("Đăng xuất")}
                       onClick={handleLogout}
                       danger
                     />
@@ -222,13 +238,13 @@ export default function CustomerLayout() {
                   onClick={() => navigate("/login")}
                   className="text-sm bg-white text-sky-700 px-2.5 py-1.5 rounded-full font-semibold hover:bg-sky-50"
                 >
-                  Đăng nhập
+                  {t("Đăng nhập")}
                 </button>
                 <button
                   onClick={() => navigate("/customer/register")}
                   className="text-sm bg-white/20 hover:bg-white/30 px-2.5 py-1.5 rounded-full hidden sm:block"
                 >
-                  Đăng ký
+                  {t("Đăng ký")}
                 </button>
               </div>
             )}
@@ -243,7 +259,7 @@ export default function CustomerLayout() {
                   : "border-transparent text-white/80 hover:text-white"
                 }`}
             >
-              Tất cả
+              {t("Tất cả danh mục")}
             </button>
 
             {visibleCategories.map((cat) => {
@@ -262,7 +278,7 @@ export default function CustomerLayout() {
                       }`}
                     aria-haspopup="menu"
                   >
-                    {cat.name}
+                    {t(cat.name)}
                     <ChevronDown
                       size={13}
                       className="opacity-70 transition-transform group-hover/category:rotate-180 group-focus-within/category:rotate-180"
@@ -286,7 +302,7 @@ export default function CustomerLayout() {
                   aria-haspopup="menu"
                   aria-expanded={showMoreCategories}
                 >
-                  Danh mục khác
+                  {t("Danh mục khác")} 
                   <ChevronDown
                     size={14}
                     className="transition-transform group-hover/more:rotate-180"
@@ -310,7 +326,7 @@ export default function CustomerLayout() {
                           className="flex w-full items-center justify-between gap-3 px-4 py-2 text-left text-base text-gray-700 transition-colors hover:bg-sky-50 hover:text-sky-700"
                           aria-haspopup="menu"
                         >
-                          <span>{cat.name}</span>
+                          <span>{t(cat.name)}</span>
                           <ChevronRight size={14} className="text-sky-400" />
                         </button>
                         <PartnerDropdown
@@ -336,7 +352,7 @@ export default function CustomerLayout() {
                   : "border-transparent text-white/80"
                 }`}
             >
-              Tất cả
+              {t("Tất cả")}
             </button>
             {categories.map((cat) => (
               <button
@@ -347,7 +363,7 @@ export default function CustomerLayout() {
                     : "border-transparent text-white/80"
                   }`}
               >
-                {cat.name}
+                {t(cat.name)}
               </button>
             ))}
           </div>
@@ -414,7 +430,7 @@ export default function CustomerLayout() {
                   onClick={() => setPopups(prev => prev.filter((_, i) => i !== currentPopupIndex))}
                   className="px-6 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl transition-colors shadow-sm text-sm ml-auto"
                 >
-                  Đã hiểu
+                  {t("Đã hiểu")}
                 </button>
               </div>
             </div>
@@ -424,23 +440,23 @@ export default function CustomerLayout() {
 
       <nav className="sm:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 z-30 flex">
         {[
-          { path: "/customer", icon: Home, label: "Trang chủ" },
+          { path: "/customer", icon: Home, label: t("Trang chủ") },
           {
             path: "/customer/cart",
             icon: ShoppingCart,
-            label: "Giỏ hàng",
+            label: t("Giỏ hàng"),
             badge: cartCount,
           },
           {
             path: "/customer/vouchers/my",
             icon: Tag,
-            label: "Của tôi",
+            label: t("Của tôi"),
             activePrefixes: [
               "/customer/vouchers/my",
               "/customer/vouchers/issued/",
             ],
           },
-          { path: "/customer/profile", icon: User, label: "Tài khoản" },
+          { path: "/customer/profile", icon: User, label: t("Tài khoản") },
         ].map((item) => {
           const Icon = item.icon;
           const active = item.activePrefixes
@@ -478,6 +494,7 @@ function PartnerDropdown({
   onSelect,
   side = "bottom",
 }) {
+  const { t } = useTranslation();
   const positionClassName =
     side === "left"
       ? "right-full top-0 pr-2"
@@ -487,15 +504,15 @@ function PartnerDropdown({
     <div
       className={`absolute ${positionClassName} z-50 invisible translate-y-1 opacity-0 pointer-events-none transition-all duration-150 group-hover/category:visible group-hover/category:translate-y-0 group-hover/category:opacity-100 group-hover/category:pointer-events-auto group-focus-within/category:visible group-focus-within/category:translate-y-0 group-focus-within/category:opacity-100 group-focus-within/category:pointer-events-auto`}
       role="menu"
-      aria-label={`Đối tác trong danh mục ${categoryName}`}
+      aria-label={`${t("Đối tác trong danh mục")} ${t(categoryName)}`}
     >
       <div className="w-72 overflow-hidden rounded-2xl border border-sky-100 bg-white text-snow-900 shadow-[0_18px_45px_rgba(15,23,42,0.16)]">
         <div className="border-b border-sky-100 bg-sky-50/80 px-4 py-3">
           <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">
-            Đối tác trong danh mục
+            {t("Đối tác trong danh mục")}
           </p>
           <p className="mt-0.5 truncate text-base font-bold text-snow-900">
-            {categoryName}
+            {t(categoryName)}
           </p>
         </div>
 
@@ -507,7 +524,7 @@ function PartnerDropdown({
                 onClick={() => onSelect(categoryName, partner.name)}
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-base font-medium text-snow-700 transition-colors hover:bg-sky-50 hover:text-sky-700 focus:bg-sky-50 focus:text-sky-700 focus:outline-none"
                 role="menuitem"
-                title={`Xem voucher của ${partner.name}`}
+                title={`${t("Xem voucher của")} ${partner.name}`}
               >
                 <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border border-sky-100 bg-sky-50 text-sky-600">
                   {partner.logo ? (
@@ -527,7 +544,7 @@ function PartnerDropdown({
             ))
           ) : (
             <p className="px-3 py-4 text-center text-sm text-snow-500">
-              Chưa có đối tác đang bán voucher.
+              {t("Chưa có đối tác đang bán voucher.")}
             </p>
           )}
         </div>

@@ -12,8 +12,10 @@ import {
   getCategoriesApi,
 } from "../../../../shared/api/partnerApi";
 import { formatCategoryName } from "../../../../shared/utils/categoryFormatter";
+import { useTranslation } from "react-i18next";
 
 export function VoucherFormPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -271,10 +273,10 @@ export function VoucherFormPage() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-slate-900">
-              {id ? "Chỉnh Sửa Chương Trình Voucher" : "Tạo Mới Chương Trình Voucher"}
+              {id ? t("Chỉnh Sửa Chương Trình Voucher") : t("Tạo Mới Chương Trình Voucher")}
             </h2>
             <p className="text-sm text-slate-500 mt-1">
-              Thiết lập thông tin nhận diện, giá bán, thời gian phát hành và phạm vi chi nhánh áp dụng
+              {t("Thiết lập thông tin nhận diện, giá bán, thời gian phát hành và phạm vi chi nhánh áp dụng")}
             </p>
           </div>
         </div>
@@ -284,7 +286,7 @@ export function VoucherFormPage() {
           <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl text-rose-800 text-xs font-semibold flex items-center gap-2">
             <span>⚠️</span>
             <span>
-              <strong>Voucher bị từ chối phê duyệt:</strong> Vui lòng chỉnh sửa, bổ sung thông tin cần thiết và bấm <strong>"✓ Lưu & Gửi duyệt ngay"</strong> để gửi lại cho Quản trị viên xét duyệt.
+              <strong>{t("Voucher bị từ chối phê duyệt:")}</strong> {t("Vui lòng chỉnh sửa, bổ sung thông tin cần thiết và bấm")} <strong>"{t("✓ Lưu & Gửi duyệt ngay")}"</strong> {t("để gửi lại cho Quản trị viên xét duyệt.")}
             </span>
           </div>
         )}
@@ -294,32 +296,32 @@ export function VoucherFormPage() {
           <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl text-amber-800 text-xs font-semibold flex items-center gap-2">
             <span>🔒</span>
             <span>
-              <strong>Voucher đang ở trạng thái Tạm ngưng:</strong> Bạn có thể điều chỉnh <strong>Số lượng phát hành (Chỉnh sửa giới hạn)</strong>, tên hoặc mô tả. Các trường Giá và Chi nhánh bị khóa chỉnh sửa theo quy định.
+              <strong>{t("Voucher đang ở trạng thái Tạm ngưng:")}</strong> {t("Bạn có thể điều chỉnh")} <strong>{t("Số lượng phát hành (Chỉnh sửa giới hạn)")}</strong>, {t("tên hoặc mô tả. Các trường Giá và Chi nhánh bị khóa chỉnh sửa theo quy định.")}
             </span>
           </div>
         )}
 
         {/* Section 1: Basic Information */}
-        <Card title="1. Thông Tin Nhận Diện Voucher">
+        <Card title={t("1. Thông Tin Nhận Diện Voucher")}>
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Tên chương trình Voucher <span className="text-rose-500">*</span>
+                {t("Tên chương trình Voucher")} <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
-                placeholder="Ví dụ: Voucher Thưởng Thức Buffet Lẩu Nướng Hải Sản Cao Cấp"
+                placeholder={t("Ví dụ: Voucher Thưởng Thức Buffet Lẩu Nướng Hải Sản Cao Cấp")}
                 value={formData.ten_voucher}
                 onChange={(e) => setFormData({ ...formData, ten_voucher: e.target.value })}
                 className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-400 focus:outline-none"
               />
-              {errors.ten_voucher && <p className="text-xs text-rose-600 mt-1">{errors.ten_voucher}</p>}
+              {errors.ten_voucher && <p className="text-xs text-rose-600 mt-1">{t(errors.ten_voucher)}</p>}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Danh mục Voucher <span className="text-rose-500">*</span>
+                  {t("Danh mục Voucher")} <span className="text-rose-500">*</span>
                 </label>
                 <select
                   value={formData.ma_danh_muc}
@@ -338,7 +340,7 @@ export function VoucherFormPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Hình ảnh minh họa (URL)</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">{t("Hình ảnh minh họa (URL)")}</label>
                 <input
                   type="text"
                   value={formData.hinh_anh_url}
@@ -349,10 +351,10 @@ export function VoucherFormPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Mô tả chi tiết nội dung Voucher</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">{t("Mô tả chi tiết nội dung Voucher")}</label>
               <textarea
                 rows="3"
-                placeholder="Mô tả trải nghiệm, các món ăn hoặc dịch vụ được hưởng..."
+                placeholder={t("Mô tả trải nghiệm, các món ăn hoặc dịch vụ được hưởng...")}
                 value={formData.mo_ta}
                 onChange={(e) => setFormData({ ...formData, mo_ta: e.target.value })}
                 className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-400 focus:outline-none"
@@ -362,12 +364,12 @@ export function VoucherFormPage() {
         </Card>
 
         {/* Section 2: Pricing & Quantity */}
-        <Card title="2. Giá Bán & Số Lượng Phát Hành">
+        <Card title={t("2. Giá Bán & Số Lượng Phát Hành")}>
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Giá niêm yết (Giá gốc đ) <span className="text-rose-500">*</span> {isTamNgung && "(Đã khóa)"}
+                  {t("Giá niêm yết (Giá gốc đ)")} <span className="text-rose-500">*</span> {isTamNgung && `(${t("Đã khóa")})`}
                 </label>
                 <input
                   type="number"
@@ -377,12 +379,12 @@ export function VoucherFormPage() {
                   onChange={(e) => setFormData({ ...formData, gia_goc: e.target.value })}
                   className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-400 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500"
                 />
-                {errors.gia_goc && <p className="text-xs text-rose-600 mt-1">{errors.gia_goc}</p>}
+                {errors.gia_goc && <p className="text-xs text-rose-600 mt-1">{t(errors.gia_goc)}</p>}
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Giá ưu đãi bán ra (Giá bán đ) <span className="text-rose-500">*</span> {isTamNgung && "(Đã khóa)"}
+                  {t("Giá ưu đãi bán ra (Giá bán đ)")} <span className="text-rose-500">*</span> {isTamNgung && `(${t("Đã khóa")})`}
                 </label>
                 <input
                   type="number"
@@ -392,12 +394,12 @@ export function VoucherFormPage() {
                   onChange={(e) => setFormData({ ...formData, gia_ban: e.target.value })}
                   className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-400 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500"
                 />
-                {errors.gia_ban && <p className="text-xs text-rose-600 mt-1">{errors.gia_ban}</p>}
+                {errors.gia_ban && <p className="text-xs text-rose-600 mt-1">{t(errors.gia_ban)}</p>}
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Số lượng phát hành <span className="text-rose-500">*</span>
+                  {t("Số lượng phát hành")} <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="number"
@@ -408,18 +410,18 @@ export function VoucherFormPage() {
                 />
                 {isTamNgung && initialQuantity > 0 && (
                   <p className="text-[11px] text-amber-700 mt-1 font-medium">
-                    💡 Khi tạm ngưng, số lượng phát hành mới chỉ được điều chỉnh tăng thêm (tối thiểu {initialQuantity}).
+                    💡 {t("Khi tạm ngưng, số lượng phát hành mới chỉ được điều chỉnh tăng thêm (tối thiểu")} {initialQuantity}).
                   </p>
                 )}
-                {errors.so_luong_phat_hanh && <p className="text-xs text-rose-600 mt-1 font-semibold">{errors.so_luong_phat_hanh}</p>}
+                {errors.so_luong_phat_hanh && <p className="text-xs text-rose-600 mt-1 font-semibold">{t(errors.so_luong_phat_hanh)}</p>}
               </div>
             </div>
 
             {discountPercent > 0 && (
               <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-lg text-xs font-semibold text-emerald-800 flex items-center justify-between">
-                <span>🔥 Chiết khấu ưu đãi dành cho khách hàng:</span>
+                <span>🔥 {t("Chiết khấu ưu đãi dành cho khách hàng:")}</span>
                 <span className="text-sm font-bold bg-emerald-600 text-white px-2 py-0.5 rounded">
-                  Giảm {discountPercent}% (Tiết kiệm {(formData.gia_goc - formData.gia_ban).toLocaleString()}đ)
+                  {t("Giảm")} {discountPercent}% ({t("Tiết kiệm")} {(formData.gia_goc - formData.gia_ban).toLocaleString()}đ)
                 </span>
               </div>
             )}
@@ -427,7 +429,7 @@ export function VoucherFormPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-100 pt-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Thời gian mở bán từ <span className="text-rose-500">*</span> {isTamNgung && "(Đã khóa)"}
+                  {t("Thời gian mở bán từ")} <span className="text-rose-500">*</span> {isTamNgung && `(${t("Đã khóa")})`}
                 </label>
                 <input
                   type="datetime-local"
@@ -439,12 +441,12 @@ export function VoucherFormPage() {
                   }}
                   className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-400 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500"
                 />
-                {errors.tg_bat_dau_ban && <p className="text-xs text-rose-600 mt-1 font-medium">{errors.tg_bat_dau_ban}</p>}
+                {errors.tg_bat_dau_ban && <p className="text-xs text-rose-600 mt-1 font-medium">{t(errors.tg_bat_dau_ban)}</p>}
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Thời gian kết thúc bán <span className="text-rose-500">*</span> {isTamNgung && "(Đã khóa)"}
+                  {t("Thời gian kết thúc bán")} <span className="text-rose-500">*</span> {isTamNgung && `(${t("Đã khóa")})`}
                 </label>
                 <input
                   type="datetime-local"
@@ -456,14 +458,14 @@ export function VoucherFormPage() {
                   }}
                   className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-400 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500"
                 />
-                {errors.tg_ket_thuc_ban && <p className="text-xs text-rose-600 mt-1 font-medium">{errors.tg_ket_thuc_ban}</p>}
+                {errors.tg_ket_thuc_ban && <p className="text-xs text-rose-600 mt-1 font-medium">{t(errors.tg_ket_thuc_ban)}</p>}
               </div>
             </div>
           </div>
         </Card>
 
         {/* Section 3: Applicable Branches */}
-        <Card title={`3. Chi Nhánh Áp Dụng ${isTamNgung ? "(Đã khóa chỉnh sửa)" : ""}`}>
+        <Card title={`${t("3. Chi Nhánh Áp Dụng")} ${isTamNgung ? `(${t("Đã khóa chỉnh sửa")})` : ""}`}>
           <div className="space-y-3">
             {activeBranches.length > 0 && (
               <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
@@ -478,17 +480,17 @@ export function VoucherFormPage() {
                     onChange={handleSelectAllBranches}
                     className="w-4 h-4 text-sky-600 rounded focus:ring-sky-500"
                   />
-                  <span>✓ Chọn tất cả chi nhánh ({activeBranches.length})</span>
+                  <span>✓ {t("Chọn tất cả chi nhánh")} ({activeBranches.length})</span>
                 </label>
                 <span className="text-xs text-slate-500 font-medium">
-                  Đã chọn: <strong className="text-sky-700 font-bold">{formData.ma_chi_nhanh.length}</strong> / {activeBranches.length} chi nhánh
+                  {t("Đã chọn:")} <strong className="text-sky-700 font-bold">{formData.ma_chi_nhanh.length}</strong> / {activeBranches.length} {t("chi nhánh")}
                 </span>
               </div>
             )}
 
             {activeBranches.length === 0 ? (
               <p className="text-xs text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-200">
-                Chưa có chi nhánh chính thức nào. Vui lòng đăng ký chi nhánh trước khi phát hành Voucher.
+                {t("Chưa có chi nhánh chính thức nào. Vui lòng đăng ký chi nhánh trước khi phát hành Voucher.")}
               </p>
             ) : (
               activeBranches.map((branch) => (
@@ -513,17 +515,17 @@ export function VoucherFormPage() {
             )}
             {errors.ma_chi_nhanh && (
               <p className="text-xs font-semibold text-rose-600 bg-rose-50 p-2.5 rounded-lg border border-rose-200 mt-2">
-                ⚠️ {errors.ma_chi_nhanh}
+                ⚠️ {t(errors.ma_chi_nhanh)}
               </p>
             )}
           </div>
         </Card>
 
         {/* Section 4: Terms & Policies */}
-        <Card title="4. Điều Khoản & Chính Sách">
+        <Card title={t("4. Điều Khoản & Chính Sách")}>
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Điều kiện áp dụng</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">{t("Điều kiện áp dụng")}</label>
               <textarea
                 rows="2"
                 value={formData.dieu_kien_ap_dung}
@@ -533,7 +535,7 @@ export function VoucherFormPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Chính sách hoàn hủy</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">{t("Chính sách hoàn hủy")}</label>
               <textarea
                 rows="2"
                 value={formData.chinh_sach_hoan_huy}
@@ -547,21 +549,21 @@ export function VoucherFormPage() {
         {/* Footer Actions */}
         <div className="flex items-center justify-between pt-4 border-t border-slate-200">
           <Button variant="secondary" onClick={() => navigate(-1)}>
-            Hủy bỏ
+            {t("Hủy bỏ")}
           </Button>
 
           <div className="flex items-center gap-3">
             {id && !["Nhap", "Tu choi"].includes(voucherStatus) ? (
               <Button variant="primary" onClick={() => handleSave("update")} loading={loading}>
-                Lưu thay đổi
+                {t("Lưu thay đổi")}
               </Button>
             ) : (
               <>
                 <Button variant="secondary" onClick={() => handleSave("draft")} loading={loading}>
-                  Lưu bản nháp
+                  {t("Lưu bản nháp")}
                 </Button>
                 <Button variant="primary" onClick={() => handleSave("submit")} loading={loading}>
-                  ✓ Lưu & Gửi duyệt ngay
+                  ✓ {t("Lưu & Gửi duyệt ngay")}
                 </Button>
               </>
             )}
@@ -576,21 +578,21 @@ export function VoucherFormPage() {
             setShowSubmitModal(false);
             await executeSave("submit");
           }}
-          title="Xác nhận gửi duyệt Voucher"
-          confirmText="✓ Xác nhận Gửi duyệt"
-          cancelText="Hủy bỏ"
+          title={t("Xác nhận gửi duyệt Voucher")}
+          confirmText={`✓ ${t("Xác nhận Gửi duyệt")}`}
+          cancelText={t("Hủy bỏ")}
           confirmVariant="primary"
           loading={loading}
         >
           <div className="space-y-3 text-left">
             <p className="text-sm text-slate-700">
-              Bạn có chắc chắn muốn gửi thông tin Voucher <strong>"{formData.ten_voucher || "chương trình này"}"</strong> cho Quản trị viên thẩm định và xét duyệt?
+              {t("Bạn có chắc chắn muốn gửi thông tin Voucher")} <strong>"{formData.ten_voucher || t("chương trình này")}"</strong> {t("cho Quản trị viên thẩm định và xét duyệt?")}
             </p>
             <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 text-xs text-amber-800 space-y-1">
               <div className="font-bold flex items-center gap-1">
-                <span>Lưu ý:</span>
+                <span>{t("Lưu ý:")}</span>
               </div>
-              <p>Sau khi gửi duyệt, thông tin Voucher sẽ ở trạng thái <strong>"Chờ duyệt"</strong>. Quản trị viên sẽ kiểm duyệt trước khi chính thức kích hoạt chương trình.</p>
+              <p>{t("Sau khi gửi duyệt, thông tin Voucher sẽ ở trạng thái")} <strong>"{t("Chờ duyệt")}"</strong>. {t("Quản trị viên sẽ kiểm duyệt trước khi chính thức kích hoạt chương trình.")}</p>
             </div>
           </div>
         </Modal>

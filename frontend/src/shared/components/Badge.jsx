@@ -1,6 +1,9 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 export function Badge({ status, text, size = "md" }) {
+  const { t } = useTranslation();
+
   const getBadgeStyle = (statusVal) => {
     switch (statusVal) {
       case "Dang hoat dong":
@@ -33,25 +36,25 @@ export function Badge({ status, text, size = "md" }) {
   };
 
   const getLabel = (statusVal) => {
-    if (text) return text;
+    if (text) return t(text);
     switch (statusVal) {
-      case "Dang hoat dong": return "Đang hoạt động";
-      case "Cho duyet": return "Chờ duyệt";
-      case "Tu choi": return "Từ chối";
-      case "Tam khoa": return "Tạm khóa";
-      case "Nhap": return "Bản nháp";
-      case "Da duyet": return "Đã duyệt";
-      case "Dang ban": return "Đang bán";
-      case "Hien thi": return "Đang bán";
-      case "Bao luu": return "Chưa công bố";
-      case "Cho hien thi": return "Chờ mở bán";
-      case "Tam an": return "Tạm ẩn";
-      case "Tam ngung": return "Tạm ngưng";
-      case "Ngung ban": return "Ngừng bán";
-      case "Yeu cau bo sung": return "Cần bổ sung";
-      case "Het hang": return "Hết hàng";
-      case "Het han": return "Hết hạn";
-      default: return statusVal;
+      case "Dang hoat dong": return t("Đang hoạt động");
+      case "Cho duyet": return t("Chờ duyệt");
+      case "Tu choi": return t("Từ chối");
+      case "Tam khoa": return t("Tạm khóa");
+      case "Nhap": return t("Bản nháp");
+      case "Da duyet": return t("Đã duyệt");
+      case "Dang ban": return t("Đang bán");
+      case "Hien thi": return t("Đang bán");
+      case "Bao luu": return t("Chưa công bố");
+      case "Cho hien thi": return t("Chờ mở bán");
+      case "Tam an": return t("Tạm ẩn");
+      case "Tam ngung": return t("Tạm ngưng");
+      case "Ngung ban": return t("Ngừng bán");
+      case "Yeu cau bo sung": return t("Cần bổ sung");
+      case "Het hang": return t("Hết hàng");
+      case "Het han": return t("Hết hạn");
+      default: return t(statusVal);
     }
   };
 

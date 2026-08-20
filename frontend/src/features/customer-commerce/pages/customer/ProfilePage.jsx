@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { User, Lock, Eye, EyeOff, Save, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import {
   fetchProfile,
   updateProfile,
@@ -35,6 +36,7 @@ function PwField({ label, value, onChange, placeholder }) {
 }
 
 export default function ProfilePage() {
+  const { t } = useTranslation();
   const [tab, setTab] = useState("info");
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -51,9 +53,9 @@ export default function ProfilePage() {
   useEffect(() => {
     fetchProfile()
       .then(setProfile)
-      .catch(() => setErrorMsg("Không thể tải thông tin hồ sơ.")) // E1
+      .catch(() => setErrorMsg(t("Không thể tải thông tin hồ sơ."))) // E1
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   const handleSaveProfile = async () => {
     setFieldErrors({});
@@ -67,10 +69,10 @@ export default function ProfilePage() {
         gioi_tinh: profile.gioi_tinh,
       });
       setProfile(updated); // bước 11: hiển thị lại hồ sơ đã cập nhật
-      toast.success("Cập nhật hồ sơ thành công!");
+      toast.success(t("Cập nhật hồ sơ thành công!"));
     } catch (err) {
       if (err.details?.fieldErrors) setFieldErrors(err.details.fieldErrors); // A7
-      toast.error(err.message || "Cập nhật hồ sơ thất bại."); // E2
+      toast.error(t(err.message || "Cập nhật hồ sơ thất bại.")); // E2
     } finally {
       setSaving(false);
     }
@@ -88,9 +90,9 @@ export default function ProfilePage() {
       setOldPw("");
       setNewPw("");
       setConfirmPw("");
-      toast.success("Đổi mật khẩu thành công!");
+      toast.success(t("Đổi mật khẩu thành công!"));
     } catch (err) {
-      setPwError(err.message || "Đổi mật khẩu thất bại.");
+      setPwError(t(err.message || "Đổi mật khẩu thất bại."));
     } finally {
       setChangingPw(false);
     }
@@ -99,19 +101,19 @@ export default function ProfilePage() {
   if (loading)
     return (
       <div className="py-16 text-center text-gray-400 text-base">
-        Đang tải hồ sơ...
+        {t("Đang tải hồ sơ...")}
       </div>
     );
   if (errorMsg)
     return (
-      <div className="py-16 text-center text-red-500 text-base">{errorMsg}</div>
+      <div className="py-16 text-center text-red-500 text-base">{t(errorMsg)}</div>
     );
   if (!profile) return null;
 
   return (
     <div className="max-w-lg mx-auto">
       <h1 className="text-xl font-bold text-gray-900 mb-4">
-        Tài khoản của tôi
+        {t("Tài khoản của tôi")}
       </h1>
 
       <div className="flex bg-white border border-gray-300 rounded-xl p-1 mb-5">
@@ -119,13 +121,13 @@ export default function ProfilePage() {
           onClick={() => setTab("info")}
           className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-base font-medium transition-colors ${tab === "info" ? "bg-sky-500 text-white shadow-sm" : "text-gray-600"}`}
         >
-          <User size={18} /> Hồ sơ cá nhân
+          <User size={18} /> {t("Hồ sơ cá nhân")}
         </button>
         <button
           onClick={() => setTab("password")}
           className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-base font-medium transition-colors ${tab === "password" ? "bg-sky-500 text-white shadow-sm" : "text-gray-600"}`}
         >
-          <Lock size={18} /> Đổi mật khẩu
+          <Lock size={18} /> {t("Đổi mật khẩu")}
         </button>
       </div>
 
@@ -143,7 +145,7 @@ export default function ProfilePage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">
-              Họ và tên <span className="text-red-500">*</span>
+              {t("Họ và tên")} <span className="text-red-500">*</span>
             </label>
             <input
               value={profile.ho_ten || ""}
@@ -153,7 +155,7 @@ export default function ProfilePage() {
               className={`w-full border rounded-xl px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-orange-300 ${fieldErrors.ho_ten ? "border-red-300" : "border-gray-300"}`}
             />
             {fieldErrors.ho_ten && (
-              <p className="text-sm text-red-500 mt-1">{fieldErrors.ho_ten}</p>
+              <p className="text-sm text-red-500 mt-1">{t(fieldErrors.ho_ten)}</p>
             )}
           </div>
 
@@ -170,13 +172,13 @@ export default function ProfilePage() {
               className={`w-full border rounded-xl px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-orange-300 ${fieldErrors.email ? "border-red-300" : "border-gray-300"}`}
             />
             {fieldErrors.email && (
-              <p className="text-sm text-red-500 mt-1">{fieldErrors.email}</p>
+              <p className="text-sm text-red-500 mt-1">{t(fieldErrors.email)}</p>
             )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">
-              Số điện thoại <span className="text-red-500">*</span>
+              {t("Số điện thoại")} <span className="text-red-500">*</span>
             </label>
             <input
               type="tel"
@@ -187,13 +189,13 @@ export default function ProfilePage() {
               className={`w-full border rounded-xl px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-orange-300 ${fieldErrors.sdt ? "border-red-300" : "border-gray-300"}`}
             />
             {fieldErrors.sdt && (
-              <p className="text-sm text-red-500 mt-1">{fieldErrors.sdt}</p>
+              <p className="text-sm text-red-500 mt-1">{t(fieldErrors.sdt)}</p>
             )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">
-              Ngày sinh
+              {t("Ngày sinh")}
             </label>
             <input
               type="date"
@@ -207,7 +209,7 @@ export default function ProfilePage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">
-              Giới tính
+              {t("Giới tính")}
             </label>
             <select
               value={profile.gioi_tinh || ""}
@@ -216,10 +218,10 @@ export default function ProfilePage() {
               }
               className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"
             >
-              <option value="">-- Chọn --</option>
-              <option value="Nam">Nam</option>
-              <option value="Nu">Nữ</option>
-              <option value="Khac">Khác</option>
+              <option value="">-- {t("Chọn")} --</option>
+              <option value="Nam">{t("Nam")}</option>
+              <option value="Nu">{t("Nữ")}</option>
+              <option value="Khac">{t("Khác")}</option>
             </select>
           </div>
 
@@ -228,7 +230,7 @@ export default function ProfilePage() {
             disabled={saving}
             className="w-full flex items-center justify-center gap-2 bg-sky-500 text-white py-2.5 rounded-xl font-semibold text-base hover:bg-sky-600 disabled:opacity-50 mt-2"
           >
-            <Save size={15} /> {saving ? "Đang lưu..." : "Lưu thay đổi"}
+            <Save size={15} /> {saving ? t("Đang lưu...") : t("Lưu thay đổi")}
           </button>
         </div>
       )}
@@ -236,27 +238,27 @@ export default function ProfilePage() {
       {tab === "password" && (
         <div className="bg-white rounded-xl border border-gray-100 p-4 space-y-3">
           <PwField
-            label="Mật khẩu hiện tại *"
+            label={t("Mật khẩu hiện tại *")}
             value={oldPw}
             onChange={setOldPw}
-            placeholder="Nhập mật khẩu hiện tại"
+            placeholder={t("Nhập mật khẩu hiện tại")}
           />
           <PwField
-            label="Mật khẩu mới *"
+            label={t("Mật khẩu mới *")}
             value={newPw}
             onChange={setNewPw}
-            placeholder="Tối thiểu 6 ký tự"
+            placeholder={t("Tối thiểu 6 ký tự")}
           />
           <PwField
-            label="Xác nhận mật khẩu mới *"
+            label={t("Xác nhận mật khẩu mới *")}
             value={confirmPw}
             onChange={setConfirmPw}
-            placeholder="Nhập lại mật khẩu mới"
+            placeholder={t("Nhập lại mật khẩu mới")}
           />
 
           {pwError && (
             <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-              <AlertCircle size={12} /> {pwError}
+              <AlertCircle size={12} /> {t(pwError)}
             </div>
           )}
 
@@ -265,7 +267,7 @@ export default function ProfilePage() {
             disabled={changingPw}
             className="w-full flex items-center justify-center gap-2 bg-sky-500 text-white py-2.5 rounded-xl font-semibold text-base hover:bg-sky-600 disabled:opacity-50"
           >
-            <Lock size={15} /> {changingPw ? "Đang xử lý..." : "Đổi mật khẩu"}
+            <Lock size={15} /> {changingPw ? t("Đang xử lý...") : t("Đổi mật khẩu")}
           </button>
         </div>
       )}

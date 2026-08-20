@@ -3,6 +3,7 @@
  */
 const voucherRepository = require("../../data/repositories/voucher.repository");
 const supabase = require("../../../../config/supabase");
+const translationService = require("../../../../common/services/translation.service");
 
 class PartnerReportService {
   async getReport(query = {}) {
@@ -238,6 +239,16 @@ class PartnerReportService {
 
     const monthly = Array.from(monthlyMap.values());
     const yearly = Array.from(yearlyMap.values());
+
+    const lang = query.lang;
+    if (lang && lang.toLowerCase().startsWith("en")) {
+      for (const v of dropdownList) {
+        if (v.ten_voucher) v.ten_voucher = await translationService.translateText(v.ten_voucher, "en");
+      }
+      for (const item of breakdown) {
+        if (item.voucherName) item.voucherName = await translationService.translateText(item.voucherName, "en");
+      }
+    }
 
     return {
       vouchers: dropdownList,

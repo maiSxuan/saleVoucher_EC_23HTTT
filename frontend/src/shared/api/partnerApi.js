@@ -2,10 +2,16 @@ import { mockStore } from "../store/mockDataStore";
 
 const BACKEND_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || "/api"}`;
 
+function getCurrentLang() {
+  return localStorage.getItem("app_lang") || "vi";
+}
+
 function getAuthHeaders() {
   const token = localStorage.getItem("accessToken");
+  const lang = getCurrentLang();
   return {
     "Content-Type": "application/json",
+    "Accept-Language": lang,
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }
@@ -131,7 +137,10 @@ export async function registerPartnerProfileApi(partnerData) {
  */
 export async function getCategoriesApi() {
   try {
-    const res = await fetch(`${BACKEND_BASE_URL}/vouchers/categories`);
+    const lang = localStorage.getItem("app_lang") || "vi";
+    const res = await fetch(`${BACKEND_BASE_URL}/vouchers/categories?lang=${lang}`, {
+      headers: { "Accept-Language": lang },
+    });
     if (res.ok) {
       const json = await res.json();
       if (json.success) return json.data;
@@ -347,8 +356,12 @@ export async function rejectBranchRequestApi(requestId, adminNote = "") {
  */
 export async function getVouchersApi(query = {}) {
   try {
-    const params = new URLSearchParams(query).toString();
-    const res = await fetch(`${BACKEND_BASE_URL}/vouchers${params ? `?${params}` : ""}`);
+    const lang = localStorage.getItem("app_lang") || "vi";
+    const queryWithLang = { lang, ...query };
+    const params = new URLSearchParams(queryWithLang).toString();
+    const res = await fetch(`${BACKEND_BASE_URL}/vouchers${params ? `?${params}` : ""}`, {
+      headers: { "Accept-Language": lang },
+    });
     if (res.ok) {
       const json = await res.json();
       if (json.success) return json.data;
@@ -364,7 +377,8 @@ export async function getVouchersApi(query = {}) {
  */
 export async function getVouchersByPartnerApi(partnerId) {
   try {
-    const res = await fetch(`${BACKEND_BASE_URL}/vouchers/partner/${partnerId}`, {
+    const lang = getCurrentLang();
+    const res = await fetch(`${BACKEND_BASE_URL}/vouchers/partner/${partnerId}?lang=${lang}`, {
       headers: getAuthHeaders(),
     });
     if (res.ok) {
@@ -382,7 +396,8 @@ export async function getVouchersByPartnerApi(partnerId) {
  */
 export async function getVoucherByIdApi(voucherId) {
   try {
-    const res = await fetch(`${BACKEND_BASE_URL}/vouchers/${voucherId}`, {
+    const lang = getCurrentLang();
+    const res = await fetch(`${BACKEND_BASE_URL}/vouchers/${voucherId}?lang=${lang}`, {
       headers: getAuthHeaders(),
     });
     if (res.ok) {
@@ -602,8 +617,12 @@ export async function rejectPartnerProfileRequestApi(reqId, reason, adminId) {
  */
 export async function getPartnerReportApi(params = {}) {
   try {
-    const queryStr = new URLSearchParams(params).toString();
-    const res = await fetch(`${BACKEND_BASE_URL}/reports/partner-reports?${queryStr}`);
+    const lang = getCurrentLang();
+    const queryParams = { ...params, lang };
+    const queryStr = new URLSearchParams(queryParams).toString();
+    const res = await fetch(`${BACKEND_BASE_URL}/reports/partner-reports?${queryStr}`, {
+      headers: getAuthHeaders(),
+    });
     if (res.ok) {
       const json = await res.json();
       if (json.success) return json.data;

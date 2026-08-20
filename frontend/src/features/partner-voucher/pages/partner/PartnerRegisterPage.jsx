@@ -13,8 +13,10 @@ import {
   resendPartnerOtpApi,
 } from "../../../../shared/api/partnerApi";
 import { VIETNAM_PROVINCES } from "../../../../shared/constants/vietnamProvinces";
+import { useTranslation } from "react-i18next";
 
 export function PartnerRegisterPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -74,12 +76,12 @@ export function PartnerRegisterPage() {
   const [errors, setErrors] = useState({});
 
   const steps = [
-    { number: 1, title: "Tạo tài khoản" },
-    { number: 2, title: "Thông tin doanh nghiệp" },
-    { number: 3, title: "Người đại diện" },
-    { number: 4, title: "Logo & Đăng ký kinh doanh" },
-    { number: 5, title: "Chi nhánh ban đầu" },
-    { number: 6, title: "Xem lại & Gửi duyệt" },
+    { number: 1, title: t("Tạo tài khoản") },
+    { number: 2, title: t("Thông tin doanh nghiệp") },
+    { number: 3, title: t("Người đại diện") },
+    { number: 4, title: t("Logo & Đăng ký kinh doanh") },
+    { number: 5, title: t("Chi nhánh ban đầu") },
+    { number: 6, title: t("Xem lại & Gửi duyệt") },
   ];
 
   const handleInputChange = (field, value) => {
@@ -334,9 +336,9 @@ export function PartnerRegisterPage() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">Đăng ký Hồ sơ Đối tác</h2>
+            <h2 className="text-2xl font-bold text-slate-900">{t("Đăng ký Hồ sơ Đối tác")}</h2>
             <p className="text-sm text-slate-500 mt-1">
-              Khai báo tài khoản, thông tin doanh nghiệp & giấy phép kinh doanh để tham gia phát hành Voucher trên hệ thống
+              {t("Khai báo tài khoản, thông tin doanh nghiệp & giấy phép kinh doanh để tham gia phát hành Voucher trên hệ thống")}
             </p>
           </div>
           <Link
@@ -394,17 +396,17 @@ export function PartnerRegisterPage() {
           {currentStep === 1 && (
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b pb-2">
-                <h3 className="text-lg font-semibold text-slate-900">Bước 1: Tạo Tài Khoản Đối Tác</h3>
-                {createdUser && <span className="text-xs text-emerald-600 font-semibold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">✓ Đã tạo tài khoản</span>}
+                <h3 className="text-lg font-semibold text-slate-900">{t("Bước 1: Tạo Tài Khoản Đối Tác")}</h3>
+                {createdUser && <span className="text-xs text-emerald-600 font-semibold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">✓ {t("Đã tạo tài khoản")}</span>}
               </div>
               <p className="text-xs text-slate-500">
-                Tạo tài khoản người đại diện doanh nghiệp để đăng nhập và quản lý hệ thống Voucher sau khi được phê duyệt.
+                {t("Tạo tài khoản người đại diện doanh nghiệp để đăng nhập và quản lý hệ thống Voucher sau khi được phê duyệt.")}
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Email đăng nhập <span className="text-rose-500">*</span>
+                    {t("Email đăng nhập")} <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="email"
@@ -414,59 +416,59 @@ export function PartnerRegisterPage() {
                     placeholder="partner@domain.com"
                     className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-50"
                   />
-                  {errors.account_email && <p className="text-xs text-rose-600 mt-1">{errors.account_email}</p>}
+                  {errors.account_email && <p className="text-xs text-rose-600 mt-1">{t(errors.account_email)}</p>}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Họ và tên người đại diện <span className="text-rose-500">*</span>
+                    {t("Họ và tên người đại diện")} <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
                     disabled={!!createdUser}
                     value={formData.account_ho_ten}
                     onChange={(e) => handleInputChange("account_ho_ten", e.target.value)}
-                    placeholder="Nguyễn Văn A"
+                    placeholder={t("Nguyễn Văn A")}
                     className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-50"
                   />
-                  {errors.account_ho_ten && <p className="text-xs text-rose-600 mt-1">{errors.account_ho_ten}</p>}
+                  {errors.account_ho_ten && <p className="text-xs text-rose-600 mt-1">{t(errors.account_ho_ten)}</p>}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Mật khẩu <span className="text-rose-500">*</span>
+                    {t("Mật khẩu")} <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="password"
                     disabled={!!createdUser}
                     value={formData.account_password}
                     onChange={(e) => handleInputChange("account_password", e.target.value)}
-                    placeholder="Ít nhất 6 ký tự"
+                    placeholder={t("Ít nhất 6 ký tự")}
                     className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-50"
                   />
-                  {errors.account_password && <p className="text-xs text-rose-600 mt-1">{errors.account_password}</p>}
+                  {errors.account_password && <p className="text-xs text-rose-600 mt-1">{t(errors.account_password)}</p>}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Xác nhận mật khẩu <span className="text-rose-500">*</span>
+                    {t("Xác nhận mật khẩu")} <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="password"
                     disabled={!!createdUser}
                     value={formData.account_confirm_password}
                     onChange={(e) => handleInputChange("account_confirm_password", e.target.value)}
-                    placeholder="Nhập lại mật khẩu"
+                    placeholder={t("Nhập lại mật khẩu")}
                     className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-50"
                   />
-                  {errors.account_confirm_password && <p className="text-xs text-rose-600 mt-1">{errors.account_confirm_password}</p>}
+                  {errors.account_confirm_password && <p className="text-xs text-rose-600 mt-1">{t(errors.account_confirm_password)}</p>}
                 </div>
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center justify-between">
-                    <span>Số điện thoại liên hệ <span className="text-rose-500">*</span></span>
+                    <span>{t("Số điện thoại liên hệ")} <span className="text-rose-500">*</span></span>
                     <span className={`text-xs font-semibold ${formData.account_sdt?.length === 10 ? "text-emerald-600 font-bold" : "text-slate-400"}`}>
-                      {formData.account_sdt?.length || 0}/10 chữ số
+                      {formData.account_sdt?.length || 0}/10 {t("chữ số")}
                     </span>
                   </label>
                   <input
@@ -475,10 +477,10 @@ export function PartnerRegisterPage() {
                     disabled={!!createdUser}
                     value={formData.account_sdt}
                     onChange={(e) => handleInputChange("account_sdt", e.target.value.replace(/\D/g, ""))}
-                    placeholder="Ví dụ: 0901234567"
+                    placeholder={t("Ví dụ: 0901234567")}
                     className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-50"
                   />
-                  {errors.account_sdt && <p className="text-xs text-rose-600 mt-1">{errors.account_sdt}</p>}
+                  {errors.account_sdt && <p className="text-xs text-rose-600 mt-1">{t(errors.account_sdt)}</p>}
                 </div>
               </div>
             </div>
@@ -487,27 +489,27 @@ export function PartnerRegisterPage() {
           {/* STEP 2: Business Info */}
           {currentStep === 2 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Bước 2: Thông tin Doanh Nghiệp</h3>
+              <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">{t("Bước 2: Thông tin Doanh Nghiệp")}</h3>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Tên Doanh Nghiệp / Công Ty <span className="text-rose-500">*</span>
+                  {t("Tên Doanh Nghiệp / Công Ty")} <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.ten_dn}
                   onChange={(e) => handleInputChange("ten_dn", e.target.value)}
-                  placeholder="Ví dụ: Công ty TNHH Thương Mại & Dịch Vụ ABC"
+                  placeholder={t("Ví dụ: Công ty TNHH Thương Mại & Dịch Vụ ABC")}
                   className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
-                {errors.ten_dn && <p className="text-xs text-rose-600 mt-1">{errors.ten_dn}</p>}
+                {errors.ten_dn && <p className="text-xs text-rose-600 mt-1">{t(errors.ten_dn)}</p>}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center justify-between">
-                    <span>Mã số thuế / Mã ĐKKD <span className="text-rose-500">*</span></span>
+                    <span>{t("Mã số thuế / Mã ĐKKD")} <span className="text-rose-500">*</span></span>
                     <span className={`text-xs font-semibold ${formData.ma_so_thue?.length >= 10 && formData.ma_so_thue?.length <= 13 ? "text-emerald-600 font-bold" : "text-slate-400"}`}>
-                      {formData.ma_so_thue?.length || 0}/10-13 chữ số
+                      {formData.ma_so_thue?.length || 0}/10-13 {t("chữ số")}
                     </span>
                   </label>
                   <input
@@ -515,25 +517,25 @@ export function PartnerRegisterPage() {
                     maxLength={13}
                     value={formData.ma_so_thue}
                     onChange={(e) => handleInputChange("ma_so_thue", e.target.value.replace(/\D/g, ""))}
-                    placeholder="Ví dụ: 0312345678"
+                    placeholder={t("Ví dụ: 0312345678")}
                     className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
-                  {errors.ma_so_thue && <p className="text-xs text-rose-600 mt-1">{errors.ma_so_thue}</p>}
+                  {errors.ma_so_thue && <p className="text-xs text-rose-600 mt-1">{t(errors.ma_so_thue)}</p>}
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Địa chỉ ĐKKD chính thức <span className="text-rose-500">*</span>
+                  {t("Địa chỉ ĐKKD chính thức")} <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.dia_chi}
                   onChange={(e) => handleInputChange("dia_chi", e.target.value)}
-                  placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố"
+                  placeholder={t("Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố")}
                   className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
-                {errors.dia_chi && <p className="text-xs text-rose-600 mt-1">{errors.dia_chi}</p>}
+                {errors.dia_chi && <p className="text-xs text-rose-600 mt-1">{t(errors.dia_chi)}</p>}
               </div>
             </div>
           )}
@@ -541,27 +543,27 @@ export function PartnerRegisterPage() {
           {/* STEP 3: Representative Info */}
           {currentStep === 3 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Bước 3: Người Đại Diện Pháp Lý</h3>
+              <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">{t("Bước 3: Người Đại Diện Pháp Lý")}</h3>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Họ và tên Người đại diện <span className="text-rose-500">*</span>
+                  {t("Họ và tên Người đại diện")} <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.ho_ten}
                   onChange={(e) => handleInputChange("ho_ten", e.target.value)}
-                  placeholder="Nguyễn Văn A"
+                  placeholder={t("Nguyễn Văn A")}
                   className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
-                {errors.ho_ten && <p className="text-xs text-rose-600 mt-1">{errors.ho_ten}</p>}
+                {errors.ho_ten && <p className="text-xs text-rose-600 mt-1">{t(errors.ho_ten)}</p>}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center justify-between">
-                    <span>Số điện thoại liên hệ <span className="text-rose-500">*</span></span>
+                    <span>{t("Số điện thoại liên hệ")} <span className="text-rose-500">*</span></span>
                     <span className={`text-xs font-semibold ${formData.sdt?.length === 10 ? "text-emerald-600 font-bold" : "text-slate-400"}`}>
-                      {formData.sdt?.length || 0}/10 chữ số
+                      {formData.sdt?.length || 0}/10 {t("chữ số")}
                     </span>
                   </label>
                   <input
@@ -572,12 +574,12 @@ export function PartnerRegisterPage() {
                     placeholder="0901234567"
                     className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
-                  {errors.sdt && <p className="text-xs text-rose-600 mt-1">{errors.sdt}</p>}
+                  {errors.sdt && <p className="text-xs text-rose-600 mt-1">{t(errors.sdt)}</p>}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Email liên hệ / Thông báo <span className="text-rose-500">*</span>
+                    {t("Email liên hệ / Thông báo")} <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="email"
@@ -586,16 +588,16 @@ export function PartnerRegisterPage() {
                     placeholder="contact@company.com"
                     className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
-                  {errors.email && <p className="text-xs text-rose-600 mt-1">{errors.email}</p>}
+                  {errors.email && <p className="text-xs text-rose-600 mt-1">{t(errors.email)}</p>}
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center justify-between">
-                    <span>Số CCCD / CMND <span className="text-rose-500">*</span></span>
+                    <span>{t("Số CCCD / CMND")} <span className="text-rose-500">*</span></span>
                     <span className={`text-xs font-semibold ${formData.cccd?.length === 12 ? "text-emerald-600 font-bold" : "text-slate-400"}`}>
-                      {formData.cccd?.length || 0}/12 chữ số
+                      {formData.cccd?.length || 0}/12 {t("chữ số")}
                     </span>
                   </label>
                   <input
@@ -606,12 +608,12 @@ export function PartnerRegisterPage() {
                     placeholder="079090123456"
                     className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
-                  {errors.cccd && <p className="text-xs text-rose-600 mt-1">{errors.cccd}</p>}
+                  {errors.cccd && <p className="text-xs text-rose-600 mt-1">{t(errors.cccd)}</p>}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Ngày sinh <span className="text-rose-500">*</span>
+                    {t("Ngày sinh")} <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="date"
@@ -619,19 +621,19 @@ export function PartnerRegisterPage() {
                     onChange={(e) => handleInputChange("ngay_sinh", e.target.value)}
                     className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
-                  {errors.ngay_sinh && <p className="text-xs text-rose-600 mt-1">{errors.ngay_sinh}</p>}
+                  {errors.ngay_sinh && <p className="text-xs text-rose-600 mt-1">{t(errors.ngay_sinh)}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Giới tính</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t("Giới tính")}</label>
                   <select
                     value={formData.gioi_tinh}
                     onChange={(e) => handleInputChange("gioi_tinh", e.target.value)}
                     className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
                   >
-                    <option value="Nam">Nam</option>
-                    <option value="Nu">Nữ</option>
-                    <option value="Khac">Khác</option>
+                    <option value="Nam">{t("Nam")}</option>
+                    <option value="Nu">{t("Nữ")}</option>
+                    <option value="Khac">{t("Khác")}</option>
                   </select>
                 </div>
               </div>
@@ -642,10 +644,10 @@ export function PartnerRegisterPage() {
           {currentStep === 4 && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">
-                Bước 4: Đăng Tải Logo Thương Hiệu & Giấy Phép Kinh Doanh
+                {t("Bước 4: Đăng Tải Logo Thương Hiệu & Giấy Phép Kinh Doanh")}
               </h3>
               <p className="text-xs text-slate-500">
-                Tải lên Logo thương hiệu và Giấy phép đăng ký kinh doanh còn hiệu lực (Tệp ảnh PNG, JPG hoặc PDF, tối đa 10MB).
+                {t("Tải lên Logo thương hiệu và Giấy phép đăng ký kinh doanh còn hiệu lực (Tệp ảnh PNG, JPG hoặc PDF, tối đa 10MB).")}
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -653,8 +655,8 @@ export function PartnerRegisterPage() {
                 <div className="border-2 border-dashed border-slate-300 rounded-xl p-5 text-center hover:border-blue-500 transition-colors bg-slate-50 flex flex-col items-center justify-between">
                   <div className="w-full">
                     <div className="text-3xl mb-2">🖼️</div>
-                    <div className="text-sm font-semibold text-slate-800">Logo Thương Hiệu Doanh Nghiệp</div>
-                    <div className="text-xs text-slate-500 mt-1">Hiển thị trên danh mục & Slider đối tác Landing Page</div>
+                    <div className="text-sm font-semibold text-slate-800">{t("Logo Thương Hiệu Doanh Nghiệp")}</div>
+                    <div className="text-xs text-slate-500 mt-1">{t("Hiển thị trên danh mục & Slider đối tác Landing Page")}</div>
                     
                     {formData.logo ? (
                       <div className="mt-3 p-2 bg-white rounded-lg border border-slate-200 inline-block">
@@ -666,7 +668,7 @@ export function PartnerRegisterPage() {
                       </div>
                     ) : (
                       <div className="mt-3 w-24 h-24 rounded-lg border border-dashed border-slate-300 bg-white mx-auto flex items-center justify-center text-xs text-slate-400">
-                        Chưa chọn logo
+                        {t("Chưa chọn logo")}
                       </div>
                     )}
                   </div>
@@ -683,7 +685,7 @@ export function PartnerRegisterPage() {
                       htmlFor="logo-upload"
                       className="w-full inline-block px-4 py-2 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-100 shadow-xs"
                     >
-                      📁 Chọn tệp Logo (PNG/JPG)
+                      📁 {t("Chọn tệp Logo (PNG/JPG)")}
                     </label>
                   </div>
                 </div>
@@ -692,15 +694,15 @@ export function PartnerRegisterPage() {
                 <div className="border-2 border-dashed border-slate-300 rounded-xl p-5 text-center hover:border-blue-500 transition-colors bg-slate-50 flex flex-col items-center justify-between">
                   <div className="w-full">
                     <div className="text-3xl mb-2">📄</div>
-                    <div className="text-sm font-semibold text-slate-800">Giấy Phép Đăng Ký Kinh Doanh</div>
-                    <div className="text-xs text-slate-500 mt-1">Tài liệu thẩm định pháp lý doanh nghiệp (Ảnh/PDF)</div>
+                    <div className="text-sm font-semibold text-slate-800">{t("Giấy Phép Đăng Ký Kinh Doanh")}</div>
+                    <div className="text-xs text-slate-500 mt-1">{t("Tài liệu thẩm định pháp lý doanh nghiệp (Ảnh/PDF)")}</div>
                     
                     {formData.giay_phep_kinh_doanh ? (
                       <div className="mt-3 p-2 bg-white rounded-lg border border-slate-200 inline-block">
                         {formData.giay_phep_kinh_doanh.startsWith("data:application/pdf") ? (
                           <div className="w-24 h-24 flex flex-col items-center justify-center bg-blue-50 text-blue-700 text-xs font-semibold rounded-md p-1">
                             <span className="text-2xl">📄</span>
-                            <span>Tệp PDF</span>
+                            <span>{t("Tệp PDF")}</span>
                           </div>
                         ) : (
                           <img
@@ -712,7 +714,7 @@ export function PartnerRegisterPage() {
                       </div>
                     ) : (
                       <div className="mt-3 w-24 h-24 rounded-lg border border-dashed border-slate-300 bg-white mx-auto flex items-center justify-center text-xs text-slate-400">
-                        Chưa chọn GPKD
+                        {t("Chưa chọn GPKD")}
                       </div>
                     )}
                   </div>
@@ -729,7 +731,7 @@ export function PartnerRegisterPage() {
                       htmlFor="license-upload"
                       className="w-full inline-block px-4 py-2 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-100 shadow-xs"
                     >
-                      📁 Chọn tệp ĐKKD (Ảnh/PDF)
+                      📁 {t("Chọn tệp ĐKKD (Ảnh/PDF)")}
                     </label>
                   </div>
                 </div>
@@ -741,29 +743,29 @@ export function PartnerRegisterPage() {
           {currentStep === 5 && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">
-                Bước 5: Khai Báo Chi Nhánh Đầu Tiên
+                {t("Bước 5: Khai Báo Chi Nhánh Đầu Tiên")}
               </h3>
               <p className="text-xs text-slate-500">
-                Cung cấp địa chỉ điểm bán hàng/chi nhánh đầu tiên sẽ áp dụng các chương trình Voucher của bạn.
+                {t("Cung cấp địa chỉ điểm bán hàng/chi nhánh đầu tiên sẽ áp dụng các chương trình Voucher của bạn.")}
               </p>
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Tên chi nhánh <span className="text-rose-500">*</span>
+                  {t("Tên chi nhánh")} <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.ten_chi_nhanh}
                   onChange={(e) => handleInputChange("ten_chi_nhanh", e.target.value)}
-                  placeholder="Ví dụ: Chi nhánh Nguyễn Huệ - Quận 1"
+                  placeholder={t("Ví dụ: Chi nhánh Nguyễn Huệ - Quận 1")}
                   className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
-                {errors.ten_chi_nhanh && <p className="text-xs text-rose-600 mt-1">{errors.ten_chi_nhanh}</p>}
+                {errors.ten_chi_nhanh && <p className="text-xs text-rose-600 mt-1">{t(errors.ten_chi_nhanh)}</p>}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Tỉnh / Thành Phố <span className="text-rose-500">*</span>
+                  {t("Tỉnh / Thành Phố")} <span className="text-rose-500">*</span>
                 </label>
                 <select
                   value={formData.khu_vuc}
@@ -776,21 +778,21 @@ export function PartnerRegisterPage() {
                     </option>
                   ))}
                 </select>
-                {errors.khu_vuc && <p className="text-xs text-rose-600 mt-1">{errors.khu_vuc}</p>}
+                {errors.khu_vuc && <p className="text-xs text-rose-600 mt-1">{t(errors.khu_vuc)}</p>}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Địa chỉ chi nhánh <span className="text-rose-500">*</span>
+                  {t("Địa chỉ chi nhánh")} <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.dia_chi_cn}
                   onChange={(e) => handleInputChange("dia_chi_cn", e.target.value)}
-                  placeholder="Địa chỉ cụ thể của điểm bán hàng"
+                  placeholder={t("Địa chỉ cụ thể của điểm bán hàng")}
                   className="w-full px-3.5 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
-                {errors.dia_chi_cn && <p className="text-xs text-rose-600 mt-1">{errors.dia_chi_cn}</p>}
+                {errors.dia_chi_cn && <p className="text-xs text-rose-600 mt-1">{t(errors.dia_chi_cn)}</p>}
               </div>
             </div>
           )}
@@ -798,20 +800,20 @@ export function PartnerRegisterPage() {
           {/* STEP 6: Review & Submit */}
           {currentStep === 6 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Bước 6: Xem Lại & Xác Nhận Hồ Sơ</h3>
+              <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">{t("Bước 6: Xem Lại & Xác Nhận Hồ Sơ")}</h3>
 
               <div className="bg-slate-50 p-4 rounded-xl space-y-3 text-sm border border-slate-200">
                 <div className="grid grid-cols-2 gap-2 border-b border-slate-200 pb-2">
-                  <span className="text-slate-500">Tài khoản đăng nhập:</span>
+                  <span className="text-slate-500">{t("Tài khoản đăng nhập:")}</span>
                   <span className="font-semibold text-slate-900">{formData.account_email || createdUser?.email}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 border-b border-slate-200 pb-2">
-                  <span className="text-slate-500">Tên doanh nghiệp:</span>
-                  <span className="font-semibold text-slate-900">{formData.ten_dn || "Chưa nhập"}</span>
+                  <span className="text-slate-500">{t("Tên doanh nghiệp:")}</span>
+                  <span className="font-semibold text-slate-900">{formData.ten_dn || t("Chưa nhập")}</span>
                 </div>
                 {formData.logo && (
                   <div className="grid grid-cols-2 gap-2 border-b border-slate-200 pb-2 items-center">
-                    <span className="text-slate-500">Logo thương hiệu:</span>
+                    <span className="text-slate-500">{t("Logo thương hiệu:")}</span>
                     <img
                       src={formData.logo}
                       alt="Logo xem trước"
@@ -820,27 +822,27 @@ export function PartnerRegisterPage() {
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-2 border-b border-slate-200 pb-2">
-                  <span className="text-slate-500">Mã số thuế:</span>
-                  <span className="font-semibold text-slate-900">{formData.ma_so_thue || "Chưa nhập"}</span>
+                  <span className="text-slate-500">{t("Mã số thuế:")}</span>
+                  <span className="font-semibold text-slate-900">{formData.ma_so_thue || t("Chưa nhập")}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 border-b border-slate-200 pb-2">
-                  <span className="text-slate-500">Người đại diện:</span>
-                  <span className="font-semibold text-slate-900">{formData.ho_ten || "Chưa nhập"}</span>
+                  <span className="text-slate-500">{t("Người đại diện:")}</span>
+                  <span className="font-semibold text-slate-900">{formData.ho_ten || t("Chưa nhập")}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 border-b border-slate-200 pb-2">
-                  <span className="text-slate-500">SĐT / Email người đại diện:</span>
+                  <span className="text-slate-500">{t("SĐT / Email người đại diện:")}</span>
                   <span className="font-semibold text-slate-900">
                     {formData.sdt} - {formData.email}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 border-b border-slate-200 pb-2">
-                  <span className="text-slate-500">CCCD / Ngày sinh / Giới tính:</span>
+                  <span className="text-slate-500">{t("CCCD / Ngày sinh / Giới tính:")}</span>
                   <span className="font-semibold text-slate-900">
-                    {formData.cccd || "Chưa nhập"} | {formData.ngay_sinh || "Chưa nhập"} | {formData.gioi_tinh === "Nu" ? "Nữ" : formData.gioi_tinh === "Nam" ? "Nam" : "Khác"}
+                    {formData.cccd || t("Chưa nhập")} | {formData.ngay_sinh || t("Chưa nhập")} | {formData.gioi_tinh === "Nu" ? t("Nữ") : formData.gioi_tinh === "Nam" ? t("Nam") : t("Khác")}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <span className="text-slate-500">Chi nhánh đầu tiên:</span>
+                  <span className="text-slate-500">{t("Chi nhánh đầu tiên:")}</span>
                   <span className="font-semibold text-slate-900">
                     {formData.ten_chi_nhanh} ({formData.khu_vuc})
                   </span>
@@ -850,7 +852,7 @@ export function PartnerRegisterPage() {
               <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl text-xs text-amber-800 flex items-start gap-2">
                 <span>⚠️</span>
                 <span>
-                  Bằng cách nhấn <strong>"Gửi yêu cầu xét duyệt"</strong>, bạn cam kết toàn bộ thông tin đã khai báo là chính xác. Quản trị viên hệ thống sẽ kiểm tra và phản hồi trong thời gian sớm nhất.
+                  {t("Bằng cách nhấn")} <strong>"{t("Gửi yêu cầu xét duyệt")}"</strong>, {t("bạn cam kết toàn bộ thông tin đã khai báo là chính xác. Quản trị viên hệ thống sẽ kiểm tra và phản hồi trong thời gian sớm nhất.")}
                 </span>
               </div>
             </div>
@@ -859,16 +861,16 @@ export function PartnerRegisterPage() {
           {/* Navigation buttons */}
           <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
             <Button variant="secondary" onClick={handleBack}>
-              ← Quay lại
+              ← {t("Quay lại")}
             </Button>
 
             {currentStep < 6 ? (
               <Button variant="primary" onClick={handleNext} loading={loading}>
-                {currentStep === 1 && !createdUser ? "Tạo tài khoản & Tiếp tục →" : "Tiếp tục →"}
+                {currentStep === 1 && !createdUser ? `${t("Tạo tài khoản & Tiếp tục")} →` : `${t("Tiếp tục")} →`}
               </Button>
             ) : (
               <Button variant="success" onClick={handleSubmit} loading={loading}>
-                ✓ Gửi yêu cầu xét duyệt
+                ✓ {t("Gửi yêu cầu xét duyệt")}
               </Button>
             )}
           </div>
@@ -879,32 +881,23 @@ export function PartnerRegisterPage() {
           <Modal
             isOpen={showOtpModal}
             onClose={() => setShowOtpModal(false)}
-            title="Xác Thực Tài Khoản Đăng Ký Đối Tác"
-            confirmText="Xác nhận mã OTP"
+            title={t("Xác Thực Tài Khoản Đăng Ký Đối Tác")}
+            confirmText={t("Xác nhận mã OTP")}
             confirmVariant="primary"
             onConfirm={handleVerifyOtp}
-            cancelText="Hủy"
+            cancelText={t("Hủy")}
           >
             <div className="space-y-4 text-left">
               <p className="text-sm text-slate-700">
-                Mã xác thực 6 chữ số đã được gửi đến email:{" "}
+                {t("Mã xác thực 6 chữ số đã được gửi đến email:")}{" "}
                 <strong className="text-blue-600 font-mono">{formData.account_email}</strong>
               </p>
 
-              {/* {demoOtpHint && (
-                <div className="p-2.5 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800 flex items-center justify-between">
-                  <span>💡 Mã OTP gợi ý thử nghiệm:</span>
-                  <span className="font-mono font-bold text-sm bg-white px-2 py-0.5 rounded border border-blue-300">
-                    {demoOtpHint}
-                  </span>
-                </div>
-              )} */}
-
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
-                  <span>Nhập mã OTP 6 chữ số *</span>
+                  <span>{t("Nhập mã OTP 6 chữ số *")}</span>
                   <span className={`text-xs font-semibold ${otpValue?.length === 6 ? "text-emerald-600 font-bold" : "text-slate-400"}`}>
-                    {otpValue?.length || 0}/6 chữ số
+                    {otpValue?.length || 0}/6 {t("chữ số")}
                   </span>
                 </label>
                 <input
@@ -924,16 +917,16 @@ export function PartnerRegisterPage() {
 
               {otpError && (
                 <p className="text-xs text-rose-600 font-medium bg-rose-50 p-2 rounded border border-rose-200">
-                  {otpError}
+                  {t(otpError)}
                 </p>
               )}
 
               <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs text-slate-500">
                 <span>
                   {otpCountdown > 0 ? (
-                    <>Mã hết hạn sau: <strong className="text-slate-900 font-mono">00:{otpCountdown < 10 ? `0${otpCountdown}` : otpCountdown}</strong></>
+                    <>{t("Mã hết hạn sau:")} <strong className="text-slate-900 font-mono">00:{otpCountdown < 10 ? `0${otpCountdown}` : otpCountdown}</strong></>
                   ) : (
-                    <span className="text-rose-600 font-medium">Mã OTP đã hết hạn</span>
+                    <span className="text-rose-600 font-medium">{t("Mã OTP đã hết hạn")}</span>
                   )}
                 </span>
 
@@ -947,7 +940,7 @@ export function PartnerRegisterPage() {
                       : "text-blue-600 hover:text-blue-800 hover:underline"
                   }`}
                 >
-                  Gửi lại mã OTP
+                  {t("Gửi lại mã OTP")}
                 </button>
               </div>
             </div>
@@ -965,19 +958,19 @@ export function PartnerRegisterPage() {
             setShowSuccessModal(false);
             navigate("/login");
           }}
-          title="Gửi hồ sơ thành công!"
-          confirmText="Đến trang Đăng nhập"
-          cancelText="Đóng"
+          title={t("Gửi hồ sơ thành công!")}
+          confirmText={t("Đến trang Đăng nhập")}
+          cancelText={t("Đóng")}
         >
           <div className="text-center py-4 space-y-3">
             <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-2xl mx-auto font-bold">
               ✓
             </div>
             <p className="text-slate-700">
-              Hồ sơ đăng ký đối tác của bạn đã được khởi tạo thành công và gửi tới Quản trị viên hệ thống. Trạng thái hiện tại là <strong>"Chờ duyệt"</strong>.
+              {t("Hồ sơ đăng ký đối tác của bạn đã được khởi tạo thành công và gửi tới Quản trị viên hệ thống. Trạng thái hiện tại là")} <strong>"{t("Chờ duyệt")}"</strong>.
             </p>
             <p className="text-slate-500 text-sm">
-              Vui lòng đăng nhập lại sau khi hồ sơ được phê duyệt để sử dụng đầy đủ chức năng.
+              {t("Vui lòng đăng nhập lại sau khi hồ sơ được phê duyệt để sử dụng đầy đủ chức năng.")}
             </p>
           </div>
         </Modal>
