@@ -7,9 +7,11 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 function authHeaders() {
   const token = localStorage.getItem("accessToken");
+  const lang = localStorage.getItem("app_lang") || "vi";
   return {
     "Content-Type": "application/json",
     Authorization: `Bearer ${token}`,
+    "Accept-Language": lang,
   };
 }
 
@@ -29,7 +31,8 @@ async function handleResponse(res) {
  * @param {object} params - { page, limit, status }
  */
 export async function getMyVouchers({ page = 1, limit = 20, status } = {}) {
-  const query = new URLSearchParams({ page, limit });
+  const lang = localStorage.getItem("app_lang") || "vi";
+  const query = new URLSearchParams({ page, limit, lang });
   if (status) query.set("status", status);
 
   const res = await fetch(`${BASE_URL}/vouchers/my?${query.toString()}`, {

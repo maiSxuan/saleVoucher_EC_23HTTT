@@ -7,6 +7,7 @@ import Toast from "../../../../shared/components/Toast";
 import { getVouchersByPartnerApi, getCategoriesApi } from "../../../../shared/api/partnerApi";
 import { formatCategoryName } from "../../../../shared/utils/categoryFormatter";
 import { getVoucherPublicationStatus } from "../../../../shared/utils/publicationStatusHelper";
+import { useTranslation } from "react-i18next";
 
 const SESSION_KEY = "ec_partner_voucher_list_state_v2";
 
@@ -19,6 +20,7 @@ const getSavedState = () => {
 };
 
 export function VoucherListPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const savedState = getSavedState();
 
@@ -40,13 +42,13 @@ export function VoucherListPage() {
   }, [searchQuery, selectedStatusTab, selectedCategory]);
 
   const statusTabs = [
-    { key: "All", label: "Tất cả" },
-    { key: "Nhap", label: "Bản nháp" },
-    { key: "Cho duyet", label: "Chờ duyệt" },
-    { key: "Dang ban", label: "Đang bán" },
-    { key: "Tam ngung", label: "Tạm ngưng" },
-    { key: "Ngung ban", label: "Ngừng bán" },
-    { key: "Tu choi", label: "Bị từ chối" },
+    { key: "All", label: t("voucher.allStatus", "Tất cả") },
+    { key: "Nhap", label: t("voucher.draft", "Bản nháp") },
+    { key: "Cho duyet", label: t("voucher.pending", "Chờ duyệt") },
+    { key: "Dang ban", label: t("voucher.approved", "Đang bán") },
+    { key: "Tam ngung", label: t("voucher.paused", "Tạm ngưng") },
+    { key: "Ngung ban", label: t("voucher.stopped", "Ngừng bán") },
+    { key: "Tu choi", label: t("voucher.rejected", "Bị từ chối") },
   ];
 
   const getLoggedInPartnerId = () => {
@@ -96,6 +98,9 @@ export function VoucherListPage() {
       setLoading(false);
     }
     loadData();
+
+    window.addEventListener("app_language_changed", loadData);
+    return () => window.removeEventListener("app_language_changed", loadData);
   }, []);
 
   const handleResetFilters = () => {
@@ -155,14 +160,14 @@ export function VoucherListPage() {
         {/* Title & Action Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Quản lý Voucher</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t("partner.voucherListTitle", "Quản lý Voucher")}</h1>
             <p className="text-sm text-gray-500 mt-1">Danh sách tất cả các chương trình ưu đãi của bạn.</p>
           </div>
           <button
             onClick={() => navigate("/partner/vouchers/new")}
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer shadow-xs"
           >
-            <Plus size={16} /> Tạo Voucher mới
+            <Plus size={16} /> {t("partner.createButton", "Tạo Voucher mới")}
           </button>
         </div>
 
@@ -254,13 +259,13 @@ export function VoucherListPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    <th className="py-3.5 px-4">Voucher</th>
-                    <th className="py-3.5 px-4">Trạng thái duyệt</th>
-                    <th className="py-3.5 px-4">Trạng thái công bố</th>
-                    <th className="py-3.5 px-4">Giá bán</th>
-                    <th className="py-3.5 px-4">Đã bán</th>
-                    <th className="py-3.5 px-4">Thời gian bán</th>
-                    <th className="py-3.5 px-4 text-right">Thao tác</th>
+                    <th className="py-3.5 px-4">{t("partner.colVoucher", "Voucher")}</th>
+                    <th className="py-3.5 px-4">{t("voucher.status", "Trạng thái duyệt")}</th>
+                    <th className="py-3.5 px-4">{t("voucher.status", "Trạng thái công bố")}</th>
+                    <th className="py-3.5 px-4">{t("partner.colPrice", "Giá bán")}</th>
+                    <th className="py-3.5 px-4">{t("voucher.sold", "Đã bán")}</th>
+                    <th className="py-3.5 px-4">{t("voucher.expiryDate", "Thời gian bán")}</th>
+                    <th className="py-3.5 px-4 text-right">{t("partner.colActions", "Thao tác")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-sm">

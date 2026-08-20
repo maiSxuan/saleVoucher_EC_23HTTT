@@ -1,7 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function Header() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const userStr = localStorage.getItem('user');
   let user = null;
@@ -32,7 +34,7 @@ export default function Header() {
       case 'PARTNER_STAFF':
         return <span className="bg-emerald-500 text-white text-xs px-2 py-1 rounded-full font-medium">Partner Staff</span>;
       case 'CUSTOMER':
-        return <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-medium">Khách hàng</span>;
+        return <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-medium">{t("nav.roleCustomer", "Khách hàng")}</span>;
       default:
         return null;
     }
@@ -49,12 +51,12 @@ export default function Header() {
       
       {user && (
         <div className="flex items-center gap-4 text-sm text-gray-700">
-          <span className="hidden sm:block">Xin chào, <strong>{user.name || user.email}</strong></span>
+          <span className="hidden sm:block">{t("nav.greeting", "Xin chào,")} <strong>{user.name || user.email}</strong></span>
           <button 
             onClick={handleLogout}
             className="text-red-600 font-medium hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors"
           >
-            Đăng xuất
+            {t("nav.logout", "Đăng xuất")}
           </button>
         </div>
       )}

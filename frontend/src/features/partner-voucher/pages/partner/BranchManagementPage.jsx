@@ -11,8 +11,10 @@ import {
   getVouchersByPartnerApi,
 } from "../../../../shared/api/partnerApi";
 import { VIETNAM_PROVINCES } from "../../../../shared/constants/vietnamProvinces";
+import { useTranslation } from "react-i18next";
 
 export function BranchManagementPage() {
+  const { t } = useTranslation();
   const [activeBranches, setActiveBranches] = useState([]);
   const [partnerRequests, setPartnerRequests] = useState([]);
   const [partnerVouchers, setPartnerVouchers] = useState([]);

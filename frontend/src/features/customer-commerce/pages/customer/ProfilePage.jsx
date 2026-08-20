@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { User, Lock, Eye, EyeOff, Save, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import {
   fetchProfile,
   updateProfile,
@@ -35,6 +36,7 @@ function PwField({ label, value, onChange, placeholder }) {
 }
 
 export default function ProfilePage() {
+  const { t } = useTranslation();
   const [tab, setTab] = useState("info");
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);

@@ -5,7 +5,9 @@ class VoucherController {
 
   async list(req, res, next) {
     try {
-      const data = await this.voucherService.getVouchers(req.query);
+      const lang = req.query.lang || req.headers["accept-language"];
+      const query = { ...req.query, lang };
+      const data = await this.voucherService.getVouchers(query);
       res.json({ success: true, data });
     } catch (error) {
       next(error);
@@ -14,7 +16,9 @@ class VoucherController {
 
   async listByPartner(req, res, next) {
     try {
-      const data = await this.voucherService.getVouchersByPartner(req.params.partnerId, req.query);
+      const lang = req.query.lang || req.headers["accept-language"];
+      const query = { ...req.query, lang };
+      const data = await this.voucherService.getVouchersByPartner(req.params.partnerId, query);
       res.json({ success: true, data });
     } catch (error) {
       next(error);
@@ -23,7 +27,8 @@ class VoucherController {
 
   async getById(req, res, next) {
     try {
-      const data = await this.voucherService.getVoucherById(req.params.id);
+      const lang = req.query.lang || req.headers["accept-language"];
+      const data = await this.voucherService.getVoucherById(req.params.id, lang);
       if (!data) {
         return res.status(404).json({ success: false, message: "Voucher not found" });
       }
@@ -99,7 +104,8 @@ class VoucherController {
 
   async getCate(req, res, next) {
     try {
-      const data = await this.voucherService.getCategories();
+      const lang = req.query.lang || req.headers["accept-language"];
+      const data = await this.voucherService.getCategories(lang);
       res.json({ success: true, data });
     } catch (error) {
       next(error);

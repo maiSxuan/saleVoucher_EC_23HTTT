@@ -16,6 +16,7 @@ import {
 } from "../../../../shared/api/catalogApi";
 import { addToCart } from "../../../../shared/api/cartApi";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 const unavailableMsg = {
   sold_out: "Voucher này đã hết số lượng.",
@@ -50,6 +51,7 @@ function isCustomerRole(role) {
 }
 
 export default function VoucherDetailPage({ publicView = false }) {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -84,20 +86,24 @@ export default function VoucherDetailPage({ publicView = false }) {
   // Bước 2-3: hệ thống tiếp nhận yêu cầu và truy xuất thông tin chi tiết
   useEffect(() => {
     let ignore = false;
-    setLoading(true);
-    setErrorMsg("");
-    fetchVoucherDetail(id)
-      .then((data) => {
-        if (ignore) return;
-        if (!data) setErrorMsg("Không tìm thấy voucher.");
-        else setVoucher(data);
-      })
-      .catch(
-        () =>
-          !ignore &&
-          setErrorMsg("Không thể tải thông tin voucher. Vui lòng thử lại sau."),
-      ) // E1
-      .finally(() => !ignore && setLoading(false));
+    const loadDetail = () => {
+      setLoading(true);
+      setErrorMsg("");
+      fetchVoucherDetail(id)
+        .then((data) => {
+          if (ignore) return;
+          if (!data) setErrorMsg("Không tìm thấy voucher.");
+          else setVoucher(data);
+        })
+        .catch(
+          () =>
+            !ignore &&
+            setErrorMsg("Không thể tải thông tin voucher. Vui lòng thử lại sau."),
+        )
+        .finally(() => !ignore && setLoading(false));
+    };
+
+    loadDetail();
 
     // Fetch reviews
     setLoadingReviews(true);
@@ -112,8 +118,10 @@ export default function VoucherDetailPage({ publicView = false }) {
         if (!ignore) setLoadingReviews(false);
       });
 
+    window.addEventListener("app_language_changed", loadDetail);
     return () => {
       ignore = true;
+      window.removeEventListener("app_language_changed", loadDetail);
     };
   }, [id]);
 
@@ -190,16 +198,16 @@ export default function VoucherDetailPage({ publicView = false }) {
     <div>
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-1.5 text-sm text-gray-500 mb-4 hover:text-gray-700"
+        className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors"
       >
-        <ArrowLeft size={16} /> Quay lại
+        <ArrowLeft size={16} /> {t("common.back", "Quay lại")}
       </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
           <div className="relative rounded-xl overflow-hidden">
             <img
-              src={voucher.image}
+              src={voucher.image || voucher.hinh_anh_url}
               alt={voucher.name}
               className="w-full h-56 object-cover"
             />
@@ -246,7 +254,7 @@ export default function VoucherDetailPage({ publicView = false }) {
               </span>
               {discountPct > 0 && (
                 <span className="text-sm text-red-500 font-medium">
-                  Tiết kiệm{" "}
+                  {t("voucher.savings", "Tiết kiệm")}{" "}
                   {(voucher.originalPrice - voucher.salePrice).toLocaleString(
                     "vi-VN",
                   )}
@@ -258,7 +266,7 @@ export default function VoucherDetailPage({ publicView = false }) {
             <div className="bg-gray-50 rounded-lg p-2.5">
               <div className="flex items-center gap-1 text-gray-400 text-sm mb-0.5">
                 <Clock size={11} />
-                Thời gian bán
+                {t("voucher.expiryDate", "Thời gian bán")}
               </div>
               <p className="text-sm font-medium text-gray-700">
                 {new Date(voucher.startSaleDate).toLocaleDateString("vi-VN")} –{" "}
@@ -269,7 +277,7 @@ export default function VoucherDetailPage({ publicView = false }) {
             {branches.length > 0 && (
               <div>
                 <p className="text-sm font-semibold text-gray-500 mb-1 uppercase tracking-wide">
-                  Chi nhánh áp dụng
+                  {t("voucher.branchesApplied", "Chi nhánh áp dụng")}
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {branches.map((branch, index) => (
@@ -289,7 +297,7 @@ export default function VoucherDetailPage({ publicView = false }) {
           {voucher.description && (
             <div className="bg-white rounded-xl border border-gray-100 p-4">
               <h3 className="font-semibold text-gray-900 mb-2 text-sm">
-                Mô tả ưu đãi
+                {t("voucher.description", "Mô tả chi tiết")}
               </h3>
               <p className="text-sm text-gray-600 leading-relaxed">
                 {voucher.description}
@@ -302,7 +310,7 @@ export default function VoucherDetailPage({ publicView = false }) {
               {voucher.conditions && (
                 <>
                   <h3 className="font-semibold text-gray-900 text-sm">
-                    Điều kiện sử dụng
+                    {t("voucher.conditions", "Điều kiện áp dụng")}
                   </h3>
                   <p className="text-sm text-gray-600">{voucher.conditions}</p>
                 </>
@@ -310,7 +318,7 @@ export default function VoucherDetailPage({ publicView = false }) {
               {voucher.cancellationPolicy && (
                 <>
                   <h3 className="font-semibold text-gray-900 text-sm mt-2">
-                    Chính sách hủy/hoàn tiền
+                    {t("voucher.cancellationPolicy", "Chính sách hoàn hủy")}
                   </h3>
                   <p className="text-sm text-gray-600">
                     {voucher.cancellationPolicy}
