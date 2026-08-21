@@ -22,10 +22,15 @@ function getActiveTransporter(type = "register") {
   const isForgotPassword = type === "forgot_password";
   const cfg = isForgotPassword ? loadAuthGmail() : loadGmail();
 
-  const user = (cfg.user || process.env.SMTP_USER || process.env.AUTH_SMTP_USER || "").trim();
-  const pass = (cfg.pass || process.env.SMTP_PASS || process.env.AUTH_SMTP_PASS || "").trim();
   const host = cfg.host || process.env.SMTP_HOST || process.env.AUTH_SMTP_HOST || "smtp.gmail.com";
   const port = Number(cfg.port || process.env.SMTP_PORT || process.env.AUTH_SMTP_PORT || 587);
+  const user = (cfg.user || process.env.SMTP_USER || process.env.AUTH_SMTP_USER || "").trim();
+  const rawPass = (cfg.pass || process.env.SMTP_PASS || process.env.AUTH_SMTP_PASS || "").trim();
+  // Google displays its 16-character App Password in four groups. Nodemailer
+  // must authenticate with the compact value, without the visual separators.
+  const pass = /(^|\.)gmail\.com$/i.test(host)
+    ? rawPass.replace(/\s+/g, "")
+    : rawPass;
 
   if (!user || !pass) {
     return null;
@@ -42,8 +47,33 @@ function getActiveTransporter(type = "register") {
     transporter: activeTransporter,
     user,
     pass,
-    from: cfg.from || process.env.MAIL_FROM || process.env.AUTH_MAIL_FROM || `"EC Voucher" <${user}>`,
+    from: cfg.from || `"EC Voucher" <${user}>`,
   };
+}
+
+function isSmtpAuthError(error) {
+  return error?.code === "EAUTH" || Number(error?.responseCode) === 535;
+}
+
+async function sendMailWithAuthFallback(primaryMailer, mailOptions) {
+  try {
+    return await primaryMailer.transporter.sendMail(mailOptions);
+  } catch (error) {
+    if (!isSmtpAuthError(error)) throw error;
+
+    const fallbackMailer = getActiveTransporter("forgot_password");
+    const hasDifferentCredentials =
+      fallbackMailer &&
+      (fallbackMailer.user !== primaryMailer.user ||
+        fallbackMailer.pass !== primaryMailer.pass);
+
+    if (!hasDifferentCredentials) throw error;
+
+    return fallbackMailer.transporter.sendMail({
+      ...mailOptions,
+      from: fallbackMailer.from,
+    });
+  }
 }
 
 /**
@@ -204,6 +234,7 @@ async function sendNotificationEmail(toEmail, {
     : "";
 
   let qrAttachment = null;
+  let qrDownloadAttachment = null;
   let qrBlock = "";
   if (voucherCode && (qrValue || voucherDetails)) {
     try {
@@ -220,6 +251,13 @@ async function sendNotificationEmail(toEmail, {
         content: qrBuffer,
         cid: qrCid,
         contentType: "image/png",
+        contentDisposition: "inline",
+      };
+      qrDownloadAttachment = {
+        filename: "ma-qr-voucher.png",
+        content: qrBuffer,
+        contentType: "image/png",
+        contentDisposition: "attachment",
       };
       qrBlock = `<div style="margin:20px 0;text-align:center">
         <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:8px">Mã QR voucher</div>
@@ -236,7 +274,7 @@ async function sendNotificationEmail(toEmail, {
   }
 
   try {
-    return await mailerObj.transporter.sendMail({
+    return await sendMailWithAuthFallback(mailerObj, {
       from: mailerObj.from,
       to: toEmail,
       subject: subject || safeTitle,
@@ -248,7 +286,9 @@ async function sendNotificationEmail(toEmail, {
         ${qrBlock}
         <p style="font-size:12px;color:#9ca3af">Đây là email tự động từ hệ thống EC Voucher.</p>
       </div>`,
-      attachments: qrAttachment ? [qrAttachment] : [],
+      attachments: qrAttachment
+        ? [qrAttachment, qrDownloadAttachment]
+        : [],
     });
   } catch (err) {
     throw new AppError(
