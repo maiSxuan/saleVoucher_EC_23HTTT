@@ -1,6 +1,9 @@
 import React, { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 export function Toast({ message, type = "success", onClose, duration = 1500 }) {
+  const { t } = useTranslation();
+
   useEffect(() => {
     if (!message) return;
     const timer = setTimeout(() => {
@@ -25,7 +28,7 @@ export function Toast({ message, type = "success", onClose, duration = 1500 }) {
           typeStyles[type] || typeStyles.success
         }`}
       >
-        <span>{message}</span>
+        <span>{t(message)}</span>
         <button onClick={onClose} className="ml-2 hover:opacity-75">
           ✕
         </button>

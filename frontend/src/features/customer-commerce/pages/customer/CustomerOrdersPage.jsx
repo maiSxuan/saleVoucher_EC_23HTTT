@@ -344,7 +344,7 @@ export default function CustomerOrdersPage() {
     const additionalDetail = cancelReason.trim();
 
     if (!selectedOption && !additionalDetail) {
-      toast.error("Vui lòng chọn một lý do hoặc nhập lý do của bạn.");
+      toast.error(t("Vui lòng chọn một lý do hoặc nhập lý do của bạn."));
       return;
     }
 
@@ -354,12 +354,12 @@ export default function CustomerOrdersPage() {
 
     try {
       await customerCancelOrder(selectedOrderId, { reason });
-      toast.success("Đã gửi yêu cầu hủy đơn, chuyển sang chờ hoàn tiền.");
+      toast.success(t("Đã gửi yêu cầu hủy đơn, chuyển sang chờ hoàn tiền."));
       closeCancelModal();
       handleSelectOrder(selectedOrderId);
       loadOrders(pagination.page);
     } catch (e) {
-      toast.error(e.message || "Không thể gửi yêu cầu hủy đơn");
+      toast.error(t(e.message) || t("Không thể gửi yêu cầu hủy đơn"));
     }
   };
 
@@ -367,10 +367,10 @@ export default function CustomerOrdersPage() {
   const handleCancleOrderNoRefund = async () => {
     try {
       await cancelOrder(selectedOrderId);
-      toast.success("Đã hủy đơn hàng.");
+      toast.success(t("Đã hủy đơn hàng."));
       handleSelectOrder(selectedOrderId);
     } catch (e) {
-      toast.error(e.message || "Không thể hủy đơn hàng");
+      toast.error(t(e.message) || t("Không thể hủy đơn hàng"));
     }
   };
   const handleRepayOrder = async () => {
@@ -423,11 +423,11 @@ export default function CustomerOrdersPage() {
 
   const handleSubmitReview = async () => {
     if (!selectedVoucherMuaId) {
-      toast.error("Vui lòng chọn mã voucher để đánh giá.");
+      toast.error(t("Vui lòng chọn mã voucher để đánh giá."));
       return;
     }
     if (!reviewText.trim()) {
-      toast.error("Vui lòng nhập nội dung đánh giá.");
+      toast.error(t("Vui lòng nhập nội dung đánh giá."));
       return;
     }
     try {
@@ -436,7 +436,7 @@ export default function CustomerOrdersPage() {
         diem: reviewRating,
         noiDung: reviewText,
       });
-      toast.success("Đánh giá đã được ghi nhận thành công.", { duration: 2000 });
+      toast.success(t("Đánh giá đã được ghi nhận thành công."), { duration: 2000 });
       setSelectedOrder(prev => {
         const newCodes = prev.codes.map(c => {
           if ((c.id || c.voucherMuaId) === selectedVoucherMuaId) {
@@ -456,19 +456,19 @@ export default function CustomerOrdersPage() {
       setShowReviewModal(false);
       setReviewText("");
     } catch (e) {
-      toast.error(e.message || "Không thể gửi đánh giá", { duration: 2000 });
+      toast.error(t(e.message) || t("Không thể gửi đánh giá"), { duration: 2000 });
     }
   };
 
   const handleSubmitFeedback = async () => {
     if (!selectedVoucherMuaId) {
-      toast.error("Vui lòng chọn mã voucher liên quan.");
+      toast.error(t("Vui lòng chọn mã voucher liên quan."));
       return;
     }
     const selectedOption = COMPLAINT_REASON_OPTIONS.find((option) => option.id === selectedComplaintReason);
     const additionalDetail = feedbackText.trim();
     if (!selectedOption && !additionalDetail) {
-      toast.error("Vui lòng chọn một lý do hoặc nhập nội dung khiếu nại của bạn.");
+      toast.error(t("Vui lòng chọn một lý do hoặc nhập nội dung khiếu nại của bạn."));
       return;
     }
     const content = selectedOption
@@ -480,13 +480,13 @@ export default function CustomerOrdersPage() {
         maVoucherMua: selectedVoucherMuaId,
         noiDung: content,
       });
-      toast.success("Khiếu nại đã được tiếp nhận. Bạn có thể theo dõi quy trình ngay trong đơn hàng.");
+      toast.success(t("Khiếu nại đã được tiếp nhận. Bạn có thể theo dõi quy trình ngay trong đơn hàng."));
       setShowFeedbackModal(false);
       setSelectedComplaintReason("");
       setFeedbackText("");
       await Promise.all([handleSelectOrder(selectedOrderId), loadOrders(pagination.page)]);
     } catch (e) {
-      toast.error(e.message || "Không thể gửi phản ánh");
+      toast.error(t(e.message) || t("Không thể gửi phản ánh"));
     } finally {
       setSubmittingComplaint(false);
     }

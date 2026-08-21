@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import Button from "./Button";
 
 export function Modal({
@@ -13,6 +14,7 @@ export function Modal({
   loading = false,
   maxWidth = "max-w-lg",
 }) {
+  const { t } = useTranslation();
   if (!isOpen) return null;
 
   return (
@@ -30,7 +32,7 @@ export function Modal({
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
-            <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+            <h3 className="text-lg font-semibold text-slate-900">{t(title)}</h3>
             <button
               onClick={onClose}
               className="text-slate-400 hover:text-slate-600 rounded-lg p-1 hover:bg-slate-100 transition-colors"
@@ -47,11 +49,11 @@ export function Modal({
           {/* Footer */}
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
             <Button variant="secondary" onClick={onClose} disabled={loading}>
-              {cancelText}
+              {t(cancelText)}
             </Button>
             {onConfirm && (
               <Button variant={confirmVariant} onClick={onConfirm} loading={loading}>
-                {confirmText}
+                {t(confirmText)}
               </Button>
             )}
           </div>

@@ -142,27 +142,28 @@ export function StaffManagementPage() {
   const handleSave = async () => {
     setEmailError("");
     if (!form.ho_ten.trim()) {
-      setToastMessage("Vui lòng nhập họ và tên nhân viên.");
+      setToastMessage(t("Vui lòng nhập họ và tên nhân viên."));
       return;
     }
     if (!form.sdt || !/^\d{10}$/.test(form.sdt.trim())) {
-      setToastMessage("Số điện thoại phải bao gồm đúng 10 chữ số.");
+      setToastMessage(t("Số điện thoại phải bao gồm đúng 10 chữ số."));
       return;
     }
     if (form.cccd && !/^\d{12}$/.test(form.cccd.trim())) {
-      setToastMessage("Số CCCD phải bao gồm đúng 12 chữ số.");
+      setToastMessage(t("Số CCCD phải bao gồm đúng 12 chữ số."));
       return;
     }
     if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-      setEmailError("Địa chỉ email không đúng định dạng.");
-      setToastMessage("Địa chỉ email không đúng định dạng.");
+      const errText = t("Địa chỉ email không đúng định dạng.");
+      setEmailError(errText);
+      setToastMessage(errText);
       return;
     }
 
     const isEditMode = editing;
     const currentForm = { ...form };
     setShowModal(false);
-    setToastMessage(isEditMode ? "Đang cập nhật nhân viên..." : "Đang thêm nhân viên mới...");
+    setToastMessage(isEditMode ? t("Đang cập nhật nhân viên...") : t("Đang thêm nhân viên mới..."));
 
     try {
       if (isEditMode) {
@@ -171,39 +172,39 @@ export function StaffManagementPage() {
           ma_hs: partnerId,
           ma_chi_nhanh: currentForm.vai_tro === "Nhân viên chi nhánh" ? currentForm.ma_chi_nhanh : null,
         });
-        setToastMessage("Cập nhật thông tin nhân viên thành công.");
+        setToastMessage(t("Cập nhật thông tin nhân viên thành công."));
       } else {
         await createStaffApi({
           ...currentForm,
           ma_hs: partnerId,
           ma_chi_nhanh: currentForm.vai_tro === "Nhân viên chi nhánh" ? currentForm.ma_chi_nhanh : null,
         });
-        setToastMessage("Thêm nhân viên mới thành công.");
+        setToastMessage(t("Thêm nhân viên mới thành công."));
       }
 
       await reload();
     } catch (e) {
-      const errMsg = e.message || "Lưu nhân viên thất bại.";
+      const errMsg = e.message || t("Lưu nhân viên thất bại.");
       if (errMsg.toLowerCase().includes("email") || errMsg.toLowerCase().includes("đã tồn tại")) {
-        setEmailError(errMsg);
+        setEmailError(t(errMsg));
       }
-      setToastMessage("Lỗi lưu nhân viên: " + errMsg);
+      setToastMessage(t("Lỗi lưu nhân viên: ") + t(errMsg));
       setShowModal(true);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Xóa nhân viên này?")) return;
+    if (!window.confirm(t("Xóa nhân viên này?"))) return;
     await deleteStaffApi(id);
     await reload();
-    setToastMessage("Đã xóa nhân viên.");
+    setToastMessage(t("Đã xóa nhân viên."));
   };
 
   const handleLock = async (staff) => {
     const nextStatus = staff.trang_thai === "Dang hoat dong" ? "Tam khoa" : "Dang hoat dong";
     await updateStaffApi(staff.ma_nv, { trang_thai: nextStatus });
     await reload();
-    setToastMessage("Đã cập nhật trạng thái.");
+    setToastMessage(t("Đã cập nhật trạng thái."));
   };
 
   return (
