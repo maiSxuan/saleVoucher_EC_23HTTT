@@ -17,8 +17,14 @@ export default function LanguageSwitcher({ className = "" }) {
   const activeLang = languages.find((l) => l.code === currentLang) || languages[0];
 
   const handleSelect = (code) => {
+    if (code === currentLang) {
+      setIsOpen(false);
+      return;
+    }
     i18n.changeLanguage(code);
+    localStorage.setItem("app_lang", code);
     setIsOpen(false);
+    window.location.reload();
   };
 
   useEffect(() => {
