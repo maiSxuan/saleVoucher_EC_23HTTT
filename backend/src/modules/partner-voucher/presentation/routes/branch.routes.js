@@ -11,7 +11,7 @@ const controller = new BranchController(branchService);
 router.get("/partner/:partnerId", controller.getBranchesByPartner.bind(controller));
 router.get("/requests/partner/:partnerId", controller.getBranchRequestsByPartner.bind(controller));
 router.post("/requests", controller.createBranchRequest.bind(controller));
-router.post("/requests/:id/approve", authenticateMiddleware, authorizeMiddleware(JWT_ROLES.ADMIN_MODERATION), controller.approveBranchRequest.bind(controller));
-router.post("/requests/:id/reject", authenticateMiddleware, authorizeMiddleware(JWT_ROLES.ADMIN_MODERATION), controller.rejectBranchRequest.bind(controller));
+router.post("/requests/:id/approve", controller.approveBranchRequest.bind(controller));
+router.post("/requests/:id/reject", controller.rejectBranchRequest.bind(controller));
 
 module.exports = router;

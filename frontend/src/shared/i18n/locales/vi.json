@@ -2136,5 +2136,13 @@
   "Được": "Được chấp nhận",
   "Được chấp nhận": "Được chấp nhận",
   "Accepted": "Đã chấp nhận",
-  "Partner or applicable branch is no longer able to provide the service.": "Đối tác hoặc chi nhánh áp dụng không còn khả năng cung cấp dịch vụ."
+  "Partner or applicable branch is no longer able to provide the service.": "Đối tác hoặc chi nhánh áp dụng không còn khả năng cung cấp dịch vụ.",
+  "Lưu bản nháp thành công!": "Lưu bản nháp thành công!",
+  "Gửi duyệt Voucher thành công!": "Gửi duyệt Voucher thành công!",
+  "Đã cập nhật thông tin Voucher thành công!": "Đã cập nhật thông tin Voucher thành công!",
+  "Đã khắc phục thông tin & Gửi lại yêu cầu duyệt thành công!": "Đã khắc phục thông tin & Gửi lại yêu cầu duyệt thành công!",
+  "Quên mật khẩu?": "Quên mật khẩu?",
+  "Quên mật khẩu": "Quên mật khẩu",
+  "Quản trị viên sẽ thẩm định trước khi cho phép mở bán chính thức.": "Quản trị viên sẽ thẩm định trước khi cho phép mở bán chính thức.",
+  "Sau khi gửi duyệt, thông tin Voucher sẽ chuyển sang trạng thái \"Chờ duyệt\". Quản trị viên sẽ thẩm định trước khi cho phép mở bán chính thức.": "Sau khi gửi duyệt, thông tin Voucher sẽ chuyển sang trạng thái \"Chờ duyệt\". Quản trị viên sẽ thẩm định trước khi cho phép mở bán chính thức."
 }

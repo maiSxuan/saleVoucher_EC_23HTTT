@@ -241,12 +241,12 @@ export function VoucherFormPage() {
     setLoading(false);
     setToastMessage(
       mode === "update"
-        ? "Đã cập nhật thông tin Voucher thành công!"
+        ? t("Đã cập nhật thông tin Voucher thành công!")
         : mode === "submit"
           ? isRejected
-            ? "Đã khắc phục thông tin & Gửi lại yêu cầu duyệt thành công!"
-            : "Gửi duyệt Voucher thành công!"
-          : "Lưu bản nháp thành công!"
+            ? t("Đã khắc phục thông tin & Gửi lại yêu cầu duyệt thành công!")
+            : t("Gửi duyệt Voucher thành công!")
+          : t("Lưu bản nháp thành công!")
     );
     setTimeout(() => {
       navigate(`/partner/vouchers/${saved?.ma_voucher || id}`);
@@ -579,7 +579,7 @@ export function VoucherFormPage() {
             await executeSave("submit");
           }}
           title={t("Xác nhận gửi duyệt Voucher")}
-          confirmText={`✓ ${t("Xác nhận Gửi duyệt")}`}
+          confirmText={t("Xác nhận Gửi duyệt")}
           cancelText={t("Hủy bỏ")}
           confirmVariant="primary"
           loading={loading}
@@ -592,7 +592,9 @@ export function VoucherFormPage() {
               <div className="font-bold flex items-center gap-1">
                 <span>{t("Lưu ý:")}</span>
               </div>
-              <p>{t("Sau khi gửi duyệt, thông tin Voucher sẽ ở trạng thái")} <strong>"{t("Chờ duyệt")}"</strong>. {t("Quản trị viên sẽ kiểm duyệt trước khi chính thức kích hoạt chương trình.")}</p>
+              <p>
+                {t('Sau khi gửi duyệt, thông tin Voucher sẽ chuyển sang trạng thái "Chờ duyệt". Quản trị viên sẽ thẩm định trước khi cho phép mở bán chính thức.')}
+              </p>
             </div>
           </div>
         </Modal>
