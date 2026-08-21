@@ -299,20 +299,20 @@ export default function LandingPage() {
 
           {/* Right Header Navigation & Auth Controls */}
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-            <LanguageSwitcher />
+            <LanguageSwitcher className="[&>button]:!text-sky-800" />
             <Link
               to="/customer/register"
-              className="flex items-center gap-1 px-2.5 sm:px-4 py-2 text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 rounded-full transition-all cursor-pointer"
+              className="flex items-center gap-1 px-2.5 sm:px-4 py-2 text-xs font-bold text-sky-800 bg-white hover:bg-sky-50 border border-sky-300 rounded-full shadow-sm transition-all cursor-pointer"
             >
-              <UserPlus size={14} />
-              <span className="hidden sm:inline">{t("Đăng ký")}</span>
+              <UserPlus size={14} className="text-sky-700" />
+              <span className="hidden sm:inline text-sky-800">{t("Đăng ký")}</span>
             </Link>
             <Link
               to="/login"
-              className="flex items-center gap-1 px-3 sm:px-5 py-2 text-xs font-bold text-white bg-sky-500 hover:bg-sky-600 rounded-full shadow-md shadow-sky-500/25 hover:shadow-lg transition-all cursor-pointer whitespace-nowrap"
+              className="flex items-center gap-1 px-3 sm:px-5 py-2 text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 rounded-full shadow-md shadow-sky-500/25 hover:shadow-lg transition-all cursor-pointer whitespace-nowrap"
             >
-              <LogIn size={14} />
-              <span>{t("Đăng nhập")}</span>
+              <LogIn size={14} className="text-white" />
+              <span className="text-white">{t("Đăng nhập")}</span>
             </Link>
           </div>
         </div>
