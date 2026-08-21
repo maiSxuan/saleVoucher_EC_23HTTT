@@ -8,6 +8,7 @@ import {
   repayOrder,
   fetchCustomerOrderDetail,
 } from "../../../../shared/api/orderApi";
+import { removeCartItems } from "../../../../shared/api/cartApi";
 import { useTranslation } from "react-i18next";
 
 export default function CheckoutPage() {
@@ -33,7 +34,9 @@ export default function CheckoutPage() {
       fetchCustomerOrderDetail(orderId)
         .then((order) => {
           if (order.orderStatus !== "Cho thanh toan") {
-            setErrorMsg(t("Đơn hàng này không còn ở trạng thái Chờ thanh toán."));
+            setErrorMsg(
+              t("Đơn hàng này không còn ở trạng thái Chờ thanh toán."),
+            );
             return;
           }
           setReviewData({
@@ -75,6 +78,7 @@ export default function CheckoutPage() {
         window.location.href = res.redirectUrl;
       } else {
         const res = await createOrder({ voucherIds, paymentMethod: payMethod });
+        await removeCartItems(voucherIds);
         window.location.href = res.redirectUrl;
       }
     } catch (err) {
@@ -96,7 +100,9 @@ export default function CheckoutPage() {
     );
   if (errorMsg)
     return (
-      <div className="py-16 text-center text-red-500 text-sm">{t(errorMsg)}</div>
+      <div className="py-16 text-center text-red-500 text-sm">
+        {t(errorMsg)}
+      </div>
     );
   if (!reviewData) return null;
 
@@ -108,7 +114,9 @@ export default function CheckoutPage() {
       >
         <ArrowLeft size={16} /> {t("Quay lại giỏ hàng")}
       </button>
-      <h1 className="text-xl font-bold text-gray-900 mb-4">{t("Xác nhận đặt mua")}</h1>
+      <h1 className="text-xl font-bold text-gray-900 mb-4">
+        {t("Xác nhận đặt mua")}
+      </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 space-y-4">
@@ -151,7 +159,9 @@ export default function CheckoutPage() {
               >
                 <Building2 size={20} />
                 <span className="font-medium">VNPay</span>
-                <span className="text-xs opacity-70">{t("Nội địa (ATM/QR)")}</span>
+                <span className="text-xs opacity-70">
+                  {t("Nội địa (ATM/QR)")}
+                </span>
               </button>
               <button
                 onClick={() => setPayMethod("paypal")}
@@ -163,14 +173,17 @@ export default function CheckoutPage() {
               </button>
             </div>
             <p className="text-xs text-gray-400 text-center mt-3">
-              {t("Bạn sẽ được chuyển sang trang thanh toán của")} {payMethod === "vnpay" ? "VNPay" : "PayPal"}.
+              {t("Bạn sẽ được chuyển sang trang thanh toán của")}{" "}
+              {payMethod === "vnpay" ? "VNPay" : "PayPal"}.
             </p>
           </div>
         </div>
 
         <div>
           <div className="bg-white rounded-xl border border-gray-200 p-4 sticky top-20">
-            <h3 className="font-semibold text-gray-900 mb-3">{t("Tổng đơn hàng")}</h3>
+            <h3 className="font-semibold text-gray-900 mb-3">
+              {t("Tổng đơn hàng")}
+            </h3>
             {reviewData.items.map((item) => (
               <div
                 key={item.voucherId}
@@ -199,7 +212,9 @@ export default function CheckoutPage() {
               className="mt-4 w-full bg-sky-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-sky-600 disabled:opacity-60 flex items-center justify-center gap-2"
             >
               <CreditCard size={16} />{" "}
-              {redirecting ? t("Đang chuyển hướng...") : t("Xác nhận thanh toán")}
+              {redirecting
+                ? t("Đang chuyển hướng...")
+                : t("Xác nhận thanh toán")}
             </button>
           </div>
         </div>
