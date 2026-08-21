@@ -60,6 +60,7 @@ export function PartnerLayout({ children }) {
 
   const partnerStatus =
     partnerInfo?.trang_thai ||
+    (!partnerInfo && !loadingPartner ? "Chua co ho so" : null) ||
     currentUser?.trang_thai ||
     currentUser?.trang_thai_hs ||
     currentUser?.trang_thai_tai_khoan ||
@@ -210,7 +211,7 @@ export function PartnerLayout({ children }) {
           <div className="flex items-center gap-2 font-medium truncate">
             <ShieldAlert className="w-4 h-4 shrink-0" />
             <span>
-              {t("Tài khoản doanh nghiệp chưa ở trạng thái")} <strong>{t("Hoạt động")}</strong> ({t("Hiện tại:")} <strong>{partnerStatus === "Cho duyet" ? t("Chờ duyệt") : partnerStatus === "Tu choi" ? t("Bị từ chối") : t(partnerStatus)}</strong>). {t("Một số tính năng bị tạm khóa.")}
+              {t("Tài khoản doanh nghiệp chưa ở trạng thái")} <strong>{t("Hoạt động")}</strong> ({t("Hiện tại:")} <strong>{partnerStatus === "Cho duyet" ? t("Chờ duyệt") : partnerStatus === "Tu choi" ? t("Bị từ chối") : partnerStatus === "Chua co ho so" ? t("Chưa tạo hồ sơ") : t(partnerStatus)}</strong>). {t("Một số tính năng bị tạm khóa.")}
             </span>
           </div>
           <Link

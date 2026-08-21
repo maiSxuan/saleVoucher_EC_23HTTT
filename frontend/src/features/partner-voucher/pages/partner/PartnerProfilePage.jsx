@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import PartnerLayout from "../../../../layouts/PartnerLayout";
 import Card from "../../../../shared/components/Card";
 import Button from "../../../../shared/components/Button";
@@ -283,6 +284,29 @@ export function PartnerProfilePage() {
                   </Button>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Missing Profile Banner for interrupted onboarding */}
+        {!partner && !loading && (
+          <div className="bg-gradient-to-r from-sky-500 to-indigo-600 text-white rounded-2xl p-6 shadow-lg space-y-4">
+            <div className="flex items-start gap-4">
+              <span className="text-3xl">📝</span>
+              <div className="space-y-1">
+                <h3 className="font-bold text-base">{t("Tài khoản của bạn chưa đăng ký Hồ sơ Doanh nghiệp")}</h3>
+                <p className="text-xs text-sky-100 leading-relaxed">
+                  {t("Bạn đã khởi tạo tài khoản đại diện thành công. Vui lòng hoàn tất quy trình khai báo thông tin doanh nghiệp, giấy phép và chi nhánh để gửi Quản trị viên xét duyệt.")}
+                </p>
+              </div>
+            </div>
+            <div className="pt-1">
+              <Link
+                to="/partner/register"
+                className="inline-flex items-center gap-2 bg-white text-indigo-700 font-bold px-4 py-2.5 rounded-xl text-xs shadow-md hover:bg-sky-50 transition-all cursor-pointer"
+              >
+                🚀 {t("Hoàn tất Khai báo Hồ sơ Doanh nghiệp ngay →")}
+              </Link>
             </div>
           </div>
         )}
