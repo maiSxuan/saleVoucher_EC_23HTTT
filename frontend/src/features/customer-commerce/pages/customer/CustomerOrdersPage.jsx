@@ -693,7 +693,7 @@ export default function CustomerOrdersPage() {
                     <p className="text-sm font-semibold text-gray-800">{t("Khách hàng yêu cầu hủy đơn")}</p>
                     <span className="text-xs text-gray-500">{new Date(cr.requestedAt).toLocaleString('vi-VN')}</span>
                   </div>
-                  <p className="text-xs text-gray-600 mb-1">Lý do: {cr.reason}</p>
+                  <p className="text-xs text-gray-600 mb-1">{t("Lý do:")} {t(cr.reason)}</p>
                   <p className="text-xs font-medium text-sky-600">{t("Trạng thái:")} {t(cr.status)}</p>
                   {cr.status === 'Da tu choi' && cr.rejectReason && (
                     <div className="mt-2 p-2.5 bg-red-50 border border-red-100 rounded-lg">

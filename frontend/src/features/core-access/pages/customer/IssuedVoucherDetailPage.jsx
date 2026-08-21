@@ -57,7 +57,7 @@ function StatusBadge({ status }) {
     },
     "Loi sinh ma": {
       icon: <AlertCircle className="w-4 h-4" />,
-      label: "Lỗi phát hành",
+      label: t("Lỗi phát hành"),
       cls: "bg-rose-50 text-rose-600 border-rose-300",
     },
   };

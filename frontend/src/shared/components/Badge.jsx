@@ -20,6 +20,10 @@ export function Badge({ status, text, size = "md" }) {
       case "Tam khoa":
       case "That bai":
       case "Ngung ban":
+      case "Vo hieu hoa":
+      case "Vo Hieu Hoa":
+      case "Vo_hieu_hoa":
+      case "disabled":
         return "bg-rose-50 text-rose-700 border-rose-200";
       case "Nhap":
         return "bg-sky-50 text-sky-700 border-sky-200";
@@ -41,6 +45,8 @@ export function Badge({ status, text, size = "md" }) {
       case "Dang hoat dong": return t("Đang hoạt động");
       case "Cho duyet": return t("Chờ duyệt");
       case "Tu choi": return t("Từ chối");
+      case "Da tu choi": return t("Đã từ chối");
+      case "Da chap nhan": return t("Đã chấp nhận");
       case "Tam khoa": return t("Tạm khóa");
       case "Nhap": return t("Bản nháp");
       case "Da duyet": return t("Đã duyệt");
@@ -54,6 +60,22 @@ export function Badge({ status, text, size = "md" }) {
       case "Yeu cau bo sung": return t("Cần bổ sung");
       case "Het hang": return t("Hết hàng");
       case "Het han": return t("Hết hạn");
+      case "Chua su dung": return t("Chưa sử dụng");
+      case "Da su dung": return t("Đã sử dụng");
+      case "Cho xu ly": return t("Chờ xử lý");
+      case "Dang xu ly": return t("Đang xử lý");
+      case "Da xu ly": return t("Đã xử lý");
+      case "Hoan tien":
+      case "Da hoan tien": return t("Đã hoàn tiền");
+      case "Cho hoan tien": return t("Chờ hoàn tiền");
+      case "Cho thanh toan": return t("Chờ thanh toán");
+      case "Da thanh toan": return t("Đã thanh toán");
+      case "Huy":
+      case "Da huy": return t("Đã hủy");
+      case "Vo hieu hoa":
+      case "Vo Hieu Hoa":
+      case "Vo_hieu_hoa":
+      case "disabled": return t("Vô hiệu hóa");
       default: return t(statusVal);
     }
   };
