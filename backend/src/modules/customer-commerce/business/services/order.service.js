@@ -194,6 +194,25 @@ class OrderService {
           if (code.usedBranch) code.usedBranch = await translationService.translateText(code.usedBranch, "en");
         }
       }
+      if (Array.isArray(order.cancelRequests)) {
+        for (const cr of order.cancelRequests) {
+          if (cr.reason) cr.reason = await translationService.translateText(cr.reason, "en");
+          if (cr.rejectReason) cr.rejectReason = await translationService.translateText(cr.rejectReason, "en");
+          if (cr.approvalReason) cr.approvalReason = await translationService.translateText(cr.approvalReason, "en");
+          if (cr.processingReason) cr.processingReason = await translationService.translateText(cr.processingReason, "en");
+        }
+      }
+      if (Array.isArray(order.refunds)) {
+        for (const rf of order.refunds) {
+          if (rf.reason) rf.reason = await translationService.translateText(rf.reason, "en");
+        }
+      }
+      if (Array.isArray(order.complaints)) {
+        for (const cp of order.complaints) {
+          if (cp.content) cp.content = await translationService.translateText(cp.content, "en");
+          if (cp.rejectReason) cp.rejectReason = await translationService.translateText(cp.rejectReason, "en");
+        }
+      }
     }
     return order;
   }
