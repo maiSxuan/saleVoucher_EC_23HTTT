@@ -234,6 +234,7 @@ async function sendNotificationEmail(toEmail, {
     : "";
 
   let qrAttachment = null;
+  let qrDownloadAttachment = null;
   let qrBlock = "";
   if (voucherCode && (qrValue || voucherDetails)) {
     try {
@@ -250,6 +251,13 @@ async function sendNotificationEmail(toEmail, {
         content: qrBuffer,
         cid: qrCid,
         contentType: "image/png",
+        contentDisposition: "inline",
+      };
+      qrDownloadAttachment = {
+        filename: "ma-qr-voucher.png",
+        content: qrBuffer,
+        contentType: "image/png",
+        contentDisposition: "attachment",
       };
       qrBlock = `<div style="margin:20px 0;text-align:center">
         <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:8px">Mã QR voucher</div>
@@ -278,7 +286,9 @@ async function sendNotificationEmail(toEmail, {
         ${qrBlock}
         <p style="font-size:12px;color:#9ca3af">Đây là email tự động từ hệ thống EC Voucher.</p>
       </div>`,
-      attachments: qrAttachment ? [qrAttachment] : [],
+      attachments: qrAttachment
+        ? [qrAttachment, qrDownloadAttachment]
+        : [],
     });
   } catch (err) {
     throw new AppError(
