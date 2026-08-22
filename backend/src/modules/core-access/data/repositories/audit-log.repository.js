@@ -54,6 +54,7 @@ class AuditLogRepository {
    *  - doiTuong: string|null — lọc theo loại đối tượng
    *  - hanhDong: string|null — lọc theo hành động
    *  - ketQua: string|null — lọc theo kết quả
+   *  - search: string|null — tìm trên hành động, đối tượng, vai trò, lý do và UUID
    */
   async list({
     page = 1,
@@ -62,12 +63,16 @@ class AuditLogRepository {
     doiTuong,
     hanhDong,
     ketQua,
+    search,
   } = {}) {
     const offset = (page - 1) * limit;
 
     let query = supabase
       .from("log_ht")
-      .select("*", { count: "exact" })
+      .select(
+        "log_id, vai_tro_thuc_hien, hanh_dong, ket_qua, ly_do_thuc_hien, thoi_diem_thuc_hien, ma_tk_thuc_hien, doi_tuong, ma_doi_tuong",
+        { count: "exact" },
+      )
       .order("thoi_diem_thuc_hien", { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -75,6 +80,34 @@ class AuditLogRepository {
     if (doiTuong) query = query.eq("doi_tuong", doiTuong);
     if (hanhDong) query = query.ilike("hanh_dong", `%${hanhDong}%`);
     if (ketQua) query = query.eq("ket_qua", ketQua);
+
+    const normalizedSearch = String(search || "")
+      .trim()
+      .slice(0, 100)
+      .replace(/[^\p{L}\p{N}\s_-]/gu, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (normalizedSearch) {
+      const pattern = `%${normalizedSearch}%`;
+      const conditions = [
+        `hanh_dong.ilike.${pattern}`,
+        `doi_tuong.ilike.${pattern}`,
+        `vai_tro_thuc_hien.ilike.${pattern}`,
+        `ly_do_thuc_hien.ilike.${pattern}`,
+        `ket_qua.ilike.${pattern}`,
+      ];
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+        .test(normalizedSearch);
+      if (isUuid) {
+        conditions.push(
+          `log_id.eq.${normalizedSearch}`,
+          `ma_tk_thuc_hien.eq.${normalizedSearch}`,
+          `ma_doi_tuong.eq.${normalizedSearch}`,
+        );
+      }
+      query = query.or(conditions.join(","));
+    }
 
     const { data, error, count } = await query;
 

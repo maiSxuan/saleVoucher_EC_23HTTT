@@ -237,7 +237,7 @@ class OrderRepository {
   // -----------------------------------------------------------------------
   // 1. KHÁCH HÀNG: LẤY DANH SÁCH ĐƠN HÀNG
   // -----------------------------------------------------------------------
-  async findCustomerOrders(accountId, { status, page = 1, limit = 10 } = {}) {
+  async findCustomerOrders(accountId, { status, page = 1, limit = 10, summary = false } = {}) {
     const offset = (page - 1) * limit;
     const filtersRejectedRefund = status === REJECTED_REFUND_DISPLAY_STATUS;
     const filtersPaidOrders = status === OrderStatus.DA_THANH_TOAN;
@@ -263,7 +263,7 @@ class OrderRepository {
 
     let query = supabase
       .from('donhang')
-      .select('*', { count: 'exact' })
+      .select(summary ? 'ma_dh, ngay_dat, tong_tien, trang_thai' : '*', { count: 'exact' })
       .eq('ma_tk_dat', accountId)
       .order('ngay_dat', { ascending: false })
       .range(offset, offset + limit - 1);
@@ -290,6 +290,64 @@ class OrderRepository {
     if (orderRows.length === 0) return { orders: [], total: count || 0 };
 
     const orderIds = orderRows.map((order) => order.ma_dh);
+
+    // The history screen only needs card counters and the derived display status.
+    // Avoid loading voucher metadata, payment/refund payloads and partner joins until
+    // the customer opens an order detail.
+    if (summary) {
+      const [itemResult, codeResult, cancelRequestResult] = await Promise.all([
+        supabase
+          .from('chitietdonhang')
+          .select('ma_dh')
+          .in('ma_dh', orderIds),
+        supabase
+          .from('voucher_mua')
+          .select('ma_dh')
+          .in('ma_dh', orderIds),
+        supabase
+          .from('yeucauhuy')
+          .select('ma_dh, trang_thai, ngay_yeu_cau')
+          .in('ma_dh', orderIds)
+          .order('ngay_yeu_cau', { ascending: false }),
+      ]);
+
+      const countByOrderId = (rows) => rows.reduce((counts, row) => {
+        counts.set(row.ma_dh, (counts.get(row.ma_dh) || 0) + 1);
+        return counts;
+      }, new Map());
+      const groupByOrderId = (rows) => rows.reduce((groups, row) => {
+        if (!groups.has(row.ma_dh)) groups.set(row.ma_dh, []);
+        groups.get(row.ma_dh).push(row);
+        return groups;
+      }, new Map());
+
+      const itemCounts = countByOrderId(
+        ensureBatchQuery(itemResult, 'Lỗi lấy số lượng chi tiết đơn hàng'),
+      );
+      const codeCounts = countByOrderId(
+        ensureBatchQuery(codeResult, 'Lỗi lấy số lượng mã voucher'),
+      );
+      const cancelRequestsByOrderId = groupByOrderId(
+        ensureBatchQuery(cancelRequestResult, 'Lỗi lấy trạng thái yêu cầu hủy'),
+      );
+
+      return {
+        orders: orderRows.map((order) => {
+          const orderCancelRequests = cancelRequestsByOrderId.get(order.ma_dh) || [];
+          return {
+            id: order.ma_dh,
+            createdAt: order.ngay_dat,
+            orderStatus: order.trang_thai,
+            displayStatus: getCustomerOrderDisplayStatus(order.trang_thai, orderCancelRequests),
+            total: order.tong_tien,
+            itemCount: itemCounts.get(order.ma_dh) || 0,
+            codeCount: codeCounts.get(order.ma_dh) || 0,
+          };
+        }),
+        total: count || 0,
+      };
+    }
+
     const [itemResult, codeResult, paymentResult, cancelRequestResult] = await Promise.all([
       supabase
         .from('chitietdonhang')

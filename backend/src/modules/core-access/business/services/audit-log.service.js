@@ -279,9 +279,9 @@ class AuditLogService {
 
   /**
    * Đọc danh sách audit log với bộ lọc và phân trang.
-   * @param {object} query - { page, limit, maTkThucHien, doiTuong, hanhDong, ketQua }
+   * @param {object} query - { page, limit, maTkThucHien, doiTuong, hanhDong, ketQua, search }
    */
-  async listLogs({ page = 1, limit = 20, maTkThucHien, doiTuong, hanhDong, ketQua } = {}) {
+  async listLogs({ page = 1, limit = 20, maTkThucHien, doiTuong, hanhDong, ketQua, search } = {}) {
     const { logs, total } = await auditLogRepository.list({
       page: Number(page),
       limit: Number(limit),
@@ -289,6 +289,7 @@ class AuditLogService {
       doiTuong,
       hanhDong,
       ketQua,
+      search,
     });
 
     return {

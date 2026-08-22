@@ -58,11 +58,17 @@ class OrderController {
   async listCustomerOrders(req, res, next) {
     try {
       const accountId = req.user.accountId || req.user.id;
-      const { status, page, limit } = req.query;
+      const { status, page, limit, summary } = req.query;
       const lang = req.query.lang || req.headers["accept-language"];
       const pageNum = Number(page) || 1;
       const limitNum = Number(limit) || 10;
-      const result = await orderService.getCustomerOrders(accountId, { status, page: pageNum, limit: limitNum, lang });
+      const result = await orderService.getCustomerOrders(accountId, {
+        status,
+        page: pageNum,
+        limit: limitNum,
+        lang,
+        summary: summary === '1' || summary === 'true',
+      });
       return paginatedResponse(res, result.orders, { page: pageNum, limit: limitNum, total: result.total });
     } catch (e) {
       next(e);

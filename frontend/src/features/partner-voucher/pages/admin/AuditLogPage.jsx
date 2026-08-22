@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { fetchAuditLogsApi } from "../../../../shared/api/auditLogApi";
 import { Search, Filter, RefreshCw, ScrollText, CheckCircle2, XCircle } from "lucide-react";
 
@@ -6,36 +6,61 @@ export function AuditLogPage() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterAction, setFilterAction] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [filterResult, setFilterResult] = useState("");
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ page: 1, limit: 15, total: 0, totalPages: 1 });
+  const requestRef = useRef(null);
 
-  const loadLogs = async () => {
+  const loadLogs = useCallback(async () => {
+    requestRef.current?.abort();
+    const request = new AbortController();
+    requestRef.current = request;
     setLoading(true);
     try {
       const res = await fetchAuditLogsApi({
         page,
         limit: 15,
-        hanhDong: filterAction,
+        search: searchQuery,
         ketQua: filterResult,
+        signal: request.signal,
       });
       setLogs(res.logs || []);
       setPagination(res.pagination || { page: 1, limit: 15, total: 0, totalPages: 1 });
     } catch (err) {
-      console.error("Lỗi lấy nhật ký:", err);
+      if (err.name !== "AbortError") {
+        console.error("Lỗi lấy nhật ký:", err);
+      }
     } finally {
-      setLoading(false);
+      if (requestRef.current === request) {
+        requestRef.current = null;
+        setLoading(false);
+      }
     }
-  };
+  }, [filterResult, page, searchQuery]);
 
   useEffect(() => {
     loadLogs();
-  }, [page, filterResult]);
+    return () => requestRef.current?.abort();
+  }, [loadLogs]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setPage(1);
+      setSearchQuery(filterAction.trim());
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [filterAction]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
+    const nextSearch = filterAction.trim();
+    if (page === 1 && nextSearch === searchQuery) {
+      loadLogs();
+      return;
+    }
     setPage(1);
-    loadLogs();
+    setSearchQuery(nextSearch);
   };
 
   return (
@@ -70,7 +95,8 @@ export function AuditLogPage() {
             type="text"
             value={filterAction}
             onChange={(e) => setFilterAction(e.target.value)}
-            placeholder="Tìm theo tên hành động (VD: LOGIN, UPDATE, LOCK)..."
+            placeholder="Tìm hành động, đối tượng, vai trò, lý do hoặc UUID..."
+            aria-label="Tìm kiếm nhật ký hệ thống"
             className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </form>
@@ -121,11 +147,11 @@ export function AuditLogPage() {
                   </td>
                 </tr>
               ) : (
-                logs.map((log) => {
+                logs.map((log, index) => {
                   const isSuccess = log.ket_qua === "Thanh cong";
                   const dateStr = log.thoi_diem || log.thoi_diem_thuc_hien;
                   return (
-                    <tr key={log.log_id || log.id || Math.random()} className="hover:bg-gray-50/80 transition-colors">
+                    <tr key={log.log_id || log.id || `${dateStr}-${index}`} className="hover:bg-gray-50/80 transition-colors">
                       <td className="py-3.5 px-4 text-xs font-mono text-gray-600 whitespace-nowrap">
                         {dateStr ? new Date(dateStr).toLocaleString("vi-VN") : "—"}
                       </td>
