@@ -29,6 +29,7 @@ import {
   getPendingPartnerProfileRequestApi,
   approvePartnerProfileRequestApi,
   rejectPartnerProfileRequestApi,
+  updateBranchStatusApi,
 } from "../../../../shared/api/partnerApi";
 
 export function PartnerDetailPage({ partnerId, onNavigate }) {
@@ -71,13 +72,50 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
         getPendingPartnerProfileRequestApi(pId),
       ]);
       setPartner(pData);
-      setActiveBranches(pData?.branches || []);
+      const rawBranches = bData || pData?.branches || [];
+      const officialActiveBranches = rawBranches.filter((b) => {
+        const st = (b.trang_thai || "").toString().toLowerCase().trim();
+        return (
+          st === "hoat dong" ||
+          st === "hoạt động" ||
+          st === "active" ||
+          st === "dang hoat dong" ||
+          st === "danghoatdong" ||
+          st === "hoatdong" ||
+          st === "tam ngung" ||
+          st === "tạm ngưng" ||
+          st === "tam ngung hoat dong" ||
+          st === "tamngung"
+        );
+      });
+      setActiveBranches(officialActiveBranches);
+
       setBranchRequests(rData || []);
       setPendingProfileReq(profReq);
     } catch (e) {
       console.error("Error loading partner detail:", e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleBranchStatus = async (branchId, currentStatus) => {
+    try {
+      const st = (currentStatus || "").toLowerCase().trim();
+      const isPaused = st === "tam ngung" || st === "tam ngung hoat dong" || st === "tamngung";
+      const nextStatus = isPaused ? "Dang hoat dong" : "Tam ngung hoat dong";
+
+      // Optimistically update activeBranches state locally
+      setActiveBranches((prev) =>
+        prev.map((b) => (b.ma_chi_nhanh === branchId ? { ...b, trang_thai: nextStatus } : b))
+      );
+
+      await updateBranchStatusApi(branchId, nextStatus);
+      setToastMessage(isPaused ? "Đã tái kích hoạt chi nhánh thành công!" : "Đã tạm ngưng chi nhánh thành công!");
+      await loadPartnerData();
+    } catch (e) {
+      setToastMessage("Tác vụ tạm ngưng/mở lại chi nhánh thất bại: " + e.message);
+      await loadPartnerData();
     }
   };
 
@@ -156,6 +194,70 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
     setToastMessage("Đã từ chối Yêu cầu Cập nhật Hồ sơ Doanh nghiệp.");
     await loadPartnerData();
   };
+
+  const getHistoryItems = () => {
+    const items = [];
+
+    // 1. All Branch Requests (Them moi, Cap nhat, Xoa)
+    (branchRequests || []).forEach((req) => {
+      let actionLabel = "Yêu cầu chi nhánh";
+      if (req.loai_yeu_cau === "Them moi") {
+        actionLabel = `Yêu cầu thêm mới chi nhánh: "${req.ten_chi_nhanh}"`;
+      } else if (req.loai_yeu_cau === "Cap nhat") {
+        actionLabel = `Yêu cầu cập nhật thông tin chi nhánh: "${req.ten_chi_nhanh}"`;
+      } else if (req.loai_yeu_cau === "Xoá" || req.loai_yeu_cau === "Xoa") {
+        actionLabel = `Yêu cầu xóa chi nhánh: "${req.ten_chi_nhanh}"`;
+      }
+
+      items.push({
+        id: `branch_req_${req.ma_yeu_cau}`,
+        title: actionLabel,
+        description: `📍 Địa chỉ: ${req.dia_chi} (${req.khu_vuc})`,
+        time: req.ngay_tao ? new Date(req.ngay_tao).toLocaleString("vi-VN") : "Gần đây",
+        badge: req.trang_thai,
+        note: req.ghi_chu_admin || req.ly_do_tu_choi || null,
+        timestamp: req.ngay_tao ? new Date(req.ngay_tao).getTime() : 0,
+      });
+    });
+
+    // 2. Profile Update Request
+    if (pendingProfileReq) {
+      const changes = [];
+      if (pendingProfileReq.ten_dn_moi) changes.push(`Tên DN mới: ${pendingProfileReq.ten_dn_moi}`);
+      if (pendingProfileReq.ma_so_thue_moi) changes.push(`MST mới: ${pendingProfileReq.ma_so_thue_moi}`);
+      if (pendingProfileReq.dia_chi_moi) changes.push(`Địa chỉ mới: ${pendingProfileReq.dia_chi_moi}`);
+      if (pendingProfileReq.giay_phep_kinh_doanh_moi) changes.push("Giấy phép kinh doanh mới");
+      if (pendingProfileReq.logo_new || pendingProfileReq.logo_moi) changes.push("Logo mới");
+      if (pendingProfileReq.ho_ten_nguoi_dai_dien_moi) changes.push(`Đại diện mới: ${pendingProfileReq.ho_ten_nguoi_dai_dien_moi}`);
+
+      items.push({
+        id: `profile_req_${pendingProfileReq.ma_yeu_cau || "1"}`,
+        title: "Đề xuất Cập nhật Hồ sơ Doanh nghiệp",
+        description: changes.length > 0 ? changes.join(" • ") : "Thay đổi thông tin pháp lý doanh nghiệp",
+        time: pendingProfileReq.ngay_tao ? new Date(pendingProfileReq.ngay_tao).toLocaleString("vi-VN") : "Gần đây",
+        badge: pendingProfileReq.trang_thai,
+        note: pendingProfileReq.ly_do_tu_choi || null,
+        timestamp: pendingProfileReq.ngay_tao ? new Date(pendingProfileReq.ngay_tao).getTime() : Date.now(),
+      });
+    }
+
+    // 3. Initial Partner Registration
+    if (partner) {
+      items.push({
+        id: `partner_register_${partner.ma_hs}`,
+        title: `Đăng ký hồ sơ doanh nghiệp "${partner.ten_dn}"`,
+        description: `Mã số thuế: ${partner.ma_so_thue} • Người đại diện: ${partner.nguoi_dai_dien?.ho_ten || "Chưa có"} • SĐT: ${partner.nguoi_dai_dien?.sdt || "Chưa có"}`,
+        time: partner.ngay_tao ? new Date(partner.ngay_tao).toLocaleString("vi-VN") : "Ban đầu",
+        badge: partner.trang_thai,
+        note: partner.ly_do_tu_choi || null,
+        timestamp: partner.ngay_tao ? new Date(partner.ngay_tao).getTime() : 1,
+      });
+    }
+
+    return items.sort((a, b) => b.timestamp - a.timestamp);
+  };
+
+  const historyItems = getHistoryItems();
 
   if (loading) {
     return (
@@ -614,20 +716,34 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
             <div className="p-12 text-center text-slate-400">Không có chi nhánh chính thức nào.</div>
           ) : (
             <div className="divide-y divide-slate-100">
-              {activeBranches.map((b) => (
-                <div key={b.ma_chi_nhanh} className="p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-3">
-                      <h4 className="font-bold text-slate-900">{b.ten_chi_nhanh}</h4>
-                      <Badge status={b.trang_thai} size="sm" />
+              {activeBranches.map((b) => {
+                const isPaused = b.trang_thai === "Tam ngung" || b.trang_thai === "Tam ngung hoat dong";
+                return (
+                  <div key={b.ma_chi_nhanh} className="p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-3">
+                        <h4 className="font-bold text-slate-900">{b.ten_chi_nhanh}</h4>
+                        <Badge status={b.trang_thai} size="sm" />
+                      </div>
+                      <p className="text-xs text-slate-600 flex items-center gap-1">
+                        <MapPin size={13} className="text-amber-500 shrink-0" />
+                        {b.dia_chi} ({b.khu_vuc})
+                      </p>
                     </div>
-                    <p className="text-xs text-slate-600 flex items-center gap-1">
-                      <MapPin size={13} className="text-amber-500 shrink-0" />
-                      {b.dia_chi} ({b.khu_vuc})
-                    </p>
+
+                    <button
+                      onClick={() => handleToggleBranchStatus(b.ma_chi_nhanh, b.trang_thai)}
+                      className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer border ${
+                        isPaused
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                          : "bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100"
+                      }`}
+                    >
+                      {isPaused ? "Mở lại hoạt động" : "Tạm ngưng chi nhánh"}
+                    </button>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -767,8 +883,49 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
 
       {/* TAB 4: HISTORY */}
       {activeTab === "history" && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6 text-slate-500 text-sm text-center">
-          Lịch sử tác vụ của doanh nghiệp {partner.ten_dn}. Chưa có nhật ký thao tác nâng cao.
+        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-5">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+              <h3 className="font-bold text-slate-900 text-base">Lịch sử tác vụ & Nhật ký hoạt động đối tác</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Theo dõi toàn bộ các nhật ký yêu cầu chi nhánh, đề xuất cập nhật hồ sơ và xử lý phê duyệt.
+              </p>
+            </div>
+            <span className="text-xs px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full font-bold">
+              {historyItems.length} nhật ký
+            </span>
+          </div>
+
+          {historyItems.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 text-sm italic bg-slate-50 rounded-xl border border-slate-100">
+              Chưa có nhật ký tác vụ nào được ghi nhận cho đối tác này.
+            </div>
+          ) : (
+            <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+              {historyItems.map((item) => (
+                <div key={item.id} className="relative space-y-1.5">
+                  <span className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-blue-600 border-2 border-white shadow-xs" />
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h4 className="font-bold text-slate-900 text-sm">{item.title}</h4>
+                    <span className="text-xs text-slate-400 font-mono bg-slate-100 px-2 py-0.5 rounded-md">
+                      {item.time}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">{item.description}</p>
+                  {item.badge && (
+                    <div className="pt-0.5">
+                      <Badge status={item.badge} size="sm" />
+                    </div>
+                  )}
+                  {item.note && (
+                    <div className="mt-1.5 p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-800 font-medium">
+                      <strong>Lý do / Ghi chú kiểm duyệt:</strong> {item.note}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

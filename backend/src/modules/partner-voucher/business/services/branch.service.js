@@ -65,12 +65,44 @@ class BranchService {
           trang_thai: "Dang hoat dong",
         });
       }
-    } else if (req.loai_yeu_cau === "Xoá") {
-      // Deactivate branch
+    } else if (req.loai_yeu_cau === "Xoá" || req.loai_yeu_cau === "Xoa") {
+      // Permanently delete branch & Lock branch staff users (trang_thai = "Tam khoa")
       if (req.ma_chi_nhanh) {
-        await branchRepository.update(req.ma_chi_nhanh, {
-          trang_thai: "Tam ngung hoat dong",
-        });
+        const supabase = require("../../../../config/supabase");
+
+        // 1. Lock all staff users belonging to this branch
+        try {
+          await supabase
+            .from("nguoidung")
+            .update({ trang_thai: "Tam khoa" })
+            .eq("ma_chi_nhanh", req.ma_chi_nhanh);
+
+          await auditLogService.log({
+            actorId: adminId,
+            actorRole: "Admin kiem duyet",
+            action: "LOCK_BRANCH_STAFF",
+            targetType: "NGUOIDUNG",
+            targetId: req.ma_chi_nhanh,
+            after: { trang_thai: "Tam khoa" },
+            result: "Thanh cong",
+            reason: `Khóa tài khoản nhân viên phụ trách chi nhánh bị xóa (${req.ten_chi_nhanh})`,
+          });
+        } catch (errStaff) {
+          console.warn("[BranchService] Lock branch staff failed:", errStaff.message);
+        }
+
+        // 2. Delete voucher-branch associations
+        try {
+          await supabase
+            .from("voucher_chinhanh")
+            .delete()
+            .eq("ma_chi_nhanh", req.ma_chi_nhanh);
+        } catch (errV) {
+          console.warn("[BranchService] Delete voucher-branch link failed:", errV.message);
+        }
+
+        // 3. Delete branch permanently from chinhanh table
+        await branchRepository.delete(req.ma_chi_nhanh);
       }
     } else {
       // Them moi: Activate branch
@@ -92,10 +124,10 @@ class BranchService {
         actorRole: "Admin kiem duyet",
         action: "APPROVE_BRANCH_REQUEST",
         targetType: "CHINHANH",
-        targetId: req.ma_chi_nhanh,
+        targetId: req.ma_chi_nhanh || requestId,
         after: { trang_thai: "Da duyet", loai_yeu_cau: req.loai_yeu_cau },
         result: "Thanh cong",
-        reason: "Admin phê duyệt yêu cầu thay đổi thông tin chi nhánh",
+        reason: `Admin phê duyệt yêu cầu chi nhánh (${req.loai_yeu_cau}: ${req.ten_chi_nhanh})`,
       });
     } catch (e) {
       console.warn(
@@ -105,6 +137,33 @@ class BranchService {
     }
 
     return res;
+  }
+
+  async updateBranchStatus(branchId, status, adminId = null) {
+    let dbStatus = status;
+    const normalized = (status || "").toLowerCase().trim();
+    if (normalized === "tam ngung" || normalized === "tam ngung hoat dong" || normalized === "tamngung" || normalized === "tạm ngưng") {
+      dbStatus = "Tam ngung hoat dong";
+    } else if (normalized === "dang hoat dong" || normalized === "hoat dong" || normalized === "active" || normalized === "đang hoạt động") {
+      dbStatus = "Dang hoat dong";
+    }
+
+    const updated = await branchRepository.update(branchId, { trang_thai: dbStatus });
+    try {
+      await auditLogService.log({
+        actorId: adminId,
+        actorRole: "Admin kiem duyet",
+        action: "UPDATE_BRANCH_STATUS",
+        targetType: "CHINHANH",
+        targetId: branchId,
+        after: { trang_thai: dbStatus },
+        result: "Thanh cong",
+        reason: `Admin cập nhật trạng thái chi nhánh sang ${dbStatus}`,
+      });
+    } catch (e) {
+      console.warn("[BranchService] Log updateBranchStatus failed:", e.message);
+    }
+    return updated;
   }
 
   async rejectBranchRequest(requestId, adminNote = "", adminId = null) {

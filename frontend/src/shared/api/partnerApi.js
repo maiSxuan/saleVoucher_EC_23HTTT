@@ -352,6 +352,27 @@ export async function rejectBranchRequestApi(requestId, adminNote = "") {
 }
 
 /**
+ * Update branch status (Admin toggle active/paused)
+ */
+export async function updateBranchStatusApi(branchId, status) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/branches/${branchId}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json?.message || "Cập nhật trạng thái chi nhánh thất bại.");
+    }
+    return json.data;
+  } catch (e) {
+    console.error("updateBranchStatusApi error:", e.message);
+    throw e;
+  }
+}
+
+/**
  * Fetch list of vouchers
  */
 export async function getVouchersApi(query = {}) {

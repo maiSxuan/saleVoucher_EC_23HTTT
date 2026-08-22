@@ -13,5 +13,6 @@ router.get("/requests/partner/:partnerId", controller.getBranchRequestsByPartner
 router.post("/requests", controller.createBranchRequest.bind(controller));
 router.post("/requests/:id/approve", controller.approveBranchRequest.bind(controller));
 router.post("/requests/:id/reject", controller.rejectBranchRequest.bind(controller));
+router.patch("/:id/status", controller.updateBranchStatus.bind(controller));
 
 module.exports = router;

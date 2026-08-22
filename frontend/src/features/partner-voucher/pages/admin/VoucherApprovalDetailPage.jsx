@@ -134,6 +134,17 @@ export function VoucherApprovalDetailPage({ voucherId, onNavigate }) {
   const rb = getReviewStatusBadge(voucher);
   const pb = getPublicationStatusBadge(voucher);
 
+  const isApproved =
+    voucher.trang_thai === "Dang ban" ||
+    voucher.trang_thai === "Da duyet" ||
+    voucher.trang_thai_kiem_duyet === "Da duyet";
+
+  const isPendingReview =
+    !isApproved &&
+    (voucher.trang_thai === "Cho duyet" ||
+      voucher.trang_thai_kiem_duyet === "Cho duyet" ||
+      voucher.trang_thai === "Cho xu ly");
+
   const applicableBranches = branchesList.filter((b) =>
     (voucher.ma_chi_nhanh || []).includes(b.ma_chi_nhanh)
   );
@@ -211,20 +222,22 @@ export function VoucherApprovalDetailPage({ voucherId, onNavigate }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setApproveModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors cursor-pointer shadow-xs"
-            >
-              <CheckCircle size={14} /> Phê duyệt
-            </button>
-            <button
-              onClick={() => setRejectModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors cursor-pointer shadow-xs"
-            >
-              <XCircle size={14} /> Từ chối
-            </button>
-          </div>
+          {isPendingReview && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setApproveModal(true)}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors cursor-pointer shadow-xs"
+              >
+                <CheckCircle size={14} /> Phê duyệt
+              </button>
+              <button
+                onClick={() => setRejectModal(true)}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors cursor-pointer shadow-xs"
+              >
+                <XCircle size={14} /> Từ chối
+              </button>
+            </div>
+          )}
         </div>
 
         {voucher.ly_do_tu_choi && (
