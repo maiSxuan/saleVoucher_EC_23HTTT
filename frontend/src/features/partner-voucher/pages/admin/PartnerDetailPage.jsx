@@ -23,7 +23,6 @@ import {
   approvePartnerApi,
   rejectPartnerApi,
   lockPartnerApi,
-  getBranchesByPartnerApi,
   getBranchRequestsApi,
   approveBranchRequestApi,
   rejectBranchRequestApi,
@@ -43,6 +42,7 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
   const [branchRequests, setBranchRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState("");
+  const [approvingProfileReqId, setApprovingProfileReqId] = useState(null);
 
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -66,14 +66,14 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
         setLoading(false);
         return;
       }
-      const [pData, bData, rData, profReq] = await Promise.all([
+      const [pData, rData, profReq] = await Promise.all([
         getPartnerByIdApi(pId),
-        getBranchesByPartnerApi(pId),
         getBranchRequestsApi(pId),
         getPendingPartnerProfileRequestApi(pId),
       ]);
       setPartner(pData);
-      const officialActiveBranches = (bData || []).filter((b) => {
+      const rawBranches = bData || pData?.branches || [];
+      const officialActiveBranches = rawBranches.filter((b) => {
         const st = (b.trang_thai || "").toString().toLowerCase().trim();
         return (
           st === "hoat dong" ||
@@ -89,6 +89,7 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
         );
       });
       setActiveBranches(officialActiveBranches);
+
       setBranchRequests(rData || []);
       setPendingProfileReq(profReq);
     } catch (e) {
@@ -173,9 +174,16 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
   };
 
   const handleApproveProfileReq = async (reqId) => {
-    await approvePartnerProfileRequestApi(reqId);
-    setToastMessage("Đã phê duyệt Cập nhật Hồ sơ Doanh nghiệp thành công!");
-    await loadPartnerData();
+    if (!reqId || approvingProfileReqId) return;
+
+    setApprovingProfileReqId(reqId);
+    try {
+      await approvePartnerProfileRequestApi(reqId);
+      setToastMessage("Đã phê duyệt Cập nhật Hồ sơ Doanh nghiệp thành công!");
+      await loadPartnerData();
+    } finally {
+      setApprovingProfileReqId(null);
+    }
   };
 
   const handleRejectProfileReq = async () => {
@@ -569,9 +577,10 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
                   </button>
                   <button
                     onClick={() => handleApproveProfileReq(pendingProfileReq.ma_yc || pendingProfileReq.ma_req)}
-                    className="px-4 py-1.5 text-xs font-bold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors cursor-pointer shadow-xs"
+                    disabled={Boolean(approvingProfileReqId)}
+                    className="px-4 py-1.5 text-xs font-bold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors cursor-pointer shadow-xs disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Phê duyệt cập nhật hồ sơ
+                    {approvingProfileReqId ? "Đang phê duyệt..." : "Phê duyệt cập nhật hồ sơ"}
                   </button>
                 </div>
               </div>

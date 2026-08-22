@@ -6,6 +6,11 @@ const VOUCHERS_MEMORY_STORE = new Map();
 let CATEGORIES_CACHE = null;
 let CATEGORIES_CACHE_EXPIRES = 0;
 
+const PARTNER_NAMES_CACHE_TTL_MS = 15_000;
+let partnerNamesCache = null;
+let partnerNamesCacheExpiresAt = 0;
+let partnerNamesRequest = null;
+
 class VoucherRepository {
   async resolveCategoryUuid(catInput) {
     const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
@@ -27,33 +32,49 @@ class VoucherRepository {
   }
 
   async resolvePartnerNamesMap() {
+    if (partnerNamesCache && Date.now() < partnerNamesCacheExpiresAt) {
+      return partnerNamesCache;
+    }
+
+    if (!partnerNamesRequest) {
+      partnerNamesRequest = (async () => {
+        try {
+          const [{ data: partnersData }, { data: branchesData }, { data: linksData }] = await Promise.all([
+            supabase.from("hosodn").select("ma_hs, ten_dn"),
+            supabase.from("chinhanh").select("ma_chi_nhanh, ma_hs"),
+            supabase.from("voucher_cn").select("ma_voucher, ma_chi_nhanh"),
+          ]);
+
+          const partnerMap = new Map();
+          (partnersData || []).forEach((p) => {
+            if (p.ma_hs) partnerMap.set(p.ma_hs, p.ten_dn);
+          });
+
+          const branchToHsMap = new Map();
+          (branchesData || []).forEach((b) => {
+            if (b.ma_chi_nhanh) branchToHsMap.set(b.ma_chi_nhanh, b.ma_hs);
+          });
+
+          const voucherToHsMap = new Map();
+          (linksData || []).forEach((l) => {
+            const hs = branchToHsMap.get(l.ma_chi_nhanh);
+            if (hs) voucherToHsMap.set(l.ma_voucher, hs);
+          });
+
+          return { partnerMap, voucherToHsMap };
+        } catch (e) {
+          console.error("[VoucherRepository] resolvePartnerNamesMap error:", e.message);
+          return { partnerMap: new Map(), voucherToHsMap: new Map() };
+        }
+      })();
+    }
+
     try {
-      const [{ data: partnersData }, { data: branchesData }, { data: linksData }] = await Promise.all([
-        supabase.from("hosodn").select("ma_hs, ten_dn"),
-        supabase.from("chinhanh").select("ma_chi_nhanh, ma_hs"),
-        supabase.from("voucher_cn").select("ma_voucher, ma_chi_nhanh"),
-      ]);
-
-      const partnerMap = new Map();
-      (partnersData || []).forEach((p) => {
-        if (p.ma_hs) partnerMap.set(p.ma_hs, p.ten_dn);
-      });
-
-      const branchToHsMap = new Map();
-      (branchesData || []).forEach((b) => {
-        if (b.ma_chi_nhanh) branchToHsMap.set(b.ma_chi_nhanh, b.ma_hs);
-      });
-
-      const voucherToHsMap = new Map();
-      (linksData || []).forEach((l) => {
-        const hs = branchToHsMap.get(l.ma_chi_nhanh);
-        if (hs) voucherToHsMap.set(l.ma_voucher, hs);
-      });
-
-      return { partnerMap, voucherToHsMap };
-    } catch (e) {
-      console.error("[VoucherRepository] resolvePartnerNamesMap error:", e.message);
-      return { partnerMap: new Map(), voucherToHsMap: new Map() };
+      partnerNamesCache = await partnerNamesRequest;
+      partnerNamesCacheExpiresAt = Date.now() + PARTNER_NAMES_CACHE_TTL_MS;
+      return partnerNamesCache;
+    } finally {
+      partnerNamesRequest = null;
     }
   }
 

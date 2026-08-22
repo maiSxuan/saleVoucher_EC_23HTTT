@@ -1,15 +1,15 @@
 import React, { lazy } from "react";
 import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import App from "../App";
-import LoginPage from "../features/core-access/pages/auth/LoginPage";
 import ProtectedRoute from "../shared/components/ProtectedRoute";
 import Forbidden from "../shared/components/Forbidden";
-import RegisterPage from "../features/customer-commerce/pages/customer/RegisterPage";
-import LogoutPage from "../features/core-access/pages/auth/LogoutPage";
-import LandingPage from "../features/core-access/pages/public/LandingPage";
 
 // Các màn hình ngoài luồng mở đầu được tách chunk để Landing/Login không phải tải
 // trước thư viện QR, biểu đồ và trình soạn thảo của toàn bộ portal.
+const LoginPage = lazy(() => import("../features/core-access/pages/auth/LoginPage"));
+const RegisterPage = lazy(() => import("../features/customer-commerce/pages/customer/RegisterPage"));
+const LogoutPage = lazy(() => import("../features/core-access/pages/auth/LogoutPage"));
+const LandingPage = lazy(() => import("../features/core-access/pages/public/LandingPage"));
 const AdminLayout = lazy(() => import("../layouts/AdminLayout"));
 const AdminDashboardPage = lazy(() => import("../features/core-access/pages/admin/AdminDashboardPage"));
 const PartnerManagementPage = lazy(() => import("../features/partner-voucher/pages/admin/PartnerManagementPage"));
