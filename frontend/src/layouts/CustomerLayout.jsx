@@ -427,13 +427,8 @@ export default function CustomerLayout() {
                   </div>
                 ) : <div />}
                 <button
-<<<<<<< HEAD
                   onClick={() => setPopups([])}
                   className="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors shadow-sm text-sm ml-auto"
-=======
-                  onClick={() => setPopups(prev => prev.filter((_, i) => i !== currentPopupIndex))}
-                  className="px-6 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl transition-colors shadow-sm text-sm ml-auto"
->>>>>>> 2f8ba53ba4433aeee9b2c010e11feb068aafd6cc
                 >
                   {t("Đã hiểu")}
                 </button>
