@@ -1,23 +1,22 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import {
-  Eye,
-  EyeOff,
-  AlertCircle,
-  ArrowLeft,
-  RefreshCw,
-} from "lucide-react";
-
+import { Eye, EyeOff, AlertCircle, ArrowLeft, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
+
+import {
+  registerCustomerApi,
+  verifyRegisterOtpApi,
+  resendRegisterOtpApi,
+} from "../../../../shared/api/customerApi";
+import { loginApi } from "../../../../shared/api/authApi";
 
 const OTP_RESEND_SECONDS = 60;
 
 export default function RegisterPage() {
   const { t } = useTranslation();
-  const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
   const navigate = useNavigate();
 
-  // step: 'form' -> nhập thông tin đăng ký | 'otp' -> nhập mã xác thực
+  // step: 'form' -> nhập thông tin | 'otp' -> nhập mã xác thực
   const [step, setStep] = useState("form");
 
   // form fields
@@ -44,7 +43,7 @@ export default function RegisterPage() {
     setErrors((e) => ({ ...e, [field]: message }));
   const clearErrors = () => setErrors({});
 
-  // ---------- Validate phía client (giống NFR-05: báo lỗi rõ nguyên nhân) ----------
+  // ---------- Validate Client ----------
   const validateForm = () => {
     const errs = {};
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginInfo);
@@ -62,42 +61,27 @@ export default function RegisterPage() {
     return Object.keys(errs).length === 0;
   };
 
-  // ---------- Bước 1: gửi thông tin đăng ký, hệ thống phát hành OTP mô phỏng ----------
+  // ---------- Bước 1: Gửi thông tin đăng ký ----------
   const handleRegister = async () => {
     clearErrors();
     if (!validateForm()) return;
 
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}/customer/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ loginInfo, password, confirmPassword }),
-      });
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        // A6: thông tin đã tồn tại / A5: sai định dạng -> backend trả message tương ứng
-        setFieldError("_global", data.message || "Đăng ký thất bại.");
-        return;
-      }
+      // Gọi API Đăng ký
+      await registerCustomerApi({ loginInfo, password, confirmPassword });
 
       setOtp("");
       setOtpTimer(OTP_RESEND_SECONDS);
       setStep("otp");
     } catch (err) {
-      setFieldError(
-        "_global",
-        err.message === "Failed to fetch"
-          ? "Không thể kết nối đến máy chủ. Hãy kiểm tra Backend."
-          : err.message,
-      );
+      setFieldError("_global", err.message || "Đăng ký thất bại.");
     } finally {
       setLoading(false);
     }
   };
 
-  // ---------- Bước 2: xác thực OTP -> tạo hồ sơ -> tự động đăng nhập ----------
+  // ---------- Bước 2: Xác thực OTP & Tự động đăng nhập ----------
   const handleVerifyOtp = async () => {
     clearErrors();
     if (!otp) {
@@ -107,43 +91,19 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}/customer/register/verify-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ loginInfo, otp }),
-      });
-      const data = await res.json();
+      // 1. Xác thực OTP
+      await verifyRegisterOtpApi({ loginInfo, otp });
 
-      if (!res.ok || !data.success) {
-        // A12: OTP sai/hết hạn/quá 3 lần -> backend trả message tương ứng
-        setFieldError("otp", data.message || "Xác thực OTP thất bại.");
-        return;
-      }
+      // 2. Tự động đăng nhập
+      const loginData = await loginApi({ username: loginInfo, password });
 
-      // Đăng ký thành công -> tự động đăng nhập bằng chính thông tin vừa tạo
-      const loginRes = await fetch(`${BASE_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: loginInfo, password }),
-      });
-      const loginData = await loginRes.json();
-
-      if (!loginRes.ok || !loginData.success) {
-        // Tạo tài khoản thành công nhưng auto-login lỗi -> vẫn cho về trang login
-        navigate("/login");
-        return;
-      }
-
-      localStorage.setItem("accessToken", loginData.data.token);
-      localStorage.setItem("user", JSON.stringify(loginData.data.user));
+      // 3. Lưu Token & Điều hướng
+      localStorage.setItem("accessToken", loginData.accessToken);
+      localStorage.setItem("user", JSON.stringify(loginData.user));
       navigate("/customer");
     } catch (err) {
-      setFieldError(
-        "otp",
-        err.message === "Failed to fetch"
-          ? "Không thể kết nối đến máy chủ. Hãy kiểm tra Backend."
-          : err.message,
-      );
+      // Nếu tự động đăng nhập lỗi hoặc OTP sai -> báo lỗi UI
+      setFieldError("otp", err.message || "Xác thực OTP thất bại.");
     } finally {
       setLoading(false);
     }
@@ -154,21 +114,11 @@ export default function RegisterPage() {
     clearErrors();
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}/customer/register/resend-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ loginInfo }),
-      });
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        setFieldError("otp", data.message || "Không thể gửi lại mã.");
-        return;
-      }
+      await resendRegisterOtpApi({ loginInfo });
       setOtp("");
       setOtpTimer(OTP_RESEND_SECONDS);
     } catch (err) {
-      setFieldError("otp", "Không thể kết nối đến máy chủ.");
+      setFieldError("otp", err.message || "Không thể gửi lại mã.");
     } finally {
       setLoading(false);
     }
@@ -179,7 +129,7 @@ export default function RegisterPage() {
       <p className="text-red-500 text-xs mt-0.5">{errors[field]}</p>
     ) : null;
 
-  // ================= UI =================
+  // ================= UI (Giữ nguyên không đổi) =================
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-cyan-50 flex items-center justify-center p-4">
       <div className="bg-white border border-sky-100 rounded-2xl shadow-xl shadow-sky-900/10 max-w-sm w-full p-6">
@@ -219,7 +169,8 @@ export default function RegisterPage() {
 
             <div className="mb-3">
               <label className="text-xs font-medium text-gray-600 block mb-1">
-                {t("Email")}<span className="text-red-500">*</span>
+                {t("Email")}
+                <span className="text-red-500">*</span>
               </label>
               <input
                 value={loginInfo}
@@ -267,7 +218,10 @@ export default function RegisterPage() {
 
             <p className="text-center text-sm text-gray-500 mt-3">
               {t("Đã có tài khoản?")}{" "}
-              <Link to="/login" className="text-sky-700 hover:text-sky-800 font-medium transition-colors">
+              <Link
+                to="/login"
+                className="text-sky-700 hover:text-sky-800 font-medium transition-colors"
+              >
                 {t("Đăng nhập")}
               </Link>
             </p>
@@ -286,9 +240,12 @@ export default function RegisterPage() {
               <ArrowLeft size={14} /> {t("Quay lại")}
             </button>
 
-            <h2 className="font-bold text-gray-900 mb-1">{t("Xác thực OTP")}</h2>
+            <h2 className="font-bold text-gray-900 mb-1">
+              {t("Xác thực OTP")}
+            </h2>
             <p className="text-sm text-gray-500 mb-4">
-              {t("Mã xác thực mô phỏng đã được gửi đến")} <strong>{loginInfo}</strong>.
+              {t("Mã xác thực mô phỏng đã được gửi đến")}{" "}
+              <strong>{loginInfo}</strong>.
             </p>
 
             <div className="mb-4">
@@ -309,7 +266,9 @@ export default function RegisterPage() {
 
             <div className="flex items-center justify-between mb-4">
               {otpTimer > 0 ? (
-                <p className="text-xs text-gray-400">{t("Gửi lại sau")} {otpTimer}s</p>
+                <p className="text-xs text-gray-400">
+                  {t("Gửi lại sau")} {otpTimer}s
+                </p>
               ) : (
                 <button
                   onClick={handleResendOtp}

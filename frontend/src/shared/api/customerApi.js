@@ -18,6 +18,37 @@ async function handleResponse(res) {
   return json.data;
 }
 
+export async function registerCustomerApi({
+  loginInfo,
+  password,
+  confirmPassword,
+}) {
+  const res = await fetch(`${BASE_URL}/customer/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ loginInfo, password, confirmPassword }),
+  });
+  return handleResponse(res);
+}
+
+export async function verifyRegisterOtpApi({ loginInfo, otp }) {
+  const res = await fetch(`${BASE_URL}/customer/register/verify-otp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ loginInfo, otp }),
+  });
+  return handleResponse(res);
+}
+
+export async function resendRegisterOtpApi({ loginInfo }) {
+  const res = await fetch(`${BASE_URL}/customer/register/resend-otp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ loginInfo }),
+  });
+  return handleResponse(res);
+}
+
 export async function fetchProfile() {
   const res = await fetch(`${BASE_URL}/customer/profile`, {
     headers: authHeaders(),
