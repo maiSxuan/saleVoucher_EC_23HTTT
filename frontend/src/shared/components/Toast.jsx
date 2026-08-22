@@ -1,6 +1,9 @@
 import React, { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 export function Toast({ message, type = "success", onClose, duration = 1500 }) {
+  const { t } = useTranslation();
+
   useEffect(() => {
     if (!message) return;
     const timer = setTimeout(() => {
@@ -15,7 +18,7 @@ export function Toast({ message, type = "success", onClose, duration = 1500 }) {
     success: "bg-emerald-800 text-white border-emerald-700",
     error: "bg-rose-800 text-white border-rose-700",
     warning: "bg-amber-800 text-white border-amber-700",
-    info: "bg-blue-800 text-white border-blue-700",
+    info: "bg-sky-800 text-white border-sky-700",
   };
 
   return (
@@ -25,7 +28,7 @@ export function Toast({ message, type = "success", onClose, duration = 1500 }) {
           typeStyles[type] || typeStyles.success
         }`}
       >
-        <span>{message}</span>
+        <span>{t(message)}</span>
         <button onClick={onClose} className="ml-2 hover:opacity-75">
           ✕
         </button>

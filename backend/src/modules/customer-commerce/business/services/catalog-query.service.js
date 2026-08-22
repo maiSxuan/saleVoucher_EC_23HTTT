@@ -4,6 +4,7 @@
 const catalogRepository = require("../../data/repositories/catalog.repository");
 const { computeAvailability } = require("./voucher-aivailability.util");
 const NotFoundError = require("../../../../common/errors/NotFoundError");
+const translationService = require("../../../../common/services/translation.service");
 
 const CATEGORY_ACCENT_MAP = {
   "An uong": "Ẩm Thực & Nhà Hàng",
@@ -44,19 +45,31 @@ function mapVoucher(v) {
         name: hosodn.ten_dn,
         taxCode: hosodn.ma_so_thue,
         address: hosodn.dia_chi,
+        logo: hosodn.logo || null,
       }
     : null;
 
   return {
     id: v.ma_voucher,
+    ma_voucher: v.ma_voucher,
     name: v.ten_voucher,
+    ten_voucher: v.ten_voucher,
     description: v.mo_ta,
     category: formatCat(v.danh_muc?.ten_danh_muc),
+    categoryRaw: v.danh_muc?.ten_danh_muc,
+    categoryId: v.ma_danh_muc || v.danh_muc?.ma_danh_muc,
+    ma_danh_muc: v.ma_danh_muc || v.danh_muc?.ma_danh_muc,
+    ten_danh_muc: formatCat(v.danh_muc?.ten_danh_muc),
     partner,
+    ten_dn: partner?.name || "Thương hiệu đối tác",
+    logo_dn: partner?.logo,
     branches,
     image: v.hinh_anh_url || "https://placehold.co/800x400?text=Voucher",
+    hinh_anh_url: v.hinh_anh_url,
     originalPrice,
+    gia_goc: originalPrice,
     salePrice: originalPrice - discountAmount,
+    gia_ban: originalPrice - discountAmount,
     totalQty: v.so_luong_phat_hanh,
     soldQty: v.so_luong_da_ban,
     startSaleDate: v.tg_bat_dau_ban,
@@ -68,23 +81,42 @@ function mapVoucher(v) {
 }
 
 class CatalogQueryService {
-  async listCatalog() {
+  async listCatalog(query = {}) {
     const vouchers = await catalogRepository.findSellingVouchers();
-    return vouchers.map(mapVoucher).filter((v) => v.availability === "selling"); // NFR-02.1
+    let mapped = vouchers.map(mapVoucher).filter((v) => v.availability === "selling"); // NFR-02.1
+    const lang = query?.lang;
+    if (lang && lang.toLowerCase().startsWith("en")) {
+      mapped = await translationService.translateVoucherFields(mapped, undefined, "en");
+    }
+    return mapped;
   }
 
-  async listCategories() {
+  async listCategories(query = {}) {
     const categories = await catalogRepository.findAllCategories();
-    return categories.map((c) => ({ id: c.ma_danh_muc, name: formatCat(c.ten_danh_muc) }));
+    let mapped = categories.map((c) => ({
+      id: c.ma_danh_muc,
+      ma_danh_muc: c.ma_danh_muc,
+      name: formatCat(c.ten_danh_muc),
+      ten_danh_muc: c.ten_danh_muc,
+    }));
+    const lang = query?.lang;
+    if (lang && lang.toLowerCase().startsWith("en")) {
+      mapped = await translationService.translateCategoryFields(mapped, "en");
+    }
+    return mapped;
   }
 
-  async getVoucherDetail(id) {
+  async getVoucherDetail(id, lang = null) {
     const v = await catalogRepository.findVoucherById(id);
     if (!v) {
       // E1: Không thể truy xuất thông tin voucher
       throw new NotFoundError("Không tìm thấy voucher");
     }
-    return mapVoucher(v);
+    let mapped = mapVoucher(v);
+    if (lang && lang.toLowerCase().startsWith("en")) {
+      mapped = await translationService.translateVoucherFields(mapped, undefined, "en");
+    }
+    return mapped;
   }
 }
 

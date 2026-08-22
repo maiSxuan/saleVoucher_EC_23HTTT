@@ -1,7 +1,7 @@
 /**
  * FILE: backend/src/modules/core-access/presentation/routes/dashboard.routes.js
  * PURPOSE: Route GET /dashboard — Admin Dashboard tổng quan (BR_ADM_06).
- *          Yêu cầu xác thực + ADMIN role.
+ *          Yêu cầu xác thực + một trong ba role Admin Portal.
  */
 const express = require('express');
 const AdminDashboardController = require('../controllers/admin-dashboard.controller');
@@ -13,11 +13,15 @@ const { JWT_ROLES } = require('../../../../common/constants/roles');
 const router = express.Router();
 const controller = new AdminDashboardController(adminDashboardService);
 
-// GET /dashboard — Chỉ ADMIN được truy cập
+// GET /dashboard — Dashboard dùng chung, dữ liệu trả về được giới hạn theo role.
 router.get(
   '/dashboard',
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN),
+  authorizeMiddleware(
+    JWT_ROLES.ADMIN_SYSTEM,
+    JWT_ROLES.ADMIN_MODERATION,
+    JWT_ROLES.ADMIN_OPERATION
+  ),
   controller.getSummary.bind(controller)
 );
 

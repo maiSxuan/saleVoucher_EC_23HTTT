@@ -59,9 +59,10 @@ class OrderController {
     try {
       const accountId = req.user.accountId || req.user.id;
       const { status, page, limit } = req.query;
+      const lang = req.query.lang || req.headers["accept-language"];
       const pageNum = Number(page) || 1;
       const limitNum = Number(limit) || 10;
-      const result = await orderService.getCustomerOrders(accountId, { status, page: pageNum, limit: limitNum });
+      const result = await orderService.getCustomerOrders(accountId, { status, page: pageNum, limit: limitNum, lang });
       return paginatedResponse(res, result.orders, { page: pageNum, limit: limitNum, total: result.total });
     } catch (e) {
       next(e);
@@ -72,7 +73,8 @@ class OrderController {
     try {
       const accountId = req.user.accountId || req.user.id;
       const { id } = req.params;
-      const order = await orderService.getCustomerOrderById(accountId, id);
+      const lang = req.query.lang || req.headers["accept-language"];
+      const order = await orderService.getCustomerOrderById(accountId, id, lang);
       return res.json({ success: true, data: order });
     } catch (e) {
       next(e);
@@ -129,19 +131,8 @@ class OrderController {
   async getAdminOrder(req, res, next) {
     try {
       const { id } = req.params;
-      const adminAccountId = req.user.accountId || req.user.id;
-      const order = await orderService.getAdminOrderById(id, adminAccountId);
+      const order = await orderService.getAdminOrderById(id);
       return res.json({ success: true, data: order });
-    } catch (e) {
-      next(e);
-    }
-  }
-
-  async getOrderLogs(req, res, next) {
-    try {
-      const { id } = req.params;
-      const logs = await orderService.getOrderLogs(id);
-      return res.json({ success: true, data: logs });
     } catch (e) {
       next(e);
     }
@@ -193,8 +184,23 @@ class OrderController {
     try {
       const { id } = req.params; // ma_hoan_tien
       const adminAccountId = req.user.accountId || req.user.id;
-      const result = await orderService.executeRefund(id, adminAccountId);
+      const forwardedIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim();
+      const ipAddr = forwardedIp || req.ip || req.socket?.remoteAddress || '127.0.0.1';
+      const result = await orderService.executeRefund(id, adminAccountId, ipAddr);
       return res.json({ success: true, data: result, message: 'Đã xử lý hoàn tiền' });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async reconcileRefund(req, res, next) {
+    try {
+      const { id } = req.params;
+      const adminAccountId = req.user.accountId || req.user.id;
+      const forwardedIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim();
+      const ipAddr = forwardedIp || req.ip || req.socket?.remoteAddress || '127.0.0.1';
+      const result = await orderService.reconcileRefund(id, adminAccountId, ipAddr);
+      return res.json({ success: true, data: result, message: 'Đã đối soát trạng thái hoàn tiền' });
     } catch (e) {
       next(e);
     }

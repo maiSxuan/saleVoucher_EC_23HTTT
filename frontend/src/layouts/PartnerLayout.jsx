@@ -1,8 +1,23 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LogOut, User, Lock } from "lucide-react";
+import {
+  LogOut,
+  User,
+  Lock,
+  ShieldAlert,
+  ArrowRight,
+  Building,
+  BarChart3,
+  QrCode,
+  Ticket,
+  Store,
+  Building2,
+  Users,
+} from "lucide-react";
 import Badge from "../shared/components/Badge";
 import { getPartnerByIdApi } from "../shared/api/partnerApi";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "../shared/components/LanguageSwitcher";
 
 export function PartnerLayout({ children }) {
   const location = useLocation();
@@ -43,7 +58,14 @@ export function PartnerLayout({ children }) {
     fetchPartner();
   }, []);
 
-  const partnerStatus = partnerInfo?.trang_thai || "Cho duyet";
+  const partnerStatus =
+    partnerInfo?.trang_thai ||
+    (!partnerInfo && !loadingPartner ? "Chua co ho so" : null) ||
+    currentUser?.trang_thai ||
+    currentUser?.trang_thai_hs ||
+    currentUser?.trang_thai_tai_khoan ||
+    "Dang hoat dong";
+
   const normStatus = (partnerStatus || "").toString().toLowerCase().trim();
   const isPartnerActive =
     normStatus === "dang hoat dong" ||
@@ -67,18 +89,22 @@ export function PartnerLayout({ children }) {
   }
 
   const userEmail = currentUser?.email || "";
-  
+
   let userRole =
     currentUser?.vai_tro_he_thong ||
     (currentUser?.role === "PARTNER_STAFF"
       ? "Nhân viên bán hàng"
-      : currentUser?.role === "PARTNER_OWNER"
-        ? "Người đại diện"
-        : "Đối tác");
+      : currentUser?.role === "PARTNER_MANAGER"
+        ? "Nhân viên quản lý voucher"
+        : currentUser?.role === "PARTNER_OWNER"
+          ? "Người đại diện"
+          : "Đối tác");
 
   if (typeof userRole === "object" && userRole !== null) {
     userRole = userRole.name || userRole.ten_vai_tro || JSON.stringify(userRole);
   }
+
+  const { t } = useTranslation();
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
@@ -88,36 +114,50 @@ export function PartnerLayout({ children }) {
     navigate("/login", { replace: true });
   };
 
-  const navItems = [
-    { label: "Báo cáo", path: "/partner/reports", icon: "📊" },
-    { label: "Tra cứu & Đổi Voucher", path: "/partner/vouchers/lookup", icon: "🔍" },
-    { label: "Quản lý Voucher", path: "/partner/vouchers", icon: "🎟️" },
-    { label: "Chi nhánh", path: "/partner/branches", icon: "📍" },
-    { label: "Hồ sơ doanh nghiệp", path: "/partner/profile", icon: "🏢" },
-    { label: "Nhân viên", path: "/partner/staffs", icon: "👥" },
+  const allNavItems = [
+    { label: t("Báo cáo"), path: "/partner/reports", icon: BarChart3 },
+    { label: t("Tra cứu & Đổi Voucher"), path: "/partner/vouchers/lookup", icon: QrCode },
+    { label: t("Quản lý Voucher"), path: "/partner/vouchers", icon: Ticket },
+    { label: t("Chi nhánh"), path: "/partner/branches", icon: Store },
+    { label: t("Hồ sơ doanh nghiệp"), path: "/partner/profile", icon: Building2 },
+    { label: t("Nhân viên"), path: "/partner/staffs", icon: Users },
   ];
 
+  const isVoucherManager =
+    currentUser?.vai_tro_he_thong === "Nhan vien quan ly voucher" ||
+    currentUser?.role === "PARTNER_MANAGER" ||
+    currentUser?.role === "VOUCHER_MANAGER";
+
+  const navItems = isVoucherManager
+    ? allNavItems.filter((item) =>
+        ["/partner/reports", "/partner/vouchers/lookup", "/partner/vouchers"].includes(item.path)
+      )
+    : allNavItems;
+
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
+    <div className="theme-snow min-h-screen bg-snow-50 flex flex-col font-sans text-snow-800">
       {/* Top Bar */}
-      <header className="h-16 bg-white border-b border-slate-200 sticky top-0 z-30 flex items-center justify-between px-6 shadow-xs">
+      <header className="h-16 bg-white border-b border-slate-200 sticky top-0 z-30 flex items-center justify-between px-6 shadow-card">
         <div className="flex items-center gap-4">
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
-            title="Đóng/Mở thanh điều hướng"
+            className="p-2 rounded-lg hover:bg-sky-50 text-slate-600 transition-colors cursor-pointer"
+            title={t("Đóng/Mở thanh điều hướng")}
           >
             ☰
           </button>
-          <div className="flex items-center gap-2">
-            <span className="w-8 h-8 rounded-lg bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shadow-xs">
-              PV
-            </span>
+          <Link to="/" className="flex items-center gap-2 group" aria-label="Về trang chủ Snow Voucher">
+            <img
+              src="/snowflake.png"
+              alt=""
+              aria-hidden="true"
+              className="w-8 h-8 object-contain drop-shadow-sm group-hover:scale-105 transition-transform"
+            />
             <div>
-              <h1 className="font-bold text-slate-900 text-sm leading-tight">Partner Portal</h1>
-              <p className="text-[11px] text-slate-500">Cổng Quản Lý Đối Tác</p>
+              <h1 className="font-bold text-slate-900 text-sm leading-tight">Snow Voucher</h1>
+              <p className="text-[11px] text-slate-500">{t("Cổng Quản Lý Đối Tác")}</p>
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Top actions & User Info & Logout */}
@@ -125,21 +165,21 @@ export function PartnerLayout({ children }) {
           {/* Status Badge of Business Profile */}
           {partnerInfo && (
             <div className="hidden md:flex items-center gap-2 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200 text-xs">
-              <span className="text-slate-500 font-medium">Trạng thái tài khoản:</span>
+              <span className="text-slate-500 font-medium">{t("Trạng thái tài khoản:")}</span>
               <Badge status={partnerStatus} size="sm" />
             </div>
           )}
 
           {/* User Profile Badge */}
           <div className="flex items-center gap-2.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
-            <div className="w-8 h-8 rounded-lg bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-700 font-bold text-xs shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-sky-100 border border-sky-200 flex items-center justify-center text-sky-700 font-bold text-xs shrink-0">
               <User className="w-4 h-4" />
             </div>
             <div className="text-left hidden sm:block">
               <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                 <span>{userName}</span>
-                <span className="text-[10px] px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-200 font-medium">
-                  {userRole}
+                <span className="text-[10px] px-1.5 py-0.5 bg-sky-50 text-sky-700 rounded-md border border-sky-200 font-medium">
+                  {t(userRole)}
                 </span>
               </div>
               {userEmail && (
@@ -152,16 +192,36 @@ export function PartnerLayout({ children }) {
 
           <div className="h-6 w-px bg-slate-200" />
 
+          <LanguageSwitcher className="[&_button]:!bg-slate-100 [&_button]:!text-slate-700 [&_button]:!border-slate-200 hover:[&_button]:!bg-slate-200" />
+
           <button
             onClick={handleLogout}
             className="flex items-center gap-1.5 px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 border border-rose-200 text-xs font-semibold rounded-xl transition-colors shadow-xs cursor-pointer"
-            title="Đăng xuất khỏi hệ thống"
+            title={t("Đăng xuất khỏi hệ thống")}
           >
             <LogOut className="w-3.5 h-3.5" />
-            <span>Đăng xuất</span>
+            <span>{t("Đăng xuất")}</span>
           </button>
         </div>
       </header>
+
+      {/* Modern Sleek Status Warning Banner */}
+      {!loadingPartner && !isPartnerActive && (
+        <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white text-xs py-2.5 px-6 flex items-center justify-between gap-4 shadow-sm sticky top-16 z-20">
+          <div className="flex items-center gap-2 font-medium truncate">
+            <ShieldAlert className="w-4 h-4 shrink-0" />
+            <span>
+              {t("Tài khoản doanh nghiệp chưa ở trạng thái")} <strong>{t("Hoạt động")}</strong> ({t("Hiện tại:")} <strong>{partnerStatus === "Cho duyet" ? t("Chờ duyệt") : partnerStatus === "Tu choi" ? t("Bị từ chối") : partnerStatus === "Chua co ho so" ? t("Chưa tạo hồ sơ") : t(partnerStatus)}</strong>). {t("Một số tính năng bị tạm khóa.")}
+            </span>
+          </div>
+          <Link
+            to="/partner/profile"
+            className="shrink-0 bg-white/20 hover:bg-white/30 text-white font-bold px-3 py-1 rounded-lg transition-colors text-[11px] border border-white/30"
+          >
+            {t("Hồ sơ doanh nghiệp & Gửi duyệt →")}
+          </Link>
+        </div>
+      )}
 
       {/* Main Container */}
       <div className="flex flex-1 overflow-hidden">
@@ -171,24 +231,25 @@ export function PartnerLayout({ children }) {
             collapsed ? "w-16" : "w-64"
           } bg-white border-r border-slate-200 transition-all duration-200 flex flex-col shrink-0`}
         >
-          <div className="p-4 flex-1 space-y-1 overflow-y-auto">
+          <div className="p-4 flex-1 space-y-1.5 overflow-y-auto">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
               const isLockedItem = item.path !== "/partner/profile" && !isPartnerActive;
+              const IconComponent = item.icon;
 
               if (isLockedItem) {
                 return (
                   <button
                     key={item.path}
                     onClick={() => navigate("/partner/profile")}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg font-medium text-sm transition-colors text-slate-400 bg-slate-50 opacity-75 hover:bg-slate-100 cursor-not-allowed`}
-                    title="Tài khoản chưa ở trạng thái Hoạt động. Vui lòng vào Hồ sơ doanh nghiệp để gửi duyệt."
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all text-slate-400 bg-slate-50/50 hover:bg-sky-50/60 hover:text-sky-700 cursor-pointer group`}
+                    title={t("Tài khoản chưa kích hoạt. Vào Hồ sơ doanh nghiệp để xem thông tin & gửi duyệt.")}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-base">{item.icon}</span>
+                      <IconComponent className="w-4 h-4 text-slate-400 shrink-0 group-hover:text-amber-600 transition-colors" />
                       {!collapsed && <span className="truncate">{item.label}</span>}
                     </div>
-                    {!collapsed && <Lock className="w-3.5 h-3.5 text-slate-400" />}
+                    {!collapsed && <Lock className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-600 transition-colors" />}
                   </button>
                 );
               }
@@ -197,13 +258,13 @@ export function PartnerLayout({ children }) {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition-colors ${
+                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
                     isActive
-                      ? "bg-emerald-50 text-emerald-700 font-semibold"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                      ? "bg-sky-50 text-sky-700 font-bold shadow-2xs border border-sky-200/50"
+                      : "text-slate-600 hover:bg-slate-100/70 hover:text-slate-900"
                   }`}
                 >
-                  <span className="text-base">{item.icon}</span>
+                  <IconComponent className={`w-4 h-4 shrink-0 ${isActive ? "text-sky-600" : "text-slate-400"}`} />
                   {!collapsed && <span className="truncate">{item.label}</span>}
                 </Link>
               );
@@ -214,37 +275,40 @@ export function PartnerLayout({ children }) {
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto p-8 bg-slate-50">
           {!loadingPartner && !isPartnerActive && !isProfilePage ? (
-            <div className="max-w-2xl mx-auto my-12 bg-white rounded-2xl border border-amber-200 p-8 shadow-sm text-center space-y-4">
-              <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-3xl">
-                🔒
+            <div className="max-w-xl mx-auto my-8 bg-white/90 backdrop-blur-md rounded-3xl border border-slate-200/80 p-8 shadow-xl shadow-amber-500/5 text-center space-y-5 transition-all">
+              <div className="w-16 h-16 bg-gradient-to-tr from-amber-500/10 to-amber-500/20 text-amber-600 rounded-2xl flex items-center justify-center mx-auto border border-amber-200/50 shadow-xs">
+                <ShieldAlert className="w-8 h-8" />
               </div>
-              <div className="flex justify-center">
-                <Badge status={partnerStatus} />
+
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200/60 text-xs font-semibold text-amber-700">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <span>{t("Trạng thái:")} {partnerStatus === "Cho duyet" ? t("Chờ duyệt") : partnerStatus === "Tu choi" ? t("Bị từ chối") : t(partnerStatus)}</span>
               </div>
-              <h2 className="text-xl font-bold text-slate-900">
-                Tài khoản doanh nghiệp chưa được kích hoạt
-              </h2>
-              <p className="text-sm text-slate-600 max-w-lg mx-auto leading-relaxed">
-                Tài khoản đối tác hiện đang ở trạng thái{" "}
-                <strong className="text-amber-800">
-                  "{partnerStatus === "Cho duyet" ? "Chờ duyệt" : partnerStatus === "Tu choi" ? "Bị từ chối" : partnerStatus}"
-                </strong>
-                . Tất cả các chức năng Quản lý Voucher, Chi nhánh, Nhân viên và Báo cáo tạm thời bị vô hiệu hóa.
-              </p>
+
+              <div className="space-y-2">
+                <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                  {t("Tài khoản doanh nghiệp chưa được kích hoạt")}
+                </h2>
+                <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+                  {t("Tất cả các chức năng Quản lý Voucher, Chi nhánh, Nhân viên và Báo cáo tạm thời bị vô hiệu hóa cho tới khi hồ sơ được phê duyệt.")}
+                </p>
+              </div>
+
               {partnerStatus === "Tu choi" && partnerInfo?.ly_do_tu_choi && (
-                <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 text-xs text-rose-800 text-left max-w-md mx-auto">
-                  <strong>Lý do Admin từ chối:</strong> {partnerInfo.ly_do_tu_choi}
+                <div className="bg-rose-50/90 border border-rose-200 rounded-2xl p-4 text-xs text-rose-800 text-left max-w-md mx-auto space-y-1">
+                  <span className="font-bold block">{t("Lý do Admin từ chối:")}</span>
+                  <p>{partnerInfo.ly_do_tu_choi}</p>
                 </div>
               )}
-              <p className="text-xs text-slate-500">
-                Chỉ khi hồ sơ được Quản trị viên thẩm định và duyệt chuyển sang trạng thái <strong>Hoạt động</strong>, bạn mới có đầy đủ quyền sử dụng các chức năng.
-              </p>
+
               <div className="pt-2">
                 <Link
                   to="/partner/profile"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl transition-colors shadow-xs"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 text-white font-bold text-sm rounded-xl transition-all shadow-md hover:shadow-lg transform active:scale-95"
                 >
-                  🏢 Đến Hồ sơ doanh nghiệp & Gửi duyệt
+                  <Building className="w-4 h-4" />
+                  <span>{t("Hồ sơ doanh nghiệp & Gửi duyệt")}</span>
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
             </div>

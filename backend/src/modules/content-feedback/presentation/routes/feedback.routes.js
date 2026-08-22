@@ -5,10 +5,10 @@ const { authenticateMiddleware } = require("../../../../common/middleware/authen
 const { authorizeMiddleware } = require("../../../../common/middleware/authorize.middleware");
 const { JWT_ROLES } = require("../../../../common/constants/roles");
 
-router.get("/", authenticateMiddleware, authorizeMiddleware(JWT_ROLES.ADMIN), controller.getFeedbackList);
+router.get("/", authenticateMiddleware, authorizeMiddleware(JWT_ROLES.ADMIN_OPERATION), controller.getFeedbackList);
 router.get("/purchase/:voucherPurchaseId", authenticateMiddleware, controller.getFeedbackByPurchaseId);
-router.get("/:id", authenticateMiddleware, authorizeMiddleware(JWT_ROLES.ADMIN), controller.getFeedbackById);
+router.get("/:id", authenticateMiddleware, authorizeMiddleware(JWT_ROLES.ADMIN_OPERATION), controller.getFeedbackById);
 router.post("/", authenticateMiddleware, controller.createFeedback);
-router.put("/:id/status", authenticateMiddleware, authorizeMiddleware(JWT_ROLES.ADMIN), controller.updateComplaintStatus);
+router.put("/:id/status", authenticateMiddleware, authorizeMiddleware(JWT_ROLES.ADMIN_OPERATION), controller.updateComplaintStatus);
 
 module.exports = router;

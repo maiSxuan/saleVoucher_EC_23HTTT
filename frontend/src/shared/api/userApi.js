@@ -28,15 +28,14 @@ async function handleResponse(res) {
 
 // -----------------------------------------------------------------------
 // 1. LẤY DANH SÁCH NGƯỜI DÙNG
-//    GET /admin/users?page=&limit=&name=&phone=&role=&status=
+//    GET /admin/users?page=&limit=&search=&role=&status=
 // -----------------------------------------------------------------------
-export async function fetchUsers({ page = 1, limit = 20, name = '', phone = '', role = '', status = '' } = {}) {
+export async function fetchUsers({ page = 1, limit = 20, search = '', role = '', status = '' } = {}) {
   // Tạo query string từ params (bỏ qua giá trị rỗng để URL sạch hơn)
   const params = new URLSearchParams();
   params.set('page', page);
   params.set('limit', limit);
-  if (name) params.set('name', name);
-  if (phone) params.set('phone', phone);
+  if (search) params.set('search', search);
   if (role) params.set('role', role);
   if (status) params.set('status', status);
 

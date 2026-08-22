@@ -8,8 +8,11 @@ import {
   repayOrder,
   fetchCustomerOrderDetail,
 } from "../../../../shared/api/orderApi";
+import { removeCartItems } from "../../../../shared/api/cartApi";
+import { useTranslation } from "react-i18next";
 
 export default function CheckoutPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const orderId = location.state?.orderId || null;
@@ -31,7 +34,9 @@ export default function CheckoutPage() {
       fetchCustomerOrderDetail(orderId)
         .then((order) => {
           if (order.orderStatus !== "Cho thanh toan") {
-            setErrorMsg("Đơn hàng này không còn ở trạng thái Chờ thanh toán.");
+            setErrorMsg(
+              t("Đơn hàng này không còn ở trạng thái Chờ thanh toán."),
+            );
             return;
           }
           setReviewData({
@@ -46,7 +51,7 @@ export default function CheckoutPage() {
           });
         })
         .catch((err) => {
-          setErrorMsg(err.message || "Không thể tải thông tin đơn hàng.");
+          setErrorMsg(t(err.message || "Không thể tải thông tin đơn hàng."));
         })
         .finally(() => setLoading(false));
       return;
@@ -56,14 +61,14 @@ export default function CheckoutPage() {
       .then(setReviewData)
       .catch((err) => {
         if (err.details?.invalidItems) {
-          toast.error(err.message);
+          toast.error(t(err.message));
           navigate("/customer/cart");
           return;
         }
-        setErrorMsg(err.message || "Không thể kiểm tra thông tin đơn hàng.");
+        setErrorMsg(t(err.message || "Không thể kiểm tra thông tin đơn hàng."));
       })
       .finally(() => setLoading(false));
-  }, [orderId, voucherIds.length, navigate]);
+  }, [orderId, voucherIds.length, navigate, t]);
 
   const handlePay = async () => {
     setRedirecting(true);
@@ -73,15 +78,16 @@ export default function CheckoutPage() {
         window.location.href = res.redirectUrl;
       } else {
         const res = await createOrder({ voucherIds, paymentMethod: payMethod });
+        await removeCartItems(voucherIds);
         window.location.href = res.redirectUrl;
       }
     } catch (err) {
       if (err.details?.invalidItems) {
-        toast.error(err.message);
+        toast.error(t(err.message));
         navigate("/customer/cart");
         return;
       }
-      toast.error(err.message || "Không thể khởi tạo thanh toán.");
+      toast.error(t(err.message || "Không thể khởi tạo thanh toán."));
       setRedirecting(false);
     }
   };
@@ -89,12 +95,14 @@ export default function CheckoutPage() {
   if (loading)
     return (
       <div className="py-16 text-center text-gray-400 text-sm">
-        Đang kiểm tra thông tin đơn hàng...
+        {t("Đang kiểm tra thông tin đơn hàng...")}
       </div>
     );
   if (errorMsg)
     return (
-      <div className="py-16 text-center text-red-500 text-sm">{errorMsg}</div>
+      <div className="py-16 text-center text-red-500 text-sm">
+        {t(errorMsg)}
+      </div>
     );
   if (!reviewData) return null;
 
@@ -104,15 +112,17 @@ export default function CheckoutPage() {
         onClick={() => navigate("/customer/cart")}
         className="flex items-center gap-1.5 text-sm text-gray-500 mb-4 hover:text-gray-700"
       >
-        <ArrowLeft size={16} /> Quay lại giỏ hàng
+        <ArrowLeft size={16} /> {t("Quay lại giỏ hàng")}
       </button>
-      <h1 className="text-xl font-bold text-gray-900 mb-4">Xác nhận đặt mua</h1>
+      <h1 className="text-xl font-bold text-gray-900 mb-4">
+        {t("Xác nhận đặt mua")}
+      </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 space-y-4">
           <div className="bg-white rounded-xl border border-gray-100 p-4">
             <h3 className="font-semibold text-gray-900 mb-3 text-sm">
-              Voucher đặt mua
+              {t("Voucher đặt mua")}
             </h3>
             <div className="space-y-3">
               {reviewData.items.map((item) => (
@@ -140,28 +150,30 @@ export default function CheckoutPage() {
 
           <div className="bg-white rounded-xl border border-gray-100 p-4">
             <h3 className="font-semibold text-gray-900 mb-3 text-sm">
-              Phương thức thanh toán
+              {t("Phương thức thanh toán")}
             </h3>
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => setPayMethod("vnpay")}
-                className={`border rounded-xl p-3 flex flex-col items-center gap-1 text-sm transition-colors ${payMethod === "vnpay" ? "border-orange-500 bg-orange-50 text-orange-700" : "border-gray-200 text-gray-600"}`}
+                className={`border rounded-xl p-3 flex flex-col items-center gap-1 text-sm transition-colors ${payMethod === "vnpay" ? "border-sky-500 bg-sky-50 text-sky-700" : "border-gray-200 text-gray-600"}`}
               >
                 <Building2 size={20} />
                 <span className="font-medium">VNPay</span>
-                <span className="text-xs opacity-70">Nội địa (ATM/QR)</span>
+                <span className="text-xs opacity-70">
+                  {t("Nội địa (ATM/QR)")}
+                </span>
               </button>
               <button
                 onClick={() => setPayMethod("paypal")}
-                className={`border rounded-xl p-3 flex flex-col items-center gap-1 text-sm transition-colors ${payMethod === "paypal" ? "border-orange-500 bg-orange-50 text-orange-700" : "border-gray-200 text-gray-600"}`}
+                className={`border rounded-xl p-3 flex flex-col items-center gap-1 text-sm transition-colors ${payMethod === "paypal" ? "border-sky-500 bg-sky-50 text-sky-700" : "border-gray-200 text-gray-600"}`}
               >
                 <Globe size={20} />
                 <span className="font-medium">PayPal</span>
-                <span className="text-xs opacity-70">Quốc tế</span>
+                <span className="text-xs opacity-70">{t("Quốc tế")}</span>
               </button>
             </div>
             <p className="text-xs text-gray-400 text-center mt-3">
-              Bạn sẽ được chuyển sang trang thanh toán của{" "}
+              {t("Bạn sẽ được chuyển sang trang thanh toán của")}{" "}
               {payMethod === "vnpay" ? "VNPay" : "PayPal"}.
             </p>
           </div>
@@ -169,7 +181,9 @@ export default function CheckoutPage() {
 
         <div>
           <div className="bg-white rounded-xl border border-gray-200 p-4 sticky top-20">
-            <h3 className="font-semibold text-gray-900 mb-3">Tổng đơn hàng</h3>
+            <h3 className="font-semibold text-gray-900 mb-3">
+              {t("Tổng đơn hàng")}
+            </h3>
             {reviewData.items.map((item) => (
               <div
                 key={item.voucherId}
@@ -186,7 +200,7 @@ export default function CheckoutPage() {
             ))}
             <div className="border-t border-gray-100 pt-3 mt-3">
               <div className="flex justify-between font-bold">
-                <span>Tổng cộng</span>
+                <span>{t("Tổng cộng")}</span>
                 <span className="text-orange-600">
                   {reviewData.total.toLocaleString("vi-VN")}đ
                 </span>
@@ -195,10 +209,12 @@ export default function CheckoutPage() {
             <button
               onClick={handlePay}
               disabled={redirecting}
-              className="mt-4 w-full bg-orange-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-orange-600 disabled:opacity-60 flex items-center justify-center gap-2"
+              className="mt-4 w-full bg-sky-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-sky-600 disabled:opacity-60 flex items-center justify-center gap-2"
             >
               <CreditCard size={16} />{" "}
-              {redirecting ? "Đang chuyển hướng..." : "Xác nhận thanh toán"}
+              {redirecting
+                ? t("Đang chuyển hướng...")
+                : t("Xác nhận thanh toán")}
             </button>
           </div>
         </div>

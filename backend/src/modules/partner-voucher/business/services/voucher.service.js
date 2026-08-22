@@ -2,9 +2,14 @@ const voucherRepository = require("../../data/repositories/voucher.repository");
 const voucherBranchRepository = require("../../data/repositories/voucher-branch.repository");
 const auditLogService = require("../../../core-access/business/services/audit-log.service");
 const supabase = require("../../../../config/supabase");
+const translationService = require("../../../../common/services/translation.service");
 
 async function uploadBase64ToSupabase(base64String, folder = "vouchers") {
-  if (!base64String || typeof base64String !== "string" || !base64String.startsWith("data:")) {
+  if (
+    !base64String ||
+    typeof base64String !== "string" ||
+    !base64String.startsWith("data:")
+  ) {
     return base64String;
   }
   try {
@@ -14,7 +19,8 @@ async function uploadBase64ToSupabase(base64String, folder = "vouchers") {
     const contentType = matches[1];
     const buffer = Buffer.from(matches[2], "base64");
     let ext = "png";
-    if (contentType.includes("jpeg") || contentType.includes("jpg")) ext = "jpg";
+    if (contentType.includes("jpeg") || contentType.includes("jpg"))
+      ext = "jpg";
 
     const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
 
@@ -23,7 +29,10 @@ async function uploadBase64ToSupabase(base64String, folder = "vouchers") {
       .upload(fileName, buffer, { contentType, upsert: true });
 
     if (error) {
-      console.warn("[VoucherService] Supabase storage upload warning:", error.message);
+      console.warn(
+        "[VoucherService] Supabase storage upload warning:",
+        error.message,
+      );
       return base64String;
     }
 
@@ -33,85 +42,141 @@ async function uploadBase64ToSupabase(base64String, folder = "vouchers") {
 
     return publicUrlData.publicUrl;
   } catch (err) {
-    console.warn("[VoucherService] Failed to upload Base64 to Supabase Storage:", err.message);
+    console.warn(
+      "[VoucherService] Failed to upload Base64 to Supabase Storage:",
+      err.message,
+    );
     return base64String;
   }
 }
 
 class VoucherService {
-  async getVouchers(query) {
-    return await voucherRepository.findAll(query);
+  async getVouchers(query = {}) {
+    const data = await voucherRepository.findAll(query);
+    const lang = query?.lang;
+    if (lang === "en") {
+      return await translationService.translateVoucherFields(data, undefined, "en");
+    }
+    return data;
   }
 
-  async getVouchersByPartner(partnerId, query) {
-    return await voucherRepository.findByPartnerId(partnerId, query);
+  async getVouchersByPartner(partnerId, query = {}) {
+    const data = await voucherRepository.findByPartnerId(partnerId, query);
+    const lang = query?.lang;
+    if (lang && lang.toLowerCase().startsWith("en")) {
+      return await translationService.translateVoucherFields(data, undefined, "en");
+    }
+    return data;
   }
 
-  async getVoucherById(id) {
-    return await voucherRepository.findById(id);
+  async getVoucherById(id, lang = null) {
+    const data = await voucherRepository.findById(id);
+    if (data && lang && lang.toLowerCase().startsWith("en")) {
+      return await translationService.translateVoucherFields(data, undefined, "en");
+    }
+    return data;
   }
 
-  async createVoucher(payload) {
+  async createVoucher(payload, actorId = null, actorRole = null) {
     if (payload.hinh_anh_url && payload.hinh_anh_url.startsWith("data:")) {
-      payload.hinh_anh_url = await uploadBase64ToSupabase(payload.hinh_anh_url, "vouchers");
+      payload.hinh_anh_url = await uploadBase64ToSupabase(
+        payload.hinh_anh_url,
+        "vouchers",
+      );
     }
     const voucher = await voucherRepository.create(payload);
     if (payload.ma_chi_nhanh && Array.isArray(payload.ma_chi_nhanh)) {
-      await voucherBranchRepository.setBranchesForVoucher(voucher.ma_voucher, payload.ma_chi_nhanh);
+      await voucherBranchRepository.setBranchesForVoucher(
+        voucher.ma_voucher,
+        payload.ma_chi_nhanh,
+      );
     }
 
-    if (payload.trang_thai === "Cho duyet") {
-      try {
-        await auditLogService.log({
-          actorRole: "PARTNER",
-          action: "SUBMIT_VOUCHER_REVIEW",
-          targetType: "VOUCHER",
-          targetId: voucher.ma_voucher,
-          after: { ten_voucher: payload.ten_voucher, trang_thai: "Cho duyet" },
-          result: "Thanh cong",
-          reason: "Tạo mới và gửi chương trình Voucher chờ duyệt",
-        });
-      } catch (e) {
-        console.warn("[VoucherService] Log submitVoucher failed:", e.message);
-      }
+    // Always log voucher creation
+    try {
+      await auditLogService.log({
+        actorId: actorId || payload.actorId || payload.ma_tk || payload.ma_hs,
+        actorRole: actorRole || "PARTNER",
+        action:
+          payload.trang_thai === "Cho duyet"
+            ? "SUBMIT_VOUCHER_REVIEW"
+            : "CREATE_VOUCHER_DRAFT",
+        targetType: "VOUCHER",
+        targetId: voucher.ma_voucher,
+        after: {
+          ten_voucher: payload.ten_voucher,
+          trang_thai: payload.trang_thai || "Nhap",
+        },
+        result: "Thanh cong",
+        reason:
+          payload.trang_thai === "Cho duyet"
+            ? "Tạo mới và gửi chương trình Voucher chờ duyệt"
+            : "Tạo mới bản nháp Voucher",
+      });
+    } catch (e) {
+      console.warn("[VoucherService] Log createVoucher failed:", e.message);
     }
 
     return voucher;
   }
 
-  async updateVoucher(id, payload) {
+  async updateVoucher(id, payload, actorId = null, actorRole = null) {
     if (payload.hinh_anh_url && payload.hinh_anh_url.startsWith("data:")) {
-      payload.hinh_anh_url = await uploadBase64ToSupabase(payload.hinh_anh_url, "vouchers");
+      payload.hinh_anh_url = await uploadBase64ToSupabase(
+        payload.hinh_anh_url,
+        "vouchers",
+      );
     }
+    const existing = await voucherRepository.findById(id);
     const updated = await voucherRepository.update(id, payload);
     if (payload.ma_chi_nhanh && Array.isArray(payload.ma_chi_nhanh)) {
-      await voucherBranchRepository.setBranchesForVoucher(id, payload.ma_chi_nhanh);
+      await voucherBranchRepository.setBranchesForVoucher(
+        id,
+        payload.ma_chi_nhanh,
+      );
     }
 
-    if (payload.trang_thai === "Cho duyet") {
-      try {
-        await auditLogService.log({
-          actorRole: "PARTNER",
-          action: "SUBMIT_VOUCHER_REVIEW",
-          targetType: "VOUCHER",
-          targetId: id,
-          after: { ten_voucher: payload.ten_voucher, trang_thai: "Cho duyet" },
-          result: "Thanh cong",
-          reason: "Khắc phục/cập nhật thông tin và gửi lại Voucher chờ duyệt",
-        });
-      } catch (e) {
-        console.warn("[VoucherService] Log resubmitVoucher failed:", e.message);
-      }
+    try {
+      const isSubmitReview = payload.trang_thai === "Cho duyet";
+      await auditLogService.log({
+        actorId:
+          actorId || payload.actorId || payload.ma_tk || payload.ma_hs || id,
+        actorRole: actorRole || "PARTNER",
+        action: isSubmitReview ? "SUBMIT_VOUCHER_REVIEW" : "UPDATE_VOUCHER",
+        targetType: "VOUCHER",
+        targetId: id,
+        before: existing
+          ? {
+              ten_voucher: existing.ten_voucher,
+              trang_thai: existing.trang_thai,
+            }
+          : null,
+        after: {
+          ten_voucher: payload.ten_voucher || existing?.ten_voucher,
+          trang_thai: payload.trang_thai || existing?.trang_thai,
+        },
+        result: "Thanh cong",
+        reason: isSubmitReview
+          ? "Khắc phục/cập nhật thông tin và gửi lại Voucher chờ duyệt"
+          : "Cập nhật thông tin chi tiết chương trình Voucher",
+      });
+    } catch (e) {
+      console.warn("[VoucherService] Log updateVoucher failed:", e.message);
     }
 
     return updated;
   }
 
-  async submitForReview(id) {
-    const res = await voucherRepository.updateStatus(id, "Cho duyet", "Cho duyet");
+  async submitForReview(id, actorId = null, actorRole = null) {
+    const res = await voucherRepository.updateStatus(
+      id,
+      "Cho duyet",
+      "Cho duyet",
+    );
     try {
       await auditLogService.log({
-        actorRole: "PARTNER",
+        actorId: actorId || id,
+        actorRole: actorRole || "PARTNER",
         action: "SUBMIT_VOUCHER_REVIEW",
         targetType: "VOUCHER",
         targetId: id,
@@ -126,23 +191,26 @@ class VoucherService {
     return res;
   }
 
-  async approveVoucher(id, isHidden = false) {
+  async approveVoucher(id, isHidden = false, reason = "", actorId = null) {
     const status = isHidden ? "Tam ngung" : "Dang ban";
     const res = await voucherRepository.updateStatus(id, status, "Da duyet");
 
     try {
       await auditLogService.log(
         {
-          actorRole: "ADMIN",
+          actorId: actorId,
+          actorRole: "Admin kiem duyet",
           action: "APPROVE_VOUCHER",
           targetType: "VOUCHER",
           targetId: id,
           before: { trang_thai: "Cho duyet" },
           after: { trang_thai: status, trang_thai_kiem_duyet: "Da duyet" },
           result: "Thanh cong",
-          reason: isHidden ? "Admin phê duyệt Voucher (Tạm ẩn công bố)" : "Admin phê duyệt Voucher mở bán chính thức",
+          reason: isHidden
+            ? "Admin phê duyệt Voucher (Tạm ẩn công bố)"
+            : "Admin phê duyệt Voucher mở bán chính thức",
         },
-        true
+        true,
       );
     } catch (e) {
       console.warn("[VoucherService] Log approveVoucher failed:", e.message);
@@ -151,13 +219,19 @@ class VoucherService {
     return res;
   }
 
-  async rejectVoucher(id, reason = "") {
-    const res = await voucherRepository.updateStatus(id, "Tu choi", "Tu choi", reason);
+  async rejectVoucher(id, reason = "", actorId = null) {
+    const res = await voucherRepository.updateStatus(
+      id,
+      "Tu choi",
+      "Tu choi",
+      reason,
+    );
 
     try {
       await auditLogService.log(
         {
-          actorRole: "ADMIN",
+          actorId: actorId,
+          actorRole: "Admin kiem duyet",
           action: "REJECT_VOUCHER",
           targetType: "VOUCHER",
           targetId: id,
@@ -166,7 +240,7 @@ class VoucherService {
           result: "Thanh cong",
           reason: reason || "Admin từ chối phê duyệt Voucher",
         },
-        true
+        true,
       );
     } catch (e) {
       console.warn("[VoucherService] Log rejectVoucher failed:", e.message);
@@ -175,12 +249,36 @@ class VoucherService {
     return res;
   }
 
-  async updateVoucherStatus(id, status) {
-    return await voucherRepository.update(id, { trang_thai: status });
+  async updateVoucherStatus(id, status, actorId = null, actorRole = null) {
+    const existing = await voucherRepository.findById(id);
+    const updated = await voucherRepository.update(id, { trang_thai: status });
+    try {
+      await auditLogService.log({
+        actorId: actorId || id,
+        actorRole: actorRole || "PARTNER",
+        action: status === "Tam ngung" ? "PAUSE_VOUCHER" : "RESUME_VOUCHER",
+        targetType: "VOUCHER",
+        targetId: id,
+        before: existing ? { trang_thai: existing.trang_thai } : null,
+        after: { trang_thai: status },
+        result: "Thanh cong",
+        reason: `Cập nhật trạng thái voucher sang ${status}`,
+      });
+    } catch (e) {
+      console.warn(
+        "[VoucherService] Log updateVoucherStatus failed:",
+        e.message,
+      );
+    }
+    return updated;
   }
 
-  async getCategories() {
-    return await voucherRepository.getVoucherCategories();
+  async getCategories(lang = null) {
+    const data = await voucherRepository.getVoucherCategories();
+    if (lang === "en") {
+      return await translationService.translateCategoryFields(data, "en");
+    }
+    return data;
   }
 }
 

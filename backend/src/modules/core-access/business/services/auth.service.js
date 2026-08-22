@@ -33,8 +33,9 @@ const REFRESH_TOKEN_EXPIRY = jwtConfig.refreshTokenExpiry;
 // In-memory stores (đủ dùng cho môi trường học tập / dev)
 // Nếu cần production: thay bằng Redis hoặc bảng DB refresh_tokens
 // ---------------------------------------------------------------
-const otpStore = new Map();          // key: email → { otp, expiresAt }
+const otpStore = new Map(); // key: email → { otp, expiresAt }
 const refreshTokenStore = new Map(); // key: refreshToken → userPayload
+const loginFailureStore = new Map(); // key: accountId → { count }
 
 // ---------------------------------------------------------------
 // Helper: Sinh cặp access + refresh token từ userPayload
@@ -64,16 +65,15 @@ async function enrichUserPayload(account) {
   let tenDn = null;
 
   if (!maHsdn) {
-    const { data: hsByRep } = await supabase
-      .from("hosodn")
-      .select("ma_hs, ten_dn")
-      .eq("id_nguoi_dai_dien", account.nguoidung.ma_nguoi_dung)
+    const { data: currentUser } = await supabase
+      .from("nguoidung")
+      .select("ma_hsdn")
+      .eq("ma_nguoi_dung", account.nguoidung.ma_nguoi_dung)
       .maybeSingle();
-    if (hsByRep) {
-      maHsdn = hsByRep.ma_hs;
-      tenDn = hsByRep.ten_dn;
-    }
-  } else {
+    if (currentUser?.ma_hsdn) maHsdn = currentUser.ma_hsdn;
+  }
+
+  if (maHsdn) {
     const { data: hsData } = await supabase
       .from("hosodn")
       .select("ma_hs, ten_dn")
@@ -130,17 +130,21 @@ class AuthService {
       throw new UnauthorizedError("Email hoặc mật khẩu không đúng");
     }
 
-    if (account.nguoidung.trang_thai !== "Dang hoat dong") {
+    const isCustomer = account.nguoidung.vai_tro === "Khach hang";
+
+    if (account.nguoidung.trang_thai === "Tam khoa") {
       await auditLogService.log({
         actorId: account.ma_tk,
-        actorRole: null,
+        actorRole: account.nguoidung.vai_tro,
         action: "LOGIN",
         targetType: "TAIKHOAN",
         targetId: account.ma_tk,
         result: LOG_RESULT.THAT_BAI,
-        reason: `Tài khoản Tạm khóa: ${account.nguoidung.trang_thai}`,
+        reason: "Tài khoản đã bị tạm khóa",
       });
-      throw new ForbiddenError("Tài khoản đã Tạm khóa hoặc không hoạt động");
+      throw new ForbiddenError(
+        "Tài khoản đã tạm khóa, vui lòng liên hệ với admin để mở khóa tài khoản",
+      );
     }
 
     // Kiểm tra mật khẩu — hỗ trợ bcrypt hash và plain-text cho seed/test cũ.
@@ -155,59 +159,68 @@ class AuthService {
     }
 
     if (!isMatch) {
+      let failureState = loginFailureStore.get(account.ma_tk) || { count: 0 };
+      failureState.count += 1;
+      loginFailureStore.set(account.ma_tk, failureState);
+
+      if (isCustomer) {
+        if (failureState.count >= 5) {
+          await userRepository.updateStatus(
+            account.nguoidung.ma_nguoi_dung,
+            "Tam khoa",
+          );
+          loginFailureStore.delete(account.ma_tk);
+
+          await auditLogService.log({
+            actorId: account.ma_tk,
+            actorRole: account.nguoidung.vai_tro,
+            action: "LOGIN",
+            targetType: "TAIKHOAN",
+            targetId: account.ma_tk,
+            result: LOG_RESULT.THAT_BAI,
+            reason: "Sai mật khẩu 5 lần liên tiếp -> khóa tài khoản",
+          });
+
+          throw new ForbiddenError(
+            "Tài khoản đã tạm khóa, vui lòng liên hệ với admin để mở khóa tài khoản",
+          );
+        } else {
+          await auditLogService.log({
+            actorId: account.ma_tk,
+            actorRole: account.nguoidung.vai_tro,
+            action: "LOGIN",
+            targetType: "TAIKHOAN",
+            targetId: account.ma_tk,
+            result: LOG_RESULT.THAT_BAI,
+            reason: `Sai mật khẩu lần ${failureState.count}`,
+          });
+          throw new UnauthorizedError(
+            `Email hoặc mật khẩu không đúng (${failureState.count}/5 lần thất bại)`,
+          );
+        }
+      }
+
       await auditLogService.log({
         actorId: account.ma_tk,
-        actorRole: null,
+        actorRole: account.nguoidung.vai_tro,
         action: "LOGIN",
         targetType: "TAIKHOAN",
         targetId: account.ma_tk,
         result: LOG_RESULT.THAT_BAI,
-        reason: "Sai mật khẩu",
+        reason: `Sai mật khẩu`,
       });
       throw new UnauthorizedError("Email hoặc mật khẩu không đúng");
+    }
+
+    // Đăng nhập thành công -> xóa trạng thái lỗi sai mật khẩu.
+    if (isCustomer) {
+      loginFailureStore.delete(account.ma_tk);
     }
 
     const dbVaiTro = account.nguoidung.vai_tro;
     const mappedRole = DB_TO_JWT[dbVaiTro] || "CUSTOMER";
 
-    // Lấy thông tin hồ sơ doanh nghiệp (nếu là người đại diện hoặc nhân viên đối tác)
-    let maHsdn = account.nguoidung.ma_hsdn || null;
-    let tenDn = null;
-
-    if (!maHsdn) {
-      const { data: hsByRep } = await supabase
-        .from("hosodn")
-        .select("ma_hs, ten_dn")
-        .eq("id_nguoi_dai_dien", account.nguoidung.ma_nguoi_dung)
-        .maybeSingle();
-      if (hsByRep) {
-        maHsdn = hsByRep.ma_hs;
-        tenDn = hsByRep.ten_dn;
-      }
-    } else {
-      const { data: hsData } = await supabase
-        .from("hosodn")
-        .select("ma_hs, ten_dn")
-        .eq("ma_hs", maHsdn)
-        .maybeSingle();
-      if (hsData) {
-        tenDn = hsData.ten_dn;
-      }
-    }
-
-    // Lấy thông tin chi nhánh của nhân viên nếu có
-    let branchInfo = null;
-    if (account.nguoidung.ma_chi_nhanh) {
-      const { data: bData } = await supabase
-        .from("chinhanh")
-        .select("ma_chi_nhanh, ten_chi_nhanh, dia_chi, khu_vuc, ma_hs")
-        .eq("ma_chi_nhanh", account.nguoidung.ma_chi_nhanh)
-        .maybeSingle();
-      if (bData) {
-        branchInfo = bData;
-        if (!maHsdn && bData.ma_hs) maHsdn = bData.ma_hs;
-      }
-    }
+    const { maHsdn, tenDn, branchInfo } = await enrichUserPayload(account);
 
     const userPayload = {
       id: account.nguoidung.ma_nguoi_dung,
@@ -305,7 +318,11 @@ class AuthService {
   async generateOTP(emailOrPhone) {
     const cleanInfo = (emailOrPhone || "").trim();
     if (!cleanInfo) {
-      throw new AppError("Vui lòng nhập email đã đăng ký", 400, "VALIDATION_ERROR");
+      throw new AppError(
+        "Vui lòng nhập email đã đăng ký",
+        400,
+        "VALIDATION_ERROR",
+      );
     }
 
     const account = await userRepository.findAccountByLoginInfo(cleanInfo);
@@ -317,7 +334,8 @@ class AuthService {
       );
     }
 
-    const targetEmail = account.nguoidung.email || (cleanInfo.includes("@") ? cleanInfo : null);
+    const targetEmail =
+      account.nguoidung.email || (cleanInfo.includes("@") ? cleanInfo : null);
     if (!targetEmail) {
       throw new AppError(
         "Tài khoản chưa được cấu hình địa chỉ email hợp lệ để nhận mã xác thực",
@@ -334,9 +352,17 @@ class AuthService {
       await emailService.sendOtpEmail(targetEmail, otp, "forgot_password");
 
       // Gửi email thành công mới lưu vào store và ghi audit log thành công
-      otpStore.set(targetEmail.toLowerCase(), { otp, expiresAt, accountId: account.ma_tk });
+      otpStore.set(targetEmail.toLowerCase(), {
+        otp,
+        expiresAt,
+        accountId: account.ma_tk,
+      });
       if (cleanInfo.toLowerCase() !== targetEmail.toLowerCase()) {
-        otpStore.set(cleanInfo.toLowerCase(), { otp, expiresAt, accountId: account.ma_tk });
+        otpStore.set(cleanInfo.toLowerCase(), {
+          otp,
+          expiresAt,
+          accountId: account.ma_tk,
+        });
       }
 
       await auditLogService.log({
@@ -350,9 +376,12 @@ class AuthService {
       });
 
       // Tạo chuỗi che giấu email (ví dụ: c***r@gmail.com)
-      const maskedEmail = targetEmail.replace(/^(.)(.*)(@.*)$/, (_, first, middle, domain) => {
-        return first + "*".repeat(Math.max(middle.length, 3)) + domain;
-      });
+      const maskedEmail = targetEmail.replace(
+        /^(.)(.*)(@.*)$/,
+        (_, first, middle, domain) => {
+          return first + "*".repeat(Math.max(middle.length, 3)) + domain;
+        },
+      );
 
       return {
         email: targetEmail,
@@ -414,43 +443,7 @@ class AuthService {
     const dbVaiTro = account.nguoidung.vai_tro;
     const mappedRole = DB_TO_JWT[dbVaiTro] || "CUSTOMER";
 
-    // Lấy thông tin hồ sơ doanh nghiệp (nếu là người đại diện hoặc nhân viên đối tác)
-    let maHsdn = account.nguoidung.ma_hsdn || null;
-    let tenDn = null;
-
-    if (!maHsdn) {
-      const { data: hsByRep } = await supabase
-        .from("hosodn")
-        .select("ma_hs, ten_dn")
-        .eq("id_nguoi_dai_dien", account.nguoidung.ma_nguoi_dung)
-        .maybeSingle();
-      if (hsByRep) {
-        maHsdn = hsByRep.ma_hs;
-        tenDn = hsByRep.ten_dn;
-      }
-    } else {
-      const { data: hsData } = await supabase
-        .from("hosodn")
-        .select("ma_hs, ten_dn")
-        .eq("ma_hs", maHsdn)
-        .maybeSingle();
-      if (hsData) {
-        tenDn = hsData.ten_dn;
-      }
-    }
-
-    let branchInfo = null;
-    if (account.nguoidung.ma_chi_nhanh) {
-      const { data: bData } = await supabase
-        .from("chinhanh")
-        .select("ma_chi_nhanh, ten_chi_nhanh, dia_chi, khu_vuc, ma_hs")
-        .eq("ma_chi_nhanh", account.nguoidung.ma_chi_nhanh)
-        .maybeSingle();
-      if (bData) {
-        branchInfo = bData;
-        if (!maHsdn && bData.ma_hs) maHsdn = bData.ma_hs;
-      }
-    }
+    const { maHsdn, tenDn, branchInfo } = await enrichUserPayload(account);
 
     const userPayload = {
       id: account.nguoidung.ma_nguoi_dung,
@@ -497,7 +490,6 @@ class AuthService {
     }
   }
 
-
   /**
    * UC-BUS-05 (Bước 11 / A11): Xác minh OTP hợp lệ mà KHÔNG xóa.
    * Dùng trước bước đặt mật khẩu mới để kiểm tra và báo lỗi sớm (A11).
@@ -509,17 +501,25 @@ class AuthService {
     const cleanOtp = (otp || "").trim();
 
     if (!cleanInfo || !cleanOtp) {
-      throw new AppError("Thông tin tài khoản và mã xác thực là bắt buộc", 400, "VALIDATION_ERROR");
+      throw new AppError(
+        "Thông tin tài khoản và mã xác thực là bắt buộc",
+        400,
+        "VALIDATION_ERROR",
+      );
     }
 
     const storedData = otpStore.get(cleanInfo);
     if (!storedData) {
-      throw new UnauthorizedError("Mã xác thực không hợp lệ hoặc chưa được yêu cầu");
+      throw new UnauthorizedError(
+        "Mã xác thực không hợp lệ hoặc chưa được yêu cầu",
+      );
     }
 
     if (Date.now() > storedData.expiresAt) {
       otpStore.delete(cleanInfo);
-      throw new UnauthorizedError("Mã xác thực đã hết hạn. Vui lòng yêu cầu gửi lại mã mới.");
+      throw new UnauthorizedError(
+        "Mã xác thực đã hết hạn. Vui lòng yêu cầu gửi lại mã mới.",
+      );
     }
 
     if (storedData.otp !== cleanOtp) {
@@ -570,7 +570,11 @@ class AuthService {
     // E1: Lấy tài khoản
     const account = await userRepository.findAccountByLoginInfo(cleanInfo);
     if (!account || !account.nguoidung) {
-      throw new AppError("Không tìm thấy tài khoản tương ứng", 404, "USER_NOT_FOUND");
+      throw new AppError(
+        "Không tìm thấy tài khoản tương ứng",
+        404,
+        "USER_NOT_FOUND",
+      );
     }
 
     // NFR-02: Hash mật khẩu bằng bcrypt trước khi lưu

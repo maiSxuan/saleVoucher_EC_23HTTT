@@ -2,9 +2,11 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 function authHeaders() {
   const token = localStorage.getItem("accessToken");
+  const lang = localStorage.getItem("app_lang") || "vi";
   return {
     "Content-Type": "application/json",
     Authorization: `Bearer ${token}`,
+    "Accept-Language": lang,
   };
 }
 
@@ -20,10 +22,12 @@ async function handleResponse(res) {
 
 // --- Customer API ---
 export async function fetchCustomerOrders(status = "", page = 1, limit = 10) {
+  const lang = localStorage.getItem("app_lang") || "vi";
   const params = new URLSearchParams();
   if (status && status !== "all") params.append("status", status);
   params.append("page", page);
   params.append("limit", limit);
+  params.append("lang", lang);
   const res = await fetch(`${BASE_URL}/orders/history?${params.toString()}`, {
     method: "GET",
     headers: authHeaders(),
@@ -36,7 +40,8 @@ export async function fetchCustomerOrders(status = "", page = 1, limit = 10) {
 }
 
 export async function fetchCustomerOrderDetail(id) {
-  const res = await fetch(`${BASE_URL}/orders/history/${id}`, {
+  const lang = localStorage.getItem("app_lang") || "vi";
+  const res = await fetch(`${BASE_URL}/orders/history/${id}?lang=${lang}`, {
     method: "GET",
     headers: authHeaders(),
   });
@@ -155,16 +160,6 @@ export async function fetchAdminOrderDetail(id) {
   return json.data;
 }
 
-export async function fetchAdminOrderLogs(id) {
-  const res = await fetch(`${BASE_URL}/admin/orders/${id}/logs`, {
-    method: "GET",
-    headers: authHeaders(),
-    cache: "no-store",
-  });
-  const json = await handleResponse(res);
-  return json.data || [];
-}
-
 export async function approveCancelRequest(id, { reason }) {
   const res = await fetch(`${BASE_URL}/admin/orders/cancel-requests/${id}/approve`, {
     method: "POST",
@@ -185,6 +180,14 @@ export async function rejectCancelRequest(id, { reason }) {
 
 export async function executeRefund(id) {
   const res = await fetch(`${BASE_URL}/admin/orders/refunds/${id}/execute`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function reconcileRefund(id) {
+  const res = await fetch(`${BASE_URL}/admin/orders/refunds/${id}/reconcile`, {
     method: "POST",
     headers: authHeaders(),
   });

@@ -17,11 +17,13 @@ class PaymentService {
   // Tạo bản ghi thanh toán "Dang xu ly" + sinh link redirect tới cổng đã chọn
   async _startPayment({ order, total, paymentMethod, ipAddr }) {
     await paymentRepository.markPendingAttemptsFailed(order.ma_dh);
+    const gatewayCreatedAt = new Date();
 
     const paymentId = await paymentRepository.createAttempt({
       orderId: order.ma_dh,
       amount: total,
       method: paymentMethod,
+      createdAt: gatewayCreatedAt,
     });
 
     if (paymentMethod === "vnpay") {
@@ -30,6 +32,7 @@ class PaymentService {
         amount: total,
         ipAddr: ipAddr || "127.0.0.1",
         orderInfo: `Thanh toan don hang ${order.ma_dh}`,
+        createDate: gatewayCreatedAt,
       });
       return { orderId: order.ma_dh, paymentId, redirectUrl };
     }

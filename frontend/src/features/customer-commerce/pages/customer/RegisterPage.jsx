@@ -6,12 +6,14 @@ import {
   AlertCircle,
   ArrowLeft,
   RefreshCw,
-  ShoppingBag,
 } from "lucide-react";
+
+import { useTranslation } from "react-i18next";
 
 const OTP_RESEND_SECONDS = 60;
 
 export default function RegisterPage() {
+  const { t } = useTranslation();
   const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
   const navigate = useNavigate();
 
@@ -179,32 +181,45 @@ export default function RegisterPage() {
 
   // ================= UI =================
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-lg max-w-sm w-full p-6">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-cyan-50 flex items-center justify-center p-4">
+      <div className="bg-white border border-sky-100 rounded-2xl shadow-xl shadow-sky-900/10 max-w-sm w-full p-6">
+        <Link
+          to="/"
+          className="flex flex-col items-center group mb-5"
+          aria-label="Về trang chủ Snow Voucher"
+        >
+          <img
+            src="/snowflake.png"
+            alt=""
+            aria-hidden="true"
+            className="w-12 h-12 object-contain mb-2 drop-shadow-md group-hover:scale-105 transition-transform"
+          />
+          <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-transparent">
+            Snow Voucher
+          </span>
+        </Link>
+
         {step === "form" && (
           <>
             <div className="text-center mb-6">
-              <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center mx-auto mb-2">
-                <ShoppingBag size={22} className="text-orange-600" />
-              </div>
               <h2 className="font-bold text-gray-900 text-lg">
-                Đăng ký tài khoản
+                {t("Đăng ký tài khoản")}
               </h2>
               <p className="text-xs text-gray-400 mt-0.5">
-                Tạo tài khoản khách hàng EC Voucher
+                {t("Tạo tài khoản khách hàng Snow Voucher")}
               </p>
             </div>
 
             {errors._global && (
               <div className="bg-red-50 border border-red-200 rounded p-2 text-sm text-red-600 mb-3 flex items-start gap-2">
                 <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />{" "}
-                {errors._global}
+                {t(errors._global)}
               </div>
             )}
 
             <div className="mb-3">
               <label className="text-xs font-medium text-gray-600 block mb-1">
-                Email<span className="text-red-500">*</span>
+                {t("Email")}<span className="text-red-500">*</span>
               </label>
               <input
                 value={loginInfo}
@@ -212,13 +227,13 @@ export default function RegisterPage() {
                   setLoginInfo(e.target.value);
                   clearErrors();
                 }}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 ${errors.loginInfo ? "border-red-400" : "border-gray-300"}`}
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 ${errors.loginInfo ? "border-red-400" : "border-gray-300"}`}
               />
               <Err field="loginInfo" />
             </div>
 
             <PwField
-              label="Mật khẩu"
+              label={t("Mật khẩu")}
               value={password}
               onChange={(p) => {
                 setPassword(p);
@@ -230,7 +245,7 @@ export default function RegisterPage() {
               required
             />
             <PwField
-              label="Xác nhận mật khẩu"
+              label={t("Xác nhận mật khẩu")}
               value={confirmPassword}
               onChange={(p) => {
                 setConfirmPassword(p);
@@ -245,15 +260,15 @@ export default function RegisterPage() {
             <button
               onClick={handleRegister}
               disabled={loading}
-              className="w-full bg-orange-500 text-white py-2 rounded-lg text-sm font-semibold hover:bg-orange-600 disabled:opacity-60 mt-1"
+              className="w-full bg-sky-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 disabled:opacity-60 transition-colors mt-1"
             >
-              {loading ? "Đang xử lý..." : "Đăng ký"}
+              {loading ? t("Đang xử lý...") : t("Đăng ký")}
             </button>
 
             <p className="text-center text-sm text-gray-500 mt-3">
-              Đã có tài khoản?{" "}
-              <Link to="/login" className="text-orange-600 font-medium">
-                Đăng nhập
+              {t("Đã có tài khoản?")}{" "}
+              <Link to="/login" className="text-sky-700 hover:text-sky-800 font-medium transition-colors">
+                {t("Đăng nhập")}
               </Link>
             </p>
           </>
@@ -268,17 +283,17 @@ export default function RegisterPage() {
               }}
               className="flex items-center gap-1 text-sm text-gray-500 mb-4"
             >
-              <ArrowLeft size={14} /> Quay lại
+              <ArrowLeft size={14} /> {t("Quay lại")}
             </button>
 
-            <h2 className="font-bold text-gray-900 mb-1">Xác thực OTP</h2>
+            <h2 className="font-bold text-gray-900 mb-1">{t("Xác thực OTP")}</h2>
             <p className="text-sm text-gray-500 mb-4">
-              Mã xác thực mô phỏng đã được gửi đến <strong>{loginInfo}</strong>.
+              {t("Mã xác thực mô phỏng đã được gửi đến")} <strong>{loginInfo}</strong>.
             </p>
 
             <div className="mb-4">
               <label className="text-xs font-medium text-gray-600 block mb-1">
-                Nhập mã OTP
+                {t("Nhập mã OTP")}
               </label>
               <input
                 value={otp}
@@ -287,21 +302,21 @@ export default function RegisterPage() {
                   clearErrors();
                 }}
                 maxLength={6}
-                className={`w-full border rounded-lg px-3 py-2 text-sm text-center tracking-widest focus:outline-none focus:ring-2 focus:ring-orange-500 ${errors.otp ? "border-red-400" : "border-gray-300"}`}
+                className={`w-full border rounded-lg px-3 py-2 text-sm text-center tracking-widest focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 ${errors.otp ? "border-red-400" : "border-gray-300"}`}
               />
               <Err field="otp" />
             </div>
 
             <div className="flex items-center justify-between mb-4">
               {otpTimer > 0 ? (
-                <p className="text-xs text-gray-400">Gửi lại sau {otpTimer}s</p>
+                <p className="text-xs text-gray-400">{t("Gửi lại sau")} {otpTimer}s</p>
               ) : (
                 <button
                   onClick={handleResendOtp}
                   disabled={loading}
-                  className="text-xs text-orange-600 flex items-center gap-1"
+                  className="text-xs text-sky-700 hover:text-sky-800 flex items-center gap-1 transition-colors"
                 >
-                  <RefreshCw size={12} /> Gửi lại mã
+                  <RefreshCw size={12} /> {t("Gửi lại mã")}
                 </button>
               )}
             </div>
@@ -309,9 +324,9 @@ export default function RegisterPage() {
             <button
               onClick={handleVerifyOtp}
               disabled={loading}
-              className="w-full bg-orange-500 text-white py-2 rounded-lg text-sm font-semibold hover:bg-orange-600 disabled:opacity-60"
+              className="w-full bg-sky-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 disabled:opacity-60 transition-colors"
             >
-              {loading ? "Đang xác thực..." : "Xác nhận"}
+              {loading ? t("Đang xác thực...") : t("Xác nhận")}
             </button>
           </>
         )}
@@ -332,7 +347,7 @@ function PwField({ label, value, onChange, show, onToggle, error, required }) {
           type={show ? "text" : "password"}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={`w-full border rounded-lg px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 ${error ? "border-red-400" : "border-gray-300"}`}
+          className={`w-full border rounded-lg px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 ${error ? "border-red-400" : "border-gray-300"}`}
         />
         <button
           type="button"

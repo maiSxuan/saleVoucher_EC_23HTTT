@@ -11,6 +11,15 @@ const STATUS = {
 };
 
 const VALID_ROLES = Object.values(DB_ROLES);
+const PARTNER_STAFF_ROLES = [
+  DB_ROLES.PARTNER_STAFF_SALES,
+  DB_ROLES.PARTNER_STAFF_VOUCHER,
+];
+const ADMIN_PORTAL_ROLES = [
+  DB_ROLES.ADMIN_SYSTEM,
+  DB_ROLES.ADMIN_MODERATION,
+  DB_ROLES.ADMIN_OPERATION,
+];
 
 class UserService {
   // -----------------------------------------------------------------------
@@ -19,13 +28,12 @@ class UserService {
   //    - Hỗ trợ lọc và phân trang.
   //    - Trả về mảng UserModel đã mapping.
   // -----------------------------------------------------------------------
-  async listUsers({ page, limit, name, phone, role, status } = {}) {
+  async listUsers({ page, limit, search, role, status } = {}) {
     // Gọi repository để lấy dữ liệu thật từ Supabase
     const { users, total } = await userRepository.findAll({
       page: Number(page) || 1,
       limit: Number(limit) || 20,
-      name,
-      phone,
+      search,
       role,
       status,
     });
@@ -78,10 +86,14 @@ class UserService {
     let extraInfo = {};
     let orderHistory = [];
     let auditLogs = [];
+    let activityLogs = [];
 
     // Lấy thông tin bổ sung dựa trên vai trò
     if (user.vai_tro === 'Khach hang') {
-      orderHistory = await userRepository.getUserOrderHistory(userId);
+      [orderHistory, activityLogs] = await Promise.all([
+        userRepository.getUserOrderHistory(userId),
+        userRepository.getUserAuditLogs(userId),
+      ]);
     } else if (user.vai_tro === 'Nhan vien quan ly voucher' || user.vai_tro === 'Nguoi dai dien') {
       extraInfo = await userRepository.getUserCompanyInfo(user.ma_hsdn);
       auditLogs = await userRepository.getUserAuditLogs(userId);
@@ -109,6 +121,7 @@ class UserService {
       extraInfo,
       orderHistory,
       auditLogs,
+      activityLogs,
     };
   }
 
@@ -231,15 +244,17 @@ class UserService {
       throw new AppError('Không tìm thấy người dùng', 404, 'USER_NOT_FOUND');
     }
 
-    // Business rule 2.5: Chỉ được phép cập nhật vai trò đối với Nhân viên bán hàng và Nhân viên quản lý voucher
-    const isTargetValid = targetUser.vai_tro === 'Nhan vien ban hang' || targetUser.vai_tro === 'Nhan vien quan ly voucher';
-    if (!isTargetValid) {
-      throw new AppError('Chỉ được phép cập nhật vai trò đối với Nhân viên bán hàng và Nhân viên quản lý voucher.', 400, 'INVALID_ROLE_TRANSITION');
-    }
+    const isPartnerStaffTransition =
+      PARTNER_STAFF_ROLES.includes(targetUser.vai_tro) &&
+      PARTNER_STAFF_ROLES.includes(newRole);
+    const isAdminPortalTransition =
+      ADMIN_PORTAL_ROLES.includes(targetUser.vai_tro) &&
+      ADMIN_PORTAL_ROLES.includes(newRole);
 
-    const isNewRoleValid = newRole === 'Nhan vien ban hang' || newRole === 'Nhan vien quan ly voucher';
-    if (!isNewRoleValid) {
-      throw new AppError('Chỉ được phép chuyển đổi giữa Nhân viên bán hàng và Nhân viên quản lý voucher.', 400, 'INVALID_ROLE_TRANSITION');
+    // Giữ nguyên chuyển đổi của nhân sự đối tác; Admin hệ thống chỉ được
+    // chuyển giữa ba portal quản trị để tránh gán nhầm quan hệ đối tác.
+    if (!isPartnerStaffTransition && !isAdminPortalTransition) {
+      throw new AppError('Chỉ được phép cập nhật vai trò của nhân sự nội bộ hoặc quản trị viên.', 400, 'INVALID_ROLE_TRANSITION');
     }
 
     // Business rule 3: Nếu vai trò không thay đổi thì không cần update

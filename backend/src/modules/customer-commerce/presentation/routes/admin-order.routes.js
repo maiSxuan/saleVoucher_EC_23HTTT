@@ -10,7 +10,7 @@ const router = express.Router();
 router.get(
   '/',
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN),
+  authorizeMiddleware(JWT_ROLES.ADMIN_OPERATION),
   orderController.listAdminOrders.bind(orderController)
 );
 
@@ -18,16 +18,8 @@ router.get(
 router.get(
   '/:id',
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN),
+  authorizeMiddleware(JWT_ROLES.ADMIN_OPERATION),
   orderController.getAdminOrder.bind(orderController)
-);
-
-// GET /admin/orders/:id/logs — Lấy nhật ký hệ thống của riêng đơn hàng
-router.get(
-  '/:id/logs',
-  authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN),
-  orderController.getOrderLogs.bind(orderController)
 );
 
 // -----------------------------------------------------------------------
@@ -36,14 +28,14 @@ router.get(
 router.post(
   '/cancel-requests/:id/approve',
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN),
+  authorizeMiddleware(JWT_ROLES.ADMIN_OPERATION),
   orderController.approveCancelRequest.bind(orderController)
 );
 
 router.post(
   '/cancel-requests/:id/reject',
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN),
+  authorizeMiddleware(JWT_ROLES.ADMIN_OPERATION),
   orderController.rejectCancelRequest.bind(orderController)
 );
 
@@ -53,8 +45,15 @@ router.post(
 router.post(
   '/refunds/:id/execute',
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN),
+  authorizeMiddleware(JWT_ROLES.ADMIN_OPERATION),
   orderController.executeRefund.bind(orderController)
+);
+
+router.post(
+  '/refunds/:id/reconcile',
+  authenticateMiddleware,
+  authorizeMiddleware(JWT_ROLES.ADMIN_OPERATION),
+  orderController.reconcileRefund.bind(orderController)
 );
 
 // -----------------------------------------------------------------------
@@ -63,35 +62,35 @@ router.post(
 router.post(
   '/complaints/:id/open',
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN),
+  authorizeMiddleware(JWT_ROLES.ADMIN_OPERATION),
   orderController.openComplaint.bind(orderController)
 );
 
 router.post(
   '/complaints/:id/resend-code',
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN),
+  authorizeMiddleware(JWT_ROLES.ADMIN_OPERATION),
   orderController.resendComplaintCode.bind(orderController)
 );
 
 router.post(
   '/complaints/:id/reissue-code',
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN),
+  authorizeMiddleware(JWT_ROLES.ADMIN_OPERATION),
   orderController.reissueComplaintCode.bind(orderController)
 );
 
 router.post(
   '/complaints/:id/approve-refund',
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN),
+  authorizeMiddleware(JWT_ROLES.ADMIN_OPERATION),
   orderController.approveComplaintRefund.bind(orderController)
 );
 
 router.post(
   '/complaints/:id/reject',
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN),
+  authorizeMiddleware(JWT_ROLES.ADMIN_OPERATION),
   orderController.rejectComplaint.bind(orderController)
 );
 
@@ -99,7 +98,7 @@ router.post(
 router.post(
   '/:id/reissue-code',
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN),
+  authorizeMiddleware(JWT_ROLES.ADMIN_OPERATION),
   orderController.reissueCode.bind(orderController)
 );
 

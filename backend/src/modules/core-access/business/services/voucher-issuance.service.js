@@ -12,6 +12,7 @@
 const issuedVoucherRepository = require('../../data/repositories/issued-voucher.repository');
 const auditLogService = require('./audit-log.service');
 const supabase = require('../../../../config/supabase');
+const translationService = require('../../../../common/services/translation.service');
 
 class VoucherIssuanceService {
   async issueAfterPayment(eligibility, actorMeta = {}) {
@@ -137,7 +138,17 @@ class VoucherIssuanceService {
       err.status = 401;
       throw err;
     }
-    return issuedVoucherRepository.findByCustomer(accountId, opts);
+    const result = await issuedVoucherRepository.findByCustomer(accountId, opts);
+    if (opts.lang && opts.lang.toLowerCase().startsWith("en") && result && Array.isArray(result.records)) {
+      await Promise.all(
+        result.records.map(async (row) => {
+          if (row.voucher) {
+            await translationService.translateVoucherFields(row.voucher, undefined, "en");
+          }
+        })
+      );
+    }
+    return result;
   }
 
   /**
@@ -145,7 +156,7 @@ class VoucherIssuanceService {
    * @param {string} issuedVoucherId - ma_voucher_mua
    * @param {string} accountId - ma_tk người đang đăng nhập
    */
-  async getIssuedVoucherDetail(issuedVoucherId, accountId) {
+  async getIssuedVoucherDetail(issuedVoucherId, accountId, lang = null) {
     if (!issuedVoucherId) {
       const err = new Error('Thiếu mã voucher đã mua');
       err.status = 400;
@@ -180,7 +191,25 @@ class VoucherIssuanceService {
     }
 
     const enriched = await issuedVoucherRepository._enrichRows([vm]);
-    return enriched[0] || null;
+    const detail = enriched[0] || null;
+
+    if (detail && lang && lang.toLowerCase().startsWith("en")) {
+      if (detail.voucher) {
+        await translationService.translateVoucherFields(detail.voucher, undefined, "en");
+      }
+      if (detail.partnerName) {
+        detail.partnerName = await translationService.translateText(detail.partnerName, "en");
+      }
+      if (Array.isArray(detail.applicableBranches)) {
+        for (const b of detail.applicableBranches) {
+          if (b.branchName) b.branchName = await translationService.translateText(b.branchName, "en");
+          if (b.address) b.address = await translationService.translateText(b.address, "en");
+          if (b.area) b.area = await translationService.translateText(b.area, "en");
+        }
+      }
+    }
+
+    return detail;
   }
 }
 

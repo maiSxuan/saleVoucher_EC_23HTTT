@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-  Shield,
   Eye,
   EyeOff,
   AlertCircle,
@@ -14,6 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../../../app/auth-context";
 import {
   loginApi,
@@ -21,8 +21,11 @@ import {
   verifyOtpApi,
   resetPasswordApi,
 } from "../../../../shared/api/authApi";
+import { ADMIN_PORTAL_ROLES } from "../../../../shared/constants/admin-roles";
 
 export default function LoginPage() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
   // mode: 'login' | 'forgot-password' (Bước 1) | 'verify-otp' (Bước 2) | 'reset-password' (Bước 3)
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
@@ -40,8 +43,6 @@ export default function LoginPage() {
   const [successMsg, setSuccessMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
-
-  const navigate = useNavigate();
   const { persistSession } = useAuth();
 
   // Đếm ngược gửi lại OTP
@@ -59,8 +60,13 @@ export default function LoginPage() {
     persistSession(accessToken, payload.user, rfToken);
 
     const userRole = payload.user?.role;
-    if (userRole === "ADMIN") navigate("/admin");
-    else if (userRole === "PARTNER_OWNER" || userRole === "PARTNER_STAFF") navigate("/partner");
+    if (ADMIN_PORTAL_ROLES.includes(userRole)) navigate("/admin");
+    else if (
+      userRole === "PARTNER_OWNER" ||
+      userRole === "PARTNER_STAFF" ||
+      userRole === "PARTNER_MANAGER"
+    )
+      navigate("/partner");
     else navigate("/customer");
   };
 
@@ -102,7 +108,10 @@ export default function LoginPage() {
       setOtp("");
       setMode("verify-otp");
     } catch (err) {
-      setError(err.message || "Không thể thực hiện yêu cầu khôi phục mật khẩu. Vui lòng thử lại sau.");
+      setError(
+        err.message ||
+          "Không thể thực hiện yêu cầu khôi phục mật khẩu. Vui lòng thử lại sau.",
+      );
     } finally {
       setLoading(false);
     }
@@ -121,7 +130,9 @@ export default function LoginPage() {
       }
       setResendCountdown(60);
     } catch (err) {
-      setError(err.message || "Không thể gửi lại mã xác thực. Vui lòng thử lại.");
+      setError(
+        err.message || "Không thể gửi lại mã xác thực. Vui lòng thử lại.",
+      );
     } finally {
       setLoading(false);
     }
@@ -174,14 +185,20 @@ export default function LoginPage() {
       });
 
       // Thành công -> chuyển về màn hình đăng nhập kèm thông báo
-      setSuccessMsg(res.message || "Đặt lại mật khẩu thành công! Vui lòng đăng nhập lại bằng mật khẩu mới.");
+      setSuccessMsg(
+        res.message ||
+          "Đặt lại mật khẩu thành công! Vui lòng đăng nhập lại bằng mật khẩu mới.",
+      );
       setMode("login");
       setPassword("");
       setOtp("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (err) {
-      setError(err.message || "Không thể cập nhật mật khẩu mới. Mật khẩu hiện tại vẫn được giữ nguyên.");
+      setError(
+        err.message ||
+          "Không thể cập nhật mật khẩu mới. Mật khẩu hiện tại vẫn được giữ nguyên.",
+      );
     } finally {
       setLoading(false);
     }
@@ -190,21 +207,31 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50/50 via-slate-50 to-purple-50/40 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl shadow-xl border border-gray-100 max-w-md w-full p-8 relative overflow-hidden transition-all duration-300">
-
         {/* Header decoration */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
 
         {/* Logo & Tiêu đề */}
         <div className="flex flex-col items-center mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center mb-3 shadow-lg shadow-indigo-200">
-            <Shield size={28} className="text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">EC Voucher</h1>
+          <Link
+            to="/"
+            className="flex flex-col items-center group"
+            aria-label="Về trang chủ Snow Voucher"
+          >
+            <img
+              src="/snowflake.png"
+              alt=""
+              aria-hidden="true"
+              className="w-14 h-14 object-contain mb-3 drop-shadow-lg group-hover:scale-105 transition-transform"
+            />
+            <h1 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              Snow Voucher
+            </h1>
+          </Link>
           <p className="text-sm text-gray-500 mt-1">
-            {mode === "login" && "Hệ thống Đăng nhập"}
-            {mode === "forgot-password" && "Quên mật khẩu (Bước 1/3)"}
-            {mode === "verify-otp" && "Xác thực mã OTP (Bước 2/3)"}
-            {mode === "reset-password" && "Thiết lập mật khẩu mới (Bước 3/3)"}
+            {mode === "login" && t("Hệ thống Đăng nhập")}
+            {mode === "forgot-password" && t("Quên mật khẩu (Bước 1/3)")}
+            {mode === "verify-otp" && t("Xác thực mã OTP (Bước 2/3)")}
+            {mode === "reset-password" && t("Thiết lập mật khẩu mới (Bước 3/3)")}
           </p>
         </div>
 
@@ -212,14 +239,32 @@ export default function LoginPage() {
         {mode !== "login" && (
           <div className="mb-6">
             <div className="flex items-center justify-between text-xs font-semibold text-gray-500 mb-2">
-              <span className={mode === "forgot-password" ? "text-indigo-600 font-bold" : "text-gray-400"}>
-                1. Nhập thông tin
+              <span
+                className={
+                  mode === "forgot-password"
+                    ? "text-indigo-600 font-bold"
+                    : "text-gray-400"
+                }
+              >
+                {t("1. Nhập thông tin")}
               </span>
-              <span className={mode === "verify-otp" ? "text-indigo-600 font-bold" : "text-gray-400"}>
-                2. Nhập OTP
+              <span
+                className={
+                  mode === "verify-otp"
+                    ? "text-indigo-600 font-bold"
+                    : "text-gray-400"
+                }
+              >
+                {t("2. Nhập OTP")}
               </span>
-              <span className={mode === "reset-password" ? "text-indigo-600 font-bold" : "text-gray-400"}>
-                3. Đổi mật khẩu
+              <span
+                className={
+                  mode === "reset-password"
+                    ? "text-indigo-600 font-bold"
+                    : "text-gray-400"
+                }
+              >
+                {t("3. Đổi mật khẩu")}
               </span>
             </div>
             <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
@@ -249,7 +294,10 @@ export default function LoginPage() {
         {/* Thông báo thành công */}
         {successMsg && (
           <div className="flex items-start gap-2.5 text-emerald-800 text-xs bg-emerald-50/90 border border-emerald-200 rounded-xl p-3.5 mb-5">
-            <CheckCircle2 size={16} className="shrink-0 mt-0.5 text-emerald-600" />
+            <CheckCircle2
+              size={16}
+              className="shrink-0 mt-0.5 text-emerald-600"
+            />
             <span className="leading-relaxed font-medium">{successMsg}</span>
           </div>
         )}
@@ -259,7 +307,7 @@ export default function LoginPage() {
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                Email
+                {t("Email")}
               </label>
               <div className="relative">
                 <input
@@ -267,7 +315,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                  placeholder="Nhập email"
+                  placeholder={t("Nhập email")}
                   className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400"
                 />
               </div>
@@ -275,7 +323,9 @@ export default function LoginPage() {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-semibold text-gray-700">Mật khẩu</label>
+                <label className="block text-xs font-semibold text-gray-700">
+                  {t("Mật khẩu")}
+                </label>
                 <button
                   type="button"
                   onClick={() => {
@@ -285,7 +335,7 @@ export default function LoginPage() {
                   }}
                   className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
                 >
-                  Quên mật khẩu?
+                  {t("Quên mật khẩu?")}
                 </button>
               </div>
               <div className="relative">
@@ -313,24 +363,24 @@ export default function LoginPage() {
               className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold text-sm hover:bg-indigo-700 disabled:opacity-60 transition-all shadow-md shadow-indigo-100 active:scale-[0.99] flex items-center justify-center gap-2"
             >
               {loading && <RefreshCw size={16} className="animate-spin" />}
-              {loading ? "Đang xác thực..." : "Đăng nhập"}
+              {loading ? t("Đang xác thực...") : t("Đăng nhập")}
             </button>
 
             <div className="pt-4 border-t border-gray-100 text-center space-y-2">
-              <div className="text-xs text-gray-500">Chưa có tài khoản?</div>
+              <div className="text-xs text-gray-500">{t("Chưa có tài khoản?")}</div>
               <div className="flex items-center justify-center gap-4 text-xs font-semibold">
                 <Link
                   to="/customer/register"
                   className="text-indigo-600 hover:text-indigo-800 transition-colors"
                 >
-                  Đăng ký Khách hàng
+                  {t("Đăng ký Khách hàng")}
                 </Link>
                 <span className="text-gray-300">|</span>
                 <Link
                   to="/partner/register"
                   className="text-indigo-600 hover:text-indigo-800 transition-colors"
                 >
-                  Đăng ký Đối tác
+                  {t("Đăng ký Đối tác")}
                 </Link>
               </div>
             </div>
@@ -341,21 +391,24 @@ export default function LoginPage() {
         {mode === "forgot-password" && (
           <div className="space-y-4">
             <div className="bg-indigo-50/60 rounded-xl p-3.5 border border-indigo-100 text-xs text-indigo-900 leading-relaxed">
-              Nhập địa chỉ Email đã đăng ký. Hệ thống sẽ kiểm tra và gửi mã xác thực (OTP 6 số) đến hộp thư của bạn.
+              {t("Nhập địa chỉ Email đã đăng ký. Hệ thống sẽ kiểm tra và gửi mã xác thực (OTP 6 số) đến hộp thư của bạn.")}
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                Email đã đăng ký
+                {t("Email đã đăng ký")}
               </label>
               <div className="relative">
-                <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Mail
+                  size={16}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                />
                 <input
                   type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleForgotPassword()}
-                  placeholder="ví dụ: nguyenvana@gmail.com "
+                  placeholder={t("ví dụ: nguyenvana@gmail.com")}
                   className="w-full border border-gray-200 rounded-xl pl-10 pr-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400"
                 />
               </div>
@@ -367,7 +420,7 @@ export default function LoginPage() {
               className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold text-sm hover:bg-indigo-700 disabled:opacity-60 transition-all shadow-md shadow-indigo-100 active:scale-[0.99] flex items-center justify-center gap-2"
             >
               {loading && <RefreshCw size={16} className="animate-spin" />}
-              {loading ? "Đang xử lý..." : "Tiếp tục & Gửi mã OTP"}
+              {loading ? t("Đang xử lý...") : t("Tiếp tục & Gửi mã OTP")}
             </button>
 
             <button
@@ -379,7 +432,7 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full flex items-center justify-center gap-1.5 text-gray-500 hover:text-gray-800 text-xs font-semibold py-2 transition-colors"
             >
-              <ArrowLeft size={14} /> Quay lại đăng nhập
+              <ArrowLeft size={14} /> {t("Quay lại đăng nhập")}
             </button>
           </div>
         )}
@@ -388,32 +441,46 @@ export default function LoginPage() {
         {mode === "verify-otp" && (
           <div className="space-y-4">
             <div className="bg-indigo-50/60 rounded-xl p-3.5 border border-indigo-100 text-xs text-indigo-900 leading-relaxed">
-              Mã xác thực đã được gửi đến {maskedEmail ? <strong className="text-indigo-700 font-bold">{maskedEmail}</strong> : "email đã đăng ký của bạn"}. Mã có hiệu lực trong vòng <strong className="text-indigo-700">5 phút</strong>.
+              {t("Mã xác thực đã được gửi đến")}{" "}
+              {maskedEmail ? (
+                <strong className="text-indigo-700 font-bold">
+                  {maskedEmail}
+                </strong>
+              ) : (
+                t("email đã đăng ký của bạn")
+              )}
+              . {t("Mã có hiệu lực trong vòng")}{" "}
+              <strong className="text-indigo-700">{t("5 phút")}</strong>.
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                Nhập mã xác thực (OTP 6 số)
+                {t("Nhập mã xác thực (OTP 6 số)")}
               </label>
               <div className="relative">
-                <KeyRound size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <KeyRound
+                  size={16}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                />
                 <input
                   type="text"
                   maxLength={6}
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ""))}
+                  onChange={(e) =>
+                    setOtp(e.target.value.replace(/[^0-9]/g, ""))
+                  }
                   onKeyDown={(e) => e.key === "Enter" && handleVerifyOtp()}
-                  placeholder="Nhập 6 số OTP..."
+                  placeholder={t("Nhập 6 số OTP...")}
                   className="w-full border border-gray-200 rounded-xl pl-10 pr-3.5 py-2.5 text-base font-bold tracking-[0.25em] text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                 />
               </div>
             </div>
 
             <div className="flex items-center justify-between text-xs text-gray-500 pt-1">
-              <span>Chưa nhận được mã?</span>
+              <span>{t("Chưa nhận được mã?")}</span>
               {resendCountdown > 0 ? (
                 <span className="flex items-center gap-1 text-gray-400 font-medium">
-                  <Clock size={13} /> Gửi lại sau {resendCountdown}s
+                  <Clock size={13} /> {t("Gửi lại sau")} {resendCountdown}s
                 </span>
               ) : (
                 <button
@@ -422,7 +489,7 @@ export default function LoginPage() {
                   disabled={loading}
                   className="text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1 transition-colors"
                 >
-                  <RefreshCw size={12} /> Gửi lại mã
+                  <RefreshCw size={12} /> {t("Gửi lại mã")}
                 </button>
               )}
             </div>
@@ -433,7 +500,7 @@ export default function LoginPage() {
               className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold text-sm hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-md shadow-indigo-100 active:scale-[0.99] flex items-center justify-center gap-2"
             >
               {loading && <RefreshCw size={16} className="animate-spin" />}
-              {loading ? "Đang xác thực..." : "Xác nhận mã OTP"}
+              {loading ? t("Đang xác thực...") : t("Xác nhận mã OTP")}
             </button>
 
             <div className="flex items-center justify-between pt-2">
@@ -447,7 +514,7 @@ export default function LoginPage() {
                 disabled={loading}
                 className="flex items-center gap-1 text-gray-500 hover:text-gray-700 text-xs font-medium transition-colors"
               >
-                <ArrowLeft size={13} /> Nhập lại Email/SĐT
+                <ArrowLeft size={13} /> {t("Nhập lại Email/SĐT")}
               </button>
               <button
                 type="button"
@@ -459,7 +526,7 @@ export default function LoginPage() {
                 disabled={loading}
                 className="text-gray-400 hover:text-gray-600 text-xs transition-colors"
               >
-                Hủy bỏ
+                {t("Hủy bỏ")}
               </button>
             </div>
           </div>
@@ -470,15 +537,20 @@ export default function LoginPage() {
           <div className="space-y-4">
             <div className="bg-emerald-50/70 rounded-xl p-3.5 border border-emerald-200 text-xs text-emerald-900 leading-relaxed flex items-center gap-2">
               <Sparkles size={16} className="shrink-0 text-emerald-600" />
-              <span>Xác thực OTP thành công! Vui lòng tạo mật khẩu mới an toàn cho tài khoản.</span>
+              <span>
+                {t("Xác thực OTP thành công! Vui lòng tạo mật khẩu mới an toàn cho tài khoản.")}
+              </span>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                Mật khẩu mới (tối thiểu 6 ký tự)
+                {t("Mật khẩu mới (tối thiểu 6 ký tự)")}
               </label>
               <div className="relative">
-                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Lock
+                  size={16}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                />
                 <input
                   type={showNewPw ? "text" : "password"}
                   value={newPassword}
@@ -498,10 +570,13 @@ export default function LoginPage() {
 
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                Xác nhận mật khẩu mới
+                {t("Xác nhận mật khẩu mới")}
               </label>
               <div className="relative">
-                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Lock
+                  size={16}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                />
                 <input
                   type={showConfirmPw ? "text" : "password"}
                   value={confirmPassword}
@@ -526,7 +601,7 @@ export default function LoginPage() {
               className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold text-sm hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-md shadow-indigo-100 active:scale-[0.99] flex items-center justify-center gap-2"
             >
               {loading && <RefreshCw size={16} className="animate-spin" />}
-              {loading ? "Đang cập nhật..." : "Cập nhật Mật khẩu mới"}
+              {loading ? t("Đang cập nhật...") : t("Cập nhật Mật khẩu mới")}
             </button>
 
             <button
@@ -538,7 +613,7 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full flex items-center justify-center gap-1.5 text-gray-500 hover:text-gray-800 text-xs font-semibold py-2 transition-colors"
             >
-              <ArrowLeft size={14} /> Hủy và quay lại Đăng nhập
+              <ArrowLeft size={14} /> {t("Hủy và quay lại Đăng nhập")}
             </button>
           </div>
         )}

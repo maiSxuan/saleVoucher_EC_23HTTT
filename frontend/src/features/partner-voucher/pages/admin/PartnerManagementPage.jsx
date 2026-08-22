@@ -244,16 +244,38 @@ export function PartnerManagementPage() {
                 <tbody className="divide-y divide-slate-100 text-sm">
                   {paginatedPartners.map((partner) => {
                     const pendingReqs = Number(partner.pending_branch_requests) || 0;
-                    const branchCount = partner.branches?.length || 0;
+                    const activeBranchCount = (partner.branches || []).filter((b) => {
+                      const st = (b.trang_thai || "").toString().toLowerCase().trim();
+                      return (
+                        st === "hoat dong" ||
+                        st === "hoạt động" ||
+                        st === "active" ||
+                        st === "dang hoat dong" ||
+                        st === "danghoatdong" ||
+                        st === "hoatdong"
+                      );
+                    }).length;
                     const sb = getPartnerStatusBadge(partner.trang_thai);
 
                     return (
                       <tr key={partner.ma_hs} className="hover:bg-slate-50 transition-colors">
-                        {/* Tên doanh nghiệp with Building Icon */}
+                        {/* Tên doanh nghiệp with Partner Logo / Icon */}
                         <td className="px-3.5 py-3.5">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0 border border-blue-100">
-                              <Building2 size={16} />
+                            <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0 border border-blue-100 overflow-hidden relative">
+                              {partner.logo ? (
+                                <img
+                                  src={partner.logo}
+                                  alt={partner.ten_dn}
+                                  referrerPolicy="no-referrer"
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = "none";
+                                  }}
+                                />
+                              ) : (
+                                <Building2 size={16} />
+                              )}
                             </div>
                             <div>
                               <Link
@@ -281,7 +303,7 @@ export function PartnerManagementPage() {
                         </td>
 
                         {/* Chi nhánh */}
-                        <td className="px-3.5 py-3.5 text-center font-semibold text-slate-700">{branchCount}</td>
+                        <td className="px-3.5 py-3.5 text-center font-semibold text-slate-700">{activeBranchCount}</td>
 
                         {/* Trạng thái hồ sơ */}
                         <td className="px-3.5 py-3.5">

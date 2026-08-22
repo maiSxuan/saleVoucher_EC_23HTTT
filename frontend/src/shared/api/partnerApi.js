@@ -2,6 +2,20 @@ import { mockStore } from "../store/mockDataStore";
 
 const BACKEND_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || "/api"}`;
 
+function getCurrentLang() {
+  return localStorage.getItem("app_lang") || "vi";
+}
+
+function getAuthHeaders() {
+  const token = localStorage.getItem("accessToken");
+  const lang = getCurrentLang();
+  return {
+    "Content-Type": "application/json",
+    "Accept-Language": lang,
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
 /**
  * Register partner representative account (Step 1)
  */
@@ -123,7 +137,10 @@ export async function registerPartnerProfileApi(partnerData) {
  */
 export async function getCategoriesApi() {
   try {
-    const res = await fetch(`${BACKEND_BASE_URL}/vouchers/categories`);
+    const lang = localStorage.getItem("app_lang") || "vi";
+    const res = await fetch(`${BACKEND_BASE_URL}/vouchers/categories?lang=${lang}`, {
+      headers: { "Accept-Language": lang },
+    });
     if (res.ok) {
       const json = await res.json();
       if (json.success) return json.data;
@@ -148,7 +165,7 @@ export async function getPartnersApi(query = {}) {
   } catch (e) {
     console.warn("Backend API unavailable, using mockStore fallback:", e.message);
   }
-  return mockStore.getPartners();
+  return [];
 }
 
 /**
@@ -335,12 +352,37 @@ export async function rejectBranchRequestApi(requestId, adminNote = "") {
 }
 
 /**
+ * Update branch status (Admin toggle active/paused)
+ */
+export async function updateBranchStatusApi(branchId, status) {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/branches/${branchId}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json?.message || "Cập nhật trạng thái chi nhánh thất bại.");
+    }
+    return json.data;
+  } catch (e) {
+    console.error("updateBranchStatusApi error:", e.message);
+    throw e;
+  }
+}
+
+/**
  * Fetch list of vouchers
  */
 export async function getVouchersApi(query = {}) {
   try {
-    const params = new URLSearchParams(query).toString();
-    const res = await fetch(`${BACKEND_BASE_URL}/vouchers${params ? `?${params}` : ""}`);
+    const lang = localStorage.getItem("app_lang") || "vi";
+    const queryWithLang = { lang, ...query };
+    const params = new URLSearchParams(queryWithLang).toString();
+    const res = await fetch(`${BACKEND_BASE_URL}/vouchers${params ? `?${params}` : ""}`, {
+      headers: { "Accept-Language": lang },
+    });
     if (res.ok) {
       const json = await res.json();
       if (json.success) return json.data;
@@ -356,7 +398,10 @@ export async function getVouchersApi(query = {}) {
  */
 export async function getVouchersByPartnerApi(partnerId) {
   try {
-    const res = await fetch(`${BACKEND_BASE_URL}/vouchers/partner/${partnerId}`);
+    const lang = getCurrentLang();
+    const res = await fetch(`${BACKEND_BASE_URL}/vouchers/partner/${partnerId}?lang=${lang}`, {
+      headers: getAuthHeaders(),
+    });
     if (res.ok) {
       const json = await res.json();
       if (json.success) return json.data;
@@ -372,7 +417,10 @@ export async function getVouchersByPartnerApi(partnerId) {
  */
 export async function getVoucherByIdApi(voucherId) {
   try {
-    const res = await fetch(`${BACKEND_BASE_URL}/vouchers/${voucherId}`);
+    const lang = getCurrentLang();
+    const res = await fetch(`${BACKEND_BASE_URL}/vouchers/${voucherId}?lang=${lang}`, {
+      headers: getAuthHeaders(),
+    });
     if (res.ok) {
       const json = await res.json();
       if (json.success) return json.data;
@@ -394,7 +442,7 @@ export async function saveVoucherApi(voucherData) {
 
     const res = await fetch(url, {
       method,
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify(voucherData),
     });
     if (res.ok) {
@@ -414,7 +462,7 @@ export async function approveVoucherApi(voucherId, isHidden = false) {
   try {
     const res = await fetch(`${BACKEND_BASE_URL}/vouchers/${voucherId}/approve`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ isHidden }),
     });
     if (res.ok) {
@@ -434,7 +482,7 @@ export async function rejectVoucherApi(voucherId, reason = "") {
   try {
     const res = await fetch(`${BACKEND_BASE_URL}/vouchers/${voucherId}/reject`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ reason }),
     });
     if (res.ok) {
@@ -467,15 +515,17 @@ export async function createStaffApi(staffData) {
   try {
     const res = await fetch(`${BACKEND_BASE_URL}/staffs`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify(staffData),
     });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success) return json.data;
+    const json = await res.json();
+    if (res.ok && json.success) return json.data;
+    if (!res.ok) {
+      throw new Error(json.message || json.error || "Thêm nhân viên thất bại");
     }
   } catch (e) {
-    console.warn("Backend API unavailable, using mockStore fallback:", e.message);
+    console.warn("[createStaffApi] Error:", e.message);
+    throw e;
   }
   return mockStore.createStaff(staffData);
 }
@@ -484,15 +534,17 @@ export async function updateStaffApi(staffId, staffData) {
   try {
     const res = await fetch(`${BACKEND_BASE_URL}/staffs/${staffId}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify(staffData),
     });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success) return json.data;
+    const json = await res.json();
+    if (res.ok && json.success) return json.data;
+    if (!res.ok) {
+      throw new Error(json.message || json.error || "Cập nhật nhân viên thất bại");
     }
   } catch (e) {
-    console.warn("Backend API unavailable, using mockStore fallback:", e.message);
+    console.warn("[updateStaffApi] Error:", e.message);
+    throw e;
   }
   return mockStore.updateStaff(staffId, staffData);
 }
@@ -501,6 +553,7 @@ export async function deleteStaffApi(staffId) {
   try {
     const res = await fetch(`${BACKEND_BASE_URL}/staffs/${staffId}`, {
       method: "DELETE",
+      headers: getAuthHeaders(),
     });
     if (res.ok) {
       const json = await res.json();
@@ -520,7 +573,7 @@ export async function createPartnerProfileRequestApi(payload) {
   try {
     const res = await fetch(`${BACKEND_BASE_URL}/partners/profile-requests`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify(payload),
     });
     if (res.ok) {
@@ -585,8 +638,12 @@ export async function rejectPartnerProfileRequestApi(reqId, reason, adminId) {
  */
 export async function getPartnerReportApi(params = {}) {
   try {
-    const queryStr = new URLSearchParams(params).toString();
-    const res = await fetch(`${BACKEND_BASE_URL}/reports/partner-reports?${queryStr}`);
+    const lang = getCurrentLang();
+    const queryParams = { ...params, lang };
+    const queryStr = new URLSearchParams(queryParams).toString();
+    const res = await fetch(`${BACKEND_BASE_URL}/reports/partner-reports?${queryStr}`, {
+      headers: getAuthHeaders(),
+    });
     if (res.ok) {
       const json = await res.json();
       if (json.success) return json.data;

@@ -1,6 +1,9 @@
 const express = require("express");
 const PartnerController = require("../controllers/partner.controller");
 const partnerService = require("../../business/services/partner.service");
+const { authenticateMiddleware } = require("../../../../common/middleware/authenticate.middleware");
+const { authorizeMiddleware } = require("../../../../common/middleware/authorize.middleware");
+const { JWT_ROLES } = require("../../../../common/constants/roles");
 
 const router = express.Router();
 const controller = new PartnerController(partnerService);

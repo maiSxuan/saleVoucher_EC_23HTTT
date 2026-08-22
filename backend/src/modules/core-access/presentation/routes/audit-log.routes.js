@@ -1,6 +1,6 @@
 /**
  * Purpose: Route cho truy vấn nhật ký hệ thống (BR-ADM-07).
- * Bảo vệ bằng authenticate + authorize(ADMIN).
+ * Bảo vệ bằng authenticate + authorize(Admin he thong).
  * Endpoint: GET /admin/logs
  */
 const express = require('express');
@@ -13,11 +13,11 @@ const { JWT_ROLES } = require('../../../../common/constants/roles');
 const router = express.Router();
 const controller = new AuditLogController(auditLogService);
 
-// Chỉ Admin được phép xem nhật ký hệ thống
+// Chỉ Admin he thong được phép xem nhật ký hệ thống.
 router.get(
   '/admin/logs',
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN),
+  authorizeMiddleware(JWT_ROLES.ADMIN_SYSTEM),
   controller.list
 );
 

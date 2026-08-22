@@ -4,7 +4,7 @@
 const supabase = require("../../../../config/supabase");
 
 class PaymentRepository {
-  async createAttempt({ orderId, amount, method }) {
+  async createAttempt({ orderId, amount, method, createdAt = new Date() }) {
     const { data, error } = await supabase
       .from("thanhtoan")
       .insert({
@@ -12,6 +12,7 @@ class PaymentRepository {
         so_tien: amount,
         phuong_thuc_tt: method,
         trang_thai: "Dang xu ly",
+        thoi_gian_tt: createdAt.toISOString(),
       })
       .select("ma_thanh_toan")
       .single();

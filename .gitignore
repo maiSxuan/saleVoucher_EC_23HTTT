@@ -147,3 +147,16 @@ vite.config.ts.timestamp-*
 gemini-code-1785250004304.md
 design.md
 db.md
+
+/task_X.md
+/taskX2.md
+/codeX_done_QLDH.md
+/codeX_done.md
+AGENTS.md
+CLAUDE.md
+.claude/
+.gitnexus/
+/sequence.md
+
+
+sequence_code/

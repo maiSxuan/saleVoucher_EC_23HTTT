@@ -6,11 +6,36 @@
 const STORAGE_KEY = "ec_voucher_mock_data_v1";
 
 const INITIAL_CATEGORIES = [
-  { id: "40000000-0000-0000-0000-000000000001", ten_danh_muc: "Ẩm thực & Nhà hàng", mo_ta: "Nhà hàng, quán ăn, buffet, đồ uống" },
-  { id: "40000000-0000-0000-0000-000000000002", ten_danh_muc: "Giải trí & Sân khấu", mo_ta: "Vé xem phim, khu vui chơi, concert, sự kiện" },
-  { id: "40000000-0000-0000-0000-000000000003", ten_danh_muc: "Làm đẹp & Spa", mo_ta: "Chăm sóc da, massage, salon tóc, nail" },
-  { id: "40000000-0000-0000-0000-000000000004", ten_danh_muc: "Du lịch & Khách sạn", mo_ta: "Khách sạn, resort, tour du lịch, nghỉ dưỡng" },
-  { id: "40000000-0000-0000-0000-000000000005", ten_danh_muc: "Mua sắm & Siêu thị", mo_ta: "Thời trang, điện máy, hàng tiêu dùng" },
+  {
+    ma_danh_muc: "40000000-0000-0000-0000-000000000001",
+    id: "40000000-0000-0000-0000-000000000001",
+    ten_danh_muc: "Ăn uống",
+    mo_ta: "Voucher nha hang, quan an va do uong.",
+  },
+  {
+    ma_danh_muc: "40000000-0000-0000-0000-000000000002",
+    id: "40000000-0000-0000-0000-000000000002",
+    ten_danh_muc: "Sức khỏe và Làm đẹp",
+    mo_ta: "Voucher spa, cham soc da va suc khoe.",
+  },
+  {
+    ma_danh_muc: "40000000-0000-0000-0000-000000000003",
+    id: "40000000-0000-0000-0000-000000000003",
+    ten_danh_muc: "Vui chơi giải trí",
+    mo_ta: "Voucher vui choi va su kien.",
+  },
+  {
+    ma_danh_muc: "40000000-0000-0000-0000-000000000004",
+    id: "40000000-0000-0000-0000-000000000004",
+    ten_danh_muc: "Du lịch",
+    mo_ta: "Voucher luu tru va trai nghiem du lich.",
+  },
+  {
+    ma_danh_muc: "40000000-0000-0000-0000-000000000005",
+    id: "40000000-0000-0000-0000-000000000005",
+    ten_danh_muc: "Dịch vụ tiện ích",
+    mo_ta: "Voucher dich vu tien ich.",
+  },
 ];
 
 const INITIAL_PARTNERS = [
@@ -19,7 +44,8 @@ const INITIAL_PARTNERS = [
     ten_dn: "Công ty TNHH Ẩm Thực Sài Gòn",
     ma_so_thue: "0310000001",
     dia_chi: "12 Nguyễn Huệ, TP. Hồ Chí Minh",
-    giay_phep_kinh_doanh: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80",
+    giay_phep_kinh_doanh:
+      "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80",
     ngay_tao: "2025-10-21T09:34:18.181Z",
     trang_thai: "Dang hoat dong",
     ly_do_tu_choi: "",
@@ -55,7 +81,8 @@ const INITIAL_PARTNERS = [
     ten_dn: "Công ty TNHH Spa An Nhiên",
     ma_so_thue: "0310000002",
     dia_chi: "25 Thành Thái, TP. Hồ Chí Minh",
-    giay_phep_kinh_doanh: "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=600&q=80",
+    giay_phep_kinh_doanh:
+      "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=600&q=80",
     ngay_tao: "2026-07-13T09:34:18.181Z",
     trang_thai: "Cho duyet",
     ly_do_tu_choi: "",
@@ -82,7 +109,8 @@ const INITIAL_PARTNERS = [
     ten_dn: "Công ty Cổ phần Giáo Dục Tương Lai",
     ma_so_thue: "0310000003",
     dia_chi: "80 Võ Văn Tần, TP. Hồ Chí Minh",
-    giay_phep_kinh_doanh: "https://images.unsplash.com/photo-1568992687947-868a62a9f521?auto=format&fit=crop&w=600&q=80",
+    giay_phep_kinh_doanh:
+      "https://images.unsplash.com/photo-1568992687947-868a62a9f521?auto=format&fit=crop&w=600&q=80",
     ngay_tao: "2026-06-23T09:34:18.181Z",
     trang_thai: "Tu choi",
     ly_do_tu_choi: "Giấy phép kinh doanh quá hạn.",
@@ -122,12 +150,10 @@ const INITIAL_STAFFS = [
     email: "mai.nguyen@sushiworld.vn",
     sdt: "0901111111",
     vai_tro: "Nhân viên chi nhánh",
-    chi_nhanh_phu_trach: [
-      "Chi nhánh Lý Tự Trọng"
-    ],
+    chi_nhanh_phu_trach: ["Chi nhánh Lý Tự Trọng"],
     trang_thai: "Dang hoat dong",
     ngay_tao: "2026-01-15",
-    avatar: ""
+    avatar: "",
   },
 
   {
@@ -137,13 +163,10 @@ const INITIAL_STAFFS = [
     email: "hung.le@sushiworld.vn",
     sdt: "0902222222",
     vai_tro: "Nhân viên chi nhánh",
-    chi_nhanh_phu_trach: [
-      "Chi nhánh Nguyễn Thị Minh Khai",
-      "Chi nhánh Quận 7"
-    ],
+    chi_nhanh_phu_trach: ["Chi nhánh Nguyễn Thị Minh Khai", "Chi nhánh Quận 7"],
     trang_thai: "Tam khoa",
     ngay_tao: "2026-02-20",
-    avatar: ""
+    avatar: "",
   },
 
   {
@@ -156,7 +179,7 @@ const INITIAL_STAFFS = [
     chi_nhanh_phu_trach: [],
     trang_thai: "Dang hoat dong",
     ngay_tao: "2026-03-01",
-    avatar: ""
+    avatar: "",
   },
 
   {
@@ -168,11 +191,11 @@ const INITIAL_STAFFS = [
     vai_tro: "Nhân viên chi nhánh",
     chi_nhanh_phu_trach: [
       "Chi nhánh Lý Tự Trọng",
-      "Chi nhánh Nguyễn Thị Minh Khai"
+      "Chi nhánh Nguyễn Thị Minh Khai",
     ],
     trang_thai: "Tam ngung",
     ngay_tao: "2025-12-10",
-    avatar: ""
+    avatar: "",
   },
 
   {
@@ -182,12 +205,10 @@ const INITIAL_STAFFS = [
     email: "khoi.dang@lotusspa.vn",
     sdt: "0905555555",
     vai_tro: "Quản lý chi nhánh",
-    chi_nhanh_phu_trach: [
-      "Lotus Spa Hoàn Kiếm"
-    ],
+    chi_nhanh_phu_trach: ["Lotus Spa Hoàn Kiếm"],
     trang_thai: "Dang hoat dong",
     ngay_tao: "2026-04-11",
-    avatar: ""
+    avatar: "",
   },
 
   {
@@ -197,12 +218,10 @@ const INITIAL_STAFFS = [
     email: "ha.ngo@lotusspa.vn",
     sdt: "0906666666",
     vai_tro: "Nhân viên chi nhánh",
-    chi_nhanh_phu_trach: [
-      "Lotus Spa Hoàn Kiếm"
-    ],
+    chi_nhanh_phu_trach: ["Lotus Spa Hoàn Kiếm"],
     trang_thai: "Dang hoat dong",
     ngay_tao: "2026-05-05",
-    avatar: ""
+    avatar: "",
   },
 
   {
@@ -215,7 +234,7 @@ const INITIAL_STAFFS = [
     chi_nhanh_phu_trach: [],
     trang_thai: "Tam khoa",
     ngay_tao: "2026-06-10",
-    avatar: ""
+    avatar: "",
   },
 
   {
@@ -228,8 +247,8 @@ const INITIAL_STAFFS = [
     chi_nhanh_phu_trach: [],
     trang_thai: "Dang hoat dong",
     ngay_tao: "2026-06-25",
-    avatar: ""
-  }
+    avatar: "",
+  },
 ];
 
 const INITIAL_VOUCHERS = [
@@ -238,13 +257,16 @@ const INITIAL_VOUCHERS = [
     ma_hs: "hs-001",
     ten_dn: "Công ty TNHH AmThucViet",
     ten_voucher: "Voucher Buffet Hải Sản Cao Cấp Tối Cuối Tuần",
-    mo_ta: "Thưởng thức hơn 80 món hải sản tươi sống nhập khẩu, bào ngư, tôm hùm nướng mỡ hành cùng quầy kem hãnh diện.",
+    mo_ta:
+      "Thưởng thức hơn 80 món hải sản tươi sống nhập khẩu, bào ngư, tôm hùm nướng mỡ hành cùng quầy kem hãnh diện.",
     gia_goc: 890000,
     gia_ban: 599000,
     ma_danh_muc: "cat-1",
     ten_danh_muc: "Ẩm thực & Nhà hàng",
-    dieu_kien_ap_dung: "Áp dụng cho 01 người lớn. Không áp dụng đồng thời với các chương trình khuyến mãi khác.",
-    chinh_sach_hoan_huy: "Hoàn tiền 100% nếu voucher chưa sử dụng và còn trong thời hạn.",
+    dieu_kien_ap_dung:
+      "Áp dụng cho 01 người lớn. Không áp dụng đồng thời với các chương trình khuyến mãi khác.",
+    chinh_sach_hoan_huy:
+      "Hoàn tiền 100% nếu voucher chưa sử dụng và còn trong thời hạn.",
     so_luong_phat_hanh: 500,
     so_luong_da_ban: 142,
     tg_bat_dau_ban: "2026-07-25T00:00:00Z",
@@ -252,13 +274,22 @@ const INITIAL_VOUCHERS = [
     trang_thai: "Dang ban", // Nhap, Cho duyet, Dang ban, Tu choi, Tam ngung, Ngung ban
     trang_thai_kiem_duyet: "Da duyet", // Nhap, Cho duyet, Da duyet, Tu choi
     trang_thai_cong_bo: "Dang ban", // Dang ban, Cho hien thi, Tam an, Ngung ban
-    hinh_anh_url: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80",
+    hinh_anh_url:
+      "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80",
     ma_chi_nhanh: ["cn-001", "cn-002"],
     ly_do_tu_choi: "",
     ngay_tao: "2026-07-21T08:00:00Z",
     lich_su_duyet: [
-      { ngay: "2026-07-21 08:00", hanh_dong: "Tạo mới & Gửi duyệt", nguoi_thuc_hien: "Đối tác" },
-      { ngay: "2026-07-22 10:15", hanh_dong: "Đã phê duyệt", nguoi_thuc_hien: "Admin QV" },
+      {
+        ngay: "2026-07-21 08:00",
+        hanh_dong: "Tạo mới & Gửi duyệt",
+        nguoi_thuc_hien: "Đối tác",
+      },
+      {
+        ngay: "2026-07-22 10:15",
+        hanh_dong: "Đã phê duyệt",
+        nguoi_thuc_hien: "Quản trị kiểm duyệt",
+      },
     ],
   },
   {
@@ -266,12 +297,14 @@ const INITIAL_VOUCHERS = [
     ma_hs: "hs-001",
     ten_dn: "Công ty TNHH AmThucViet",
     ten_voucher: "E-Voucher Trị Giá 200.000đ Áp Dụng Cho Toàn Menu",
-    mo_ta: "Voucher giảm tiền mặt 200k áp dụng cho hóa đơn từ 500k tại toàn bộ chi nhánh hệ thống AmThucViet.",
+    mo_ta:
+      "Voucher giảm tiền mặt 200k áp dụng cho hóa đơn từ 500k tại toàn bộ chi nhánh hệ thống AmThucViet.",
     gia_goc: 200000,
     gia_ban: 120000,
     ma_danh_muc: "cat-1",
     ten_danh_muc: "Ẩm thực & Nhà hàng",
-    dieu_kien_ap_dung: "Áp dụng tối đa 02 voucher/hóa đơn. Không quy đổi thành tiền mặt.",
+    dieu_kien_ap_dung:
+      "Áp dụng tối đa 02 voucher/hóa đơn. Không quy đổi thành tiền mặt.",
     chinh_sach_hoan_huy: "Không áp dụng hoàn hủy.",
     so_luong_phat_hanh: 1000,
     so_luong_da_ban: 0,
@@ -280,12 +313,17 @@ const INITIAL_VOUCHERS = [
     trang_thai: "Cho duyet",
     trang_thai_kiem_duyet: "Cho duyet",
     trang_thai_cong_bo: "Cho hien thi",
-    hinh_anh_url: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80",
+    hinh_anh_url:
+      "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80",
     ma_chi_nhanh: ["cn-001"],
     ly_do_tu_choi: "",
     ngay_tao: "2026-07-27T14:30:00Z",
     lich_su_duyet: [
-      { ngay: "2026-07-27 14:30", hanh_dong: "Gửi yêu cầu xét duyệt", nguoi_thuc_hien: "Đối tác" },
+      {
+        ngay: "2026-07-27 14:30",
+        hanh_dong: "Gửi yêu cầu xét duyệt",
+        nguoi_thuc_hien: "Đối tác",
+      },
     ],
   },
   {
@@ -293,7 +331,8 @@ const INITIAL_VOUCHERS = [
     ma_hs: "hs-002",
     ten_dn: "Công ty Cổ phần Spa & Wellbeing Lotus",
     ten_voucher: "Gói Liệu Trình Massage Body Thảo Dược 90 Phút",
-    mo_ta: "Thư giãn sâu với kỹ thuật massage bấm huyệt truyền thống kết hợp tinh dầu thảo dược thiên nhiên độc quyền.",
+    mo_ta:
+      "Thư giãn sâu với kỹ thuật massage bấm huyệt truyền thống kết hợp tinh dầu thảo dược thiên nhiên độc quyền.",
     gia_goc: 1200000,
     gia_ban: 499000,
     ma_danh_muc: "cat-3",
@@ -307,12 +346,17 @@ const INITIAL_VOUCHERS = [
     trang_thai: "Cho duyet",
     trang_thai_kiem_duyet: "Cho duyet",
     trang_thai_cong_bo: "Cho hien thi",
-    hinh_anh_url: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=800&q=80",
+    hinh_anh_url:
+      "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=800&q=80",
     ma_chi_nhanh: ["cn-003"],
     ly_do_tu_choi: "",
     ngay_tao: "2026-07-28T09:00:00Z",
     lich_su_duyet: [
-      { ngay: "2026-07-28 09:00", hanh_dong: "Gửi yêu cầu xét duyệt", nguoi_thuc_hien: "Đối tác" },
+      {
+        ngay: "2026-07-28 09:00",
+        hanh_dong: "Gửi yêu cầu xét duyệt",
+        nguoi_thuc_hien: "Đối tác",
+      },
     ],
   },
 ];
@@ -321,7 +365,7 @@ const INITIAL_AUDIT_LOGS = [
   {
     log_id: "log-1",
     hanh_dong: "Phê duyệt đối tác",
-    vai_tro_thuc_hien: "Admin",
+    vai_tro_thuc_hien: "Admin kiem duyet",
     doi_tuong: "HOSODN",
     ma_doi_tuong: "hs-001",
     ly_do_thuc_hien: "Hồ sơ pháp lý đầy đủ và hợp lệ",
@@ -331,10 +375,11 @@ const INITIAL_AUDIT_LOGS = [
   {
     log_id: "log-2",
     hanh_dong: "Phê duyệt Voucher",
-    vai_tro_thuc_hien: "Admin",
+    vai_tro_thuc_hien: "Admin kiem duyet",
     doi_tuong: "VOUCHER",
     ma_doi_tuong: "v-001",
-    ly_do_thuc_hien: "Voucher đáp ứng đúng quy định chiết khấu và điều kiện áp dụng",
+    ly_do_thuc_hien:
+      "Voucher đáp ứng đúng quy định chiết khấu và điều kiện áp dụng",
     thoi_diem: "2026-07-22T10:15:00Z",
     ket_qua: "Thanh cong",
   },
@@ -386,7 +431,10 @@ class MockDataStore {
 
   getActivePartner() {
     const data = this.getData();
-    return data.partners.find((p) => p.ma_hs === data.activePartnerId) || data.partners[0];
+    return (
+      data.partners.find((p) => p.ma_hs === data.activePartnerId) ||
+      data.partners[0]
+    );
   }
 
   // Partners
@@ -400,8 +448,12 @@ class MockDataStore {
       let count = 0;
       if (p.trang_thai === "Cho duyet") count += 1;
 
-      const pendingProf = profileRequests.filter((r) => r.ma_hs === p.ma_hs && r.trang_thai === "Cho duyet").length;
-      const pendingBranch = branchRequests.filter((r) => r.ma_hs === p.ma_hs && r.trang_thai === "Cho duyet").length;
+      const pendingProf = profileRequests.filter(
+        (r) => r.ma_hs === p.ma_hs && r.trang_thai === "Cho duyet",
+      ).length;
+      const pendingBranch = branchRequests.filter(
+        (r) => r.ma_hs === p.ma_hs && r.trang_thai === "Cho duyet",
+      ).length;
 
       return {
         ...p,
@@ -419,15 +471,11 @@ class MockDataStore {
   }
 
   getStaffsByPartner(partnerId) {
-    return this.getStaffs().filter(
-      staff => staff.ma_hs === partnerId
-    );
+    return this.getStaffs().filter((staff) => staff.ma_hs === partnerId);
   }
 
   getStaffById(id) {
-    return this.getStaffs().find(
-      staff => staff.ma_nv === id
-    );
+    return this.getStaffs().find((staff) => staff.ma_nv === id);
   }
 
   updatePartnerProfile(partnerId, updatedFields) {
@@ -450,7 +498,9 @@ class MockDataStore {
       ten_dn: registrationForm.ten_dn,
       ma_so_thue: registrationForm.ma_so_thue,
       dia_chi: registrationForm.dia_chi,
-      giay_phep_kinh_doanh: registrationForm.giay_phep_kinh_doanh || "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80",
+      giay_phep_kinh_doanh:
+        registrationForm.giay_phep_kinh_doanh ||
+        "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80",
       ngay_tao: new Date().toISOString(),
       trang_thai: "Cho duyet",
       ly_do_tu_choi: "",
@@ -485,13 +535,16 @@ class MockDataStore {
     if (partner) {
       partner.trang_thai = "Dang hoat dong";
       partner.ly_do_tu_choi = "";
-      partner.branches = partner.branches.map((b) => ({ ...b, trang_thai: "Dang hoat dong" }));
+      partner.branches = partner.branches.map((b) => ({
+        ...b,
+        trang_thai: "Dang hoat dong",
+      }));
 
       // Add audit log
       data.auditLogs.unshift({
         log_id: `log-${Date.now()}`,
         hanh_dong: "Phê duyệt đối tác",
-        vai_tro_thuc_hien: "Admin",
+        vai_tro_thuc_hien: "Admin kiem duyet",
         doi_tuong: "HOSODN",
         ma_doi_tuong: partnerId,
         ly_do_thuc_hien: reason || "Hồ sơ hợp lệ",
@@ -513,7 +566,7 @@ class MockDataStore {
       data.auditLogs.unshift({
         log_id: `log-${Date.now()}`,
         hanh_dong: "Từ chối đối tác",
-        vai_tro_thuc_hien: "Admin",
+        vai_tro_thuc_hien: "Admin kiem duyet",
         doi_tuong: "HOSODN",
         ma_doi_tuong: partnerId,
         ly_do_thuc_hien: reason,
@@ -534,7 +587,7 @@ class MockDataStore {
       data.auditLogs.unshift({
         log_id: `log-${Date.now()}`,
         hanh_dong: lock ? "Khóa đối tác" : "Mở khóa đối tác",
-        vai_tro_thuc_hien: "Admin",
+        vai_tro_thuc_hien: "Admin kiem duyet",
         doi_tuong: "HOSODN",
         ma_doi_tuong: partnerId,
         ly_do_thuc_hien: reason,
@@ -593,7 +646,9 @@ class MockDataStore {
             gio_mo_cua: req.gio_mo_cua,
           });
         } else if (req.loai_yeu_cau === "Cap nhat" && req.ma_chi_nhanh) {
-          const branch = partner.branches.find((b) => b.ma_chi_nhanh === req.ma_chi_nhanh);
+          const branch = partner.branches.find(
+            (b) => b.ma_chi_nhanh === req.ma_chi_nhanh,
+          );
           if (branch) {
             const updatePayload = req.du_lieu_de_xuat || {
               ten_chi_nhanh: req.ten_chi_nhanh,
@@ -606,7 +661,9 @@ class MockDataStore {
             branch.trang_thai = "Dang hoat dong";
           }
         } else if (req.loai_yeu_cau === "Xoá" && req.ma_chi_nhanh) {
-          const branch = partner.branches.find((b) => b.ma_chi_nhanh === req.ma_chi_nhanh);
+          const branch = partner.branches.find(
+            (b) => b.ma_chi_nhanh === req.ma_chi_nhanh,
+          );
           if (branch) {
             branch.trang_thai = "Tam ngung hoat dong";
           }
@@ -642,35 +699,53 @@ class MockDataStore {
   saveVoucher(voucherForm) {
     const data = this.getData();
     const isEdit = !!voucherForm.ma_voucher;
-    const partner = data.partners.find((p) => p.ma_hs === (voucherForm.ma_hs || data.activePartnerId));
-    const category = data.categories.find((c) => c.id === voucherForm.ma_danh_muc);
+    const partner = data.partners.find(
+      (p) => p.ma_hs === (voucherForm.ma_hs || data.activePartnerId),
+    );
+    const category = data.categories.find(
+      (c) => c.id === voucherForm.ma_danh_muc,
+    );
 
     const now = new Date();
     const dateStr = now.toISOString().replace("T", " ").slice(0, 16);
 
     if (isEdit) {
-      const idx = data.vouchers.findIndex((v) => v.ma_voucher === voucherForm.ma_voucher);
+      const idx = data.vouchers.findIndex(
+        (v) => v.ma_voucher === voucherForm.ma_voucher,
+      );
       if (idx !== -1) {
         const existing = data.vouchers[idx];
         const isSubmitNow = voucherForm.isSubmit;
-        const newStatus = voucherForm.trang_thai || (isSubmitNow ? "Cho duyet" : existing.trang_thai);
-        const newKiemDuyet = voucherForm.trang_thai_kiem_duyet || (isSubmitNow ? "Cho duyet" : existing.trang_thai_kiem_duyet);
+        const newStatus =
+          voucherForm.trang_thai ||
+          (isSubmitNow ? "Cho duyet" : existing.trang_thai);
+        const newKiemDuyet =
+          voucherForm.trang_thai_kiem_duyet ||
+          (isSubmitNow ? "Cho duyet" : existing.trang_thai_kiem_duyet);
 
         data.vouchers[idx] = {
           ...existing,
           ...voucherForm,
           gia_goc: Number(voucherForm.gia_goc || existing.gia_goc),
           gia_ban: Number(voucherForm.gia_ban || existing.gia_ban),
-          so_luong_phat_hanh: Number(voucherForm.so_luong_phat_hanh || existing.so_luong_phat_hanh),
-          ten_danh_muc: category ? category.ten_danh_muc : existing.ten_danh_muc,
+          so_luong_phat_hanh: Number(
+            voucherForm.so_luong_phat_hanh || existing.so_luong_phat_hanh,
+          ),
+          ten_danh_muc: category
+            ? category.ten_danh_muc
+            : existing.ten_danh_muc,
           trang_thai: newStatus,
           trang_thai_kiem_duyet: newKiemDuyet,
-          ly_do_tu_choi: newStatus === "Cho duyet" ? "" : existing.ly_do_tu_choi,
+          ly_do_tu_choi:
+            newStatus === "Cho duyet" ? "" : existing.ly_do_tu_choi,
           lich_su_duyet: [
             ...(existing.lich_su_duyet || []),
             {
               ngay: dateStr,
-              hanh_dong: newStatus === "Cho duyet" ? "Gửi lại duyệt" : "Cập nhật thông tin",
+              hanh_dong:
+                newStatus === "Cho duyet"
+                  ? "Gửi lại duyệt"
+                  : "Cập nhật thông tin",
               nguoi_thuc_hien: "Đối tác",
             },
           ],
@@ -692,8 +767,11 @@ class MockDataStore {
         gia_ban: Number(voucherForm.gia_ban),
         ma_danh_muc: voucherForm.ma_danh_muc,
         ten_danh_muc: category ? category.ten_danh_muc : "Khác",
-        dieu_kien_ap_dung: voucherForm.dieu_kien_ap_dung || "Áp dụng theo quy định chung.",
-        chinh_sach_hoan_huy: voucherForm.chinh_sach_hoan_huy || "Theo chính sách của nhà cung cấp.",
+        dieu_kien_ap_dung:
+          voucherForm.dieu_kien_ap_dung || "Áp dụng theo quy định chung.",
+        chinh_sach_hoan_huy:
+          voucherForm.chinh_sach_hoan_huy ||
+          "Theo chính sách của nhà cung cấp.",
         so_luong_phat_hanh: Number(voucherForm.so_luong_phat_hanh),
         so_luong_da_ban: 0,
         tg_bat_dau_ban: voucherForm.tg_bat_dau_ban,
@@ -701,7 +779,9 @@ class MockDataStore {
         trang_thai: isSubmitNow ? "Cho duyet" : "Nhap",
         trang_thai_kiem_duyet: isSubmitNow ? "Cho duyet" : "Nhap",
         trang_thai_cong_bo: "Cho hien thi",
-        hinh_anh_url: voucherForm.hinh_anh_url || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80",
+        hinh_anh_url:
+          voucherForm.hinh_anh_url ||
+          "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80",
         ma_chi_nhanh: voucherForm.ma_chi_nhanh || [],
         ly_do_tu_choi: "",
         ngay_tao: new Date().toISOString(),
@@ -759,13 +839,13 @@ class MockDataStore {
       v.lich_su_duyet.push({
         ngay: now.toISOString().replace("T", " ").slice(0, 16),
         hanh_dong: isHidden ? "Đã duyệt (Tạm ẩn)" : "Phê duyệt công bố",
-        nguoi_thuc_hien: "Admin",
+        nguoi_thuc_hien: "Quản trị kiểm duyệt",
       });
 
       data.auditLogs.unshift({
         log_id: `log-${Date.now()}`,
         hanh_dong: "Phê duyệt Voucher",
-        vai_tro_thuc_hien: "Admin",
+        vai_tro_thuc_hien: "Admin kiem duyet",
         doi_tuong: "VOUCHER",
         ma_doi_tuong: voucherId,
         ly_do_thuc_hien: "Đáp ứng đầy đủ điều kiện phát hành",
@@ -789,13 +869,13 @@ class MockDataStore {
       v.lich_su_duyet.push({
         ngay: now.toISOString().replace("T", " ").slice(0, 16),
         hanh_dong: `Từ chối: ${reason}`,
-        nguoi_thuc_hien: "Admin",
+        nguoi_thuc_hien: "Quản trị kiểm duyệt",
       });
 
       data.auditLogs.unshift({
         log_id: `log-${Date.now()}`,
         hanh_dong: "Từ chối Voucher",
-        vai_tro_thuc_hien: "Admin",
+        vai_tro_thuc_hien: "Admin kiem duyet",
         doi_tuong: "VOUCHER",
         ma_doi_tuong: voucherId,
         ly_do_thuc_hien: reason,
@@ -837,7 +917,6 @@ class MockDataStore {
       ma_so_thue_moi: payload.ma_so_thue_moi || null,
       dia_chi_moi: payload.dia_chi_moi || null,
       giay_phep_kinh_doanh_moi: payload.giay_phep_kinh_doanh_moi || null,
-      id_nguoi_dai_dien_moi: payload.id_nguoi_dai_dien_moi || null,
       ho_ten_nguoi_dai_dien_moi: payload.ho_ten_nguoi_dai_dien_moi || null,
       sdt_nguoi_dai_dien_moi: payload.sdt_nguoi_dai_dien_moi || null,
       email_nguoi_dai_dien_moi: payload.email_nguoi_dai_dien_moi || null,
@@ -856,7 +935,10 @@ class MockDataStore {
   getPendingProfileRequest(partnerId) {
     const data = this.getData();
     const list = data.profileRequests || [];
-    return list.find((r) => r.ma_hs === partnerId && r.trang_thai === "Cho duyet") || null;
+    return (
+      list.find((r) => r.ma_hs === partnerId && r.trang_thai === "Cho duyet") ||
+      null
+    );
   }
 
   approveProfileRequest(reqId, adminId = null) {
@@ -871,21 +953,27 @@ class MockDataStore {
 
     // Apply changes to partner record
     const partner = data.partners.find(
-      (p) => p.ma_hs === req.ma_hs || p.id === req.ma_hs || p.id_nguoi_dai_dien === req.ma_hs
+      (p) => p.ma_hs === req.ma_hs || p.id === req.ma_hs,
     );
     if (partner) {
       if (req.ten_dn_moi) partner.ten_dn = req.ten_dn_moi;
       if (req.ma_so_thue_moi) partner.ma_so_thue = req.ma_so_thue_moi;
       if (req.dia_chi_moi) partner.dia_chi = req.dia_chi_moi;
-      if (req.giay_phep_kinh_doanh_moi) partner.giay_phep_kinh_doanh = req.giay_phep_kinh_doanh_moi;
+      if (req.giay_phep_kinh_doanh_moi)
+        partner.giay_phep_kinh_doanh = req.giay_phep_kinh_doanh_moi;
 
       if (!partner.nguoi_dai_dien) partner.nguoi_dai_dien = {};
-      if (req.ho_ten_nguoi_dai_dien_moi) partner.nguoi_dai_dien.ho_ten = req.ho_ten_nguoi_dai_dien_moi;
-      if (req.sdt_nguoi_dai_dien_moi) partner.nguoi_dai_dien.sdt = req.sdt_nguoi_dai_dien_moi;
-      if (req.email_nguoi_dai_dien_moi) partner.nguoi_dai_dien.email = req.email_nguoi_dai_dien_moi;
+      if (req.ho_ten_nguoi_dai_dien_moi)
+        partner.nguoi_dai_dien.ho_ten = req.ho_ten_nguoi_dai_dien_moi;
+      if (req.sdt_nguoi_dai_dien_moi)
+        partner.nguoi_dai_dien.sdt = req.sdt_nguoi_dai_dien_moi;
+      if (req.email_nguoi_dai_dien_moi)
+        partner.nguoi_dai_dien.email = req.email_nguoi_dai_dien_moi;
       if (req.cccd_moi) partner.nguoi_dai_dien.cccd = req.cccd_moi;
-      if (req.ngay_sinh || req.ngay_sinh_moi) partner.nguoi_dai_dien.ngay_sinh = req.ngay_sinh || req.ngay_sinh_moi;
-      if (req.gioi_tinh || req.gioi_tinh_moi) partner.nguoi_dai_dien.gioi_tinh = req.gioi_tinh || req.gioi_tinh_moi;
+      if (req.ngay_sinh || req.ngay_sinh_moi)
+        partner.nguoi_dai_dien.ngay_sinh = req.ngay_sinh || req.ngay_sinh_moi;
+      if (req.gioi_tinh || req.gioi_tinh_moi)
+        partner.nguoi_dai_dien.gioi_tinh = req.gioi_tinh || req.gioi_tinh_moi;
     }
 
     this.saveData(data);

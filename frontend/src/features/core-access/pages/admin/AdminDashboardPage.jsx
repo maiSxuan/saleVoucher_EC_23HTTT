@@ -36,6 +36,37 @@ import {
   Tooltip,
 } from 'recharts';
 import { fetchDashboardSummary } from '../../../../shared/api/adminDashboardApi';
+import { ADMIN_ROLES, getAdminRole } from '../../../../shared/constants/admin-roles';
+
+const DASHBOARD_CONFIG = {
+  [ADMIN_ROLES.SYSTEM]: {
+    eyebrow: 'Hệ Thống Quản Trị Trung Tâm',
+    title: 'Tổng quan hệ thống Voucher',
+    description: 'Đây là bảng điều khiển tổng hợp chỉ số hệ thống và doanh thu.',
+    statKeys: ['totalUsers', 'activePartners', 'activeVouchers', 'totalRevenue'],
+    showSystemCharts: true,
+    showPartnerQueue: false,
+    showCustomerQueue: false,
+  },
+  [ADMIN_ROLES.MODERATION]: {
+    eyebrow: 'Trung Tâm Kiểm Duyệt',
+    title: 'Tổng quan kiểm duyệt',
+    description: 'Đây là bảng điều khiển các hồ sơ đối tác và voucher đang chờ kiểm duyệt.',
+    statKeys: ['pendingPartners', 'profileChangeRequests', 'pendingVouchers'],
+    showSystemCharts: false,
+    showPartnerQueue: true,
+    showCustomerQueue: false,
+  },
+  [ADMIN_ROLES.OPERATION]: {
+    eyebrow: 'Trung Tâm Vận Hành',
+    title: 'Tổng quan vận hành',
+    description: 'Đây là bảng điều khiển các yêu cầu từ khách hàng và đơn hàng cần xử lý.',
+    statKeys: ['pendingOrders', 'complaintOrders'],
+    showSystemCharts: false,
+    showPartnerQueue: false,
+    showCustomerQueue: true,
+  },
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: định dạng số tiền VND
@@ -113,7 +144,7 @@ function StatCard({ icon: Icon, label, value, sub, color, linkTo, badge, badgeCo
         {sub && <div className="text-[11px] text-slate-400 mt-0.5">{sub}</div>}
       </div>
       {linkTo && (
-        <div className="flex items-center gap-1 text-xs font-semibold text-blue-600 mt-auto pt-2 border-t border-slate-100">
+        <div className="flex items-center gap-1 text-xs font-semibold text-sky-700 mt-auto pt-2 border-t border-slate-100">
           <span>Xem chi tiết</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </div>
@@ -140,13 +171,13 @@ function CustomChartTooltip({ active, payload }) {
     return (
       <div className="bg-slate-900/95 backdrop-blur-md text-white p-3.5 rounded-xl shadow-xl border border-slate-700/60 text-xs min-w-[170px]">
         <div className="font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
-          <Calendar className="w-3.5 h-3.5 text-blue-400" />
+          <Calendar className="w-3.5 h-3.5 text-sky-400" />
           {data.fullLabel || data.label || data.date}
         </div>
         <div className="space-y-1">
           <div className="flex items-center justify-between gap-3">
             <span className="text-slate-400">Doanh thu:</span>
-            <span className="font-bold text-emerald-400">{formatVndFull(data.revenue)}</span>
+            <span className="font-bold text-brand-accent-soft">{formatVndFull(data.revenue)}</span>
           </div>
           {data.count != null && (
             <div className="flex items-center justify-between gap-3">
@@ -182,6 +213,50 @@ function CustomPartnerTooltip({ active, payload }) {
   return null;
 }
 
+function WorkQueueGroup({ title, items, total, emptyText, allLink, dotClass, getDetailLink }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h4 className="text-sm font-bold text-slate-800">
+          {title} <span className="ml-1 text-xs font-semibold text-slate-400">({total ?? items.length})</span>
+        </h4>
+        <Link to={allLink} className="flex items-center gap-1 text-xs font-semibold text-sky-700 hover:text-sky-800">
+          Xem tất cả <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+
+      {items.length === 0 ? (
+        <p className="py-2 text-xs italic text-slate-400">{emptyText}</p>
+      ) : (
+        <div className="space-y-2">
+          {items.map((item) => {
+            const detailLink = getDetailLink(item);
+            return (
+              <div key={item.id} className="flex flex-col gap-2 rounded-lg border border-slate-100 bg-slate-50/70 p-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${dotClass}`} />
+                    <p className="truncate text-xs font-semibold text-slate-800">{item.name}</p>
+                  </div>
+                  {item.description && <p className="mt-1 line-clamp-2 pl-4 text-[11px] text-slate-500">{item.description}</p>}
+                </div>
+                <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
+                  <span className="flex items-center gap-1 text-[11px] text-slate-400">
+                    <Clock className="h-3 w-3" /> {formatDateDisplay(item.date)}
+                  </span>
+                  <Link to={detailLink} className="text-xs font-semibold text-sky-700 hover:text-sky-800 hover:underline">
+                    Xem chi tiết
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -195,8 +270,8 @@ export default function AdminDashboardPage() {
   // Chế độ xem biểu đồ doanh thu: 'day' | 'month' | 'year'
   const [timelineMode, setTimelineMode] = useState('day');
 
-  const loadSummary = useCallback(async () => {
-    setLoading(true);
+  const loadSummary = useCallback(async ({ showLoader = true } = {}) => {
+    if (showLoader) setLoading(true);
     setError(null);
     try {
       const data = await fetchDashboardSummary();
@@ -210,29 +285,46 @@ export default function AdminDashboardPage() {
       }
       setError(err.message || 'Không thể tải dữ liệu dashboard');
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
     }
   }, [navigate]);
 
   useEffect(() => {
     loadSummary();
+    const refreshInterval = window.setInterval(() => loadSummary({ showLoader: false }), 60000);
+    const refreshOnFocus = () => loadSummary({ showLoader: false });
+    window.addEventListener('focus', refreshOnFocus);
+    return () => {
+      window.clearInterval(refreshInterval);
+      window.removeEventListener('focus', refreshOnFocus);
+    };
   }, [loadSummary]);
 
-  // ── User hiện tại ──
-  let adminName = 'Admin';
+  // ── User và cấu hình dashboard theo role hiện tại ──
+  let currentUser = {};
   try {
-    const u = JSON.parse(localStorage.getItem('user') || '{}');
-    adminName = u.ho_ten || u.name || 'Admin';
+    currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   } catch {
     /* empty */
   }
+  const adminName = currentUser.ho_ten || currentUser.name || 'Quản trị viên';
+  const adminRole = getAdminRole(currentUser);
+  const dashboardConfig = DASHBOARD_CONFIG[adminRole] || {
+    eyebrow: 'Cổng Quản Trị',
+    title: 'Tổng quan',
+    description: 'Bảng điều khiển theo quyền quản trị được cấp.',
+    statKeys: [],
+    showSystemCharts: false,
+    showPartnerQueue: false,
+    showCustomerQueue: false,
+  };
 
   // ── Thời gian cập nhật ──
   const updatedText = lastUpdated
     ? `Cập nhật lúc ${lastUpdated.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`
     : '';
 
-  // ── 7 Chỉ số tổng quan ──
+  // ── Chỉ số tổng quan — giữ nguyên dữ liệu, chỉ lọc theo quyền sở hữu ──
   const stats = [
     {
       key: 'totalUsers',
@@ -240,7 +332,7 @@ export default function AdminDashboardPage() {
       label: 'Tổng người dùng',
       value: summary?.totalUsers ?? null,
       sub: 'Tất cả tài khoản trong hệ thống',
-      color: { bg: 'bg-blue-50', icon: 'text-blue-600', border: 'border-blue-100' },
+       color: { bg: 'bg-sky-50', icon: 'text-sky-700', border: 'border-sky-200' },
       linkTo: '/admin/users',
     },
     {
@@ -249,8 +341,7 @@ export default function AdminDashboardPage() {
       label: 'Đối tác đang hoạt động',
       value: summary?.activePartners ?? null,
       sub: 'Hồ sơ doanh nghiệp đang hoạt động',
-      color: { bg: 'bg-emerald-50', icon: 'text-emerald-600', border: 'border-emerald-100' },
-      linkTo: '/admin/partners',
+      color: { bg: 'bg-semantic-success-soft', icon: 'text-semantic-success', border: 'border-semantic-success-border' },
     },
     {
       key: 'pendingPartners',
@@ -258,10 +349,21 @@ export default function AdminDashboardPage() {
       label: 'Đối tác chờ duyệt',
       value: summary?.pendingPartners ?? null,
       sub: 'Hồ sơ đang chờ xét duyệt',
-      color: { bg: 'bg-amber-50', icon: 'text-amber-600', border: 'border-amber-100' },
+      color: { bg: 'bg-semantic-warning-soft', icon: 'text-semantic-warning', border: 'border-semantic-warning-border' },
       linkTo: '/admin/partners',
       badge: summary?.pendingPartners > 0 ? 'Cần xử lý' : null,
-      badgeColor: 'bg-amber-100 text-amber-700',
+      badgeColor: 'bg-semantic-warning-soft text-semantic-warning border border-semantic-warning-border',
+    },
+    {
+      key: 'profileChangeRequests',
+      icon: Building2,
+      label: 'Yêu cầu thay đổi hồ sơ doanh nghiệp',
+      value: summary?.workQueue?.partnerManagement?.counts?.profileChangeRequests ?? null,
+      sub: 'Yêu cầu cập nhật thông tin đang chờ duyệt',
+      color: { bg: 'bg-sky-50', icon: 'text-sky-700', border: 'border-sky-200' },
+      linkTo: '/admin/partners',
+      badge: summary?.workQueue?.partnerManagement?.counts?.profileChangeRequests > 0 ? 'Cần xử lý' : null,
+      badgeColor: 'bg-sky-50 text-sky-700 border border-sky-200',
     },
     {
       key: 'activeVouchers',
@@ -269,8 +371,7 @@ export default function AdminDashboardPage() {
       label: 'Voucher đang bán',
       value: summary?.activeVouchers ?? null,
       sub: 'Voucher đã duyệt, đang lưu hành',
-      color: { bg: 'bg-violet-50', icon: 'text-violet-600', border: 'border-violet-100' },
-      linkTo: '/admin/vouchers',
+      color: { bg: 'bg-brand-accent-soft', icon: 'text-brand-accent-foreground', border: 'border-brand-accent-border' },
     },
     {
       key: 'pendingVouchers',
@@ -278,10 +379,10 @@ export default function AdminDashboardPage() {
       label: 'Voucher chờ duyệt',
       value: summary?.pendingVouchers ?? null,
       sub: 'Yêu cầu phát hành chưa duyệt',
-      color: { bg: 'bg-orange-50', icon: 'text-orange-600', border: 'border-orange-100' },
+      color: { bg: 'bg-semantic-warning-soft', icon: 'text-semantic-warning', border: 'border-semantic-warning-border' },
       linkTo: '/admin/vouchers',
       badge: summary?.pendingVouchers > 0 ? 'Cần duyệt' : null,
-      badgeColor: 'bg-orange-100 text-orange-700',
+      badgeColor: 'bg-semantic-warning-soft text-semantic-warning border border-semantic-warning-border',
     },
     {
       key: 'pendingOrders',
@@ -289,9 +390,9 @@ export default function AdminDashboardPage() {
       label: 'Đơn hàng chờ xử lí',
       value: summary?.pendingOrders ?? null,
       sub: 'Chờ hoàn tiền hoặc lỗi sinh mã',
-      color: { bg: 'bg-rose-50', icon: 'text-rose-600', border: 'border-rose-100' },
+      color: { bg: 'bg-semantic-error-soft', icon: 'text-semantic-error', border: 'border-semantic-error-border' },
       badge: summary?.pendingOrders > 0 ? 'Cần xử lý' : null,
-      badgeColor: 'bg-rose-100 text-rose-700',
+      badgeColor: 'bg-semantic-error-soft text-semantic-error border border-semantic-error-border',
       linkTo: '/admin/orders',
     },
     {
@@ -300,9 +401,9 @@ export default function AdminDashboardPage() {
       label: 'Đơn hàng đang khiếu nại',
       value: summary?.complaintOrders ?? null,
       sub: 'Khách hàng yêu cầu hỗ trợ',
-      color: { bg: 'bg-red-50', icon: 'text-red-600', border: 'border-red-100' },
+      color: { bg: 'bg-semantic-error-soft', icon: 'text-semantic-error', border: 'border-semantic-error-border' },
       badge: summary?.complaintOrders > 0 ? 'Cần xử lý' : null,
-      badgeColor: 'bg-red-100 text-red-700',
+      badgeColor: 'bg-semantic-error-soft text-semantic-error border border-semantic-error-border',
       linkTo: '/admin/orders',
     },
     {
@@ -311,9 +412,10 @@ export default function AdminDashboardPage() {
       label: 'Doanh thu tổng',
       value: summary?.totalRevenue != null ? formatVnd(summary.totalRevenue) : null,
       sub: 'Tổng thanh toán thành công',
-      color: { bg: 'bg-teal-50', icon: 'text-teal-600', border: 'border-teal-100' },
+      color: { bg: 'bg-sky-50', icon: 'text-sky-700', border: 'border-sky-200' },
     },
   ];
+  const visibleStats = stats.filter((stat) => dashboardConfig.statKeys.includes(stat.key));
 
   // ── Dữ liệu biểu đồ doanh thu theo tab đã chọn ──
   const chartData = useMemo(() => {
@@ -327,12 +429,22 @@ export default function AdminDashboardPage() {
 
   // ── Dữ liệu phân bố đối tác ──
   const partnerStatusData = useMemo(() => {
-    return summary?.partnerDistribution?.items || [
-      { status: 'Dang hoat dong', label: 'Đang hoạt động', count: 0, fill: '#10b981' },
-      { status: 'Cho duyet', label: 'Chờ xét duyệt', count: 0, fill: '#f59e0b' },
-      { status: 'Tam khoa', label: 'Tạm khóa', count: 0, fill: '#ef4444' },
-      { status: 'Tu choi', label: 'Từ chối', count: 0, fill: '#64748b' },
+    const statusColors = {
+      'Dang hoat dong': 'var(--brand-success)',
+      'Cho duyet': 'var(--brand-warning)',
+      'Tam khoa': 'var(--brand-error)',
+      'Tu choi': 'var(--brand-text-muted)',
+    };
+    const items = summary?.partnerDistribution?.items || [
+      { status: 'Dang hoat dong', label: 'Đang hoạt động', count: 0 },
+      { status: 'Cho duyet', label: 'Chờ xét duyệt', count: 0 },
+      { status: 'Tam khoa', label: 'Tạm khóa', count: 0 },
+      { status: 'Tu choi', label: 'Từ chối', count: 0 },
     ];
+    return items.map((item) => ({
+      ...item,
+      fill: statusColors[item.status] || 'var(--brand-text-muted)',
+    }));
   }, [summary]);
 
   const totalPartners = summary?.partnerDistribution?.total ?? 0;
@@ -340,46 +452,57 @@ export default function AdminDashboardPage() {
   // ── Dữ liệu hàng đợi công việc cần xử lý ──
   const workQueue = summary?.workQueue || {
     totalPending: 0,
-    pendingPartners: [],
-    pendingBranches: [],
-    pendingVouchers: [],
-    refundOrders: [],
-    failedGenOrders: [],
+    partnerManagement: {
+      counts: { pendingPartners: 0, branchChangeRequests: 0, profileChangeRequests: 0, pendingVouchers: 0 },
+      pendingPartners: [],
+      branchChangeRequests: [],
+      profileChangeRequests: [],
+      pendingVouchers: [],
+    },
+    customerRequests: {
+      counts: { cancelRequests: 0, complaints: 0, refundOrders: 0, failedGenOrders: 0 },
+      cancelRequests: [],
+      complaints: [],
+      refundOrders: [],
+      failedGenOrders: [],
+    },
   };
+  const partnerWork = workQueue.partnerManagement || {};
+  const customerWork = workQueue.customerRequests || {};
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12">
       {/* ── Header Banner ── */}
-      <div className="bg-gradient-to-r from-blue-900 via-slate-900 to-indigo-950 text-white rounded-2xl p-6 lg:p-8 shadow-sm">
+      <div className="bg-gradient-to-r from-sky-50 via-white to-snow-100 text-snow-900 rounded-2xl border border-slate-200 p-6 lg:p-8 shadow-card">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-semibold mb-3 border border-blue-400/30">
-              <ShieldCheck className="w-3.5 h-3.5" /> Hệ Thống Quản Trị Trung Tâm
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-100 text-sky-800 text-xs font-semibold mb-3 border border-sky-200">
+              <ShieldCheck className="w-3.5 h-3.5" /> {dashboardConfig.eyebrow}
             </div>
             <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">
-              Tổng quan hệ thống Voucher
+              {dashboardConfig.title}
             </h1>
-            <p className="text-slate-300 text-sm mt-2">
-              Xin chào, <span className="font-semibold text-white">{adminName}</span>. Đây là bảng điều khiển tổng hợp chỉ số vận hành và doanh thu.
+            <p className="text-snow-600 text-sm mt-2">
+              Xin chào, <span className="font-semibold text-snow-900">{adminName}</span>. {dashboardConfig.description}
             </p>
           </div>
           <div className="shrink-0 flex items-center gap-3">
             {updatedText && !loading && (
-              <div className="text-[11px] text-slate-400 hidden md:block">{updatedText}</div>
+              <div className="text-[11px] text-snow-500 hidden md:block">{updatedText}</div>
             )}
             <button
               type="button"
-              onClick={loadSummary}
+              onClick={() => loadSummary()}
               disabled={loading}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-white/80 bg-white/10 hover:bg-white/20 transition-colors border border-white/10 disabled:opacity-50 cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-sky-700 bg-white hover:bg-sky-50 transition-colors border border-slate-200 disabled:opacity-50 cursor-pointer"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
               Làm mới
             </button>
-            <div className="px-4 py-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/10 text-center hidden sm:block">
-              <div className="text-[10px] text-slate-300">Trạng thái</div>
-              <div className="text-xs font-bold text-emerald-400 flex items-center gap-1 justify-center mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Hoạt động
+            <div className="px-4 py-3 bg-white rounded-xl border border-slate-200 text-center hidden sm:block">
+              <div className="text-[10px] text-snow-500">Trạng thái</div>
+              <div className="text-xs font-bold text-semantic-success flex items-center gap-1 justify-center mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-semantic-success animate-pulse" /> Hoạt động
               </div>
             </div>
           </div>
@@ -388,27 +511,27 @@ export default function AdminDashboardPage() {
 
       {/* ── Error Banner ── */}
       {error && !loading && (
-        <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+        <div className="bg-semantic-error-soft border border-semantic-error-border rounded-xl p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-semantic-error shrink-0 mt-0.5" />
           <div className="flex-1">
-            <p className="text-sm font-semibold text-rose-800">Lỗi tải dữ liệu dashboard</p>
-            <p className="text-xs text-rose-600 mt-0.5">{error}</p>
+            <p className="text-sm font-semibold text-semantic-error">Lỗi tải dữ liệu dashboard</p>
+            <p className="text-xs text-semantic-error mt-0.5">{error}</p>
           </div>
           <button
             type="button"
             onClick={loadSummary}
-            className="text-xs font-semibold text-rose-700 hover:text-rose-900 underline cursor-pointer"
+            className="text-xs font-semibold text-semantic-error hover:brightness-90 underline cursor-pointer"
           >
             Thử lại
           </button>
         </div>
       )}
 
-      {/* ── 7 Chỉ số tổng quan ── */}
+      {/* ── Chỉ số tổng quan theo role ── */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-            <TrendingUp className="w-4.5 h-4.5 text-blue-600" />
+            <TrendingUp className="w-4.5 h-4.5 text-sky-700" />
             Chỉ số tổng quan
           </h2>
           {!loading && summary?.generatedAt && (
@@ -420,13 +543,13 @@ export default function AdminDashboardPage() {
 
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 7 }).map((_, i) => (
+            {Array.from({ length: visibleStats.length }).map((_, i) => (
               <SkeletonCard key={i} />
             ))}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {stats.map((s) => (
+            {visibleStats.map((s) => (
               <StatCard
                 key={s.key}
                 icon={s.icon}
@@ -443,7 +566,8 @@ export default function AdminDashboardPage() {
         )}
       </div>
 
-      {/* ── KHU VỰC BIỂU ĐỒ: BIỂU ĐỒ ĐƯỜNG DOANH THU & BIỂU ĐỒ CỘT NẰM NGANG TRẠNG THÁI ĐỐI TÁC ── */}
+      {/* ── Biểu đồ hệ thống: chỉ Admin hệ thống sở hữu ── */}
+      {dashboardConfig.showSystemCharts && (
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* CỘT TRÁI (8/12): Biểu đồ đường tổng doanh thu */}
         <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col justify-between">
@@ -452,8 +576,8 @@ export default function AdminDashboardPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-100">
               <div>
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center">
-                    <Activity className="w-4 h-4 text-teal-600" />
+                  <div className="w-8 h-8 rounded-lg bg-brand-accent-soft border border-brand-accent-border flex items-center justify-center">
+                    <Activity className="w-4 h-4 text-brand-accent-foreground" />
                   </div>
                   <h2 className="text-base font-bold text-slate-900">
                     Biểu đồ tổng doanh thu
@@ -471,7 +595,7 @@ export default function AdminDashboardPage() {
                   onClick={() => setTimelineMode('day')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
                     timelineMode === 'day'
-                      ? 'bg-white text-blue-600 shadow-xs'
+                      ? 'bg-white text-sky-700 shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -482,7 +606,7 @@ export default function AdminDashboardPage() {
                   onClick={() => setTimelineMode('month')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
                     timelineMode === 'month'
-                      ? 'bg-white text-blue-600 shadow-xs'
+                      ? 'bg-white text-sky-700 shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -493,7 +617,7 @@ export default function AdminDashboardPage() {
                   onClick={() => setTimelineMode('year')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
                     timelineMode === 'year'
-                      ? 'bg-white text-blue-600 shadow-xs'
+                      ? 'bg-white text-sky-700 shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -524,8 +648,8 @@ export default function AdminDashboardPage() {
                   <AreaChart data={chartData} margin={{ top: 10, right: 15, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.35} />
-                        <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0.0} />
+                        <stop offset="5%" stopColor="var(--brand-primary)" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="var(--brand-primary)" stopOpacity={0.0} />
                       </linearGradient>
                     </defs>
 
@@ -566,12 +690,12 @@ export default function AdminDashboardPage() {
                     <Line
                       type="monotone"
                       dataKey="revenue"
-                      stroke="#0284c7"
+                      stroke="var(--brand-primary)"
                       strokeWidth={3}
-                      dot={{ r: 4, fill: '#0284c7', strokeWidth: 2, stroke: '#ffffff' }}
+                      dot={{ r: 4, fill: 'var(--brand-primary)', strokeWidth: 2, stroke: '#ffffff' }}
                       activeDot={{
                         r: 6,
-                        fill: '#0284c7',
+                        fill: 'var(--brand-primary)',
                         strokeWidth: 3,
                         stroke: '#bae6fd',
                       }}
@@ -588,8 +712,8 @@ export default function AdminDashboardPage() {
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center">
-                  <BarChart3 className="w-4 h-4 text-blue-600" />
+                <div className="w-8 h-8 rounded-lg bg-sky-50 border border-sky-200 flex items-center justify-center">
+                  <BarChart3 className="w-4 h-4 text-sky-700" />
                 </div>
                 <div>
                   <h2 className="text-base font-bold text-slate-900">Trạng thái đối tác</h2>
@@ -628,7 +752,7 @@ export default function AdminDashboardPage() {
                     <Tooltip content={<CustomPartnerTooltip />} />
                     <Bar dataKey="count" radius={[0, 6, 6, 0]}>
                       {partnerStatusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill || '#3b82f6'} />
+                        <Cell key={`cell-${index}`} fill={entry.fill || 'var(--brand-primary)'} />
                       ))}
                     </Bar>
                   </BarChart>
@@ -657,14 +781,16 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </div>
+      )}
 
-      {/* ── KHỐI "CÔNG VIỆC CẦN XỬ LÍ" (QUEUE CẦN XỬ LÝ) ── */}
+      {/* ── Queue nghiệp vụ được chuyển nguyên vẹn về role sở hữu ── */}
+      {(dashboardConfig.showPartnerQueue || dashboardConfig.showCustomerQueue) && (
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
         {/* Tiêu đề Queue */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center">
-              <ListTodo className="w-4 h-4 text-indigo-600" />
+            <div className="w-8 h-8 rounded-lg bg-sky-50 border border-sky-200 flex items-center justify-center">
+              <ListTodo className="w-4 h-4 text-sky-700" />
             </div>
             <h2 className="text-lg font-bold text-slate-900">
               Công việc cần xử lí
@@ -675,249 +801,113 @@ export default function AdminDashboardPage() {
           </span>
         </div>
 
-        <div className="space-y-6 divide-y divide-slate-100">
-          {/* 1. Đối tác chờ duyệt */}
-          <div className="pt-2 first:pt-0">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                Đối tác chờ duyệt
-              </h3>
-              <Link
-                to="/admin/partners"
-                className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
-              >
-                Xem tất cả <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-
-            {workQueue.pendingPartners.length === 0 ? (
-              <div className="text-xs text-slate-400 py-2 italic">Không có đối tác nào đang chờ duyệt.</div>
-            ) : (
-              <div className="space-y-2">
-                {workQueue.pendingPartners.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between p-3 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-100 transition-colors"
-                  >
-                    <Link
-                      to={`/admin/partners/${item.id}`}
-                      className="flex items-center gap-2.5 min-w-0 flex-1 hover:text-blue-600 transition-colors"
-                    >
-                      <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
-                      <span className="text-xs font-semibold text-slate-800 hover:text-blue-600 truncate">{item.name}</span>
-                    </Link>
-                    <div className="flex items-center gap-4 shrink-0">
-                      <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {formatDateDisplay(item.date)}
-                      </span>
-                      <Link
-                        to={`/admin/partners/${item.id}`}
-                        className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
-                      >
-                        Xem chi tiết
-                      </Link>
-                    </div>
-                  </div>
-                ))}
+        <div className="grid gap-5">
+          {dashboardConfig.showPartnerQueue && (
+          <section className="rounded-2xl border border-sky-200 bg-sky-50/50 p-4">
+            <div className="mb-4 flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-800">
+                <Building2 className="h-4.5 w-4.5" />
               </div>
-            )}
-          </div>
-
-          {/* 2. Yêu cầu thay đổi chi nhánh */}
-          <div className="pt-5">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                Yêu cầu thay đổi chi nhánh
-              </h3>
-              <Link
-                to="/admin/partners"
-                className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
-              >
-                Xem tất cả <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-
-            {workQueue.pendingBranches.length === 0 ? (
-              <div className="text-xs text-slate-400 py-2 italic">Không có yêu cầu chi nhánh nào đang chờ duyệt.</div>
-            ) : (
-              <div className="space-y-2">
-                {workQueue.pendingBranches.map((item) => {
-                  const targetPartnerId = item.partnerId || item.id;
-                  return (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between p-3 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-100 transition-colors"
-                    >
-                      <Link
-                        to={`/admin/partners/${targetPartnerId}`}
-                        className="flex items-center gap-2.5 min-w-0 flex-1 hover:text-blue-600 transition-colors"
-                      >
-                        <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-                        <span className="text-xs font-semibold text-slate-800 hover:text-blue-600 truncate">{item.name}</span>
-                      </Link>
-                      <div className="flex items-center gap-4 shrink-0">
-                        <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {formatDateDisplay(item.date)}
-                        </span>
-                        <Link
-                          to={`/admin/partners/${targetPartnerId}`}
-                          className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
-                        >
-                          Xem chi tiết
-                        </Link>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div>
+                <h3 className="font-bold text-slate-900">Quản lý đối tác</h3>
+                <p className="mt-0.5 text-xs text-slate-500">Hồ sơ, chi nhánh và voucher cần quản trị viên xét duyệt.</p>
               </div>
-            )}
-          </div>
-
-          {/* 3. Voucher chờ duyệt */}
-          <div className="pt-5">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                Voucher chờ duyệt
-              </h3>
-              <Link
-                to="/admin/vouchers"
-                className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
-              >
-                Xem tất cả <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
             </div>
-
-            {workQueue.pendingVouchers.length === 0 ? (
-              <div className="text-xs text-slate-400 py-2 italic">Không có voucher nào đang chờ duyệt.</div>
-            ) : (
-              <div className="space-y-2">
-                {workQueue.pendingVouchers.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between p-3 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-100 transition-colors"
-                  >
-                    <Link
-                      to={`/admin/vouchers/${item.id}`}
-                      className="flex items-center gap-2.5 min-w-0 flex-1 hover:text-blue-600 transition-colors"
-                    >
-                      <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-                      <span className="text-xs font-semibold text-slate-800 hover:text-blue-600 truncate">{item.name}</span>
-                    </Link>
-                    <div className="flex items-center gap-4 shrink-0">
-                      <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {formatDateDisplay(item.date)}
-                      </span>
-                      <Link
-                        to={`/admin/vouchers/${item.id}`}
-                        className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
-                      >
-                        Xem chi tiết
-                      </Link>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* 4. Đơn chờ hoàn tiền */}
-          <div className="pt-5">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                Đơn chờ hoàn tiền
-              </h3>
-              <Link
-                to="/admin/logs"
-                className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
-              >
-                Xem tất cả <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
+            <div className="space-y-3">
+              <WorkQueueGroup
+                title="Đối tác chờ duyệt"
+                items={partnerWork.pendingPartners || []}
+                total={partnerWork.counts?.pendingPartners}
+                emptyText="Không có đối tác chờ duyệt."
+                allLink="/admin/partners"
+                dotClass="bg-sky-600"
+                getDetailLink={(item) => `/admin/partners/${item.partnerId || item.id}`}
+              />
+              <WorkQueueGroup
+                title="Yêu cầu thay đổi chi nhánh"
+                items={partnerWork.branchChangeRequests || []}
+                total={partnerWork.counts?.branchChangeRequests}
+                emptyText="Không có yêu cầu thay đổi chi nhánh."
+                allLink="/admin/partners"
+                dotClass="bg-cyan-500"
+                getDetailLink={(item) => `/admin/partners/${item.partnerId}`}
+              />
+              <WorkQueueGroup
+                title="Yêu cầu thay đổi hồ sơ doanh nghiệp"
+                items={partnerWork.profileChangeRequests || []}
+                total={partnerWork.counts?.profileChangeRequests}
+                emptyText="Không có yêu cầu thay đổi hồ sơ."
+                allLink="/admin/partners"
+                dotClass="bg-sky-700"
+                getDetailLink={(item) => `/admin/partners/${item.partnerId}`}
+              />
+              <WorkQueueGroup
+                title="Voucher chờ duyệt"
+                items={partnerWork.pendingVouchers || []}
+                total={partnerWork.counts?.pendingVouchers}
+                emptyText="Không có voucher chờ duyệt."
+                allLink="/admin/vouchers"
+                dotClass="bg-semantic-warning"
+                getDetailLink={(item) => `/admin/vouchers/${item.id}`}
+              />
             </div>
+          </section>
+          )}
 
-            {workQueue.refundOrders.length === 0 ? (
-              <div className="text-xs text-slate-400 py-2 italic">Không có đơn hàng nào chờ hoàn tiền.</div>
-            ) : (
-              <div className="space-y-2">
-                {workQueue.refundOrders.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between p-3 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-100 transition-colors"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
-                      <span className="text-xs font-semibold text-slate-800 truncate">
-                        {item.orderCode} - {item.customerName}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4 shrink-0">
-                      <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {formatDateDisplay(item.date)}
-                      </span>
-                      <Link
-                        to="/admin/logs"
-                        className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
-                      >
-                        Xem chi tiết
-                      </Link>
-                    </div>
-                  </div>
-                ))}
+          {dashboardConfig.showCustomerQueue && (
+          <section className="rounded-2xl border border-semantic-error-border bg-semantic-error-soft/50 p-4">
+            <div className="mb-4 flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-semantic-error-soft text-semantic-error">
+                <ShoppingBag className="h-4.5 w-4.5" />
               </div>
-            )}
-          </div>
-
-          {/* 5. Đơn lỗi sinh mã */}
-          <div className="pt-5">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                Đơn lỗi sinh mã
-              </h3>
-              <Link
-                to="/admin/logs"
-                className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
-              >
-                Xem tất cả <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
+              <div>
+                <h3 className="font-bold text-slate-900">Yêu cầu từ khách hàng</h3>
+                <p className="mt-0.5 text-xs text-slate-500">Đơn hàng, hủy đơn, khiếu nại và sự cố cần xử lý.</p>
+              </div>
             </div>
-
-            {workQueue.failedGenOrders.length === 0 ? (
-              <div className="text-xs text-slate-400 py-2 italic">Không có đơn hàng nào bị lỗi sinh mã.</div>
-            ) : (
-              <div className="space-y-2">
-                {workQueue.failedGenOrders.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between p-3 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-100 transition-colors"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
-                      <span className="text-xs font-semibold text-slate-800 truncate">
-                        {item.orderCode} - {item.customerName}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4 shrink-0">
-                      <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {formatDateDisplay(item.date)}
-                      </span>
-                      <Link
-                        to="/admin/logs"
-                        className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
-                      >
-                        Xem chi tiết
-                      </Link>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+            <div className="space-y-3">
+              <WorkQueueGroup
+                title="Yêu cầu hủy đơn"
+                items={customerWork.cancelRequests || []}
+                total={customerWork.counts?.cancelRequests}
+                emptyText="Không có yêu cầu hủy đơn chờ xử lý."
+                allLink="/admin/orders"
+                dotClass="bg-semantic-error"
+                getDetailLink={(item) => `/admin/orders?orderId=${encodeURIComponent(item.orderId)}&tab=refund`}
+              />
+              <WorkQueueGroup
+                title="Khiếu nại chờ xử lý"
+                items={customerWork.complaints || []}
+                total={customerWork.counts?.complaints}
+                emptyText="Không có khiếu nại chờ xử lý."
+                allLink="/admin/orders"
+                dotClass="bg-semantic-error"
+                getDetailLink={(item) => `/admin/orders?orderId=${encodeURIComponent(item.orderId)}&tab=complaints`}
+              />
+              <WorkQueueGroup
+                title="Đơn chờ hoàn tiền"
+                items={customerWork.refundOrders || []}
+                total={customerWork.counts?.refundOrders}
+                emptyText="Không có đơn chờ hoàn tiền."
+                allLink="/admin/orders"
+                dotClass="bg-semantic-warning"
+                getDetailLink={(item) => `/admin/orders?orderId=${encodeURIComponent(item.orderId)}&tab=refund`}
+              />
+              <WorkQueueGroup
+                title="Đơn lỗi sinh mã"
+                items={customerWork.failedGenOrders || []}
+                total={customerWork.counts?.failedGenOrders}
+                emptyText="Không có đơn lỗi sinh mã."
+                allLink="/admin/orders"
+                dotClass="bg-semantic-error"
+                getDetailLink={(item) => `/admin/orders?orderId=${encodeURIComponent(item.orderId)}&tab=codes`}
+              />
+            </div>
+          </section>
+          )}
         </div>
       </div>
+      )}
     </div>
   );
 }

@@ -1,18 +1,10 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
+import { getAdminRole } from '../constants/admin-roles';
 
 export default function ProtectedRoute({ allowedRoles }) {
-  // Development bypass: Mock authentication for testing
-  if (import.meta.env.MODE === 'development') {
-    if (!localStorage.getItem('user')) {
-      localStorage.setItem('accessToken', 'mock-token');
-      localStorage.setItem('user', JSON.stringify({ role: 'Admin', ho_ten: 'Admin Test' }));
-    }
-    return <Outlet />;
-  }
-
-  const token = localStorage.getItem('accessToken');
-  const userStr = localStorage.getItem('user');
+  const token = localStorage.getItem('accessToken') || localStorage.getItem('ec_auth_token');
+  const userStr = localStorage.getItem('user') || localStorage.getItem('ec_auth_user');
   
   if (!token || !userStr) {
     return <Navigate to="/login" replace />;
@@ -20,7 +12,8 @@ export default function ProtectedRoute({ allowedRoles }) {
 
   try {
     const user = JSON.parse(userStr);
-    if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+    const userRole = getAdminRole(user);
+    if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
       return <Navigate to="/forbidden" replace />;
     }
   } catch (error) {

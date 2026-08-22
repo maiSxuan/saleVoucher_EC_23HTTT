@@ -31,6 +31,7 @@ class VoucherModel {
     lich_su_duyet = [],
   }) {
     this.ma_voucher = ma_voucher;
+    this.id = ma_voucher;
     this.ten_voucher = ten_voucher;
     this.mo_ta = mo_ta;
     this.gia_goc = Number(gia_goc);

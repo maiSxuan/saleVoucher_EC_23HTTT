@@ -118,14 +118,22 @@ class DashboardRepository {
    */
   async countComplaintOrders() {
     try {
-      const { data, error } = await supabase
+      const { data: complaints, error: complaintError } = await supabase
         .from('khieunai')
-        .select('voucher_mua!inner(ma_dh)')
+        .select('ma_voucher_mua')
         .in('trang_thai', ['Moi', 'Dang xu ly']);
-      
-      if (error) throw error;
-      
-      const distinctOrders = new Set(data.map(item => item.voucher_mua.ma_dh));
+
+      if (complaintError) throw complaintError;
+      const purchasedVoucherIds = [...new Set((complaints || []).map(item => item.ma_voucher_mua).filter(Boolean))];
+      if (purchasedVoucherIds.length === 0) return 0;
+
+      const { data: purchasedVouchers, error: purchasedVoucherError } = await supabase
+        .from('voucher_mua')
+        .select('ma_voucher_mua, ma_dh')
+        .in('ma_voucher_mua', purchasedVoucherIds);
+      if (purchasedVoucherError) throw purchasedVoucherError;
+
+      const distinctOrders = new Set((purchasedVouchers || []).map(item => item.ma_dh).filter(Boolean));
       return distinctOrders.size;
     } catch (err) {
       console.warn('[DashboardRepository] countComplaintOrders error:', err.message);
@@ -273,85 +281,258 @@ class DashboardRepository {
    * Danh sách các mục công việc cần xử lý (Hàng đợi chờ duyệt / chờ xử lý)
    */
   async getPendingWorkQueue() {
+    const emptyQueue = {
+      totalPending: 0,
+      partnerManagement: {
+        counts: { pendingPartners: 0, branchChangeRequests: 0, profileChangeRequests: 0, pendingVouchers: 0 },
+        pendingPartners: [],
+        branchChangeRequests: [],
+        profileChangeRequests: [],
+        pendingVouchers: [],
+      },
+      customerRequests: {
+        counts: { cancelRequests: 0, complaints: 0, refundOrders: 0, failedGenOrders: 0 },
+        cancelRequests: [],
+        complaints: [],
+        refundOrders: [],
+        failedGenOrders: [],
+      },
+    };
+
     try {
-      const [
-        partnersRes,
-        branchesRes,
-        vouchersRes,
-        refundsRes,
-        failedGenRes,
-      ] = await Promise.allSettled([
-        supabase.from('hosodn').select('ma_hs, ten_dn, ngay_tao, trang_thai').eq('trang_thai', 'Cho duyet').order('ngay_tao', { ascending: false }).limit(5),
-        supabase.from('chinhanh').select('ma_chi_nhanh, ten_chi_nhanh, trang_thai, ma_hs').eq('trang_thai', 'Cho duyet').limit(5),
-        supabase.from('voucher').select('ma_voucher, ten_voucher, tg_bat_dau_ban, trang_thai').eq('trang_thai', 'Cho duyet').order('tg_bat_dau_ban', { ascending: false }).limit(5),
-        supabase.from('donhang').select('ma_dh, ngay_dat, nguoi_nhan, tong_tien, trang_thai').eq('trang_thai', 'Cho hoan tien').order('ngay_dat', { ascending: false }).limit(5),
-        supabase.from('voucher_mua').select('ma_voucher_mua, trang_thai, thoi_gian_sinh_ma, donhang:ma_dh(ma_dh, ngay_dat, nguoi_nhan, tong_tien, trang_thai)').eq('trang_thai', 'Loi sinh ma').order('thoi_gian_sinh_ma', { ascending: false }).limit(5),
+      const results = await Promise.allSettled([
+        supabase.from('hosodn')
+          .select('ma_hs, ten_dn, ngay_tao, trang_thai', { count: 'exact' })
+          .eq('trang_thai', 'Cho duyet')
+          .order('ngay_tao', { ascending: false })
+          .limit(5),
+        supabase.from('yeu_cau_cap_nhat_chinhanh')
+          .select('ma_yc, ma_chi_nhanh, loai_yeu_cau, ten_chi_nhanh_moi, ngay_yeu_cau, trang_thai', { count: 'exact' })
+          .eq('trang_thai', 'Cho duyet')
+          .order('ngay_yeu_cau', { ascending: false })
+          .limit(5),
+        supabase.from('yeu_cau_cap_nhat_hosodn')
+          .select('ma_yc, ma_hs, ten_dn_moi, ngay_yeu_cau, trang_thai', { count: 'exact' })
+          .eq('trang_thai', 'Cho duyet')
+          .order('ngay_yeu_cau', { ascending: false })
+          .limit(5),
+        supabase.from('voucher')
+          .select('ma_voucher, ten_voucher, tg_bat_dau_ban, trang_thai', { count: 'exact' })
+          .eq('trang_thai', 'Cho duyet')
+          .order('tg_bat_dau_ban', { ascending: false })
+          .limit(5),
+        supabase.from('yeucauhuy')
+          .select('ma_yc_huy, ma_dh, ly_do_kh, ngay_yeu_cau, trang_thai', { count: 'exact' })
+          .eq('trang_thai', 'Cho xu ly')
+          .order('ngay_yeu_cau', { ascending: false })
+          .limit(5),
+        supabase.from('khieunai')
+          .select('ma_khieu_nai, ma_voucher_mua, noi_dung, ngay_khieu_nai, trang_thai', { count: 'exact' })
+          .in('trang_thai', ['Moi', 'Dang xu ly'])
+          .order('ngay_khieu_nai', { ascending: false })
+          .limit(5),
+        supabase.from('donhang')
+          .select('ma_dh, ngay_dat, nguoi_nhan, tong_tien, trang_thai', { count: 'exact' })
+          .eq('trang_thai', 'Cho hoan tien')
+          .order('ngay_dat', { ascending: false })
+          .limit(5),
+        supabase.from('voucher_mua')
+          .select('ma_voucher_mua, ma_dh, ma_voucher, trang_thai, thoi_gian_sinh_ma', { count: 'exact' })
+          .eq('trang_thai', 'Loi sinh ma')
+          .order('thoi_gian_sinh_ma', { ascending: false })
+          .limit(5),
       ]);
 
-      const pendingPartners = partnersRes.status === 'fulfilled' && partnersRes.value.data ? partnersRes.value.data.map(p => ({
-        id: p.ma_hs,
-        name: p.ten_dn || 'Đối tác chưa đặt tên',
-        date: p.ngay_tao,
-        type: 'partner',
-        status: p.trang_thai,
-      })) : [];
+      const labels = [
+        'đối tác chờ duyệt',
+        'yêu cầu thay đổi chi nhánh',
+        'yêu cầu thay đổi hồ sơ',
+        'voucher chờ duyệt',
+        'yêu cầu hủy đơn',
+        'khiếu nại',
+        'đơn chờ hoàn tiền',
+        'lỗi sinh mã',
+      ];
+      const readResult = (result, index) => {
+        if (result.status === 'rejected') {
+          console.warn(`[DashboardRepository] Không tải được ${labels[index]}:`, result.reason?.message || result.reason);
+          return { data: [], count: 0 };
+        }
+        if (result.value.error) {
+          console.warn(`[DashboardRepository] Không tải được ${labels[index]}:`, result.value.error.message);
+          return { data: [], count: 0 };
+        }
+        return { data: result.value.data || [], count: result.value.count || 0 };
+      };
+      const orderCode = (id) => id ? `#${String(id).slice(0, 8).toUpperCase()}` : '—';
 
-      const pendingBranches = branchesRes.status === 'fulfilled' && branchesRes.value.data ? branchesRes.value.data.map(b => ({
-        id: b.ma_chi_nhanh,
-        name: b.ten_chi_nhanh || 'Chi nhánh mới',
-        partnerId: b.ma_hs,
-        type: 'branch',
-        status: b.trang_thai,
-      })) : [];
+      const [partners, branchChanges, profileChanges, vouchers, cancellations, complaints, refunds, failedCodes]
+        = results.map(readResult);
 
-      const pendingVouchers = vouchersRes.status === 'fulfilled' && vouchersRes.value.data ? vouchersRes.value.data.map(v => ({
-        id: v.ma_voucher,
-        name: v.ten_voucher || 'Voucher chưa đặt tên',
-        date: v.tg_bat_dau_ban,
-        type: 'voucher',
-        status: v.trang_thai,
-      })) : [];
+      const loadRowsByIds = async (table, columns, key, ids, label) => {
+        const uniqueIds = [...new Set(ids.filter(Boolean))];
+        if (uniqueIds.length === 0) return [];
+        const { data, error } = await supabase.from(table).select(columns).in(key, uniqueIds);
+        if (error) {
+          console.warn(`[DashboardRepository] Không tải được ${label}:`, error.message);
+          return [];
+        }
+        return data || [];
+      };
 
-      const refundOrders = refundsRes.status === 'fulfilled' && refundsRes.value.data ? refundsRes.value.data.map(d => ({
-        id: d.ma_dh,
-        orderCode: `ORD${String(d.ma_dh).slice(0, 4).toUpperCase()}`,
-        customerName: d.nguoi_nhan || 'Khách hàng',
-        date: d.ngay_dat,
-        amount: d.tong_tien,
-        type: 'refund_order',
-        status: d.trang_thai,
-      })) : [];
+      const [branchRows, complaintPurchasedVouchers] = await Promise.all([
+        loadRowsByIds(
+          'chinhanh',
+          'ma_chi_nhanh, ma_hs, ten_chi_nhanh',
+          'ma_chi_nhanh',
+          branchChanges.data.map(item => item.ma_chi_nhanh),
+          'chi nhánh của yêu cầu thay đổi',
+        ),
+        loadRowsByIds(
+          'voucher_mua',
+          'ma_voucher_mua, ma_dh, ma_voucher',
+          'ma_voucher_mua',
+          complaints.data.map(item => item.ma_voucher_mua),
+          'voucher mua của khiếu nại',
+        ),
+      ]);
 
-      const failedGenOrders = failedGenRes.status === 'fulfilled' && failedGenRes.value.data ? failedGenRes.value.data.map(item => ({
-        id: item.donhang?.ma_dh || item.ma_voucher_mua,
-        orderCode: `ORD${String(item.donhang?.ma_dh || '').slice(0, 4).toUpperCase()}`,
-        customerName: item.donhang?.nguoi_nhan || 'Khách hàng',
-        date: item.thoi_gian_sinh_ma || item.donhang?.ngay_dat,
-        amount: item.donhang?.tong_tien || 0,
-        type: 'failed_gen_order',
-        status: item.trang_thai,
-      })) : [];
+      const complaintPurchasedById = new Map(
+        complaintPurchasedVouchers.map(item => [item.ma_voucher_mua, item]),
+      );
+      const orderIds = [
+        ...cancellations.data.map(item => item.ma_dh),
+        ...complaintPurchasedVouchers.map(item => item.ma_dh),
+        ...refunds.data.map(item => item.ma_dh),
+        ...failedCodes.data.map(item => item.ma_dh),
+      ];
+      const complaintVoucherIds = complaintPurchasedVouchers.map(item => item.ma_voucher);
+      const [orderRows, complaintVoucherRows] = await Promise.all([
+        loadRowsByIds(
+          'donhang',
+          'ma_dh, ngay_dat, nguoi_nhan, tong_tien, trang_thai',
+          'ma_dh',
+          orderIds,
+          'đơn hàng liên quan',
+        ),
+        loadRowsByIds(
+          'voucher',
+          'ma_voucher, ten_voucher',
+          'ma_voucher',
+          complaintVoucherIds,
+          'voucher của khiếu nại',
+        ),
+      ]);
+      const branchById = new Map(branchRows.map(item => [item.ma_chi_nhanh, item]));
+      const orderById = new Map(orderRows.map(item => [item.ma_dh, item]));
+      const voucherById = new Map(complaintVoucherRows.map(item => [item.ma_voucher, item]));
 
-      const totalPending = pendingPartners.length + pendingBranches.length + pendingVouchers.length + refundOrders.length + failedGenOrders.length;
+      const partnerManagement = {
+        counts: {
+          pendingPartners: partners.count,
+          branchChangeRequests: branchChanges.count,
+          profileChangeRequests: profileChanges.count,
+          pendingVouchers: vouchers.count,
+        },
+        pendingPartners: partners.data.map((item) => ({
+          id: item.ma_hs,
+          partnerId: item.ma_hs,
+          name: item.ten_dn || 'Đối tác chưa đặt tên',
+          date: item.ngay_tao,
+          status: item.trang_thai,
+        })),
+        branchChangeRequests: branchChanges.data.map((item) => {
+          const branch = branchById.get(item.ma_chi_nhanh) || {};
+          return {
+            id: item.ma_yc,
+            partnerId: branch.ma_hs,
+            name: item.ten_chi_nhanh_moi || branch.ten_chi_nhanh || `Chi nhánh ${String(item.ma_chi_nhanh || '').slice(0, 8)}`,
+            description: item.loai_yeu_cau === 'THEM_MOI' ? 'Thêm chi nhánh' : item.loai_yeu_cau === 'XOA' ? 'Xóa chi nhánh' : 'Cập nhật chi nhánh',
+            date: item.ngay_yeu_cau,
+            status: item.trang_thai,
+          };
+        }),
+        profileChangeRequests: profileChanges.data.map((item) => ({
+          id: item.ma_yc,
+          partnerId: item.ma_hs,
+          name: item.ten_dn_moi || `Hồ sơ doanh nghiệp ${String(item.ma_hs || '').slice(0, 8)}`,
+          description: 'Cập nhật hồ sơ doanh nghiệp',
+          date: item.ngay_yeu_cau,
+          status: item.trang_thai,
+        })),
+        pendingVouchers: vouchers.data.map((item) => ({
+          id: item.ma_voucher,
+          name: item.ten_voucher || 'Voucher chưa đặt tên',
+          date: item.tg_bat_dau_ban,
+          status: item.trang_thai,
+        })),
+      };
+
+      const customerRequests = {
+        counts: {
+          cancelRequests: cancellations.count,
+          complaints: complaints.count,
+          refundOrders: refunds.count,
+          failedGenOrders: failedCodes.count,
+        },
+        cancelRequests: cancellations.data.map((item) => {
+          const order = orderById.get(item.ma_dh) || {};
+          return {
+            id: item.ma_yc_huy,
+            orderId: item.ma_dh,
+            name: `${orderCode(item.ma_dh)} · ${order.nguoi_nhan || 'Khách hàng'}`,
+            description: item.ly_do_kh,
+            date: item.ngay_yeu_cau,
+            amount: order.tong_tien || 0,
+            status: item.trang_thai,
+          };
+        }),
+        complaints: complaints.data.map((item) => {
+          const purchasedVoucher = complaintPurchasedById.get(item.ma_voucher_mua) || {};
+          const order = orderById.get(purchasedVoucher.ma_dh) || {};
+          const voucher = voucherById.get(purchasedVoucher.ma_voucher) || {};
+          return {
+            id: item.ma_khieu_nai,
+            orderId: purchasedVoucher.ma_dh,
+            name: `${orderCode(purchasedVoucher.ma_dh)} · ${order.nguoi_nhan || 'Khách hàng'}`,
+            description: `${voucher.ten_voucher ? `${voucher.ten_voucher}: ` : ''}${item.noi_dung}`,
+            date: item.ngay_khieu_nai,
+            amount: order.tong_tien || 0,
+            status: item.trang_thai,
+          };
+        }),
+        refundOrders: refunds.data.map((item) => ({
+          id: item.ma_dh,
+          orderId: item.ma_dh,
+          name: `${orderCode(item.ma_dh)} · ${item.nguoi_nhan || 'Khách hàng'}`,
+          description: 'Đơn hàng đang chờ thực hiện hoàn tiền',
+          date: item.ngay_dat,
+          amount: item.tong_tien || 0,
+          status: item.trang_thai,
+        })),
+        failedGenOrders: failedCodes.data.map((item) => {
+          const order = orderById.get(item.ma_dh) || {};
+          return {
+            id: item.ma_voucher_mua,
+            orderId: order.ma_dh,
+            name: `${orderCode(order.ma_dh)} · ${order.nguoi_nhan || 'Khách hàng'}`,
+            description: 'Voucher code phát hành bị lỗi',
+            date: item.thoi_gian_sinh_ma || order.ngay_dat,
+            amount: order.tong_tien || 0,
+            status: item.trang_thai,
+          };
+        }),
+      };
 
       return {
-        totalPending,
-        pendingPartners,
-        pendingBranches,
-        pendingVouchers,
-        refundOrders,
-        failedGenOrders,
+        totalPending: partners.count + branchChanges.count + profileChanges.count + vouchers.count
+          + cancellations.count + complaints.count + refunds.count + failedCodes.count,
+        partnerManagement,
+        customerRequests,
       };
     } catch (err) {
       console.warn('[DashboardRepository] getPendingWorkQueue error:', err.message);
-      return {
-        totalPending: 0,
-        pendingPartners: [],
-        pendingBranches: [],
-        pendingVouchers: [],
-        refundOrders: [],
-        failedGenOrders: [],
-      };
+      return emptyQueue;
     }
   }
 
@@ -385,7 +566,17 @@ class DashboardRepository {
 
     const rev = revenueResult.status === 'fulfilled' ? revenueResult.value : { totalRevenue: 0, daily: [], monthly: [], yearly: [] };
     const partnerDist = partnerDistributionResult.status === 'fulfilled' ? partnerDistributionResult.value : { total: 0, items: [] };
-    const workQueue = workQueueResult.status === 'fulfilled' ? workQueueResult.value : { totalPending: 0, pendingPartners: [], pendingBranches: [], pendingVouchers: [], refundOrders: [], failedGenOrders: [] };
+    const workQueue = workQueueResult.status === 'fulfilled' ? workQueueResult.value : {
+      totalPending: 0,
+      partnerManagement: {
+        counts: { pendingPartners: 0, branchChangeRequests: 0, profileChangeRequests: 0, pendingVouchers: 0 },
+        pendingPartners: [], branchChangeRequests: [], profileChangeRequests: [], pendingVouchers: [],
+      },
+      customerRequests: {
+        counts: { cancelRequests: 0, complaints: 0, refundOrders: 0, failedGenOrders: 0 },
+        cancelRequests: [], complaints: [], refundOrders: [], failedGenOrders: [],
+      },
+    };
 
     return {
       totalUsers: usersResult.status === 'fulfilled' ? usersResult.value : null,

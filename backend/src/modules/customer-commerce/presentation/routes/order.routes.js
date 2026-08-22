@@ -20,7 +20,7 @@ const router = express.Router();
 router.get(
   "/history",
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.CUSTOMER, JWT_ROLES.ADMIN),
+  authorizeMiddleware(JWT_ROLES.CUSTOMER),
   orderController.listCustomerOrders.bind(orderController),
 );
 
@@ -28,7 +28,7 @@ router.get(
 router.get(
   "/history/:id",
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.CUSTOMER, JWT_ROLES.ADMIN),
+  authorizeMiddleware(JWT_ROLES.CUSTOMER),
   orderController.getCustomerOrder.bind(orderController),
 );
 
