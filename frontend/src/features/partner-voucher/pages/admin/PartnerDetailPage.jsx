@@ -23,6 +23,7 @@ import {
   approvePartnerApi,
   rejectPartnerApi,
   lockPartnerApi,
+  getBranchesByPartnerApi,
   getBranchRequestsApi,
   approveBranchRequestApi,
   rejectBranchRequestApi,
@@ -66,13 +67,14 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
         setLoading(false);
         return;
       }
-      const [pData, rData, profReq] = await Promise.all([
+      const [pData, bData, rData, profReq] = await Promise.all([
         getPartnerByIdApi(pId),
+        getBranchesByPartnerApi(pId),
         getBranchRequestsApi(pId),
         getPendingPartnerProfileRequestApi(pId),
       ]);
       setPartner(pData);
-      const rawBranches = bData || pData?.branches || [];
+      const rawBranches = (Array.isArray(bData) && bData.length > 0) ? bData : (pData?.branches || []);
       const officialActiveBranches = rawBranches.filter((b) => {
         const st = (b.trang_thai || "").toString().toLowerCase().trim();
         return (
@@ -397,35 +399,32 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
       <div className="flex items-center gap-4 border-b border-slate-200">
         <button
           onClick={() => setActiveTab("overview")}
-          className={`pb-3 text-sm font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${
-            activeTab === "overview"
+          className={`pb-3 text-sm font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${activeTab === "overview"
               ? "border-blue-600 text-blue-600"
               : "border-transparent text-slate-500 hover:text-slate-800"
-          }`}
+            }`}
         >
           <Building2 size={16} /> Thông tin chung
         </button>
 
         <button
           onClick={() => setActiveTab("branches")}
-          className={`pb-3 text-sm font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${
-            activeTab === "branches"
+          className={`pb-3 text-sm font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${activeTab === "branches"
               ? "border-blue-600 text-blue-600"
               : "border-transparent text-slate-500 hover:text-slate-800"
-          }`}
+            }`}
         >
           <MapPin size={16} /> Chi nhánh chính thức ({activeBranches.length})
         </button>
 
         <button
           onClick={() => setActiveTab("requests")}
-          className={`pb-3 text-sm font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
-            activeTab === "requests"
+          className={`pb-3 text-sm font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${activeTab === "requests"
               ? "border-blue-600 text-blue-600"
               : "border-transparent text-slate-500 hover:text-slate-800"
-          }`}
+            }`}
         >
-          <Clock size={16} /> Yêu cầu chi nhánh 
+          <Clock size={16} /> Yêu cầu chi nhánh
           {pendingRequestsCount > 0 && (
             <span className="px-2 py-0.5 text-xs bg-amber-500 text-white font-bold rounded-full animate-pulse">
               {pendingRequestsCount} chờ duyệt
@@ -435,11 +434,10 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
 
         <button
           onClick={() => setActiveTab("history")}
-          className={`pb-3 text-sm font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${
-            activeTab === "history"
+          className={`pb-3 text-sm font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${activeTab === "history"
               ? "border-blue-600 text-blue-600"
               : "border-transparent text-slate-500 hover:text-slate-800"
-          }`}
+            }`}
         >
           <FileText size={16} /> Lịch sử tác vụ
         </button>
@@ -464,7 +462,7 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
 
                 <div className="space-y-2 text-xs">
                   <p className="text-gray-600 font-medium">So sánh thông tin hiện tại vs Đề xuất thay đổi mới:</p>
-                  
+
                   <div className="bg-white p-3.5 rounded-lg border border-amber-200 space-y-2">
                     {pendingProfileReq.ten_dn_moi && (
                       <div className="flex justify-between items-center py-1 border-b border-gray-100">
@@ -733,11 +731,10 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
 
                     <button
                       onClick={() => handleToggleBranchStatus(b.ma_chi_nhanh, b.trang_thai)}
-                      className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer border ${
-                        isPaused
+                      className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer border ${isPaused
                           ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
                           : "bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100"
-                      }`}
+                        }`}
                     >
                       {isPaused ? "Mở lại hoạt động" : "Tạm ngưng chi nhánh"}
                     </button>
@@ -774,19 +771,18 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <span
-                            className={`px-3 py-1 rounded-full text-xs font-bold ${
-                              req.loai_yeu_cau === "Them moi"
+                            className={`px-3 py-1 rounded-full text-xs font-bold ${req.loai_yeu_cau === "Them moi"
                                 ? "bg-blue-100 text-blue-800"
                                 : req.loai_yeu_cau === "Cap nhat"
-                                ? "bg-amber-100 text-amber-800"
-                                : "bg-rose-100 text-rose-800"
-                            }`}
+                                  ? "bg-amber-100 text-amber-800"
+                                  : "bg-rose-100 text-rose-800"
+                              }`}
                           >
                             {req.loai_yeu_cau === "Them moi"
                               ? "Thêm mới chi nhánh"
                               : req.loai_yeu_cau === "Cap nhat"
-                              ? "Cập nhật thông tin chi nhánh"
-                              : "Yêu cầu xóa chi nhánh"}
+                                ? "Cập nhật thông tin chi nhánh"
+                                : "Yêu cầu xóa chi nhánh"}
                           </span>
                           <h4 className="font-bold text-slate-900 text-base">{req.ten_chi_nhanh}</h4>
                         </div>
@@ -955,21 +951,21 @@ export function PartnerDetailPage({ partnerId, onNavigate }) {
         cancelText="Hủy"
       >
         <div className="space-y-3 text-left">
-  <label className="block text-xs font-semibold text-slate-700">Lý do từ chối *</label>
-  <input
-    type="text"
-    list="reject-reason-options"
-    value={rejectReason}
-    onChange={(e) => setRejectReason(e.target.value)}
-    placeholder="Chọn lý do có sẵn hoặc nhập lý do khác..."
-    className="w-full px-3 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-rose-500 focus:outline-none bg-white"
-  />
-  <datalist id="reject-reason-options">
-    <option value="Giấy phép kinh doanh không hợp lệ" />
-    <option value="Thông tin doanh nghiệp không trùng khớp" />
-    <option value="Mã số thuế không tồn tại" />
-  </datalist>
-</div>
+          <label className="block text-xs font-semibold text-slate-700">Lý do từ chối *</label>
+          <input
+            type="text"
+            list="reject-reason-options"
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            placeholder="Chọn lý do có sẵn hoặc nhập lý do khác..."
+            className="w-full px-3 py-2 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-rose-500 focus:outline-none bg-white"
+          />
+          <datalist id="reject-reason-options">
+            <option value="Giấy phép kinh doanh không hợp lệ" />
+            <option value="Thông tin doanh nghiệp không trùng khớp" />
+            <option value="Mã số thuế không tồn tại" />
+          </datalist>
+        </div>
       </Modal>
 
       {/* Modal Lock Confirmation */}
