@@ -1,15 +1,6 @@
 /**
  * FILE: frontend/src/features/core-access/pages/customer/IssuedVoucherDetailPage.jsx
  * PURPOSE: BR-CUS-07 — Chi tiết voucher đã mua.
- *
- * Hiển thị đầy đủ theo spec:
- *  - Mã voucher (font mono)
- *  - Mã QR mô phỏng (canvas QR code thật từ thư viện qrcode)
- *  - Thời hạn sử dụng
- *  - Chi nhánh áp dụng
- *  - Tên đối tác, điều kiện sử dụng
- *  - Trạng thái sử dụng
- *  - Link đến "Đơn hàng của tôi" (A7 fallback)
  */
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -32,8 +23,10 @@ import {
 import { getIssuedVoucherDetail } from "../../../../shared/api/issuedVoucherApi";
 import QrCodeDisplay from "../../component/QRCodeDisplay";
 import ReviewForm from "../../../content-feedback/components/ReviewForm";
+import FeedbackForm from "../../../content-feedback/components/FeedbackForm";
 import { useReview } from "../../../content-feedback/hooks/useReview";
 import { reviewApi } from "../../../content-feedback/api/reviewApi";
+import { feedbackApi } from "../../../content-feedback/api/feedbackApi";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
@@ -100,9 +93,16 @@ export default function IssuedVoucherDetailPage() {
   const [vm, setVm] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Review states
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [existingReview, setExistingReview] = useState(null);
   const [showViewReviewModal, setShowViewReviewModal] = useState(false);
+
+  // Complaint states
+  const [showComplaintModal, setShowComplaintModal] = useState(false);
+  const [existingComplaint, setExistingComplaint] = useState(null);
+  const [showViewComplaintModal, setShowViewComplaintModal] = useState(false);
 
   const { create: createReview } = useReview();
 
@@ -136,7 +136,6 @@ export default function IssuedVoucherDetailPage() {
       .catch(() => setExistingReview(null));
   }, [issuedId, t]);
 
-  // Loading
   if (loading) {
     return (
       <div className="flex flex-col items-center py-24 gap-3">
@@ -146,7 +145,6 @@ export default function IssuedVoucherDetailPage() {
     );
   }
 
-  // Error (E2.3)
   if (error || !vm) {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
@@ -157,7 +155,6 @@ export default function IssuedVoucherDetailPage() {
         <p className="text-sm text-slate-500 mb-6">
           {t(error) || t("Không tìm thấy voucher này.")}
         </p>
-        {/* A7.3 — Hướng dẫn truy cập "Đơn hàng của tôi" */}
         <p className="text-xs text-slate-400 mb-4">
           {t("Voucher của bạn vẫn được lưu. Bạn có thể xem lại tại mục \"Đơn hàng của tôi\".")}
         </p>
@@ -196,7 +193,6 @@ export default function IssuedVoucherDetailPage() {
 
   return (
     <div className="max-w-md mx-auto px-4 py-6">
-      {/* Back button */}
       <button
         onClick={() => navigate(-1)}
         className="flex items-center gap-1.5 text-slate-500 hover:text-slate-800 text-sm mb-5 transition-colors"
@@ -233,7 +229,7 @@ export default function IssuedVoucherDetailPage() {
         </div>
       </div>
 
-      {/* QR Code — luồng cơ bản bước 5 (hiển thị mã QR mô phỏng) */}
+      {/* QR Code */}
       {!isDone && (
         <div className="mb-4">
           <QrCodeDisplay
@@ -248,7 +244,6 @@ export default function IssuedVoucherDetailPage() {
 
       {/* Thông tin chi tiết */}
       <div className="bg-white border border-slate-200 rounded-2xl px-4 mb-4 shadow-sm">
-        {/* Mã code */}
         <div className="py-4 border-b border-slate-100">
           <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1.5">
             {t("Mã Voucher")}
@@ -283,7 +278,6 @@ export default function IssuedVoucherDetailPage() {
           />
         )}
 
-        {/* Thông tin khi đã sử dụng */}
         {isDone && vm.ngay_su_dung && (
           <InfoRow
             icon={<CheckCircle2 className="w-4 h-4 text-slate-400" />}
@@ -293,7 +287,7 @@ export default function IssuedVoucherDetailPage() {
         )}
       </div>
 
-      {/* Chi nhánh áp dụng — luồng cơ bản bước 8 */}
+      {/* Chi nhánh áp dụng */}
       {branches.length > 0 && (
         <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
@@ -389,6 +383,34 @@ export default function IssuedVoucherDetailPage() {
             </p>
             <button
               onClick={() => setShowViewReviewModal(false)}
+              className="w-full py-2.5 bg-slate-900 text-white font-semibold text-sm rounded-xl hover:bg-slate-800"
+            >
+              {t("Đóng")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Complaint Modal */}
+      {showComplaintModal && <FeedbackForm onSubmit={handleSubmitComplaint} onCancel={() => setShowComplaintModal(false)} />}
+      {showViewComplaintModal && existingComplaint && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
+            <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-red-500" />
+              Chi tiết khiếu nại của bạn
+            </h3>
+            <div className="mb-2 text-xs font-semibold text-slate-500">
+              Trạng thái: <span className="text-orange-600">{existingComplaint.status || 'Mới'}</span>
+            </div>
+            <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-xl mb-4">
+              {existingComplaint.content || existingComplaint.noi_dung || "Không có nội dung."}
+            </p>
+            <p className="text-xs text-slate-400 mb-5">
+              Ngày gửi: {existingComplaint.createdAt ? new Date(existingComplaint.createdAt).toLocaleString("vi-VN") : "—"}
+            </p>
+            <button
+              onClick={() => setShowViewComplaintModal(false)}
               className="w-full py-2.5 bg-slate-900 text-white font-semibold text-sm rounded-xl hover:bg-slate-800"
             >
               {t("Đóng")}

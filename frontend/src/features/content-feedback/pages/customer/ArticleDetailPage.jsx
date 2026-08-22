@@ -58,7 +58,7 @@ export default function ArticleDetailPage() {
           </h1>
 
           <div 
-            className="prose max-w-none text-gray-700 leading-relaxed space-y-4"
+            className="prose max-w-none text-gray-700 leading-relaxed space-y-4 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-3 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mb-2 [&_blockquote]:border-l-4 [&_blockquote]:border-orange-500 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-gray-600 [&_p]:mb-3"
             dangerouslySetInnerHTML={{ __html: article.content }}
           />
         </div>
