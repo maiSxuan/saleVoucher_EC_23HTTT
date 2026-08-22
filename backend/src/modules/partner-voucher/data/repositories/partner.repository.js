@@ -91,7 +91,7 @@ class PartnerRepository {
       return uniquePartners.map((item) => {
         const rep = representativesByPartner.get(item.ma_hs) || item.nguoi_dai_dien || {};
         const pBranches = branchesByPartner.get(item.ma_hs) || item.branches || [];
-        
+
         // Active partner OR pending partner: Count all pending branch requests
         const branchPendingCount = pendingReqsByPartner.get(item.ma_hs) || 0;
         const registrationPendingCount = item.trang_thai === "Cho duyet" ? 1 : 0;
