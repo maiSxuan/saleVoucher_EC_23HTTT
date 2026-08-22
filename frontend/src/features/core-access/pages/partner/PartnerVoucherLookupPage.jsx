@@ -188,7 +188,14 @@ export default function PartnerVoucherLookupPage() {
 
   // Xác nhận đổi voucher (BR-PAR-06)
   const handleConfirmRedemption = async () => {
-    if (!verificationResult?.data?.code) return;
+    if (
+      !verificationResult?.valid ||
+      verificationResult?.status !== 'valid' ||
+      !verificationResult?.data?.code
+    ) {
+      setIsConfirmModalOpen(false);
+      return;
+    }
 
     setIsRedeeming(true);
     setErrorMessage(null);
@@ -583,6 +590,7 @@ export default function PartnerVoucherLookupPage() {
                           {verificationResult.status === 'valid' && t("HỢP LỆ — SẴN SÀNG SỬ DỤNG")}
                           {verificationResult.status === 'used' && t("VOUCHER ĐÃ ĐƯỢC SỬ DỤNG")}
                           {verificationResult.status === 'expired' && t("VOUCHER ĐÃ HẾT HẠN")}
+                          {verificationResult.status === 'stopped_selling' && t("VOUCHER ĐÃ NGỪNG BÁN")}
                           {verificationResult.status === 'cancelled' && t("VOUCHER BỊ HỦY / KHÓA")}
                           {verificationResult.status === 'invalid_branch' && t("KHÔNG THUỘC CHI NHÁNH NÀY (RB-09)")}
                           {verificationResult.status === 'invalid' && t("MÃ VOUCHER KHÔNG TỒN TẠI")}
@@ -706,8 +714,15 @@ export default function PartnerVoucherLookupPage() {
                           </div>
                         )}
 
+                        {verificationResult.status === 'stopped_selling' && (
+                          <div className="p-3.5 bg-rose-50 rounded-xl border border-rose-200 text-sm font-semibold text-rose-700 flex items-center gap-2">
+                            <Ban className="w-4 h-4 shrink-0" />
+                            <span>{t(verificationResult.message || "Voucher này đã ngừng bán")}</span>
+                          </div>
+                        )}
+
                         {/* Primary Action Button (BR-PAR-06 - Fitts's Law) */}
-                        {verificationResult.status === 'valid' && (
+                        {verificationResult.valid && verificationResult.status === 'valid' && (
                           <div className="pt-2">
                             <button
                               type="button"
@@ -819,7 +834,7 @@ export default function PartnerVoucherLookupPage() {
       />
 
       {/* 5. MODAL XÁC NHẬN SỬ DỤNG VOUCHER (BR-PAR-06) */}
-      {isConfirmModalOpen && voucherData && (
+      {isConfirmModalOpen && verificationResult?.valid && verificationResult?.status === 'valid' && voucherData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
           <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 border border-slate-100 space-y-4">
             <div className="flex items-center gap-3">
