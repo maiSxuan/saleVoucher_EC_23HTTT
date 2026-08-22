@@ -498,7 +498,11 @@ class PartnerRepository {
       if (hosodnError) {
         console.warn("[PartnerRepository.update] Supabase hosodn update warning:", hosodnError.message);
       } else {
-        console.log(`[PartnerRepository.update] SUCCESS updated hosodn ${targetMaHs} -> status: ${payload.trang_thai}`);
+        const updatedFields = Object.keys(hosodnUpdate).join(", ");
+        const effectiveStatus = hosodnUpdate.trang_thai ?? currentPartner?.trang_thai ?? "unknown";
+        console.log(
+          `[PartnerRepository.update] SUCCESS updated hosodn ${targetMaHs} -> fields: ${updatedFields}; status: ${effectiveStatus}`,
+        );
       }
     }
 

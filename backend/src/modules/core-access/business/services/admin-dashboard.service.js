@@ -4,8 +4,33 @@
  */
 const dashboardRepository = require('../../data/repositories/dashboard.repository');
 
+const DASHBOARD_CACHE_TTL_MS = 10_000;
+let cachedSummary = null;
+let cachedSummaryExpiresAt = 0;
+let summaryRequest = null;
+
 class AdminDashboardService {
   async getSummary() {
+    if (cachedSummary && Date.now() < cachedSummaryExpiresAt) {
+      return cachedSummary;
+    }
+
+    if (summaryRequest) {
+      return summaryRequest;
+    }
+
+    summaryRequest = this.buildSummary();
+    try {
+      const summary = await summaryRequest;
+      cachedSummary = summary;
+      cachedSummaryExpiresAt = Date.now() + DASHBOARD_CACHE_TTL_MS;
+      return summary;
+    } finally {
+      summaryRequest = null;
+    }
+  }
+
+  async buildSummary() {
     const metrics = await dashboardRepository.getAllMetrics();
 
     return {

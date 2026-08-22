@@ -286,18 +286,19 @@ class OrderRepository {
       throw new Error(`Lỗi lấy danh sách đơn hàng khách hàng: ${error.message}`);
     }
 
-    const orders = await Promise.all((data || []).map(async (dh) => {
-      const { data: rawItems, error: itemError } = await supabase
+    const orderRows = data || [];
+    if (orderRows.length === 0) return { orders: [], total: count || 0 };
+
+    const orderIds = orderRows.map((order) => order.ma_dh);
+    const [itemResult, codeResult, paymentResult, cancelRequestResult] = await Promise.all([
+      supabase
         .from('chitietdonhang')
         .select('*')
-        .eq('ma_dh', dh.ma_dh);
-      if (itemError) throw new Error(`Lỗi lấy chi tiết đơn hàng: ${itemError.message}`);
-
-      const items = await enrichOrderItems(rawItems);
-
-      const { data: codes } = await supabase
+        .in('ma_dh', orderIds),
+      supabase
         .from('voucher_mua')
         .select(`
+          ma_dh,
           ma_voucher_mua,
           ma_voucher,
           voucher_code,
@@ -306,21 +307,73 @@ class OrderRepository {
           ngay_su_dung,
           chinhanh:ma_chi_nhanh_su_dung ( ten_chi_nhanh )
         `)
-        .eq('ma_dh', dh.ma_dh);
+        .in('ma_dh', orderIds),
+      supabase
+        .from('thanhtoan')
+        .select('*')
+        .in('ma_dh', orderIds)
+        .order('thoi_gian_tt', { ascending: false }),
+      supabase
+        .from('yeucauhuy')
+        .select('*')
+        .in('ma_dh', orderIds)
+        .order('ngay_yeu_cau', { ascending: false }),
+    ]);
 
-      const extra = await fetchOrderExtraDetails(dh);
-      const latestPayment = extra.payments[0] || null;
+    const rawItems = ensureBatchQuery(itemResult, 'Lỗi lấy chi tiết đơn hàng');
+    const codes = ensureBatchQuery(codeResult, 'Lỗi lấy mã voucher');
+    const payments = ensureBatchQuery(paymentResult, 'Lỗi lấy lịch sử thanh toán');
+    const cancelRequests = ensureBatchQuery(cancelRequestResult, 'Lỗi lấy yêu cầu hủy');
+    const enrichedItems = await enrichOrderItems(rawItems);
+    const paymentIds = payments.map((payment) => payment.ma_thanh_toan);
+    let refunds = [];
+
+    if (paymentIds.length > 0) {
+      const refundResult = await supabase
+        .from('hoantien')
+        .select('*')
+        .in('ma_thanh_toan', paymentIds)
+        .order('ngay_xu_ly', { ascending: false });
+      refunds = ensureBatchQuery(refundResult, 'Lỗi lấy lịch sử hoàn tiền');
+    }
+
+    const groupRows = (rows, getKey) => rows.reduce((groups, row, index) => {
+      const key = getKey(row, index);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(row);
+      return groups;
+    }, new Map());
+    const enrichedItemsByOrderId = groupRows(
+      enrichedItems,
+      (_item, index) => rawItems[index]?.ma_dh,
+    );
+    const codesByOrderId = groupRows(codes, (code) => code.ma_dh);
+    const paymentsByOrderId = groupRows(payments, (payment) => payment.ma_dh);
+    const cancelRequestsByOrderId = groupRows(cancelRequests, (request) => request.ma_dh);
+    const refundsByPaymentId = groupRows(refunds, (refund) => refund.ma_thanh_toan);
+
+    const orders = orderRows.map((dh) => {
+      const orderPayments = paymentsByOrderId.get(dh.ma_dh) || [];
+      const latestPayment = orderPayments[0] || null;
+      const orderCancelRequests = cancelRequestsByOrderId.get(dh.ma_dh) || [];
+      const orderRefunds = sortByDateDesc(
+        orderPayments.flatMap(
+          (payment) => refundsByPaymentId.get(payment.ma_thanh_toan) || [],
+        ),
+        'ngay_xu_ly',
+      );
+      const orderCodes = codesByOrderId.get(dh.ma_dh) || [];
 
       return {
         id: dh.ma_dh,
         createdAt: dh.ngay_dat,
         orderStatus: dh.trang_thai,
-        displayStatus: getCustomerOrderDisplayStatus(dh.trang_thai, extra.cancelRequests),
+        displayStatus: getCustomerOrderDisplayStatus(dh.trang_thai, orderCancelRequests),
         paymentStatus: latestPayment ? latestPayment.trang_thai : PaymentStatus.DANG_XU_LY,
         total: dh.tong_tien,
         cancelReason: dh.ly_do_huy,
         recipient: dh.nguoi_nhan,
-        cancelRequests: extra.cancelRequests.map(y => ({
+        cancelRequests: orderCancelRequests.map(y => ({
           id: y.ma_yc_huy,
           reason: y.ly_do_kh,
           status: y.trang_thai,
@@ -328,15 +381,15 @@ class OrderRepository {
           rejectReason: y.ly_do_xu_ly,
           processedAt: y.ngay_xu_ly,
         })),
-        refunds: extra.refunds.map(r => ({
+        refunds: orderRefunds.map(r => ({
           id: r.ma_hoan_tien,
           amount: r.so_tien,
           status: r.trang_thai,
           reason: r.ly_do,
           processedAt: r.ngay_xu_ly,
         })),
-        items,
-        codes: (codes || []).map(c => {
+        items: enrichedItemsByOrderId.get(dh.ma_dh) || [],
+        codes: orderCodes.map(c => {
           // Note: for list view we might not need full review/complaint details, but we can pass basic hasReviewed/hasComplained if needed.
           // However, to keep it fast, we can just pass the basic fields.
           return {
@@ -346,11 +399,11 @@ class OrderRepository {
             status: c.trang_thai,
             issuedAt: c.thoi_gian_sinh_ma,
             usedAt: c.ngay_su_dung,
-            usedBranch: c.chinhanh?.ten_chi_nhanh || null,
+            usedBranch: firstRelation(c.chinhanh)?.ten_chi_nhanh || null,
           };
         }),
       };
-    }));
+    });
 
     return { orders, total: count || 0 };
   }

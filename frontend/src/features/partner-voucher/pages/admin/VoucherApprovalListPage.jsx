@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, X, Tag, XCircle, Eye } from "lucide-react";
-import { getVouchersApi, getPartnersApi } from "../../../../shared/api/partnerApi";
+import { getVouchersApi } from "../../../../shared/api/partnerApi";
 import { formatCategoryName } from "../../../../shared/utils/categoryFormatter";
 import { getVoucherPublicationStatus } from "../../../../shared/utils/publicationStatusHelper";
 
@@ -19,7 +19,6 @@ export function VoucherApprovalListPage() {
   const savedState = getSavedState();
 
   const [vouchers, setVouchers] = useState(savedState?.cachedVouchers || []);
-  const [partners, setPartners] = useState(savedState?.cachedPartners || []);
   const [loading, setLoading] = useState(!savedState?.cachedVouchers || savedState.cachedVouchers.length === 0);
 
   // Filters state matching prototype code
@@ -38,9 +37,8 @@ export function VoucherApprovalListPage() {
   const loadData = async () => {
     if (!savedState?.cachedVouchers) setLoading(true);
     try {
-      const [vData, pData] = await Promise.all([getVouchersApi(), getPartnersApi()]);
+      const vData = await getVouchersApi();
       setVouchers(vData || []);
-      setPartners(pData || []);
     } catch (e) {
       console.error("Error loading vouchers:", e);
     } finally {
@@ -57,11 +55,10 @@ export function VoucherApprovalListPage() {
           filterPartner,
           filterReview,
           cachedVouchers: vouchers,
-          cachedPartners: partners,
         })
       );
     } catch (e) {}
-  }, [searchName, filterPartner, filterReview, vouchers, partners]);
+  }, [searchName, filterPartner, filterReview, vouchers]);
 
   useEffect(() => {
     loadData();
@@ -106,7 +103,7 @@ export function VoucherApprovalListPage() {
     return matchName && matchPartner && matchReview;
   });
 
-  const partnerNames = [...new Set(partners.map((p) => p.ten_dn).filter(Boolean))];
+  const partnerNames = [...new Set(vouchers.map((voucher) => voucher.ten_dn).filter(Boolean))];
 
   const totalVouchers = filteredVouchers.length;
   const totalPages = Math.ceil(totalVouchers / limit) || 1;

@@ -1,24 +1,39 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 
-import viTranslation from "./locales/vi.json";
-import enTranslation from "./locales/en.json";
-
 const savedLang = localStorage.getItem("app_lang") || "vi";
 
-i18n.use(initReactI18next).init({
-  resources: {
-    vi: { translation: viTranslation },
-    en: { translation: enTranslation },
-  },
-  lng: savedLang,
-  fallbackLng: "vi",
-  keySeparator: false,
-  nsSeparator: false,
-  interpolation: {
-    escapeValue: false,
-  },
-});
+const localeLoaders = {
+  vi: () => import("./locales/vi.json"),
+  en: () => import("./locales/en.json"),
+};
+const localeRequests = new Map();
+
+async function loadLocale(lang) {
+  const normalizedLang = localeLoaders[lang] ? lang : "vi";
+  if (!localeRequests.has(normalizedLang)) {
+    localeRequests.set(
+      normalizedLang,
+      localeLoaders[normalizedLang]().then((module) => module.default || module),
+    );
+  }
+  return localeRequests.get(normalizedLang);
+}
+
+export const i18nReady = loadLocale(savedLang).then((translation) =>
+  i18n.use(initReactI18next).init({
+    resources: {
+      [savedLang]: { translation },
+    },
+    lng: savedLang,
+    fallbackLng: savedLang,
+    keySeparator: false,
+    nsSeparator: false,
+    interpolation: {
+      escapeValue: false,
+    },
+  }),
+);
 
 i18n.on("languageChanged", (lng) => {
   localStorage.setItem("app_lang", lng);
@@ -31,6 +46,7 @@ i18n.on("languageChanged", (lng) => {
 export async function translateOnTheFly(text, targetLang = i18n.language) {
   if (!text || targetLang === "vi") return text;
   // First check if text is already in en.json
+  const enTranslation = await loadLocale("en");
   if (enTranslation[text]) return enTranslation[text];
 
   try {

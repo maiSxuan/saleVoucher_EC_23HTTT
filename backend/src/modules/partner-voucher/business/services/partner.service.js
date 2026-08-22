@@ -60,14 +60,9 @@ async function uploadBase64ToSupabase(base64String, folder = "licenses") {
 
 class PartnerService {
   async getPartners(query) {
-    const partners = await partnerRepository.findAll(query);
-    const result = await Promise.all(
-      partners.map(async (p) => {
-        const branches = await branchRepository.findByPartnerId(p.ma_hs);
-        return { ...p, branches };
-      }),
-    );
-    return result;
+    // findAll already loads and groups every branch in one bulk query.
+    // Returning it directly avoids one extra Supabase request per partner.
+    return partnerRepository.findAll(query);
   }
 
   async getPartnerById(id) {
@@ -495,6 +490,12 @@ class PartnerService {
     if (!req) {
       const err = new Error("Không tìm thấy yêu cầu cập nhật hồ sơ");
       err.status = 404;
+      throw err;
+    }
+
+    if (!["Cho duyet", "Cho xu ly"].includes(req.trang_thai)) {
+      const err = new Error("Yêu cầu cập nhật hồ sơ đã được xử lý trước đó");
+      err.status = 409;
       throw err;
     }
 

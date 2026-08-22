@@ -253,48 +253,55 @@ class IssuedVoucherRepository {
       return { records: [], total: 0, page, limit, totalPages: 0 };
     }
 
-    // Nạp thêm thông tin voucher và chi nhánh
-    const enriched = await Promise.all(
-      (data || []).map(async (row) => {
-        let vInfo = null;
-        let bInfo = null;
-        let staffInfo = null;
-
-        if (row.ma_voucher) {
-          const { data: v } = await supabase
-            .from('voucher')
-            .select('ten_voucher, gia_tri_giam, gia_goc')
-            .eq('ma_voucher', row.ma_voucher)
-            .maybeSingle();
-          vInfo = v;
-        }
-
-        if (row.ma_chi_nhanh_su_dung) {
-          const { data: b } = await supabase
-            .from('chinhanh')
-            .select('ten_chi_nhanh')
-            .eq('ma_chi_nhanh', row.ma_chi_nhanh_su_dung)
-            .maybeSingle();
-          bInfo = b;
-        }
-
-        if (row.ma_nhan_vien_xac_nhan) {
-          const { data: tk } = await supabase
-            .from('taikhoan')
-            .select('thong_tin_dang_nhap, nguoidung:ma_nguoi_dung(ho_ten)')
-            .eq('ma_tk', row.ma_nhan_vien_xac_nhan)
-            .maybeSingle();
-          staffInfo = tk;
-        }
-
-        return {
-          ...row,
-          voucher: vInfo,
-          chinhanh: bInfo,
-          nhanvien: staffInfo,
-        };
-      })
+    const rows = data || [];
+    const voucherIds = [...new Set(rows.map((row) => row.ma_voucher).filter(Boolean))];
+    const branchIds = [...new Set(rows.map((row) => row.ma_chi_nhanh_su_dung).filter(Boolean))];
+    const staffIds = [...new Set(rows.map((row) => row.ma_nhan_vien_xac_nhan).filter(Boolean))];
+    const emptyResult = Promise.resolve({ data: [] });
+    const [voucherResult, branchResult, staffResult] = await Promise.all([
+      voucherIds.length
+        ? supabase
+          .from('voucher')
+          .select('ma_voucher, ten_voucher, gia_tri_giam, gia_goc')
+          .in('ma_voucher', voucherIds)
+        : emptyResult,
+      branchIds.length
+        ? supabase
+          .from('chinhanh')
+          .select('ma_chi_nhanh, ten_chi_nhanh')
+          .in('ma_chi_nhanh', branchIds)
+        : emptyResult,
+      staffIds.length
+        ? supabase
+          .from('taikhoan')
+          .select('ma_tk, thong_tin_dang_nhap, nguoidung:ma_nguoi_dung(ho_ten)')
+          .in('ma_tk', staffIds)
+        : emptyResult,
+    ]);
+    const vouchersById = new Map(
+      (voucherResult.data || []).map((voucher) => [voucher.ma_voucher, {
+        ten_voucher: voucher.ten_voucher,
+        gia_tri_giam: voucher.gia_tri_giam,
+        gia_goc: voucher.gia_goc,
+      }]),
     );
+    const branchesById = new Map(
+      (branchResult.data || []).map((branch) => [branch.ma_chi_nhanh, {
+        ten_chi_nhanh: branch.ten_chi_nhanh,
+      }]),
+    );
+    const staffById = new Map(
+      (staffResult.data || []).map((staff) => [staff.ma_tk, {
+        thong_tin_dang_nhap: staff.thong_tin_dang_nhap,
+        nguoidung: staff.nguoidung,
+      }]),
+    );
+    const enriched = rows.map((row) => ({
+      ...row,
+      voucher: vouchersById.get(row.ma_voucher) || null,
+      chinhanh: branchesById.get(row.ma_chi_nhanh_su_dung) || null,
+      nhanvien: staffById.get(row.ma_nhan_vien_xac_nhan) || null,
+    }));
 
     return {
       records: enriched,
@@ -320,25 +327,26 @@ class IssuedVoucherRepository {
         return [];
       }
 
-      // Map tên voucher
-      const result = await Promise.all(
-        data.map(async (row) => {
-          let vName = 'Voucher';
-          if (row.ma_voucher) {
-            const { data: v } = await supabase
-              .from('voucher')
-              .select('ten_voucher')
-              .eq('ma_voucher', row.ma_voucher)
-              .maybeSingle();
-            if (v?.ten_voucher) vName = v.ten_voucher;
-          }
-          return {
-            code: row.voucher_code,
-            status: row.trang_thai,
-            voucherName: vName,
-          };
-        })
-      );
+      const voucherIds = [...new Set(data.map((row) => row.ma_voucher).filter(Boolean))];
+      let voucherNamesById = new Map();
+      if (voucherIds.length > 0) {
+        const { data: vouchers, error: voucherError } = await supabase
+          .from('voucher')
+          .select('ma_voucher, ten_voucher')
+          .in('ma_voucher', voucherIds);
+        if (voucherError) {
+          console.warn('[IssuedVoucherRepository] findSampleCodes voucher error:', voucherError.message);
+        }
+        voucherNamesById = new Map(
+          (vouchers || []).map((voucher) => [voucher.ma_voucher, voucher.ten_voucher]),
+        );
+      }
+
+      const result = data.map((row) => ({
+        code: row.voucher_code,
+        status: row.trang_thai,
+        voucherName: voucherNamesById.get(row.ma_voucher) || 'Voucher',
+      }));
 
       return result;
     } catch (err) {
