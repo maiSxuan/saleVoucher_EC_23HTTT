@@ -130,21 +130,38 @@ class BranchRepository {
       .from("chinhanh")
       .update(payload)
       .eq("ma_chi_nhanh", id)
-      .select()
-      .single();
+      .select();
 
     if (error) {
       console.error("[BranchRepository] update error:", error.message);
       throw new Error(`Cập nhật chi nhánh thất bại: ${error.message}`);
     }
-    return new BranchModel(data);
+    const updatedRecord = data && data[0] ? data[0] : { ma_chi_nhanh: id, ...payload };
+    return new BranchModel(updatedRecord);
   }
 
   /**
-   * Delete or deactivate branch
+   * Delete branch permanently from database
    */
   async delete(id) {
-    return this.update(id, { trang_thai: "Tam ngung hoat dong" });
+    const { data, error } = await supabase
+      .from("chinhanh")
+      .delete()
+      .eq("ma_chi_nhanh", id)
+      .select();
+
+    if (error) {
+      console.error("[BranchRepository] delete error:", error.message);
+      throw new Error(`Xóa chi nhánh thất bại: ${error.message}`);
+    }
+    return data;
+  }
+
+  /**
+   * Update branch status (e.g. "Tam ngung", "Dang hoat dong")
+   */
+  async updateStatus(id, status) {
+    return this.update(id, { trang_thai: status });
   }
 }
 

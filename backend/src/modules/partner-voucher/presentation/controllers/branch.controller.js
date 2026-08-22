@@ -50,6 +50,16 @@ class BranchController {
       next(error);
     }
   }
+  async updateBranchStatus(req, res, next) {
+    try {
+      const actorId = req.user?.ma_tk || req.user?.id || req.user?.ma_nguoi_dung || req.body?.actorId || req.body?.adminId;
+      const { status } = req.body;
+      const result = await this.branchService.updateBranchStatus(req.params.id, status, actorId);
+      res.json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = BranchController;

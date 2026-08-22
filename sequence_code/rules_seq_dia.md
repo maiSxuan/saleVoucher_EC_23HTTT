@@ -52,6 +52,10 @@ Mỗi bước cần ghi rõ:
 Dựa trên mã nguồn/tài liệu dự án hiện có, hãy đưa ra bản phân tích luồng chi tiết cho: "[TÊN USE CASE / CHỨC NĂNG CẦN VẼ]".
 
 Các chức năng cần thực hiện gồm:
+"Thiết kế sequence: 
+UC-PAR-01 — Đăng ký tài khoản doanh nghiệp 
+UC-PAR-02 — Cập nhật hồ sơ chi nhánh
+UC-PAR-03 — Cập nhật thông tin pháp lý doanh nghiệp 
 UC-PAR-04 — Tạo voucher.
 UC-PAR-05 — Gửi duyệt voucher.
 UC-PAR-06 — Tạm ngưng voucher.
@@ -61,5 +65,9 @@ UC-PAR-09 — Xem danh sách voucher.
 UC-PAR-10 — Xem chi tiết voucher.
 UC-PAR-11 — Cập nhật voucher.
 UC-PAR-12 — Xem kết quả duyệt voucher.
-UC-ADM-02 — Admin quản lý và duyệt đối tác. 
-UC-ADM-03 — Admin duyệt voucher."
+UC-PAR-14 --- Thêm tài khoản nhân viên
+UC-PAR-16 — Báo cáo đối tác.
+UC-ADM-02 — xử lý hồ sơ đối tác
+UC-ADM-03 — Khóa/mở đối tác
+UC-ADM-04 — Quản lý chi nhánh đối tác
+UC-ADM-05 — Admin duyệt voucher."

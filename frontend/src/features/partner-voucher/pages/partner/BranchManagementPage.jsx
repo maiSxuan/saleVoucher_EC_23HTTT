@@ -22,6 +22,7 @@ export function BranchManagementPage() {
 
   const [activeTab, setActiveTab] = useState("official");
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
   const [toastMessage, setToastMessage] = useState("");
 
   // Modals state
@@ -38,7 +39,7 @@ export function BranchManagementPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [searchQuery, activeTab]);
+  }, [searchQuery, activeTab, statusFilter]);
 
   const [newBranchForm, setNewBranchForm] = useState({
     ten_chi_nhanh: "",
@@ -228,11 +229,45 @@ export function BranchManagementPage() {
     await loadData();
   };
 
-  const filteredBranches = activeBranches.filter(
-    (b) =>
+  const activeCount = activeBranches.filter((b) => {
+    const st = (b.trang_thai || "").toLowerCase().trim();
+    return st === "hoat dong" || st === "hoạt động" || st === "active" || st === "dang hoat dong";
+  }).length;
+
+  const pausedCount = activeBranches.filter((b) => {
+    const st = (b.trang_thai || "").toLowerCase().trim();
+    return st === "tam ngung" || st === "tạm ngưng" || st === "tam ngung hoat dong" || st === "tamngung";
+  }).length;
+
+  const rejectedCount = activeBranches.filter((b) => {
+    const st = (b.trang_thai || "").toLowerCase().trim();
+    return st === "tu choi" || st === "từ chối" || st === "rejected" || st === "da tu choi";
+  }).length;
+
+  const pendingCount = activeBranches.filter((b) => {
+    const st = (b.trang_thai || "").toLowerCase().trim();
+    return st === "cho duyet" || st === "chờ duyệt" || st === "pending" || st === "cho xu ly";
+  }).length;
+
+  const filteredBranches = activeBranches.filter((b) => {
+    const matchesSearch =
       (b.ten_chi_nhanh || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (b.dia_chi || "").toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      (b.dia_chi || "").toLowerCase().includes(searchQuery.toLowerCase());
+
+    if (!matchesSearch) return false;
+
+    const st = (b.trang_thai || "").toLowerCase().trim();
+    const isActive = st === "hoat dong" || st === "hoạt động" || st === "active" || st === "dang hoat dong";
+    const isPaused = st === "tam ngung" || st === "tạm ngưng" || st === "tam ngung hoat dong" || st === "tamngung";
+    const isRejected = st === "tu choi" || st === "từ chối" || st === "rejected" || st === "da tu choi";
+    const isPending = st === "cho duyet" || st === "chờ duyệt" || st === "pending" || st === "cho xu ly";
+
+    if (statusFilter === "ACTIVE") return isActive;
+    if (statusFilter === "PAUSED") return isPaused;
+    if (statusFilter === "REJECTED") return isRejected;
+    if (statusFilter === "PENDING") return isPending;
+    return true;
+  });
 
   return (
     <PartnerLayout>
@@ -258,17 +293,17 @@ export function BranchManagementPage() {
           <button
             onClick={() => setActiveTab("official")}
             className={`pb-3 text-sm font-bold border-b-2 transition-colors cursor-pointer ${activeTab === "official"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-800"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-800"
               }`}
           >
-            {t("Chi nhánh chính thức")} ({activeBranches.length})
+            {t("Chi nhánh")} ({activeBranches.length})
           </button>
           <button
             onClick={() => setActiveTab("requests")}
             className={`pb-3 text-sm font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${activeTab === "requests"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-800"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-800"
               }`}
           >
             {t("Yêu cầu thay đổi")}
@@ -284,8 +319,8 @@ export function BranchManagementPage() {
           </button>
         </div>
 
-        {/* Filters Bar */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
+        {/* Filters Bar with Horizontal Tag Pills */}
+        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4 space-y-3">
           <div className="relative">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
@@ -297,8 +332,80 @@ export function BranchManagementPage() {
             />
           </div>
 
-          <div className="flex items-center justify-between mt-3">
-            <p className="text-sm text-gray-500">{filteredBranches.length} {t("chi nhánh")}</p>
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-100">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold text-gray-500 mr-1">{t("Lọc trạng thái:")}</span>
+
+              <button
+                type="button"
+                onClick={() => setStatusFilter("ALL")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  statusFilter === "ALL"
+                    ? "bg-slate-900 text-white shadow-xs"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                {t("Tất cả")} ({activeBranches.length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStatusFilter("ACTIVE")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  statusFilter === "ACTIVE"
+                    ? "bg-emerald-600 text-white shadow-xs"
+                    : "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
+                }`}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                {t("Đang hoạt động")} ({activeCount})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStatusFilter("PAUSED")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  statusFilter === "PAUSED"
+                    ? "bg-slate-700 text-white shadow-xs"
+                    : "bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200"
+                }`}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                {t("Tạm ngưng")} ({pausedCount})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStatusFilter("REJECTED")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  statusFilter === "REJECTED"
+                    ? "bg-rose-600 text-white shadow-xs"
+                    : "bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100"
+                }`}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                {t("Bị từ chối")} ({rejectedCount})
+              </button>
+
+              {pendingCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter("PENDING")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    statusFilter === "PENDING"
+                      ? "bg-amber-600 text-white shadow-xs"
+                      : "bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
+                  }`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  {t("Chờ duyệt")} ({pendingCount})
+                </button>
+              )}
+            </div>
+
+            <p className="text-xs text-gray-500 font-medium">
+              {filteredBranches.length} {t("chi nhánh")}
+            </p>
           </div>
         </div>
 
@@ -454,7 +561,7 @@ export function BranchManagementPage() {
             {partnerRequests.filter((r) => r.trang_thai !== "Cho duyet" && r.trang_thai !== "Cho xu ly").length > 0 && (
               <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-xs p-5 space-y-4">
                 <h3 className="font-bold text-gray-700 text-sm border-b border-gray-100 pb-3">
-                {t("Lịch sử các yêu cầu đã xử lý")} ({partnerRequests.filter((r) => r.trang_thai !== "Cho duyet" && r.trang_thai !== "Cho xu ly").length})
+                  {t("Lịch sử các yêu cầu đã xử lý")} ({partnerRequests.filter((r) => r.trang_thai !== "Cho duyet" && r.trang_thai !== "Cho xu ly").length})
                 </h3>
                 <div className="divide-y divide-gray-100">
                   {partnerRequests

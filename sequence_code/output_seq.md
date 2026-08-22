@@ -1,597 +1,714 @@
-# Detailed Interaction Flow cho Sequence Diagram
-## Hệ thống Quản lý và Phê duyệt Voucher / Đối tác (SaleVoucher EC)
+# ĐẶC TẢ SEQUENCE DIAGRAM (DETAILED INTERACTION FLOW)
+## DỰ ÁN HỆ THỐNG QUẢN LÝ & PHÁT HÀNH E-VOUCHER (SNOW VOUCHER)
 
-Tài liệu này tổng hợp luồng tương tác chi tiết (Detailed Interaction Flow) cho 11 Use Cases theo đúng thực trạng mã nguồn hiện tại của dự án, tuân thủ nguyên tắc phân tầng 3 lớp (**Presentation Layer -> Business Layer -> Data Access Layer**) theo chuẩn [`rules_seq_dia.md`](file:///Users/nguyenkimngan/Downloads/saleVoucher_EC_23HTTT/rules_seq_dia.md).
-
----
-
-# I. TỔNG QUAN PHÂN TẦNG VÀ DANH SÁCH LIFELINES CHUNG
-
-### 1. Presentation Layer (Giao diện & API Controllers)
-- **[Actor] Partner / Partner Manager**: Đối tác / Nhân viên quản lý Voucher thực hiện thao tác.
-- **[Actor] Admin**: Quản trị viên hệ thống phê duyệt / quản lý.
-- **[Presentation] VoucherFormPage**: Giao diện tạo và cập nhật Voucher.
-- **[Presentation] VoucherDetailPage**: Giao diện xem chi tiết Voucher và thay đổi trạng thái bán.
-- **[Presentation] VoucherListPage**: Giao diện danh sách Voucher phía Đối tác.
-- **[Presentation] VoucherApprovalListPage**: Giao diện danh sách duyệt Voucher phía Admin.
-- **[Presentation] VoucherApprovalDetailPage**: Giao diện phê duyệt/từ chối Voucher chi tiết phía Admin.
-- **[Presentation] PartnerManagementPage**: Giao diện quản lý đối tác phía Admin.
-- **[Presentation] PartnerDetailPage**: Giao diện xem/duyệt/từ chối/khóa đối tác phía Admin.
-- **[Presentation/API] VoucherController**: Controller xử lý REST API Voucher (`/api/vouchers`).
-- **[Presentation/API] PartnerController**: Controller xử lý REST API Partner (`/api/partners`, `/api/admin/partners`).
-
-### 2. Business Layer (Logic Nghiệp vụ & Control)
-- **[Business] VoucherService**: Service điều hướng logic tạo, cập nhật, đổi trạng thái và thẩm định Voucher.
-- **[Business] PartnerService**: Service điều hướng logic duyệt, từ chối, khóa/mở khóa hồ sơ Đối tác.
-- **[Business] BranchService**: Service quản lý liên kết chi nhánh áp dụng.
-- **[Business] AuditLogService**: Service ghi nhật ký hệ thống (`log_ht`) với cơ chế `resolveActorId` định danh chính xác Partner/Manager/Admin.
-- **[Business] uploadBase64ToSupabase**: Utility chuyển đổi ảnh Base64 và upload lên Supabase Storage bucket.
-
-### 3. Data Access Layer / External Systems (Lưu trữ & Truy vấn)
-- **[Data] VoucherRepository**: Repository tương tác bảng `voucher` & bảng trung gian `voucher_cn` trong Supabase DB.
-- **[Data] VoucherBranchRepository**: Repository xử lý liên kết `voucher_cn`.
-- **[Data] PartnerRepository**: Repository tương tác bảng `hosodn` & `taikhoan`.
-- **[Data] BranchRepository**: Repository tương tác bảng `chinhanh`.
-- **[Data] AuditLogRepository**: Repository ghi dữ liệu vào bảng `log_ht`.
-- **[External] Supabase Postgres DB**: Hệ quản trị cơ sở dữ liệu PostgreSQL.
-- **[External] Supabase Storage**: Dịch vụ lưu trữ file/hình ảnh công khai (Bucket `partner-documents`).
+> Document Generated Following 3-Tier Architecture Principles (Presentation, Business, Data Access) for PlantUML / Mermaid Sequence Diagram Rendering.
 
 ---
 
-# II. CHI TIẾT LUỒNG TƯƠNG TÁC THEO TỪNG USE CASE
+## UC-PAR-01 — Đăng ký tài khoản doanh nghiệp
 
----
+### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
+- **[Actor]**: Partner (Người đại diện Doanh nghiệp)
+- **[Presentation - UI]**: PartnerRegisterPage
+- **[Presentation - API Client]**: partnerApi
+- **[Presentation - Controller]**: PartnerController
+- **[Business - Service]**: PartnerService, MailerService
+- **[Data Access - DB]**: SupabaseDB (`DANHSACHOTP`, `TAIKHOAN`, `HOSODN`, `CHINHANH`)
 
-## 1. UC-PAR-04 — Tạo voucher
+### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
 
-#### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
-- **[Actor] Partner / Partner Manager**
-- **[Presentation] VoucherFormPage**
-- **[Presentation/API] VoucherController.create**
-- **[Business] VoucherService.createVoucher**
-- **[Business] uploadBase64ToSupabase**
-- **[Data] VoucherRepository.create**
-- **[Data] VoucherBranchRepository.setBranchesForVoucher**
-- **[Business] AuditLogService.log**
-- **[External] Supabase Storage**
-- **[External] Supabase DB**
-
-#### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
-1. **[1] Partner -> [Presentation] VoucherFormPage**: executeSave("draft" | "submit")
+1. **[Actor] Partner -> [Presentation - UI] PartnerRegisterPage**: Điền thông tin tài khoản đăng ký (email, sdt, password, ho_ten) & Bấm "Tiếp tục"
    - *Kiểu gọi*: Synchronous
    - *Tầng tương tác*: [Actor -> Presentation]
-   - *Mô tả*: Người dùng điền các thông tin voucher (`ten_voucher`, `gia_goc`, `gia_ban`, `so_luong_phat_hanh`, `ma_chi_nhanh`, `hinh_anh_url`...).
-2. **[2] [Presentation] VoucherFormPage -> [Presentation/API] VoucherController.create**: saveVoucherApi(voucherData) -> POST /api/vouchers
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation -> Presentation/API]
-   - *Mô tả*: Frontend đính kèm JWT Token và Header `x-actor-id`, `x-actor-role` gửi tới API create.
-3. **[3] [Presentation/API] VoucherController.create -> [Business] VoucherService.createVoucher**: createVoucher(payload, actorId, actorRole)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation/API -> Business]
-   - *Mô tả*: Controller trích xuất actorInfo và gọi Service tạo Voucher.
-4. **[4] [Business] VoucherService.createVoucher -> [Business] uploadBase64ToSupabase**: uploadBase64ToSupabase(payload.hinh_anh_url, "vouchers")
+   - *Mô tả*: Khởi tạo bước 1 đăng ký tài khoản.
+
+2. **[Presentation - UI] PartnerRegisterPage -> [Presentation - API Client] partnerApi**: requestPartnerOtpApi({ email, sdt, password, ho_ten })
    - *Kiểu gọi*: Asynchronous
-   - *Tầng tương tác*: [Business -> Business]
-   - *Mô tả*: Nếu `hinh_anh_url` dạng Base64 data URL, tiến hành upload lên Supabase Storage.
-5. **[5] [Business] uploadBase64ToSupabase -> [External] Supabase Storage**: upload(filePath, fileBuffer, { contentType })
+   - *Tầng tương tác*: [Presentation UI -> API Client]
+   - *Mô tả*: Gọi API yêu cầu cấp mã xác thực OTP.
+
+3. **[Presentation - API Client] partnerApi -> [Presentation - Controller] PartnerController**: POST /api/v1/partners/register/request-otp (body: { email, sdt, password, ho_ten })
+   - *Kiểu gọi*: Synchronous HTTP
+   - *Tầng tương tác*: [API Client -> Presentation Controller]
+   - *Mô tả*: Chuyển tiếp HTTP Request đến Backend Controller.
+
+4. **[Presentation - Controller] PartnerController -> [Business - Service] PartnerService**: requestRegisterOtp({ email, sdt, password, ho_ten })
+   - *Kiểu gọi*: Synchronous
+   - *Tầng tương tác*: [Presentation Controller -> Business Service]
+   - *Mô tả*: Thực thi logic kiểm tra email trùng lặp và tạo mã OTP 6 chữ số.
+
+5. **[Business - Service] PartnerService -> [Data Access - DB] SupabaseDB**: SELECT COUNT(*) FROM TAIKHOAN WHERE email = ?
+   - *Kiểu gọi*: Synchronous DB Query
+   - *Tầng tương tác*: [Business Service -> Data Access]
+   - *Mô tả*: Kiểm tra email đã đăng ký chưa.
+
+6. **ALT [If Email already exists]**:
+   - **[Data Access - DB] SupabaseDB --> [Business - Service] PartnerService**: return count > 0
+   - **[Business - Service] PartnerService --> [Presentation - Controller] PartnerController**: throw Error("Email đã tồn tại trên hệ thống")
+   - **[Presentation - Controller] PartnerController --> [Presentation - UI] PartnerRegisterPage**: HTTP 400 Bad Request ({ message })
+
+7. **ALT [If Email is valid & unique]**:
+   - **[Business - Service] PartnerService -> [Data Access - DB] SupabaseDB**: INSERT INTO DANHSACHOTP (email, otp, expire_at)
+   - **[Data Access - DB] SupabaseDB --> [Business - Service] PartnerService**: return createdOtpRecord
+   - **[Business - Service] PartnerService -> [Business - Service] MailerService**: sendOtpEmail(email, otp)
+   - *Kiểu gọi*: Asynchronous Mail Dispatch
+   - **[Business - Service] PartnerService --> [Presentation - Controller] PartnerController**: return { message: "Mã OTP đã được gửi", demoOtp }
+   - **[Presentation - Controller] PartnerController --> [Presentation - UI] PartnerRegisterPage**: HTTP 200 OK ({ demoOtp })
+   - *Mô tả*: Đã gửi mã OTP và hiển thị Popup nhập OTP cho Partner.
+
+8. **[Actor] Partner -> [Presentation - UI] PartnerRegisterPage**: Nhập mã OTP 6 chữ số & Bấm "Xác nhận OTP"
+   - *Kiểu gọi*: Synchronous
+   - *Tầng tương tác*: [Actor -> Presentation]
+
+9. **[Presentation - UI] PartnerRegisterPage -> [Presentation - API Client] partnerApi**: verifyPartnerOtpApi({ email, otp, sdt, password, ho_ten })
    - *Kiểu gọi*: Asynchronous
-   - *Tầng tương tác*: [Business -> External]
-   - *Mô tả*: Đẩy ảnh lên Storage bucket `partner-documents` và nhận về `publicUrl`.
-6. **[6] [External] Supabase Storage --> [Business] uploadBase64ToSupabase**: return publicUrl
-   - *Kiểu gọi*: Return
-   - *Tầng tương tác*: [External -> Business]
-7. **[7] [Business] VoucherService.createVoucher -> [Data] VoucherRepository.create**: create(dbPayload)
+
+10. **[Presentation - API Client] partnerApi -> [Presentation - Controller] PartnerController**: POST /api/v1/partners/register/verify-otp
+   - *Kiểu gọi*: Synchronous HTTP
+
+11. **[Presentation - Controller] PartnerController -> [Business - Service] PartnerService**: verifyRegisterOtp({ email, otp, sdt, password, ho_ten })
    - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Business -> Data]
-   - *Mô tả*: Tính toán `gia_tri_giam = Math.max(0, gia_goc - gia_ban)` và chuẩn bị Payload lưu DB.
-8. **[8] [Data] VoucherRepository.create -> [External] Supabase DB**: supabase.from("voucher").insert(dbPayload).select().single()
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Data -> External]
-   - *Mô tả*: Thêm dòng dữ liệu mới vào bảng `voucher`.
-9. **[9] [External] Supabase DB --> [Data] VoucherRepository.create**: return createdVoucherRow
-   - *Kiểu gọi*: Return
-   - *Tầng tương tác*: [External -> Data]
-10. **[10] [Data] VoucherRepository.create -> [External] Supabase DB**: supabase.from("voucher_cn").insert(branchLinks)
+
+12. **[Business - Service] PartnerService -> [Data Access - DB] SupabaseDB**: SELECT * FROM DANHSACHOTP WHERE email = ? AND otp = ? AND expire_at > NOW()
+   - *Kiểu gọi*: Synchronous DB Query
+
+13. **ALT [If OTP is valid]**:
+    - **[Business - Service] PartnerService -> [Data Access - DB] SupabaseDB**: INSERT INTO TAIKHOAN (email, mat_khau, ho_ten, sdt, vai_tro) VALUES (?, hashed_pw, ?, ?, 'PARTNER_OWNER')
+    - **[Data Access - DB] SupabaseDB --> [Business - Service] PartnerService**: return createdAccount
+    - **[Business - Service] PartnerService --> [Presentation - Controller] PartnerController**: return { user: createdAccount, token: accessToken }
+    - **[Presentation - Controller] PartnerController --> [Presentation - UI] PartnerRegisterPage**: HTTP 200 OK ({ user, token })
+    - *Mô tả*: Tài khoản đại diện đã tạo thành công. UI tự động chuyển sang Bước 2 (Thông tin Doanh nghiệp & GPKD & Chi nhánh).
+
+14. **[Actor] Partner -> [Presentation - UI] PartnerRegisterPage**: Khai báo Tên doanh nghiệp, MST, GPKD, Người đại diện, Chi nhánh & Bấm "Gửi duyệt hồ sơ"
     - *Kiểu gọi*: Synchronous
-    - *Tầng tương tác*: [Data -> External]
-    - *Mô tả*: Lưu danh sách các chi nhánh liên kết vào bảng trung gian `voucher_cn`.
-11. **[11] [Data] VoucherRepository.create --> [Business] VoucherService.createVoucher**: return VoucherModel
-    - *Kiểu gọi*: Return
-    - *Tầng tương tác*: [Data -> Business]
-12. **[12] [Business] VoucherService.createVoucher -> [Business] AuditLogService.log**: log({ actorId, actorRole, action, targetType: "VOUCHER", targetId: ma_voucher, result: "Thanh cong" })
+
+15. **[Presentation - UI] PartnerRegisterPage -> [Presentation - API Client] partnerApi**: registerPartnerProfileApi(profileFormData)
     - *Kiểu gọi*: Asynchronous
-    - *Tầng tương tác*: [Business -> Business]
-    - *Mô tả*: Ghi nhật ký thao tác `CREATE_VOUCHER_DRAFT` hoặc `SUBMIT_VOUCHER_REVIEW`.
-13. **[13] [Business] AuditLogService.log -> [External] Supabase DB**: insert into log_ht
-    - *Kiểu gọi*: Synchronous
-    - *Tầng tương tác*: [Business -> External]
-14. **[14] [Business] VoucherService.createVoucher --> [Presentation/API] VoucherController.create**: return voucherData
-    - *Kiểu gọi*: Return
-    - *Tầng tương tác*: [Business -> Presentation/API]
-15. **[15] [Presentation/API] VoucherController.create --> [Presentation] VoucherFormPage**: res.status(201).json({ success: true, data })
-    - *Kiểu gọi*: Return
-    - *Tầng tương tác*: [Presentation/API -> Presentation]
 
-#### C. CÁC KHỐI ĐIỀU KIỆN / VÒNG LẶP
-- **OPT [if payload.hinh_anh_url.startsWith("data:")]**:
-  - Thực hiện uploadBase64ToSupabase() để đổi lấy HTTP URL công khai trước khi lưu.
-- **ALT [if payload.trang_thai === "Cho duyet"]**:
-  - Ghi AuditLog action = `"SUBMIT_VOUCHER_REVIEW"`, `trang_thai_kiem_duyet` = `"Cho duyet"`.
-  - **ELSE**: Ghi AuditLog action = `"CREATE_VOUCHER_DRAFT"`, `trang_thai_kiem_duyet` = `"Nhap"`.
+16. **[Presentation - API Client] partnerApi -> [Presentation - Controller] PartnerController**: POST /api/v1/partners (body: profileFormData)
+    - *Kiểu gọi*: Synchronous HTTP
+
+17. **[Presentation - Controller] PartnerController -> [Business - Service] PartnerService**: createPartner(profileFormData, actorId)
+    - *Kiểu gọi*: Synchronous
+
+18. **[Business - Service] PartnerService -> [Data Access - DB] SupabaseDB**: INSERT INTO HOSODN (ma_nguoi_dung, ten_dn, ma_so_thue, dia_chi, trang_thai, ...) VALUES (?, ?, ?, ?, 'Cho duyet', ...)
+    - *Kiểu gọi*: Synchronous DB Query
+
+19. **[Business - Service] PartnerService -> [Data Access - DB] SupabaseDB**: INSERT INTO CHINHANH (ma_hs, ten_chi_nhanh, dia_chi, khu_vuc, trang_thai) VALUES (?, ?, ?, ?, 'Hoat dong')
+    - *Kiểu gọi*: Synchronous DB Query
+
+20. **[Business - Service] PartnerService --> [Presentation - Controller] PartnerController**: return createdPartnerProfile
+    - *Kiểu gọi*: Return
+
+21. **[Presentation - Controller] PartnerController --> [Presentation - UI] PartnerRegisterPage**: HTTP 201 Created ({ message: "Hồ sơ đối tác đã được tạo thành công! Trạng thái đang Chờ duyệt." })
+    - *Kiểu gọi*: Return
+    - *Mô tả*: Đăng ký hoàn tất, hiển thị Modal thông báo Chờ Admin phê duyệt.
 
 ---
 
-## 2. UC-PAR-05 — Gửi duyệt voucher
+## UC-PAR-02 — Cập nhật hồ sơ chi nhánh
 
-#### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
-- **[Actor] Partner / Partner Manager**
-- **[Presentation] VoucherDetailPage**
-- **[Presentation/API] VoucherController.submit**
-- **[Business] VoucherService.submitForReview**
-- **[Data] VoucherRepository.updateStatus**
-- **[Business] AuditLogService.log**
-- **[External] Supabase DB**
+### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
+- **[Actor]**: Partner (Người quản lý đối tác)
+- **[Presentation - UI]**: BranchManagementPage
+- **[Presentation - API Client]**: partnerApi
+- **[Presentation - Controller]**: BranchController
+- **[Business - Service]**: BranchService
+- **[Data Access - DB]**: SupabaseDB (`CHINHANH`, `YEUCAUCHINHANH`)
 
-#### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
-1. **[1] Partner -> [Presentation] VoucherDetailPage**: handleStatusChange("Cho duyet")
+### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
+
+1. **[Actor] Partner -> [Presentation - UI] BranchManagementPage**: Mở form "Thêm chi nhánh mới" / "Cập nhật chi nhánh", nhập tên, địa chỉ, khu vực, sđt & Bấm "Gửi yêu cầu"
    - *Kiểu gọi*: Synchronous
    - *Tầng tương tác*: [Actor -> Presentation]
-2. **[2] [Presentation] VoucherDetailPage -> [Presentation/API] VoucherController.submit**: POST /api/vouchers/:id/submit
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation -> Presentation/API]
-3. **[3] [Presentation/API] VoucherController.submit -> [Business] VoucherService.submitForReview**: submitForReview(id, actorId, actorRole)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation/API -> Business]
-4. **[4] [Business] VoucherService.submitForReview -> [Data] VoucherRepository.updateStatus**: updateStatus(id, "Cho duyet", "Cho duyet")
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Business -> Data]
-5. **[5] [Data] VoucherRepository.updateStatus -> [External] Supabase DB**: supabase.from("voucher").update({ trang_thai: "Cho duyet", trang_thai_kiem_duyet: "Cho duyet", ly_do_tu_choi: "" }).eq("ma_voucher", id)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Data -> External]
-6. **[6] [External] Supabase DB --> [Data] VoucherRepository.updateStatus**: return updatedRow
-   - *Kiểu gọi*: Return
-   - *Tầng tương tác*: [External -> Data]
-7. **[7] [Business] VoucherService.submitForReview -> [Business] AuditLogService.log**: log({ actorId, actorRole, action: "SUBMIT_VOUCHER_REVIEW", targetId: id, result: "Thanh cong" })
+
+2. **[Presentation - UI] BranchManagementPage -> [Presentation - API Client] partnerApi**: createBranchRequestApi({ ma_hs, ten_chi_nhanh, dia_chi, khu_vuc, sdt })
    - *Kiểu gọi*: Asynchronous
-   - *Tầng tương tác*: [Business -> Business]
-8. **[8] [Business] VoucherService.submitForReview --> [Presentation/API] VoucherController.submit**: return updatedVoucher
-   - *Kiểu gọi*: Return
-   - *Tầng tương tác*: [Business -> Presentation/API]
-9. **[9] [Presentation/API] VoucherController.submit --> [Presentation] VoucherDetailPage**: res.json({ success: true, data })
-   - *Kiểu gọi*: Return
-   - *Tầng tương tác*: [Presentation/API -> Presentation]
+   - *Tầng tương tác*: [Presentation UI -> API Client]
 
-#### C. CÁC KHỐI ĐIỀU KIỆN / VÒNG LẶP
-- **ALT [if update success]**: Trạng thái kiểm duyệt chuyển thành `Cho duyet`, lý do từ chối trước đó (nếu có) được xóa sạch.
+3. **[Presentation - API Client] partnerApi -> [Presentation - Controller] BranchController**: POST /api/v1/branches/requests (body: { ma_hs, ten_chi_nhanh, ... })
+   - *Kiểu gọi*: Synchronous HTTP
+   - *Tầng tương tác*: [API Client -> Presentation Controller]
+
+4. **[Presentation - Controller] BranchController -> [Business - Service] BranchService**: createBranchRequest(payload, actorId)
+   - *Kiểu gọi*: Synchronous
+   - *Tầng tương tác*: [Presentation Controller -> Business Service]
+
+5. **[Business - Service] BranchService -> [Data Access - DB] SupabaseDB**: INSERT INTO YEUCAUCHINHANH (ma_hs, loai_yeu_cau, ten_chi_nhanh, dia_chi, khu_vuc, trang_thai) VALUES (?, 'THEM_MOI', ?, ?, ?, 'Cho duyet')
+   - *Kiểu gọi*: Synchronous DB Query
+   - *Tầng tương tác*: [Business Service -> Data Access]
+
+6. **[Data Access - DB] SupabaseDB --> [Business - Service] BranchService**: return createdBranchRequest
+   - *Kiểu gọi*: Return
+
+7. **[Business - Service] BranchService --> [Presentation - Controller] BranchController**: return createdBranchRequest
+   - *Kiểu gọi*: Return
+
+8. **[Presentation - Controller] BranchController --> [Presentation - UI] BranchManagementPage**: HTTP 201 Created ({ message: "Yêu cầu thêm chi nhánh mới đã được gửi tới Quản trị viên!" })
+   - *Kiểu gọi*: Return
+   - *Mô tả*: Cập nhật giao diện danh sách chi nhánh kèm trạng thái "Chờ duyệt".
 
 ---
 
-## 3. UC-PAR-06 — Tạm ngưng voucher
+## UC-PAR-03 — Cập nhật thông tin pháp lý doanh nghiệp
 
-#### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
-- **[Actor] Partner / Partner Manager**
-- **[Presentation] VoucherDetailPage**
-- **[Presentation/API] VoucherController.updateStatus**
-- **[Business] VoucherService.updateVoucherStatus**
-- **[Data] VoucherRepository.updateStatus**
-- **[Business] AuditLogService.log**
-- **[External] Supabase DB**
+### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
+- **[Actor]**: Partner (Người đại diện Doanh nghiệp)
+- **[Presentation - UI]**: PartnerProfilePage
+- **[Presentation - API Client]**: partnerApi
+- **[Presentation - Controller]**: PartnerController
+- **[Business - Service]**: PartnerService
+- **[Data Access - DB]**: SupabaseDB (`HOSODN`, `YEUCAUCAPNHATHOSODN`)
 
-#### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
-1. **[1] Partner -> [Presentation] VoucherDetailPage**: handleStatusChange("Tam ngung")
+### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
+
+1. **[Actor] Partner -> [Presentation - UI] PartnerProfilePage**: Nhập thay đổi (Tên DN, Địa chỉ, GPKD mới, Logo mới, Thông tin người đại diện) & Bấm "Gửi yêu cầu cập nhật"
    - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Actor -> Presentation]
-2. **[2] [Presentation] VoucherDetailPage -> [Presentation/API] VoucherController.updateStatus**: PATCH /api/vouchers/:id/status { status: "Tam ngung" }
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation -> Presentation/API]
-3. **[3] [Presentation/API] VoucherController.updateStatus -> [Business] VoucherService.updateVoucherStatus**: updateVoucherStatus(id, "Tam ngung", actorId, actorRole)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation/API -> Business]
-4. **[4] [Business] VoucherService.updateVoucherStatus -> [Data] VoucherRepository.updateStatus**: updateStatus(id, "Tam ngung", "Da duyet")
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Business -> Data]
-5. **[5] [Data] VoucherRepository.updateStatus -> [External] Supabase DB**: supabase.from("voucher").update({ trang_thai: "Tam ngung" }).eq("ma_voucher", id)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Data -> External]
-6. **[6] [Business] VoucherService.updateVoucherStatus -> [Business] AuditLogService.log**: log({ actorId, actorRole, action: "PAUSE_VOUCHER", targetId: id, result: "Thanh cong" })
+
+2. **[Presentation - UI] PartnerProfilePage -> [Presentation - API Client] partnerApi**: createPartnerProfileRequestApi(partnerId, updatePayload)
    - *Kiểu gọi*: Asynchronous
-   - *Tầng tương tác*: [Business -> Business]
-7. **[7] [Business] VoucherService.updateVoucherStatus --> [Presentation/API] VoucherController.updateStatus**: return result
-   - *Kiểu gọi*: Return
-8. **[8] [Presentation/API] VoucherController.updateStatus --> [Presentation] VoucherDetailPage**: res.json({ success: true, data })
-   - *Kiểu gọi*: Return
+
+3. **[Presentation - API Client] partnerApi -> [Presentation - Controller] PartnerController**: POST /api/v1/partners/:id/profile-request (body: updatePayload)
+   - *Kiểu gọi*: Synchronous HTTP
+
+4. **[Presentation - Controller] PartnerController -> [Business - Service] PartnerService**: createProfileRequest(payload, actorId)
+   - *Kiểu gọi*: Synchronous
+
+5. **[Business - Service] PartnerService -> [Data Access - DB] SupabaseDB**: INSERT INTO YEUCAUCAPNHATHOSODN (ma_hs, noi_dung_thay_doi, trang_thai) VALUES (?, JSON.stringify(updatePayload), 'Cho duyet')
+   - *Kiểu gọi*: Synchronous DB Query
+
+6. **[Data Access - DB] SupabaseDB --> [Business - Service] PartnerService**: return createdProfileRequest
+
+7. **[Business - Service] PartnerService --> [Presentation - Controller] PartnerController**: return createdProfileRequest
+
+8. **[Presentation - Controller] PartnerController --> [Presentation - UI] PartnerProfilePage**: HTTP 201 Created ({ message: "Đã gửi Yêu cầu Cập nhật Hồ sơ Doanh nghiệp tới Quản trị viên!" })
+   - *Mô tả*: Hiển thị banner "Yêu cầu cập nhật thông tin đang chờ Admin kiểm duyệt".
 
 ---
 
-## 4. UC-PAR-07 — Ngừng bán voucher
+## UC-PAR-04 — Tạo voucher
 
-#### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
-- **[Actor] Partner / Partner Manager**
-- **[Presentation] VoucherDetailPage**
-- **[Presentation/API] VoucherController.updateStatus**
-- **[Business] VoucherService.updateVoucherStatus**
-- **[Data] VoucherRepository.updateStatus**
-- **[Business] AuditLogService.log**
-- **[External] Supabase DB**
+### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
+- **[Actor]**: Partner (Người quản lý Voucher)
+- **[Presentation - UI]**: VoucherFormPage
+- **[Presentation - API Client]**: partnerApi
+- **[Presentation - Controller]**: VoucherController
+- **[Business - Service]**: VoucherService
+- **[Data Access - DB]**: SupabaseDB (`VOUCHER`, `APDUNGCHINHANH`)
 
-#### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
-1. **[1] Partner -> [Presentation] VoucherDetailPage**: handleStatusChange("Ngung ban")
+### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
+
+1. **[Actor] Partner -> [Presentation - UI] VoucherFormPage**: Nhập Tên Voucher, Danh mục, Giá gốc, Giá bán, Số lượng, Thời hạn, Chi nhánh áp dụng & Bấm "Lưu bản nháp"
    - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Actor -> Presentation]
-2. **[2] [Presentation] VoucherDetailPage -> [Presentation/API] VoucherController.updateStatus**: PATCH /api/vouchers/:id/status { status: "Ngung ban" }
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation -> Presentation/API]
-3. **[3] [Presentation/API] VoucherController.updateStatus -> [Business] VoucherService.updateVoucherStatus**: updateVoucherStatus(id, "Ngung ban", actorId, actorRole)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation/API -> Business]
-4. **[4] [Business] VoucherService.updateVoucherStatus -> [Data] VoucherRepository.updateStatus**: updateStatus(id, "Ngung ban", "Da duyet")
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Business -> Data]
-5. **[5] [Data] VoucherRepository.updateStatus -> [External] Supabase DB**: supabase.from("voucher").update({ trang_thai: "Ngung ban" }).eq("ma_voucher", id)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Data -> External]
-6. **[6] [Business] VoucherService.updateVoucherStatus -> [Business] AuditLogService.log**: log({ actorId, actorRole, action: "CLOSE_VOUCHER", targetId: id, result: "Thanh cong" })
+
+2. **[Presentation - UI] VoucherFormPage -> [Presentation - API Client] partnerApi**: createVoucherApi({ ...voucherData, trang_thai: 'Nhap', trang_thai_kiem_duyet: 'Nhap' })
    - *Kiểu gọi*: Asynchronous
-   - *Tầng tương tác*: [Business -> Business]
-7. **[7] [Business] VoucherService.updateVoucherStatus --> [Presentation/API] VoucherController.updateStatus**: return result
-   - *Kiểu gọi*: Return
-8. **[8] [Presentation/API] VoucherController.updateStatus --> [Presentation] VoucherDetailPage**: res.json({ success: true, data })
-   - *Kiểu gọi*: Return
+
+3. **[Presentation - API Client] partnerApi -> [Presentation - Controller] VoucherController**: POST /api/v1/vouchers (body: voucherData)
+   - *Kiểu gọi*: Synchronous HTTP
+
+4. **[Presentation - Controller] VoucherController -> [Business - Service] VoucherService**: createVoucher(payload, actorId, actorRole)
+   - *Kiểu gọi*: Synchronous
+
+5. **[Business - Service] VoucherService -> [Data Access - DB] SupabaseDB**: INSERT INTO VOUCHER (ma_hs, ten_voucher, gia_goc, gia_ban, so_luong_phat_hanh, trang_thai, trang_thai_kiem_duyet, ...) VALUES (...)
+   - *Kiểu gọi*: Synchronous DB Query
+
+6. **LOOP [for each applicable branchId in ma_chi_nhanh]**:
+   - **[Business - Service] VoucherService -> [Data Access - DB] SupabaseDB**: INSERT INTO APDUNGCHINHANH (ma_voucher, ma_chi_nhanh) VALUES (newVoucherId, branchId)
+
+7. **[Business - Service] VoucherService --> [Presentation - Controller] VoucherController**: return createdVoucher
+
+8. **[Presentation - Controller] VoucherController --> [Presentation - UI] VoucherFormPage**: HTTP 201 Created ({ data: createdVoucher, message: "Lưu bản nháp thành công!" })
+   - *Mô tả*: Đã lưu voucher trạng thái Bản nháp.
 
 ---
 
-## 5. UC-PAR-08 — Mở bán lại voucher
+## UC-PAR-05 — Gửi duyệt voucher
 
-#### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
-- **[Actor] Partner / Partner Manager**
-- **[Presentation] VoucherDetailPage**
-- **[Presentation/API] VoucherController.updateStatus**
-- **[Business] VoucherService.updateVoucherStatus**
-- **[Data] VoucherRepository.updateStatus**
-- **[Business] AuditLogService.log**
-- **[External] Supabase DB**
+### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
+- **[Actor]**: Partner (Người quản lý Voucher)
+- **[Presentation - UI]**: VoucherFormPage / VoucherListPage
+- **[Presentation - API Client]**: partnerApi
+- **[Presentation - Controller]**: VoucherController
+- **[Business - Service]**: VoucherService
+- **[Data Access - DB]**: SupabaseDB (`VOUCHER`)
 
-#### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
-1. **[1] Partner -> [Presentation] VoucherDetailPage**: handleStatusChange("Dang ban")
+### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
+
+1. **[Actor] Partner -> [Presentation - UI] VoucherFormPage**: Bấm nút "✓ Lưu & Gửi duyệt ngay" -> Xác nhận Modal gửi duyệt
    - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Actor -> Presentation]
-2. **[2] [Presentation] VoucherDetailPage -> [Presentation/API] VoucherController.updateStatus**: PATCH /api/vouchers/:id/status { status: "Dang ban" }
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation -> Presentation/API]
-3. **[3] [Presentation/API] VoucherController.updateStatus -> [Business] VoucherService.updateVoucherStatus**: updateVoucherStatus(id, "Dang ban", actorId, actorRole)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation/API -> Business]
-4. **[4] [Business] VoucherService.updateVoucherStatus -> [Data] VoucherRepository.updateStatus**: updateStatus(id, "Dang ban", "Da duyet")
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Business -> Data]
-5. **[5] [Data] VoucherRepository.updateStatus -> [External] Supabase DB**: supabase.from("voucher").update({ trang_thai: "Dang ban" }).eq("ma_voucher", id)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Data -> External]
-6. **[6] [Business] VoucherService.updateVoucherStatus -> [Business] AuditLogService.log**: log({ actorId, actorRole, action: "RESUME_VOUCHER", targetId: id, result: "Thanh cong" })
+
+2. **[Presentation - UI] VoucherFormPage -> [Presentation - API Client] partnerApi**: submitVoucherForReviewApi(voucherId)
    - *Kiểu gọi*: Asynchronous
-   - *Tầng tương tác*: [Business -> Business]
-7. **[7] [Business] VoucherService.updateVoucherStatus --> [Presentation/API] VoucherController.updateStatus**: return result
-   - *Kiểu gọi*: Return
-8. **[8] [Presentation/API] VoucherController.updateStatus --> [Presentation] VoucherDetailPage**: res.json({ success: true, data })
-   - *Kiểu gọi*: Return
+
+3. **[Presentation - API Client] partnerApi -> [Presentation - Controller] VoucherController**: POST /api/v1/vouchers/:id/submit-review
+   - *Kiểu gọi*: Synchronous HTTP
+
+4. **[Presentation - Controller] VoucherController -> [Business - Service] VoucherService**: submitForReview(voucherId, actorId, actorRole)
+   - *Kiểu gọi*: Synchronous
+
+5. **[Business - Service] VoucherService -> [Data Access - DB] SupabaseDB**: UPDATE VOUCHER SET trang_thai = 'Cho duyet', trang_thai_kiem_duyet = 'Cho duyet', ly_do_tu_choi = '' WHERE ma_voucher = ?
+   - *Kiểu gọi*: Synchronous DB Query
+
+6. **[Data Access - DB] SupabaseDB --> [Business - Service] VoucherService**: return updatedVoucher
+
+7. **[Business - Service] VoucherService --> [Presentation - Controller] VoucherController**: return updatedVoucher
+
+8. **[Presentation - Controller] VoucherController --> [Presentation - UI] VoucherFormPage**: HTTP 200 OK ({ message: "Gửi duyệt Voucher thành công!" })
+   - *Mô tả*: Trạng thái Voucher chuyển sang "Chờ duyệt", hiển thị Toast thành công và chuyển hướng về danh sách.
 
 ---
 
-## 6. UC-PAR-09 — Xem danh sách voucher
+## UC-PAR-06 — Tạm ngưng voucher
 
-#### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
-- **[Actor] Partner / Partner Manager**
-- **[Presentation] VoucherListPage**
-- **[Presentation/API] VoucherController.listByPartner**
-- **[Business] VoucherService.getVouchersByPartner**
-- **[Data] VoucherRepository.findByPartnerId**
-- **[External] Supabase DB**
+### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
+- **[Actor]**: Partner (Người quản lý Voucher)
+- **[Presentation - UI]**: VoucherDetailPage / VoucherListPage
+- **[Presentation - API Client]**: partnerApi
+- **[Presentation - Controller]**: VoucherController
+- **[Business - Service]**: VoucherService
+- **[Data Access - DB]**: SupabaseDB (`VOUCHER`)
 
-#### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
-1. **[1] Partner -> [Presentation] VoucherListPage**: loadVouchers()
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Actor -> Presentation]
-2. **[2] [Presentation] VoucherListPage -> [Presentation/API] VoucherController.listByPartner**: GET /api/vouchers/partner/:partnerId
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation -> Presentation/API]
-3. **[3] [Presentation/API] VoucherController.listByPartner -> [Business] VoucherService.getVouchersByPartner**: getVouchersByPartner(partnerId, query)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation/API -> Business]
-4. **[4] [Business] VoucherService.getVouchersByPartner -> [Data] VoucherRepository.findByPartnerId**: findByPartnerId(partnerId, query)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Business -> Data]
-5. **[5] [Data] VoucherRepository.findByPartnerId -> [External] Supabase DB**: Truy vấn bảng `chinhanh` thuộc `ma_hs` và danh sách `ma_voucher` thuộc `voucher_cn`.
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Data -> External]
-6. **[6] [External] Supabase DB --> [Data] VoucherRepository.findByPartnerId**: return rawVoucherRows
-   - *Kiểu gọi*: Return
-7. **[7] [Data] VoucherRepository.findByPartnerId -> [Data] VoucherRepository.makeVoucherModel**: Map `gia_ban = gia_goc - gia_tri_giam` và chuẩn hóa danh sách chi nhánh.
-   - *Kiểu gọi*: Synchronous (Self-call)
-   - *Tầng tương tác*: [Data -> Data]
-8. **[8] [Data] VoucherRepository.findByPartnerId --> [Business] VoucherService.getVouchersByPartner**: return voucherModels
-   - *Kiểu gọi*: Return
-9. **[9] [Business] VoucherService.getVouchersByPartner --> [Presentation/API] VoucherController.listByPartner**: return listData
-   - *Kiểu gọi*: Return
-10. **[10] [Presentation/API] VoucherController.listByPartner --> [Presentation] VoucherListPage**: res.json({ success: true, data })
-    - *Kiểu gọi*: Return
+### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
 
----
+1. **[Actor] Partner -> [Presentation - UI] VoucherDetailPage**: Bấm nút "Tạm ngưng phát hành" & Xác nhận lý do
+   - *Kiểu gọi*: Synchronous
 
-## 7. UC-PAR-10 — Xem chi tiết voucher
-
-#### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
-- **[Actor] Partner / Partner Manager**
-- **[Presentation] VoucherDetailPage**
-- **[Presentation/API] VoucherController.getById**
-- **[Business] VoucherService.getVoucherById**
-- **[Data] VoucherRepository.findById**
-- **[Data] AuditLogRepository.getLatestRejectionReason**
-- **[External] Supabase DB**
-
-#### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
-1. **[1] Partner -> [Presentation] VoucherDetailPage**: loadData()
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Actor -> Presentation]
-2. **[2] [Presentation] VoucherDetailPage -> [Presentation/API] VoucherController.getById**: GET /api/vouchers/:id
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation -> Presentation/API]
-3. **[3] [Presentation/API] VoucherController.getById -> [Business] VoucherService.getVoucherById**: getVoucherById(id)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation/API -> Business]
-4. **[4] [Business] VoucherService.getVoucherById -> [Data] VoucherRepository.findById**: findById(id)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Business -> Data]
-5. **[5] [Data] VoucherRepository.findById -> [External] Supabase DB**: select("*, danh_muc(ten_danh_muc)") from voucher where ma_voucher = id
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Data -> External]
-6. **[6] [External] Supabase DB --> [Data] VoucherRepository.findById**: return voucherRow
-   - *Kiểu gọi*: Return
-7. **[7] [Data] VoucherRepository.findById -> [External] Supabase DB**: select ma_chi_nhanh from voucher_cn where ma_voucher = id
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Data -> External]
-8. **[8] OPT [if trang_thai === "Tu choi"]**:
-   - **[Data] VoucherRepository.findById -> [Data] AuditLogRepository.getLatestRejectionReason**: getLatestRejectionReason("VOUCHER", id)
-   - *Tầng tương tác*: [Data -> Data]
-   - *Mô tả*: Lấy lý do từ chối phê duyệt từ nhật ký hệ thống `log_ht`.
-9. **[9] [Data] VoucherRepository.findById --> [Business] VoucherService.getVoucherById**: return VoucherModel
-   - *Kiểu gọi*: Return
-10. **[10] [Business] VoucherService.getVoucherById --> [Presentation/API] VoucherController.getById**: return voucherDetail
-    - *Kiểu gọi*: Return
-11. **[11] [Presentation/API] VoucherController.getById --> [Presentation] VoucherDetailPage**: res.json({ success: true, data })
-    - *Kiểu gọi*: Return
-
----
-
-## 8. UC-PAR-11 — Cập nhật voucher
-
-#### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
-- **[Actor] Partner / Partner Manager**
-- **[Presentation] VoucherFormPage**
-- **[Presentation/API] VoucherController.update**
-- **[Business] VoucherService.updateVoucher**
-- **[Business] uploadBase64ToSupabase**
-- **[Data] VoucherRepository.update**
-- **[Data] VoucherBranchRepository.setBranchesForVoucher**
-- **[Business] AuditLogService.log**
-- **[External] Supabase Storage**
-- **[External] Supabase DB**
-
-#### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
-1. **[1] Partner -> [Presentation] VoucherFormPage**: executeSave("update")
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Actor -> Presentation]
-2. **[2] [Presentation] VoucherFormPage -> [Presentation/API] VoucherController.update**: saveVoucherApi(payload) -> PUT /api/vouchers/:id
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation -> Presentation/API]
-3. **[3] [Presentation/API] VoucherController.update -> [Business] VoucherService.updateVoucher**: updateVoucher(id, payload, actorId, actorRole)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation/API -> Business]
-4. **[4] OPT [if payload.hinh_anh_url startsWith("data:")]**:
-   - **[Business] VoucherService.updateVoucher -> [Business] uploadBase64ToSupabase**: uploadBase64ToSupabase(payload.hinh_anh_url, "vouchers")
-   - **[Business] uploadBase64ToSupabase -> [External] Supabase Storage**: upload(filePath, buffer)
-   - **[External] Supabase Storage --> [Business] uploadBase64ToSupabase**: return newPublicUrl
-5. **[5] [Business] VoucherService.updateVoucher -> [Data] VoucherRepository.update**: update(id, dbPayload)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Business -> Data]
-   - *Mô tả*: Cập nhật thông tin voucher và tự động tính `gia_tri_giam = Math.max(0, gia_goc - gia_ban)`.
-6. **[6] [Data] VoucherRepository.update -> [External] Supabase DB**: supabase.from("voucher").update(dbPayload).eq("ma_voucher", id)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Data -> External]
-7. **[7] OPT [if payload.ma_chi_nhanh exists]**:
-   - **[Business] VoucherService.updateVoucher -> [Data] VoucherBranchRepository.setBranchesForVoucher**: setBranchesForVoucher(id, payload.ma_chi_nhanh)
-   - **[Data] VoucherBranchRepository.setBranchesForVoucher -> [External] Supabase DB**: delete & insert new mapping rows into `voucher_cn`.
-8. **[8] [Business] VoucherService.updateVoucher -> [Business] AuditLogService.log**: log({ actorId, actorRole, action: "UPDATE_VOUCHER", targetId: id, result: "Thanh cong" })
+2. **[Presentation - UI] VoucherDetailPage -> [Presentation - API Client] partnerApi**: updateVoucherStatusApi(voucherId, 'Tam ngung')
    - *Kiểu gọi*: Asynchronous
-   - *Tầng tương tác*: [Business -> Business]
-9. **[9] [Business] VoucherService.updateVoucher --> [Presentation/API] VoucherController.update**: return updatedVoucher
-   - *Kiểu gọi*: Return
-10. **[10] [Presentation/API] VoucherController.update --> [Presentation] VoucherFormPage**: res.json({ success: true, data })
-    - *Kiểu gọi*: Return
+
+3. **[Presentation - API Client] partnerApi -> [Presentation - Controller] VoucherController**: PATCH /api/v1/vouchers/:id/status (body: { trang_thai: 'Tam ngung' })
+   - *Kiểu gọi*: Synchronous HTTP
+
+4. **[Presentation - Controller] VoucherController -> [Business - Service] VoucherService**: updateVoucherStatus(voucherId, 'Tam ngung', actorId, actorRole)
+   - *Kiểu gọi*: Synchronous
+
+5. **[Business - Service] VoucherService -> [Data Access - DB] SupabaseDB**: UPDATE VOUCHER SET trang_thai = 'Tam ngung' WHERE ma_voucher = ?
+   - *Kiểu gọi*: Synchronous DB Query
+
+6. **[Business - Service] VoucherService --> [Presentation - Controller] VoucherController**: return updatedVoucher
+
+7. **[Presentation - Controller] VoucherController --> [Presentation - UI] VoucherDetailPage**: HTTP 200 OK ({ message: "Đã tạm ngưng phát hành Voucher thành công!" })
+   - *Mô tả*: Voucher tạm thời không hiển thị mở bán trên Sàn cho khách hàng.
 
 ---
 
-## 9. UC-PAR-12 — Xem kết quả duyệt voucher
+## UC-PAR-07 — Ngừng bán voucher
 
-#### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
-- **[Actor] Partner / Partner Manager**
-- **[Presentation] VoucherDetailPage**
-- **[Presentation/API] VoucherController.getById**
-- **[Business] VoucherService.getVoucherById**
-- **[Data] VoucherRepository.findById**
-- **[Data] AuditLogRepository.getLatestRejectionReason**
-- **[External] Supabase DB**
+### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
+- **[Actor]**: Partner (Người quản lý Voucher)
+- **[Presentation - UI]**: VoucherDetailPage / VoucherListPage
+- **[Presentation - API Client]**: partnerApi
+- **[Presentation - Controller]**: VoucherController
+- **[Business - Service]**: VoucherService
+- **[Data Access - DB]**: SupabaseDB (`VOUCHER`)
 
-#### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
-1. **[1] Partner -> [Presentation] VoucherDetailPage**: renderReviewStatusBanner()
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Actor -> Presentation]
-2. **[2] [Presentation] VoucherDetailPage -> [Presentation/API] VoucherController.getById**: GET /api/vouchers/:id
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation -> Presentation/API]
-3. **[3] [Presentation/API] VoucherController.getById -> [Business] VoucherService.getVoucherById**: getVoucherById(id)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation/API -> Business]
-4. **[4] [Business] VoucherService.getVoucherById -> [Data] VoucherRepository.findById**: findById(id)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Business -> Data]
-5. **[5] [Data] VoucherRepository.findById -> [External] Supabase DB**: select * from voucher where ma_voucher = id
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Data -> External]
-6. **[6] ALT [if trang_thai === "Tu choi" || trang_thai_kiem_duyet === "Tu choi"]**:
-   - **[Data] VoucherRepository.findById -> [Data] AuditLogRepository.getLatestRejectionReason**: getLatestRejectionReason("VOUCHER", id)
-   - **[Data] AuditLogRepository.getLatestRejectionReason -> [External] Supabase DB**: select ly_do_thuc_hien from log_ht where hanh_dong = 'REJECT_VOUCHER' and ma_doi_tuong = id order by tg_tao desc limit 1
-   - **[External] Supabase DB --> [Data] AuditLogRepository.getLatestRejectionReason**: return rejectionReasonString
-7. **[7] [Data] VoucherRepository.findById --> [Business] VoucherService.getVoucherById**: return VoucherModel (chứa `trang_thai_kiem_duyet` & `ly_do_tu_choi`)
-   - *Kiểu gọi*: Return
-8. **[8] [Business] VoucherService.getVoucherById --> [Presentation/API] VoucherController.getById**: return data
-   - *Kiểu gọi*: Return
-9. **[9] [Presentation/API] VoucherController.getById --> [Presentation] VoucherDetailPage**: res.json({ success: true, data })
-   - *Kiểu gọi*: Return
-   - *Mô tả*: UI render Banner tương ứng: Badge Emerald "Đã duyệt", Badge Rose "Bị từ chối" (kèm lý do), hoặc Badge Amber "Chờ duyệt".
+### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
 
----
+1. **[Actor] Partner -> [Presentation - UI] VoucherDetailPage**: Bấm nút "Ngừng bán vĩnh viễn" -> Xác nhận Modal
+   - *Kiểu gọi*: Synchronous
 
-## 10. UC-ADM-02 — Admin quản lý và duyệt đối tác
-
-#### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
-- **[Actor] Admin**
-- **[Presentation] PartnerManagementPage / PartnerDetailPage**
-- **[Presentation/API] PartnerController.approve / reject / lock**
-- **[Business] PartnerService.approvePartner / rejectPartner / lockUnlockPartner**
-- **[Data] PartnerRepository.updateStatus**
-- **[Data] BranchRepository.findByPartnerId / update**
-- **[Business] AuditLogService.log**
-- **[External] Supabase DB**
-
-#### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
-
-##### Phê duyệt Đối tác (Approve Partner):
-1. **[1] Admin -> [Presentation] PartnerDetailPage**: clickApprove(partnerId)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Actor -> Presentation]
-2. **[2] [Presentation] PartnerDetailPage -> [Presentation/API] PartnerController.approve**: POST /api/admin/partners/:id/approve
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation -> Presentation/API]
-3. **[3] [Presentation/API] PartnerController.approve -> [Business] PartnerService.approvePartner**: approvePartner(id, reason, actorId)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation/API -> Business]
-4. **[4] [Business] PartnerService.approvePartner -> [Data] PartnerRepository.updateStatus**: updateStatus(id, "Dang hoat dong")
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Business -> Data]
-5. **[5] [Data] PartnerRepository.updateStatus -> [External] Supabase DB**: supabase.from("hosodn").update({ trang_thai: "Dang hoat dong" }).eq("ma_hs", id)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Data -> External]
-6. **[6] [Business] PartnerService.approvePartner -> [Data] BranchRepository.findByPartnerId**: findByPartnerId(id)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Business -> Data]
-7. **[7] LOOP [for each branch of partner]**:
-   - **[Business] PartnerService.approvePartner -> [Data] BranchRepository.update**: update(branch.ma_chi_nhanh, { trang_thai: "Dang hoat dong" })
-   - **[Data] BranchRepository.update -> [External] Supabase DB**: update chinhanh set trang_thai = "Dang hoat dong"
-8. **[8] [Business] PartnerService.approvePartner -> [Business] AuditLogService.log**: log({ actorId, actorRole: "ADMIN", action: "APPROVE_PARTNER", targetId: id, result: "Thanh cong" })
+2. **[Presentation - UI] VoucherDetailPage -> [Presentation - API Client] partnerApi**: updateVoucherStatusApi(voucherId, 'Ngung ban')
    - *Kiểu gọi*: Asynchronous
-   - *Tầng tương tác*: [Business -> Business]
-9. **[9] [Business] PartnerService.approvePartner --> [Presentation/API] PartnerController.approve**: return result
-   - *Kiểu gọi*: Return
-10. **[10] [Presentation/API] PartnerController.approve --> [Presentation] PartnerDetailPage**: res.json({ success: true, data })
-    - *Kiểu gọi*: Return
 
-##### Từ chối / Khóa Đối tác (Reject / Lock Partner):
-- **ALT [if Admin rejects partner]**:
-  - `PartnerController.reject` -> `PartnerService.rejectPartner` -> `PartnerRepository.updateStatus(id, "Tu choi", reason)` -> AuditLog `REJECT_PARTNER`.
-- **ALT [if Admin locks/unlocks partner]**:
-  - `PartnerController.lock` -> `PartnerService.lockUnlockPartner` -> `PartnerRepository.updateStatus(id, isLocking ? "Tam khoa" : "Dang hoat dong", reason)` -> AuditLog `LOCK_PARTNER` / `UNLOCK_PARTNER`.
+3. **[Presentation - API Client] partnerApi -> [Presentation - Controller] VoucherController**: PATCH /api/v1/vouchers/:id/status (body: { trang_thai: 'Ngung ban' })
+   - *Kiểu gọi*: Synchronous HTTP
+
+4. **[Presentation - Controller] VoucherController -> [Business - Service] VoucherService**: updateVoucherStatus(voucherId, 'Ngung ban', actorId, actorRole)
+   - *Kiểu gọi*: Synchronous
+
+5. **[Business - Service] VoucherService -> [Data Access - DB] SupabaseDB**: UPDATE VOUCHER SET trang_thai = 'Ngung ban' WHERE ma_voucher = ?
+   - *Kiểu gọi*: Synchronous DB Query
+
+6. **[Business - Service] VoucherService --> [Presentation - Controller] VoucherController**: return updatedVoucher
+
+7. **[Presentation - Controller] VoucherController --> [Presentation - UI] VoucherDetailPage**: HTTP 200 OK ({ message: "Đã ngừng bán chương trình Voucher thành công!" })
 
 ---
 
-## 11. UC-ADM-03 — Admin duyệt voucher
+## UC-PAR-08 — Mở bán lại voucher
 
-#### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
-- **[Actor] Admin**
-- **[Presentation] VoucherApprovalListPage / VoucherApprovalDetailPage**
-- **[Presentation/API] VoucherController.approve / reject**
-- **[Business] VoucherService.approveVoucher / rejectVoucher**
-- **[Data] VoucherRepository.updateStatus**
-- **[Business] AuditLogService.log**
-- **[External] Supabase DB**
+### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
+- **[Actor]**: Partner (Người quản lý Voucher)
+- **[Presentation - UI]**: VoucherDetailPage / VoucherListPage
+- **[Presentation - API Client]**: partnerApi
+- **[Presentation - Controller]**: VoucherController
+- **[Business - Service]**: VoucherService
+- **[Data Access - DB]**: SupabaseDB (`VOUCHER`)
 
-#### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
+### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
 
-##### 1. Xem danh sách Voucher chờ duyệt (Admin Voucher List):
-1. **[1] Admin -> [Presentation] VoucherApprovalListPage**: openApprovalList()
+1. **[Actor] Partner -> [Presentation - UI] VoucherDetailPage**: Bấm nút "Mở bán lại" (Đối với voucher đang "Tam ngung")
    - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Actor -> Presentation]
-2. **[2] [Presentation] VoucherApprovalListPage -> [Presentation/API] VoucherController.list**: GET /api/vouchers
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation -> Presentation/API]
-3. **[3] [Presentation/API] VoucherController.list -> [Business] VoucherService.getVouchers**: getVouchers(query)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation/API -> Business]
-4. **[4] [Business] VoucherService.getVouchers -> [Data] VoucherRepository.findAll**: findAll(query)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Business -> Data]
-5. **[5] [Data] VoucherRepository.findAll -> [External] Supabase DB**: select * from voucher
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Data -> External]
-6. **[6] [Presentation] VoucherApprovalListPage -> [Presentation] VoucherApprovalListPage**: filteredVouchers (Ẩn `v.trang_thai === "Nhap"`, phân loại `trang_thai_kiem_duyet`)
-   - *Kiểu gọi*: Synchronous (Internal Filter)
 
-##### 2. Phê duyệt Voucher (Approve Voucher):
-7. **[7] Admin -> [Presentation] VoucherApprovalDetailPage**: clickApprove(voucherId, isHidden)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Actor -> Presentation]
-8. **[8] [Presentation] VoucherApprovalDetailPage -> [Presentation/API] VoucherController.approve**: POST /api/vouchers/:id/approve { isHidden }
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation -> Presentation/API]
-9. **[9] [Presentation/API] VoucherController.approve -> [Business] VoucherService.approveVoucher**: approveVoucher(id, isHidden, reason, actorId, actorRole)
-   - *Kiểu gọi*: Synchronous
-   - *Tầng tương tác*: [Presentation/API -> Business]
-10. **[10] [Business] VoucherService.approveVoucher -> [Data] VoucherRepository.updateStatus**: updateStatus(id, isHidden ? "Tam ngung" : "Dang ban", "Da duyet")
-    - *Kiểu gọi*: Synchronous
-    - *Tầng tương tác*: [Business -> Data]
-11. **[11] [Data] VoucherRepository.updateStatus -> [External] Supabase DB**: supabase.from("voucher").update({ trang_thai: isHidden ? "Tam ngung" : "Dang ban", trang_thai_kiem_duyet: "Da duyet", ly_do_tu_choi: "" }).eq("ma_voucher", id)
-    - *Kiểu gọi*: Synchronous
-    - *Tầng tương tác*: [Data -> External]
-12. **[12] [Business] VoucherService.approveVoucher -> [Business] AuditLogService.log**: log({ actorId, actorRole: "ADMIN", action: "APPROVE_VOUCHER", targetId: id, result: "Thanh cong" })
-    - *Kiểu gọi*: Asynchronous
-    - *Tầng tương tác*: [Business -> Business]
-13. **[13] [Business] VoucherService.approveVoucher --> [Presentation/API] VoucherController.approve**: return result
-    - *Kiểu gọi*: Return
-14. **[14] [Presentation/API] VoucherController.approve --> [Presentation] VoucherApprovalDetailPage**: res.json({ success: true, data })
-    - *Kiểu gọi*: Return
+2. **[Presentation - UI] VoucherDetailPage -> [Presentation - API Client] partnerApi**: updateVoucherStatusApi(voucherId, 'Dang ban')
+   - *Kiểu gọi*: Asynchronous
 
-##### 3. Từ chối Voucher (Reject Voucher):
-15. **[15] Admin -> [Presentation] VoucherApprovalDetailPage**: clickReject(voucherId, reason)
-    - *Kiểu gọi*: Synchronous
-    - *Tầng tương tác*: [Actor -> Presentation]
-16. **[16] [Presentation] VoucherApprovalDetailPage -> [Presentation/API] VoucherController.reject**: POST /api/vouchers/:id/reject { reason }
-    - *Kiểu gọi*: Synchronous
-    - *Tầng tương tác*: [Presentation -> Presentation/API]
-17. **[17] [Presentation/API] VoucherController.reject -> [Business] VoucherService.rejectVoucher**: rejectVoucher(id, reason, actorId, actorRole)
-    - *Kiểu gọi*: Synchronous
-    - *Tầng tương tác*: [Presentation/API -> Business]
-18. **[18] [Business] VoucherService.rejectVoucher -> [Data] VoucherRepository.updateStatus**: updateStatus(id, "Tu choi", "Tu choi", reason)
-    - *Kiểu gọi*: Synchronous
-    - *Tầng tương tác*: [Business -> Data]
-19. **[19] [Data] VoucherRepository.updateStatus -> [External] Supabase DB**: supabase.from("voucher").update({ trang_thai: "Tu choi", trang_thai_kiem_duyet: "Tu choi", ly_do_tu_choi: reason }).eq("ma_voucher", id)
-    - *Kiểu gọi*: Synchronous
-    - *Tầng tương tác*: [Data -> External]
-20. **[20] [Business] VoucherService.rejectVoucher -> [Business] AuditLogService.log**: log({ actorId, actorRole: "ADMIN", action: "REJECT_VOUCHER", targetId: id, reason, result: "Thanh cong" })
-    - *Kiểu gọi*: Asynchronous
-    - *Tầng tương tác*: [Business -> Business]
-21. **[21] [Business] VoucherService.rejectVoucher --> [Presentation/API] VoucherController.reject**: return result
-    - *Kiểu gọi*: Return
-22. **[22] [Presentation/API] VoucherController.reject --> [Presentation] VoucherApprovalDetailPage**: res.json({ success: true, data })
-    - *Kiểu gọi*: Return
+3. **[Presentation - API Client] partnerApi -> [Presentation - Controller] VoucherController**: PATCH /api/v1/vouchers/:id/status (body: { trang_thai: 'Dang ban' })
+   - *Kiểu gọi*: Synchronous HTTP
 
-#### C. CÁC KHỐI ĐIỀU KIỆN / VÒNG LẶP
-- **ALT [if isHidden === true]**:
-  - Voucher chuyển sang `trang_thai_kiem_duyet` = `"Da duyet"`, nhưng `trang_thai` công bố = `"Tam ngung"`.
-- **ALT [if isHidden === false]**:
-  - Voucher chuyển sang `trang_thai_kiem_duyet` = `"Da duyet"`, và `trang_thai` công bố = `"Dang ban"`.
-- **ALT [if reject voucher]**:
-  - Voucher chuyển sang `trang_thai` & `trang_thai_kiem_duyet` = `"Tu choi"`, đồng thời lưu `ly_do_tu_choi` vào DB & AuditLog.
+4. **[Presentation - Controller] VoucherController -> [Business - Service] VoucherService**: updateVoucherStatus(voucherId, 'Dang ban', actorId, actorRole)
+   - *Kiểu gọi*: Synchronous
+
+5. **[Business - Service] VoucherService -> [Data Access - DB] SupabaseDB**: UPDATE VOUCHER SET trang_thai = 'Dang ban' WHERE ma_voucher = ? AND trang_thai_kiem_duyet = 'Da duyet'
+   - *Kiểu gọi*: Synchronous DB Query
+
+6. **[Business - Service] VoucherService --> [Presentation - Controller] VoucherController**: return updatedVoucher
+
+7. **[Presentation - Controller] VoucherController --> [Presentation - UI] VoucherDetailPage**: HTTP 200 OK ({ message: "Đã mở bán lại Voucher thành công trên Sàn!" })
 
 ---
 
-# III. KẾT LUẬN
-Bản mô tả luồng tương tác trên đây hoàn toàn chuẩn hóa theo đúng **mã nguồn thực tế hiện tại**, phân định rành mạch 3 tầng kiến trúc, ghi nhận chính xác tên hàm, tham số, kiểu tương tác (Sync/Async/Return) và các khối logic (Alt/Opt/Loop) phục vụ trực tiếp cho việc vẽ sơ đồ Sequence Diagram UML.
+## UC-PAR-09 — Xem danh sách voucher
+
+### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
+- **[Actor]**: Partner (Người quản lý / Người đại diện)
+- **[Presentation - UI]**: VoucherListPage
+- **[Presentation - API Client]**: partnerApi
+- **[Presentation - Controller]**: VoucherController
+- **[Business - Service]**: VoucherService, TranslationService
+- **[Data Access - DB]**: SupabaseDB (`VOUCHER`, `DANHMUC`)
+
+### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
+
+1. **[Actor] Partner -> [Presentation - UI] VoucherListPage**: Truy cập trang "Quản lý Voucher" (lọc theo search, trang_thai, ma_dm)
+   - *Kiểu gọi*: Synchronous
+
+2. **[Presentation - UI] VoucherListPage -> [Presentation - API Client] partnerApi**: getVouchersByPartnerApi(partnerId, queryParams)
+   - *Kiểu gọi*: Asynchronous
+
+3. **[Presentation - API Client] partnerApi -> [Presentation - Controller] VoucherController**: GET /api/v1/vouchers/partner/:partnerId?search=...&trang_thai=...
+   - *Kiểu gọi*: Synchronous HTTP
+
+4. **[Presentation - Controller] VoucherController -> [Business - Service] VoucherService**: getVouchersByPartner(partnerId, queryParams)
+   - *Kiểu gọi*: Synchronous
+
+5. **[Business - Service] VoucherService -> [Data Access - DB] SupabaseDB**: SELECT v.*, dm.ten_danh_muc FROM VOUCHER v LEFT JOIN DANHMUC dm ON v.ma_dm = dm.ma_dm WHERE v.ma_hs = ?
+   - *Kiểu gọi*: Synchronous DB Query
+
+6. **[Data Access - DB] SupabaseDB --> [Business - Service] VoucherService**: return voucherList
+
+7. **[Business - Service] VoucherService --> [Presentation - Controller] VoucherController**: return voucherList
+
+8. **[Presentation - Controller] VoucherController --> [Presentation - UI] VoucherListPage**: HTTP 200 OK ({ data: voucherList })
+   - *Mô tả*: Hiển thị danh sách card voucher kèm badge trạng thái (Đang bán, Chờ duyệt, Bản nháp, Tạm ngưng, Ngừng bán).
+
+---
+
+## UC-PAR-10 — Xem chi tiết voucher
+
+### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
+- **[Actor]**: Partner (Người quản lý / Người đại diện)
+- **[Presentation - UI]**: VoucherDetailPage
+- **[Presentation - API Client]**: partnerApi
+- **[Presentation - Controller]**: VoucherController
+- **[Business - Service]**: VoucherService
+- **[Data Access - DB]**: SupabaseDB (`VOUCHER`, `APDUNGCHINHANH`, `CHINHANH`, `DANHMUC`)
+
+### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
+
+1. **[Actor] Partner -> [Presentation - UI] VoucherDetailPage**: Bấm chọn 1 Voucher trong danh sách để xem chi tiết
+   - *Kiểu gọi*: Synchronous
+
+2. **[Presentation - UI] VoucherDetailPage -> [Presentation - API Client] partnerApi**: getVoucherByIdApi(voucherId)
+   - *Kiểu gọi*: Asynchronous
+
+3. **[Presentation - API Client] partnerApi -> [Presentation - Controller] VoucherController**: GET /api/v1/vouchers/:id
+   - *Kiểu gọi*: Synchronous HTTP
+
+4. **[Presentation - Controller] VoucherController -> [Business - Service] VoucherService**: getVoucherById(voucherId, lang)
+   - *Kiểu gọi*: Synchronous
+
+5. **[Business - Service] VoucherService -> [Data Access - DB] SupabaseDB**: SELECT v.*, dm.ten_danh_muc, cn.* FROM VOUCHER v JOIN APDUNGCHINHANH acn ON v.ma_voucher = acn.ma_voucher JOIN CHINHANH cn ON acn.ma_chi_nhanh = cn.ma_chi_nhanh WHERE v.ma_voucher = ?
+   - *Kiểu gọi*: Synchronous DB Query
+
+6. **[Data Access - DB] SupabaseDB --> [Business - Service] VoucherService**: return voucherDetailRecord
+
+7. **[Business - Service] VoucherService --> [Presentation - Controller] VoucherController**: return voucherDetailRecord
+
+8. **[Presentation - Controller] VoucherController --> [Presentation - UI] VoucherDetailPage**: HTTP 200 OK ({ data: voucherDetailRecord })
+   - *Mô tả*: Render toàn bộ thông tin Voucher, hình ảnh, thời hạn, danh sách chi nhánh áp dụng & lịch sử duyệt.
+
+---
+
+## UC-PAR-11 — Cập nhật voucher
+
+### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
+- **[Actor]**: Partner (Người quản lý Voucher)
+- **[Presentation - UI]**: VoucherFormPage
+- **[Presentation - API Client]**: partnerApi
+- **[Presentation - Controller]**: VoucherController
+- **[Business - Service]**: VoucherService
+- **[Data Access - DB]**: SupabaseDB (`VOUCHER`, `APDUNGCHINHANH`)
+
+### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
+
+1. **[Actor] Partner -> [Presentation - UI] VoucherFormPage**: Điều chỉnh thông tin (Tên, mô tả, số lượng mở rộng, chi nhánh) & Bấm "Lưu thay đổi"
+   - *Kiểu gọi*: Synchronous
+
+2. **[Presentation - UI] VoucherFormPage -> [Presentation - API Client] partnerApi**: updateVoucherApi(voucherId, updatePayload)
+   - *Kiểu gọi*: Asynchronous
+
+3. **[Presentation - API Client] partnerApi -> [Presentation - Controller] VoucherController**: PUT /api/v1/vouchers/:id (body: updatePayload)
+   - *Kiểu gọi*: Synchronous HTTP
+
+4. **[Presentation - Controller] VoucherController -> [Business - Service] VoucherService**: updateVoucher(voucherId, updatePayload, actorId, actorRole)
+   - *Kiểu gọi*: Synchronous
+
+5. **ALT [If Voucher status is 'Tam ngung']**:
+   - **[Business - Service] VoucherService**: Kiểm tra `so_luong_phat_hanh` mới không được nhỏ hơn số lượng ban đầu.
+
+6. **[Business - Service] VoucherService -> [Data Access - DB] SupabaseDB**: UPDATE VOUCHER SET ten_voucher = ?, mo_ta = ?, so_luong_phat_hanh = ?, ... WHERE ma_voucher = ?
+   - *Kiểu gọi*: Synchronous DB Query
+
+7. **[Business - Service] VoucherService -> [Data Access - DB] SupabaseDB**: DELETE FROM APDUNGCHINHANH WHERE ma_voucher = ?; INSERT INTO APDUNGCHINHANH ...
+   - *Kiểu gọi*: Synchronous DB Query
+
+8. **[Business - Service] VoucherService --> [Presentation - Controller] VoucherController**: return updatedVoucher
+
+9. **[Presentation - Controller] VoucherController --> [Presentation - UI] VoucherFormPage**: HTTP 200 OK ({ message: "Đã cập nhật thông tin Voucher thành công!" })
+
+---
+
+## UC-PAR-12 — Xem kết quả duyệt voucher
+
+### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
+- **[Actor]**: Partner (Người quản lý / Người đại diện)
+- **[Presentation - UI]**: VoucherDetailPage / VoucherListPage
+- **[Presentation - API Client]**: partnerApi
+- **[Presentation - Controller]**: VoucherController
+- **[Business - Service]**: VoucherService
+- **[Data Access - DB]**: SupabaseDB (`VOUCHER`)
+
+### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
+
+1. **[Actor] Partner -> [Presentation - UI] VoucherDetailPage**: Mở trang chi tiết Voucher bị từ chối phê duyệt
+   - *Kiểu gọi*: Synchronous
+
+2. **[Presentation - UI] VoucherDetailPage -> [Presentation - API Client] partnerApi**: getVoucherByIdApi(voucherId)
+   - *Kiểu gọi*: Asynchronous
+
+3. **[Presentation - API Client] partnerApi -> [Presentation - Controller] VoucherController**: GET /api/v1/vouchers/:id
+   - *Kiểu gọi*: Synchronous HTTP
+
+4. **[Presentation - Controller] VoucherController -> [Business - Service] VoucherService**: getVoucherById(voucherId)
+   - *Kiểu gọi*: Synchronous
+
+5. **[Business - Service] VoucherService -> [Data Access - DB] SupabaseDB**: SELECT trang_thai_kiem_duyet, ly_do_tu_choi FROM VOUCHER WHERE ma_voucher = ?
+   - *Kiểu gọi*: Synchronous DB Query
+
+6. **[Business - Service] VoucherService --> [Presentation - Controller] VoucherController**: return { trang_thai_kiem_duyet: 'Tu choi', ly_do_tu_choi: '...' }
+
+7. **[Presentation - Controller] VoucherController --> [Presentation - UI] VoucherDetailPage**: HTTP 200 OK ({ data: voucherRecord })
+
+8. **[Presentation - UI] VoucherDetailPage**: Hiển thị Banner cảnh báo màu đỏ: "Voucher bị từ chối phê duyệt: [Nội dung lý do Admin từ chối]" kèm nút "Chỉnh sửa & Gửi lại".
+
+---
+
+## UC-PAR-14 — Thêm tài khoản nhân viên
+
+### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
+- **[Actor]**: Partner (Người đại diện Doanh nghiệp)
+- **[Presentation - UI]**: StaffManagementPage
+- **[Presentation - API Client]**: partnerApi
+- **[Presentation - Controller]**: PartnerController / StaffController
+- **[Business - Service]**: PartnerService / StaffService
+- **[Data Access - DB]**: SupabaseDB (`TAIKHOAN`, `NHANVIEN`, `CHINHANH`)
+
+### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
+
+1. **[Actor] Partner -> [Presentation - UI] StaffManagementPage**: Nhập họ tên, email, sđt, vai trò (Bán hàng / Quản lý voucher) & chọn Chi nhánh -> Bấm "Thêm nhân viên"
+   - *Kiểu gọi*: Synchronous
+
+2. **[Presentation - UI] StaffManagementPage -> [Presentation - API Client] partnerApi**: createStaffApi({ ho_ten, email, sdt, vai_tro, ma_chi_nhanh, ma_hs })
+   - *Kiểu gọi*: Asynchronous
+
+3. **[Presentation - API Client] partnerApi -> [Presentation - Controller] PartnerController**: POST /api/v1/partners/staffs (body: staffPayload)
+   - *Kiểu gọi*: Synchronous HTTP
+
+4. **[Presentation - Controller] PartnerController -> [Business - Service] PartnerService**: createStaff(staffPayload, actorId)
+   - *Kiểu gọi*: Synchronous
+
+5. **[Business - Service] PartnerService -> [Data Access - DB] SupabaseDB**: INSERT INTO TAIKHOAN (email, mat_khau, ho_ten, sdt, vai_tro) VALUES (?, hashed_pw, ?, ?, role)
+   - *Kiểu gọi*: Synchronous DB Query
+
+6. **[Business - Service] PartnerService -> [Data Access - DB] SupabaseDB**: INSERT INTO NHANVIEN (ma_nguoi_dung, ma_hs, ma_chi_nhanh, trang_thai) VALUES (newUserId, partnerId, branchId, 'Hoat dong')
+   - *Kiểu gọi*: Synchronous DB Query
+
+7. **[Business - Service] PartnerService --> [Presentation - Controller] PartnerController**: return createdStaffRecord
+
+8. **[Presentation - Controller] PartnerController --> [Presentation - UI] StaffManagementPage**: HTTP 201 Created ({ message: "Thêm nhân viên mới thành công." })
+   - *Mô tả*: Danh sách nhân viên cập nhật thông tin nhân viên mới.
+
+---
+
+## UC-PAR-16 — Báo cáo đối tác
+
+### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
+- **[Actor]**: Partner (Người đại diện / Người quản lý)
+- **[Presentation - UI]**: PartnerReportsPage
+- **[Presentation - API Client]**: partnerApi
+- **[Presentation - Controller]**: PartnerReportController
+- **[Business - Service]**: PartnerReportService
+- **[Data Access - DB]**: SupabaseDB (`HOADON`, `CHITIETHOADON`, `VOUCHERSUDUNG`, `VOUCHER`)
+
+### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
+
+1. **[Actor] Partner -> [Presentation - UI] PartnerReportsPage**: Truy cập trang "Báo cáo doanh thu" (chọn mốc thời gian: 7 ngày, 30 ngày, quý, năm)
+   - *Kiểu gọi*: Synchronous
+
+2. **[Presentation - UI] PartnerReportsPage -> [Presentation - API Client] partnerApi**: getPartnerRevenueReportApi(partnerId, { period })
+   - *Kiểu gọi*: Asynchronous
+
+3. **[Presentation - API Client] partnerApi -> [Presentation - Controller] PartnerReportController**: GET /api/v1/partner-reports/revenue?partnerId=...&period=...
+   - *Kiểu gọi*: Synchronous HTTP
+
+4. **[Presentation - Controller] PartnerReportController -> [Business - Service] PartnerReportService**: getRevenueReport(partnerId, period)
+   - *Kiểu gọi*: Synchronous
+
+5. **[Business - Service] PartnerReportService -> [Data Access - DB] SupabaseDB**: SELECT SUM(ct.thanh_tien) AS tong_doanh_thu, COUNT(ct.ma_cthd) AS tong_voucher_ban, SUM(vsd.so_luong) AS tong_da_doi FROM CHITIETHOADON ct JOIN VOUCHER v ON ct.ma_voucher = v.ma_voucher LEFT JOIN VOUCHERSUDUNG vsd ON v.ma_voucher = vsd.ma_voucher WHERE v.ma_hs = ?
+   - *Kiểu gọi*: Synchronous DB Query
+
+6. **[Data Access - DB] SupabaseDB --> [Business - Service] PartnerReportService**: return reportMetrics
+
+7. **[Business - Service] PartnerReportService --> [Presentation - Controller] PartnerReportController**: return reportMetrics
+
+8. **[Presentation - Controller] PartnerReportController --> [Presentation - UI] PartnerReportsPage**: HTTP 200 OK ({ data: reportMetrics })
+   - *Mô tả*: Render biểu đồ doanh thu Recharts, tổng doanh số, tỷ lệ đổi voucher tại quầy & danh sách top bán chạy.
+
+---
+
+## UC-ADM-02 — Xử lý hồ sơ đối tác
+
+### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
+- **[Actor]**: Admin (Quản trị viên hệ thống)
+- **[Presentation - UI]**: PartnerDetailPage
+- **[Presentation - API Client]**: partnerApi
+- **[Presentation - Controller]**: PartnerController
+- **[Business - Service]**: PartnerService, MailerService
+- **[Data Access - DB]**: SupabaseDB (`HOSODN`, `YEUCAUCAPNHATHOSODN`, `TAIKHOAN`)
+
+### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
+
+1. **[Actor] Admin -> [Presentation - UI] PartnerDetailPage**: Xem thông tin GPKD, MST, người đại diện -> Bấm "Phê duyệt đối tác" HOẶC "Từ chối" (nhập lý do)
+   - *Kiểu gọi*: Synchronous
+
+2. **ALT [If Admin Approves Partner Profile]**:
+   - **[Presentation - UI] PartnerDetailPage -> [Presentation - API Client] partnerApi**: approvePartnerApi(partnerId)
+   - **[Presentation - API Client] partnerApi -> [Presentation - Controller] PartnerController**: POST /api/v1/partners/:id/approve
+   - **[Presentation - Controller] PartnerController -> [Business - Service] PartnerService**: approvePartner(partnerId, reason, adminId)
+   - **[Business - Service] PartnerService -> [Data Access - DB] SupabaseDB**: UPDATE HOSODN SET trang_thai = 'Dang hoat dong' WHERE ma_hs = ?
+   - **[Business - Service] PartnerService -> [Business - Service] MailerService**: sendPartnerApprovalEmail(partnerEmail)
+   - **[Presentation - Controller] PartnerController --> [Presentation - UI] PartnerDetailPage**: HTTP 200 OK ({ message: "Đã phê duyệt hồ sơ đối tác thành công!" })
+
+3. **ALT [If Admin Rejects Partner Profile]**:
+   - **[Presentation - UI] PartnerDetailPage -> [Presentation - API Client] partnerApi**: rejectPartnerApi(partnerId, reason)
+   - **[Presentation - API Client] partnerApi -> [Presentation - Controller] PartnerController**: POST /api/v1/partners/:id/reject (body: { reason })
+   - **[Presentation - Controller] PartnerController -> [Business - Service] PartnerService**: rejectPartner(partnerId, reason, adminId)
+   - **[Business - Service] PartnerService -> [Data Access - DB] SupabaseDB**: UPDATE HOSODN SET trang_thai = 'Tu choi', ly_do_tu_choi = ? WHERE ma_hs = ?
+   - **[Business - Service] PartnerService -> [Business - Service] MailerService**: sendPartnerRejectionEmail(partnerEmail, reason)
+   - **[Presentation - Controller] PartnerController --> [Presentation - UI] PartnerDetailPage**: HTTP 200 OK ({ message: "Đã từ chối hồ sơ đối tác." })
+
+---
+
+## UC-ADM-03 — Khóa/mở đối tác
+
+### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
+- **[Actor]**: Admin (Quản trị viên hệ thống)
+- **[Presentation - UI]**: PartnerDetailPage / PartnerManagementPage
+- **[Presentation - API Client]**: partnerApi
+- **[Presentation - Controller]**: PartnerController
+- **[Business - Service]**: PartnerService
+- **[Data Access - DB]**: SupabaseDB (`HOSODN`, `TAIKHOAN`)
+
+### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
+
+1. **[Actor] Admin -> [Presentation - UI] PartnerDetailPage**: Bấm "Tạm khóa đối tác" HOẶC "Mở khóa đối tác" -> Nhập lý do khóa
+   - *Kiểu gọi*: Synchronous
+
+2. **[Presentation - UI] PartnerDetailPage -> [Presentation - API Client] partnerApi**: lockUnlockPartnerApi(partnerId, isLocking, reason)
+   - *Kiểu gọi*: Asynchronous
+
+3. **[Presentation - API Client] partnerApi -> [Presentation - Controller] PartnerController**: POST /api/v1/partners/:id/lock (body: { isLocking, reason })
+   - *Kiểu gọi*: Synchronous HTTP
+
+4. **[Presentation - Controller] PartnerController -> [Business - Service] PartnerService**: lockUnlockPartner(partnerId, isLocking, reason, adminId)
+   - *Kiểu gọi*: Synchronous
+
+5. **ALT [If isLocking is True]**:
+   - **[Business - Service] PartnerService -> [Data Access - DB] SupabaseDB**: UPDATE HOSODN SET trang_thai = 'Tam khoa', ly_do_tu_choi = ? WHERE ma_hs = ?
+   - **[Business - Service] PartnerService -> [Data Access - DB] SupabaseDB**: UPDATE TAIKHOAN SET trang_thai = 'Tam khoa' WHERE ma_nguoi_dung = (SELECT ma_nguoi_dung FROM HOSODN WHERE ma_hs = ?)
+   - **[Presentation - Controller] PartnerController --> [Presentation - UI] PartnerDetailPage**: HTTP 200 OK ({ message: "Đã khóa tài khoản đối tác thành công!" })
+
+6. **ALT [If isLocking is False (Unlock)]**:
+   - **[Business - Service] PartnerService -> [Data Access - DB] SupabaseDB**: UPDATE HOSODN SET trang_thai = 'Dang hoat dong' WHERE ma_hs = ?
+   - **[Business - Service] PartnerService -> [Data Access - DB] SupabaseDB**: UPDATE TAIKHOAN SET trang_thai = 'Hoat dong' WHERE ma_nguoi_dung = (SELECT ma_nguoi_dung FROM HOSODN WHERE ma_hs = ?)
+   - **[Presentation - Controller] PartnerController --> [Presentation - UI] PartnerDetailPage**: HTTP 200 OK ({ message: "Đã mở khóa tài khoản đối tác thành công!" })
+
+---
+
+## UC-ADM-04 — Quản lý chi nhánh đối tác
+
+### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
+- **[Actor]**: Admin (Quản trị viên hệ thống)
+- **[Presentation - UI]**: PartnerDetailPage (Tab Chi nhánh)
+- **[Presentation - API Client]**: partnerApi
+- **[Presentation - Controller]**: BranchController
+- **[Business - Service]**: BranchService
+- **[Data Access - DB]**: SupabaseDB (`YEUCAUCHINHANH`, `CHINHANH`)
+
+### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
+
+1. **[Actor] Admin -> [Presentation - UI] PartnerDetailPage**: Xem danh sách Yêu cầu thêm chi nhánh -> Bấm "Duyệt chi nhánh" HOẶC "Từ chối"
+   - *Kiểu gọi*: Synchronous
+
+2. **ALT [If Admin Approves Branch Request]**:
+   - **[Presentation - UI] PartnerDetailPage -> [Presentation - API Client] partnerApi**: approveBranchRequestApi(requestId)
+   - **[Presentation - API Client] partnerApi -> [Presentation - Controller] BranchController**: POST /api/v1/branches/requests/:id/approve
+   - **[Presentation - Controller] BranchController -> [Business - Service] BranchService**: approveBranchRequest(requestId, adminId)
+   - **[Business - Service] BranchService -> [Data Access - DB] SupabaseDB**: INSERT INTO CHINHANH (ma_hs, ten_chi_nhanh, dia_chi, khu_vuc, trang_thai) SELECT ma_hs, ten_chi_nhanh, dia_chi, khu_vuc, 'Hoat dong' FROM YEUCAUCHINHANH WHERE ma_yeu_cau = ?
+   - **[Business - Service] BranchService -> [Data Access - DB] SupabaseDB**: UPDATE YEUCAUCHINHANH SET trang_thai = 'Da duyet' WHERE ma_yeu_cau = ?
+   - **[Presentation - Controller] BranchController --> [Presentation - UI] PartnerDetailPage**: HTTP 200 OK ({ message: "Đã duyệt yêu cầu chi nhánh thành công!" })
+
+3. **ALT [If Admin Rejects Branch Request]**:
+   - **[Presentation - UI] PartnerDetailPage -> [Presentation - API Client] partnerApi**: rejectBranchRequestApi(requestId, reason)
+   - **[Presentation - API Client] partnerApi -> [Presentation - Controller] BranchController**: POST /api/v1/branches/requests/:id/reject (body: { reason })
+   - **[Presentation - Controller] BranchController -> [Business - Service] BranchService**: rejectBranchRequest(requestId, reason, adminId)
+   - **[Business - Service] BranchService -> [Data Access - DB] SupabaseDB**: UPDATE YEUCAUCHINHANH SET trang_thai = 'Tu choi', ghi_chu_admin = ? WHERE ma_yeu_cau = ?
+   - **[Presentation - Controller] BranchController --> [Presentation - UI] PartnerDetailPage**: HTTP 200 OK ({ message: "Đã từ chối yêu cầu chi nhánh." })
+
+---
+
+## UC-ADM-05 — Admin duyệt voucher
+
+### A. DANH SÁCH ĐỐI TƯỢNG (LIFELINES)
+- **[Actor]**: Admin (Quản trị viên hệ thống)
+- **[Presentation - UI]**: VoucherApprovalDetailPage / VoucherApprovalListPage
+- **[Presentation - API Client]**: partnerApi
+- **[Presentation - Controller]**: VoucherController
+- **[Business - Service]**: VoucherService, MailerService
+- **[Data Access - DB]**: SupabaseDB (`VOUCHER`)
+
+### B. CHI TIẾT TỪNG BƯỚC CỦA LUỒNG (STEP-BY-STEP FLOW)
+
+1. **[Actor] Admin -> [Presentation - UI] VoucherApprovalDetailPage**: Kiểm tra thông tin Voucher, chiết khấu, hình ảnh, thời hạn & chi nhánh -> Bấm "Phê duyệt" HOẶC "Từ chối"
+   - *Kiểu gọi*: Synchronous
+
+2. **ALT [If Admin Approves Voucher]**:
+   - **[Presentation - UI] VoucherApprovalDetailPage -> [Presentation - API Client] partnerApi**: approveVoucherApi(voucherId, { isHidden: false })
+   - **[Presentation - API Client] partnerApi -> [Presentation - Controller] VoucherController**: POST /api/v1/vouchers/:id/approve
+   - **[Presentation - Controller] VoucherController -> [Business - Service] VoucherService**: approveVoucher(voucherId, isHidden, reason, adminId)
+   - **[Business - Service] VoucherService -> [Data Access - DB] SupabaseDB**: UPDATE VOUCHER SET trang_thai = 'Dang ban', trang_thai_kiem_duyet = 'Da duyet', ly_do_tu_choi = '' WHERE ma_voucher = ?
+   - **[Business - Service] VoucherService -> [Business - Service] MailerService**: sendVoucherApprovedEmail(partnerEmail, voucherTitle)
+   - **[Presentation - Controller] VoucherController --> [Presentation - UI] VoucherApprovalDetailPage**: HTTP 200 OK ({ message: "Voucher đã được phê duyệt thành công!" })
+
+3. **ALT [If Admin Rejects Voucher]**:
+   - **[Presentation - UI] VoucherApprovalDetailPage -> [Presentation - API Client] partnerApi**: rejectVoucherApi(voucherId, reason)
+   - **[Presentation - API Client] partnerApi -> [Presentation - Controller] VoucherController**: POST /api/v1/vouchers/:id/reject (body: { reason })
+   - **[Presentation - Controller] VoucherController -> [Business - Service] VoucherService**: rejectVoucher(voucherId, reason, adminId)
+   - **[Business - Service] VoucherService -> [Data Access - DB] SupabaseDB**: UPDATE VOUCHER SET trang_thai = 'Tu choi', trang_thai_kiem_duyet = 'Tu choi', ly_do_tu_choi = ? WHERE ma_voucher = ?
+   - **[Business - Service] VoucherService -> [Business - Service] MailerService**: sendVoucherRejectedEmail(partnerEmail, voucherTitle, reason)
+   - **[Presentation - Controller] VoucherController --> [Presentation - UI] VoucherApprovalDetailPage**: HTTP 200 OK ({ message: "Đã từ chối voucher. Lý do đã được ghi nhận và gửi cho đối tác." })
+
+---
+*Bản đặc tả Sequence Diagram chi tiết tuân thủ quy tắc 3 tầng (Presentation, Business, Data Access) đã hoàn thành cho 18 use cases yêu cầu.*

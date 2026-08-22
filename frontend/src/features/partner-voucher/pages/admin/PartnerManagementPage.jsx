@@ -244,7 +244,17 @@ export function PartnerManagementPage() {
                 <tbody className="divide-y divide-slate-100 text-sm">
                   {paginatedPartners.map((partner) => {
                     const pendingReqs = Number(partner.pending_branch_requests) || 0;
-                    const branchCount = partner.branches?.length || 0;
+                    const activeBranchCount = (partner.branches || []).filter((b) => {
+                      const st = (b.trang_thai || "").toString().toLowerCase().trim();
+                      return (
+                        st === "hoat dong" ||
+                        st === "hoạt động" ||
+                        st === "active" ||
+                        st === "dang hoat dong" ||
+                        st === "danghoatdong" ||
+                        st === "hoatdong"
+                      );
+                    }).length;
                     const sb = getPartnerStatusBadge(partner.trang_thai);
 
                     return (
@@ -293,7 +303,7 @@ export function PartnerManagementPage() {
                         </td>
 
                         {/* Chi nhánh */}
-                        <td className="px-3.5 py-3.5 text-center font-semibold text-slate-700">{branchCount}</td>
+                        <td className="px-3.5 py-3.5 text-center font-semibold text-slate-700">{activeBranchCount}</td>
 
                         {/* Trạng thái hồ sơ */}
                         <td className="px-3.5 py-3.5">

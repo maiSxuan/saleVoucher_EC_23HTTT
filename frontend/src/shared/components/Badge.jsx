@@ -6,6 +6,7 @@ export function Badge({ status, text, size = "md" }) {
 
   const getBadgeStyle = (statusVal) => {
     switch (statusVal) {
+      case "Hoat dong":
       case "Dang hoat dong":
       case "Dang ban":
       case "Da duyet":
@@ -42,6 +43,7 @@ export function Badge({ status, text, size = "md" }) {
   const getLabel = (statusVal) => {
     if (text) return t(text);
     switch (statusVal) {
+      case "Hoat dong":
       case "Dang hoat dong": return t("Đang hoạt động");
       case "Cho duyet": return t("Chờ duyệt");
       case "Tu choi": return t("Từ chối");
@@ -55,7 +57,8 @@ export function Badge({ status, text, size = "md" }) {
       case "Bao luu": return t("Chưa công bố");
       case "Cho hien thi": return t("Chờ mở bán");
       case "Tam an": return t("Tạm ẩn");
-      case "Tam ngung": return t("Tạm ngưng");
+      case "Tam ngung":
+      case "Tam ngung hoat dong": return t("Tạm ngưng");
       case "Ngung ban": return t("Ngừng bán");
       case "Yeu cau bo sung": return t("Cần bổ sung");
       case "Het hang": return t("Hết hàng");
