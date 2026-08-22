@@ -2157,5 +2157,23 @@
   "Chưa tạo hồ sơ": "No Profile Created",
   "Tài khoản của bạn chưa đăng ký Hồ sơ Doanh nghiệp": "Your account has no registered Business Profile",
   "Bạn đã khởi tạo tài khoản đại diện thành công. Vui lòng hoàn tất quy trình khai báo thông tin doanh nghiệp, giấy phép và chi nhánh để gửi Quản trị viên xét duyệt.": "You have successfully created a representative account. Please complete the business information, license, and branch declaration to submit for Administrator approval.",
-  "Hoàn tất Khai báo Hồ sơ Doanh nghiệp ngay →": "Complete Business Profile Registration Now →"
+  "Hoàn tất Khai báo Hồ sơ Doanh nghiệp ngay →": "Complete Business Profile Registration Now →",
+
+  "Đăng ký tài khoản": "Create Account",
+  "Tạo tài khoản khách hàng Snow Voucher": "Create a Snow Voucher Customer Account",
+  "Email": "Email",
+  "Mật khẩu": "Password",
+  "Xác nhận mật khẩu": "Confirm Password",
+  "Đăng ký": "Register",
+  "Đang xử lý...": "Processing...",
+  "Đã có tài khoản?": "Already have an account?",
+  "Đăng nhập": "Login",
+  "Quay lại": "Back",
+  "Xác thực OTP": "Verify OTP",
+  "Mã xác thực mô phỏng đã được gửi đến": "A verification code has been sent to",
+  "Nhập mã OTP": "Enter OTP Code",
+  "Gửi lại sau": "Resend in",
+  "Gửi lại mã": "Resend Code",
+  "Đang xác thực...": "Verifying...",
+  "Xác nhận": "Confirm"
 }
