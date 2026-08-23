@@ -79,7 +79,8 @@ export default function ContentListPage() {
       type: activeType,
       title: formData.title, 
       content: formData.content,
-      hinh_anh_url: formData.imageUrl || null
+      hinh_anh_url: formData.imageUrl || null,
+      imageUrl: formData.imageUrl || null
     });
     setSelectedItem(null);
     setIsFormOpen(false);

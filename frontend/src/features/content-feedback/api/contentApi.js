@@ -13,12 +13,14 @@ export const contentApi = {
     const url = type ? `${API_BASE}/content?loai=${type}` : `${API_BASE}/content`;
     const response = await fetch(url);
     if (!response.ok) throw new Error("Failed to fetch contents");
-    return response.json();
+    const json = await response.json();
+    return json.data || json;
   },
   getById: async (id) => {
     const response = await fetch(`${API_BASE}/content/${id}`);
     if (!response.ok) throw new Error("Failed to fetch content");
-    return response.json();
+    const json = await response.json();
+    return json.data || json;
   },
   create: async (data) => {
     const response = await fetch(`${API_BASE}/content`, {

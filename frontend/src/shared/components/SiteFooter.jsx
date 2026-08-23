@@ -1,13 +1,28 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { ArrowRight, Mail, MapPin, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { contentApi } from "../../features/content-feedback/api/contentApi";
 
 export default function SiteFooter() {
   const { t } = useTranslation();
+  const [policies, setPolicies] = useState([]);
+
+  useEffect(() => {
+    contentApi.list("chinh_sach")
+      .then((data) => {
+        const list = Array.isArray(data) ? data : (data.data || []);
+        const visiblePolicies = list.filter(p => p.status === 'visible' || p.trang_thai === 'Dang hien thi');
+        setPolicies(visiblePolicies);
+      })
+      .catch((err) => {
+        console.warn("Failed to load footer policies:", err);
+      });
+  }, []);
+
   return (
     <footer className="border-t border-slate-200 bg-white text-slate-600">
-      <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-6 px-4 py-6 sm:px-6 md:grid-cols-12 lg:px-8">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 items-start gap-6 px-4 py-6 sm:px-6 md:grid-cols-12 lg:px-8">
         <div className="space-y-2 md:col-span-4">
           <Link to="/" className="inline-flex items-center gap-2" aria-label="Snow Voucher - về trang chủ">
             <img
@@ -23,7 +38,7 @@ export default function SiteFooter() {
           </p>
         </div>
 
-        <address className="space-y-1.5 text-xs not-italic text-slate-600 md:col-span-5">
+        <address className="space-y-1.5 text-xs not-italic text-slate-600 md:col-span-4">
           <a href="mailto:nkngan23@clc.fitus.edu.vn" className="flex items-center gap-2 transition-colors hover:text-sky-700">
             <Mail size={13} className="shrink-0 text-sky-600" aria-hidden="true" />
             <span><strong className="text-slate-700">Email:</strong> nkngan23@clc.fitus.edu.vn</span>
@@ -38,14 +53,30 @@ export default function SiteFooter() {
           </div>
         </address>
 
-        <div className="flex flex-col justify-center space-y-1 md:col-span-3 md:items-end">
-          <Link
-            to="/policy"
-            className="inline-flex items-center gap-1.5 py-1 text-xs font-bold text-sky-700 underline decoration-sky-500/40 transition-colors hover:text-sky-800"
-          >
-            <ArrowRight size={14} aria-hidden="true" />
-            <span>{t("Điều khoản & Chính sách sàn")}</span>
-          </Link>
+        <div className="flex flex-col space-y-1.5 md:col-span-4 md:items-end">
+          <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-1">
+            {t("Điều khoản & Chính sách")}
+          </span>
+          {policies.length > 0 ? (
+            policies.map((p) => (
+              <Link
+                key={p.id}
+                to={`/policy/${p.id}`}
+                className="inline-flex items-center gap-1.5 py-0.5 text-xs font-semibold text-slate-600 transition-colors hover:text-sky-700"
+              >
+                <ArrowRight size={12} className="text-sky-600 shrink-0" aria-hidden="true" />
+                <span>{p.title}</span>
+              </Link>
+            ))
+          ) : (
+            <Link
+              to="/policy"
+              className="inline-flex items-center gap-1.5 py-1 text-xs font-bold text-sky-700 underline decoration-sky-500/40 transition-colors hover:text-sky-800"
+            >
+              <ArrowRight size={14} aria-hidden="true" />
+              <span>{t("Điều khoản & Chính sách sàn")}</span>
+            </Link>
+          )}
         </div>
       </div>
 

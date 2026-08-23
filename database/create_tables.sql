@@ -421,7 +421,6 @@ create table NOIDUNG (
         loai in ('banner', 'bai_viet', 'popup', 'chinh_sach')
     ),
     tieu_de text not null,
-    vai_tro text,
     trang_thai text not null default 'Dang hien thi' check (
         trang_thai in ('Dang hien thi', 'Tam an', 'Ngung hien thi')
     ),
