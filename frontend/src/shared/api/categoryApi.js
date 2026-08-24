@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:3001/api";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
 function getHeaders() {
   const token = localStorage.getItem("accessToken") || localStorage.getItem("ec_auth_token") || "";

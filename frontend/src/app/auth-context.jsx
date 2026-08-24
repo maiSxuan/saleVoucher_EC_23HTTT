@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { loginApi, logoutApi, getMeApi, refreshApi } from "../shared/api/authApi";
 
 const AuthContext = createContext(null);
@@ -22,6 +22,8 @@ export function AuthProvider({ children }) {
   );
 
   const [loading, setLoading] = useState(false);
+  const [sessionChecking, setSessionChecking] = useState(true);
+  const sessionValidationStarted = useRef(false);
 
   // ---------------------------------------------------------------
   // persistSession — lưu/xóa toàn bộ session (access + refresh + user)
@@ -80,23 +82,43 @@ export function AuthProvider({ children }) {
   }, [refreshToken, user, persistSession]);
 
   // ---------------------------------------------------------------
-  // Khi mount: nếu có token nhưng không có user → lấy lại từ /me
-  // Nếu /me thất bại (token hết hạn) → thử refresh
+  // Khi mount: luôn xác minh token với backend, kể cả localStorage vẫn còn user.
+  // Điều này ngăn session cũ/hết hạn bị hiểu nhầm là đang đăng nhập.
   // ---------------------------------------------------------------
   useEffect(() => {
-    if (token && !user) {
-      getMeApi(token).then(async (userData) => {
-        if (userData) {
-          persistSession(token, userData, refreshToken);
-        } else {
-          // Access token hết hạn → thử dùng refresh token
-          const ok = await refreshSession();
-          if (!ok) {
-            persistSession("", null, "");
-          }
+    if (sessionValidationStarted.current) return;
+    sessionValidationStarted.current = true;
+
+    async function validateStoredSession() {
+      if (!token) {
+        persistSession("", null, "");
+        setSessionChecking(false);
+        return;
+      }
+
+      let validToken = token;
+      let validRefreshToken = refreshToken;
+      let userData = await getMeApi(validToken);
+
+      if (!userData && validRefreshToken) {
+        const refreshed = await refreshApi(validRefreshToken);
+        if (refreshed?.accessToken) {
+          validToken = refreshed.accessToken;
+          validRefreshToken = refreshed.refreshToken || validRefreshToken;
+          userData = await getMeApi(validToken);
         }
-      });
+      }
+
+      if (userData) {
+        persistSession(validToken, userData, validRefreshToken);
+      } else {
+        persistSession("", null, "");
+      }
+
+      setSessionChecking(false);
     }
+
+    validateStoredSession();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -144,8 +166,8 @@ export function AuthProvider({ children }) {
         user,
         token,
         refreshToken,
-        isAuthenticated: !!user && !!token,
-        loading,
+        isAuthenticated: !sessionChecking && !!user && !!token,
+        loading: loading || sessionChecking,
         login,
         logout,
         setUser,

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import {
   Search,
@@ -13,9 +13,16 @@ import { contentApi } from "../../../../features/content-feedback/api/contentApi
 import VoucherCard from "../../components/VoucherCard";
 import { useTranslation } from "react-i18next";
 
+function cleanImageUrl(url) {
+  if (!url || typeof url !== "string") return null;
+  const cleaned = url.trim();
+  return cleaned.includes("$0") ? cleaned.split("$0")[0].trim() : cleaned;
+}
+
 export default function VoucherSearchPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const brandScrollRef = useRef(null);
 
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -141,6 +148,54 @@ export default function VoucherSearchPage() {
     sortBy,
   ]);
 
+  const brandList = useMemo(() => {
+    const brands = new Map();
+
+    vouchers.forEach((voucher) => {
+      const partner = voucher.partner;
+      const name =
+        typeof partner === "object" && partner !== null
+          ? partner.name || partner.ten_dn
+          : partner || voucher.ten_dn;
+
+      if (!name) return;
+
+      const key = String(partner?.id || name).trim().toLocaleLowerCase("vi");
+      const logo = partner?.logo || voucher.logo || voucher.logo_dn || null;
+      const current = brands.get(key);
+
+      if (!current) {
+        brands.set(key, {
+          id: partner?.id || key,
+          name,
+          logo,
+        });
+      } else if (!current.logo && logo) {
+        current.logo = logo;
+      }
+    });
+
+    return [...brands.values()];
+  }, [vouchers]);
+
+  const scrollBrands = (direction) => {
+    brandScrollRef.current?.scrollBy({
+      left: direction === "left" ? -320 : 320,
+      behavior: "smooth",
+    });
+  };
+
+  const selectBrand = (name) => {
+    setSearchValue(name);
+    setActiveCategory("Tất cả");
+    requestAnimationFrame(() => {
+      document.getElementById("customer-voucher-results")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  };
+
   if (loading)
     return (
       <div className="py-24 text-center text-snow-600 text-base font-medium">
@@ -229,8 +284,103 @@ export default function VoucherSearchPage() {
         </div>
       )}
 
+      {/* Bản sao khối thương hiệu nổi bật từ landing page */}
+      <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white py-10 shadow-card">
+        <div className="space-y-6 px-4 sm:px-6">
+          <div className="space-y-1">
+            <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-bold uppercase tracking-widest text-sky-600">
+              {t("landing.partnerTitle", "Đối Tác Đồng Hành")}
+            </span>
+            <h2 className="pt-1 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+              {t("voucher.featuredBrands", "Thương Hiệu Đối Tác Nổi Bật")}
+            </h2>
+            <p className="text-sm text-slate-500">
+              {t(
+                "landing.partnerSub",
+                "Các doanh nghiệp & chuỗi cửa hàng chính hãng trên hệ thống Snow Voucher",
+              )}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => scrollBrands("left")}
+              className="hidden h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-xs transition-all hover:border-sky-400 hover:bg-sky-50 hover:text-sky-700 sm:flex"
+              title={t("Xem thương hiệu trước")}
+              aria-label={t("Xem thương hiệu trước")}
+            >
+              <ChevronLeft size={22} />
+            </button>
+
+            <div
+              ref={brandScrollRef}
+              className="flex flex-1 items-center gap-4 overflow-x-auto scroll-smooth px-1 py-3"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              {brandList.length > 0 ? (
+                brandList.map((brand) => {
+                  const logo = cleanImageUrl(brand.logo);
+                  return (
+                    <button
+                      type="button"
+                      key={brand.id}
+                      onClick={() => selectBrand(brand.name)}
+                      className="group flex w-40 shrink-0 cursor-pointer flex-col items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 p-3.5 text-center shadow-2xs transition-all duration-300 hover:-translate-y-1 hover:border-sky-300 hover:bg-sky-50 hover:shadow-md sm:w-44"
+                      title={`${t("Xem voucher của")} ${brand.name}`}
+                    >
+                      <div className="relative mb-2 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xs transition-transform group-hover:scale-105">
+                        {logo ? (
+                          <img
+                            src={logo}
+                            alt={brand.name}
+                            referrerPolicy="no-referrer"
+                            loading="lazy"
+                            decoding="async"
+                            className="h-full w-full object-contain"
+                            onError={(event) => {
+                              event.currentTarget.style.display = "none";
+                              if (event.currentTarget.nextElementSibling) {
+                                event.currentTarget.nextElementSibling.style.display = "flex";
+                              }
+                            }}
+                          />
+                        ) : null}
+                        <div
+                          className="flex h-full w-full items-center justify-center rounded-xl bg-gradient-to-tr from-sky-500 to-sky-700 text-xl font-black text-white shadow-inner"
+                          style={{ display: logo ? "none" : "flex" }}
+                        >
+                          {brand.name.charAt(0).toUpperCase()}
+                        </div>
+                      </div>
+                      <h3 className="line-clamp-1 text-xs font-bold text-slate-800 transition-colors group-hover:text-sky-600">
+                        {brand.name}
+                      </h3>
+                    </button>
+                  );
+                })
+              ) : (
+                <div className="flex-1 py-8 text-center text-xs text-slate-400">
+                  {t("Chưa có đối tác nổi bật trong catalog.")}
+                </div>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => scrollBrands("right")}
+              className="hidden h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-xs transition-all hover:border-sky-400 hover:bg-slate-100 hover:text-sky-600 sm:flex"
+              title={t("Xem thương hiệu tiếp theo")}
+              aria-label={t("Xem thương hiệu tiếp theo")}
+            >
+              <ChevronRight size={22} />
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* Toolbar Lọc và Sắp xếp */}
-      <div className="flex items-center gap-3">
+      <div id="customer-voucher-results" className="flex scroll-mt-28 items-center gap-3">
         <button
           onClick={() => setShowFilters((s) => !s)}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${
