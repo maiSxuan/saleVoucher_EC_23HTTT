@@ -89,6 +89,9 @@ end $$;
 create index if not exists idx_perf_donhang_customer_date
   on public.donhang (ma_tk_dat, ngay_dat desc);
 
+create index if not exists idx_perf_donhang_customer_status_date
+  on public.donhang (ma_tk_dat, trang_thai, ngay_dat desc);
+
 create index if not exists idx_perf_donhang_status_date
   on public.donhang (trang_thai, ngay_dat desc);
 
@@ -124,6 +127,9 @@ create index if not exists idx_perf_khieunai_voucher_date
 create index if not exists idx_perf_yeucauhuy_status_date
   on public.yeucauhuy (trang_thai, ngay_yeu_cau desc);
 
+create index if not exists idx_perf_yeucauhuy_order_status_date
+  on public.yeucauhuy (ma_dh, trang_thai, ngay_yeu_cau desc);
+
 -- --------------------------------------------------------------------------
 -- Audit log listing and rejection-history lookups
 -- --------------------------------------------------------------------------
@@ -138,6 +144,18 @@ create index if not exists idx_perf_log_target_time
 
 create index if not exists idx_perf_log_action_trgm
   on public.log_ht using gin (hanh_dong gin_trgm_ops);
+
+create index if not exists idx_perf_log_result_time
+  on public.log_ht (ket_qua, thoi_diem_thuc_hien desc);
+
+create index if not exists idx_perf_log_target_trgm
+  on public.log_ht using gin (doi_tuong gin_trgm_ops);
+
+create index if not exists idx_perf_log_actor_role_trgm
+  on public.log_ht using gin (vai_tro_thuc_hien gin_trgm_ops);
+
+create index if not exists idx_perf_log_reason_trgm
+  on public.log_ht using gin (ly_do_thuc_hien gin_trgm_ops);
 
 -- --------------------------------------------------------------------------
 -- Remove older indexes now fully covered by the indexes above. PK/UNIQUE
@@ -178,8 +196,8 @@ analyze public.yeucauhuy;
 analyze public.log_ht;
 
 -- Supabase SQL Editor displays this final result so the installation is easy
--- to verify. A successful run currently returns 31 idx_perf_* indexes when the
--- optional branch-request column ma_hs exists, otherwise 30.
+-- to verify. A successful run currently returns 37 idx_perf_* indexes when the
+-- optional branch-request column ma_hs exists, otherwise 36.
 select indexname, indexdef
 from pg_indexes
 where schemaname = 'public'

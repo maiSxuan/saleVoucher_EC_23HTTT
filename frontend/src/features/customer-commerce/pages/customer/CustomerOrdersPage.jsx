@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Package,
   ChevronRight,
@@ -299,6 +299,8 @@ export default function CustomerOrdersPage() {
     total: 0,
     totalPages: 0,
   });
+  const orderListCacheRef = useRef(new Map());
+  const orderListRequestRef = useRef(null);
 
   // Modals
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -356,8 +358,9 @@ export default function CustomerOrdersPage() {
       await customerCancelOrder(selectedOrderId, { reason });
       toast.success(t("Đã gửi yêu cầu hủy đơn, chuyển sang chờ hoàn tiền."));
       closeCancelModal();
+      orderListCacheRef.current.clear();
       handleSelectOrder(selectedOrderId);
-      loadOrders(pagination.page);
+      loadOrders(pagination.page, { force: true });
     } catch (e) {
       toast.error(t(e.message) || t("Không thể gửi yêu cầu hủy đơn"));
     }
@@ -368,6 +371,7 @@ export default function CustomerOrdersPage() {
     try {
       await cancelOrder(selectedOrderId);
       toast.success(t("Đã hủy đơn hàng."));
+      orderListCacheRef.current.clear();
       handleSelectOrder(selectedOrderId);
     } catch (e) {
       toast.error(t(e.message) || t("Không thể hủy đơn hàng"));
@@ -379,18 +383,52 @@ export default function CustomerOrdersPage() {
     });
   };
 
-  const loadOrders = async (pageNum = 1) => {
+  const loadOrders = async (pageNum = 1, { force = false } = {}) => {
+    const lang = localStorage.getItem("app_lang") || "vi";
+    const cacheKey = `${lang}:${filterStatus}:${pageNum}`;
+    const cached = orderListCacheRef.current.get(cacheKey);
+
+    if (!force && cached && Date.now() - cached.savedAt < 30_000) {
+      setOrders(cached.orders);
+      setPagination(cached.pagination);
+      setLoading(false);
+      return;
+    }
+
+    orderListRequestRef.current?.abort();
+    const request = new AbortController();
+    orderListRequestRef.current = request;
+
     try {
       setLoading(true);
-      const res = await fetchCustomerOrders(filterStatus, pageNum, 10);
-      setOrders(res.orders || []);
-      setPagination(
-        res.pagination || { page: 1, limit: 10, total: 0, totalPages: 0 },
-      );
+      const res = await fetchCustomerOrders(filterStatus, pageNum, 10, {
+        signal: request.signal,
+        summary: true,
+      });
+      const nextOrders = res.orders || [];
+      const nextPagination = res.pagination || {
+        page: 1,
+        limit: 10,
+        total: 0,
+        totalPages: 0,
+      };
+
+      orderListCacheRef.current.set(cacheKey, {
+        orders: nextOrders,
+        pagination: nextPagination,
+        savedAt: Date.now(),
+      });
+      setOrders(nextOrders);
+      setPagination(nextPagination);
     } catch (e) {
-      toast.error(e.message || "Không thể tải danh sách đơn hàng");
+      if (e.name !== "AbortError") {
+        toast.error(e.message || "Không thể tải danh sách đơn hàng");
+      }
     } finally {
-      setLoading(false);
+      if (orderListRequestRef.current === request) {
+        orderListRequestRef.current = null;
+        setLoading(false);
+      }
     }
   };
 
@@ -405,7 +443,10 @@ export default function CustomerOrdersPage() {
     };
 
     window.addEventListener("app_language_changed", handleLangChange);
-    return () => window.removeEventListener("app_language_changed", handleLangChange);
+    return () => {
+      window.removeEventListener("app_language_changed", handleLangChange);
+      orderListRequestRef.current?.abort();
+    };
   }, [filterStatus]);
 
   const handleSelectOrder = async (orderId) => {
@@ -484,7 +525,11 @@ export default function CustomerOrdersPage() {
       setShowFeedbackModal(false);
       setSelectedComplaintReason("");
       setFeedbackText("");
-      await Promise.all([handleSelectOrder(selectedOrderId), loadOrders(pagination.page)]);
+      orderListCacheRef.current.clear();
+      await Promise.all([
+        handleSelectOrder(selectedOrderId),
+        loadOrders(pagination.page, { force: true }),
+      ]);
     } catch (e) {
       toast.error(t(e.message) || t("Không thể gửi phản ánh"));
     } finally {
@@ -1209,11 +1254,11 @@ export default function CustomerOrdersPage() {
               <div className="flex items-center justify-between border-t border-gray-100 pt-3">
                 <div className="text-xs text-gray-600">
                   <span className="font-semibold text-gray-900">
-                    {order.items.length}
+                    {order.itemCount ?? order.items?.length ?? 0}
                   </span>{" "}
                   {t("sản phẩm")} ·{" "}
                   <span className="font-semibold text-gray-900">
-                    {order.codes.length}
+                    {order.codeCount ?? order.codes?.length ?? 0}
                   </span>{" "}
                   {t("mã voucher")}
                 </div>

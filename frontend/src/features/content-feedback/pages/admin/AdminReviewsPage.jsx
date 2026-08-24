@@ -12,11 +12,16 @@ export default function AdminReviewsPage() {
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState("");
   const [ratingFilter, setRatingFilter] = useState("all");
+  const [reviewerFilter, setReviewerFilter] = useState("");
+  const [voucherFilter, setVoucherFilter] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [sortBy, setSortBy] = useState("newest");
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
 
   // Delete modal state
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -25,14 +30,24 @@ export default function AdminReviewsPage() {
     try {
       setLoading(true);
       setError(null);
-      const res = await reviewApi.list();
+      const res = await reviewApi.list({
+        search: searchQuery,
+        rating: ratingFilter,
+        fromDate,
+        toDate,
+        page: currentPage,
+        limit: pageSize,
+      });
       setReviews(res.data || []);
+      if (res.pagination) {
+        setPagination(res.pagination);
+      }
     } catch (err) {
       setError(err.message || "Không thể tải danh sách đánh giá");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [searchQuery, ratingFilter, fromDate, toDate, currentPage]);
 
   useEffect(() => {
     loadReviews();
@@ -41,7 +56,7 @@ export default function AdminReviewsPage() {
   // Reset to page 1 on filter/search change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, ratingFilter, sortBy]);
+  }, [searchQuery, ratingFilter, fromDate, toDate]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -57,14 +72,15 @@ export default function AdminReviewsPage() {
 
   // Filter and Sort logic
   const filtered = reviews.filter(r => {
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const matchComment = (r.comment || "").toLowerCase().includes(q);
-      const matchId = (r.id || "").toLowerCase().includes(q);
-      if (!matchComment && !matchId) return false;
+    if (reviewerFilter.trim()) {
+      const q = reviewerFilter.toLowerCase();
+      if (!(r.reviewerName || "").toLowerCase().includes(q)) return false;
     }
-    if (ratingFilter !== "all") {
-      if (r.rating !== parseInt(ratingFilter, 10)) return false;
+    if (voucherFilter.trim()) {
+      const q = voucherFilter.toLowerCase();
+      const matchVoucher = (r.voucherName || "").toLowerCase().includes(q);
+      const matchCode = (r.voucherCode || "").toLowerCase().includes(q);
+      if (!matchVoucher && !matchCode) return false;
     }
     return true;
   });
@@ -77,8 +93,8 @@ export default function AdminReviewsPage() {
     return 0;
   });
 
-  const totalPages = Math.ceil(filtered.length / pageSize) || 1;
-  const paginatedReviews = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const totalPages = pagination.totalPages || 1;
+  const paginatedReviews = filtered;
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -111,6 +127,20 @@ export default function AdminReviewsPage() {
           />
         </div>
         <div className="flex items-center gap-3 flex-wrap">
+          <input 
+            type="text"
+            placeholder="Lọc người đánh giá..."
+            value={reviewerFilter}
+            onChange={e => setReviewerFilter(e.target.value)}
+            className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white outline-none focus:border-blue-500 font-medium text-gray-700 min-w-[160px]"
+          />
+          <input 
+            type="text"
+            placeholder="Lọc voucher..."
+            value={voucherFilter}
+            onChange={e => setVoucherFilter(e.target.value)}
+            className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white outline-none focus:border-blue-500 font-medium text-gray-700 min-w-[160px]"
+          />
           <div className="flex items-center gap-1.5 text-sm">
             <Filter size={14} className="text-gray-500" />
             <span className="text-gray-600 font-medium">Số sao:</span>
@@ -126,6 +156,24 @@ export default function AdminReviewsPage() {
               <option value="2">2 sao ⭐⭐</option>
               <option value="1">1 sao ⭐</option>
             </select>
+          </div>
+          <div className="flex items-center gap-1.5 text-sm">
+            <span className="text-gray-600 font-medium">Từ:</span>
+            <input 
+              type="date"
+              value={fromDate}
+              onChange={e => setFromDate(e.target.value)}
+              className="border border-gray-200 rounded-xl px-2.5 py-2 text-sm bg-white outline-none focus:border-blue-500 font-medium text-gray-700"
+            />
+          </div>
+          <div className="flex items-center gap-1.5 text-sm">
+            <span className="text-gray-600 font-medium">Đến:</span>
+            <input 
+              type="date"
+              value={toDate}
+              onChange={e => setToDate(e.target.value)}
+              className="border border-gray-200 rounded-xl px-2.5 py-2 text-sm bg-white outline-none focus:border-blue-500 font-medium text-gray-700"
+            />
           </div>
           <div className="flex items-center gap-1.5 text-sm">
             <ArrowUpDown size={14} className="text-gray-500" />
@@ -160,9 +208,10 @@ export default function AdminReviewsPage() {
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   <th className="p-4">Mã đánh giá</th>
+                  <th className="p-4">Người đánh giá</th>
+                  <th className="p-4">Voucher</th>
                   <th className="p-4">Điểm số</th>
                   <th className="p-4">Nội dung đánh giá</th>
-                  <th className="p-4">Mã lần mua voucher</th>
                   <th className="p-4">Ngày đánh giá</th>
                   <th className="p-4 text-right">Hành động</th>
                 </tr>
@@ -171,6 +220,11 @@ export default function AdminReviewsPage() {
                 {paginatedReviews.map(r => (
                   <tr key={r.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="p-4 font-mono text-xs font-bold text-gray-800">{r.id?.substring(0, 8)}...</td>
+                    <td className="p-4 text-sm font-medium text-gray-900">{r.reviewerName || 'Khách hàng'}</td>
+                    <td className="p-4 text-sm text-gray-700">
+                      <div className="font-semibold text-gray-900">{r.voucherName}</div>
+                      <div className="font-mono text-xs text-gray-500">{r.voucherCode}</div>
+                    </td>
                     <td className="p-4">
                       <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
                         <Star size={13} className="fill-amber-500 text-amber-500 flex-shrink-0" />
@@ -180,7 +234,6 @@ export default function AdminReviewsPage() {
                     <td className="p-4 text-gray-700 max-w-md">
                       <p className="line-clamp-2">{r.comment || <span className="text-gray-400 italic">Không có bình luận</span>}</p>
                     </td>
-                    <td className="p-4 font-mono text-xs text-gray-500">{r.voucherPurchaseId ? r.voucherPurchaseId.substring(0, 8) + '...' : '—'}</td>
                     <td className="p-4 text-xs text-gray-500">
                       {r.createdAt ? new Date(r.createdAt).toLocaleString('vi-VN') : '—'}
                     </td>
@@ -203,7 +256,7 @@ export default function AdminReviewsPage() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-6 py-4 bg-white border-t border-gray-200">
               <div className="text-xs text-gray-500">
-                Hiển thị {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, filtered.length)} trên tổng số {filtered.length} kết quả
+                Hiển thị {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, pagination.total)} trên tổng số {pagination.total} kết quả
               </div>
               <div className="flex items-center gap-1">
                 <button

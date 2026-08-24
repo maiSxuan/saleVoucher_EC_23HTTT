@@ -14,6 +14,7 @@ const QRCode = require('qrcode');
 const supabase = require('../../../../config/supabase');
 const issuedVoucherRepository = require('../../data/repositories/issued-voucher.repository');
 const IssuedVoucherModel = require('../../data/models/issued-voucher.model');
+const VOUCHER_STATUS = require('../../../../common/constants/voucher-status');
 
 class VoucherVerificationService {
   /**
@@ -84,7 +85,18 @@ class VoucherVerificationService {
       }
     }
 
-    // 4. Kiểm tra trạng thái đã sử dụng (RB-07)
+    // 4. Voucher gốc đã ngừng bán thì voucher code không được phép sử dụng.
+    if (voucher.voucherStatus === VOUCHER_STATUS.NGUNG_BAN) {
+      return {
+        valid: false,
+        status: 'stopped_selling',
+        message: 'Voucher này đã ngừng bán',
+        code: cleanCode,
+        data: voucher,
+      };
+    }
+
+    // 5. Kiểm tra trạng thái đã sử dụng (RB-07)
     if (voucher.status === 'Da su dung') {
       return {
         valid: false,
@@ -95,7 +107,7 @@ class VoucherVerificationService {
       };
     }
 
-    // 5. Kiểm tra trạng thái vô hiệu hóa hoặc lỗi
+    // 6. Kiểm tra trạng thái vô hiệu hóa hoặc lỗi
     if (voucher.status === 'Vo hieu hoa' || voucher.status === 'Loi sinh ma') {
       return {
         valid: false,
@@ -106,7 +118,7 @@ class VoucherVerificationService {
       };
     }
 
-    // 6. Kiểm tra hạn sử dụng (RB-08)
+    // 7. Kiểm tra hạn sử dụng (RB-08)
     if (voucher.validUntil) {
       const expiryDate = new Date(voucher.validUntil);
       const now = new Date();
@@ -121,7 +133,7 @@ class VoucherVerificationService {
       }
     }
 
-    // 7. Mã hoàn toàn hợp lệ, sẵn sàng sử dụng
+    // 8. Mã hoàn toàn hợp lệ, sẵn sàng sử dụng
     return {
       valid: true,
       status: 'valid',

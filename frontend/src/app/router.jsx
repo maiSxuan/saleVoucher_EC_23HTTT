@@ -115,6 +115,10 @@ const routes = [
     element: <PolicyPage />,
   },
   {
+    path: "/policy/:id",
+    element: <PolicyPage />,
+  },
+  {
     path: "/privacy-policy",
     element: <PolicyPage />,
   },

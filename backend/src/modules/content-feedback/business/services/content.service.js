@@ -69,7 +69,7 @@ async function getDefaultModerationAccountId() {
 async function createContent(payload, reqUser) {
   const loai = payload.loai || payload.type;
   const tieu_de = payload.tieu_de || payload.title;
-  const noi_dung = payload.noi_dung || payload.content;
+  const noi_dung = payload.noi_dung || payload.content || "";
   let trang_thai = payload.trang_thai;
   if (payload.status) {
     trang_thai = mapStatusToDb(payload.status);
@@ -121,7 +121,8 @@ async function updateContent(id, payload) {
     dbPayload.trang_thai = mapStatusToDb(payload.status);
   }
   if (payload.hinh_anh_url !== undefined || payload.imageUrl !== undefined) {
-    let img = payload.hinh_anh_url || payload.imageUrl;
+    let rawImg = payload.hinh_anh_url !== undefined ? payload.hinh_anh_url : payload.imageUrl;
+    let img = (rawImg === "" || rawImg === null) ? null : rawImg;
     if (img) {
       dbPayload.hinh_anh_url = await uploadBase64ToSupabase(img, "content");
     } else {

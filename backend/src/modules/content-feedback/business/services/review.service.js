@@ -2,11 +2,23 @@ const repository = require("../../data/repositories/review.repository");
 const accountRepository = require("../../data/repositories/account.repository");
 const validator = require("../../presentation/validators/review.validator");
 const dto = require("../../presentation/dtos/review.dto");
+const auditLogService = require("../../../core-access/business/services/audit-log.service");
 
 // Lấy danh sách đánh giá
-async function getReviewList() {
-  const items = await repository.findAll();
-  return items.map(item => dto.buildReviewDto(item));
+async function getReviewList(filters = {}) {
+  const page = parseInt(filters.page, 10) || 1;
+  const limit = parseInt(filters.limit, 10) || 10;
+  const { data, count } = await repository.findAll(filters);
+  const reviews = data.map(item => dto.buildReviewDto(item));
+  return {
+    data: reviews,
+    pagination: {
+      page,
+      limit,
+      total: count,
+      totalPages: Math.ceil(count / limit) || 1,
+    }
+  };
 }
 
 // Lấy đánh giá theo id
@@ -43,8 +55,25 @@ async function createReview(payload) {
 }
 
 // Xóa đánh giá
-async function deleteReview(id) {
-  return await repository.remove(id);
+async function deleteReview(id, adminAccountId) {
+  const current = await repository.findById(id);
+  if (!current) {
+    const err = new Error("Không tìm thấy đánh giá");
+    err.status = 404;
+    throw err;
+  }
+  const result = await repository.remove(id);
+
+  await auditLogService.log({
+    actorId: adminAccountId,
+    action: "XOA_DANH_GIA",
+    targetType: "DANHGIA",
+    targetId: id,
+    before: current,
+    after: null,
+  });
+
+  return result;
 }
 
 // Lấy danh sách đánh giá theo voucher id

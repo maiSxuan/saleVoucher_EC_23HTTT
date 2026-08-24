@@ -4,7 +4,7 @@ function validateCreateContent(data) {
   }
 
   // Kiểm tra các trường bắt buộc theo bảng noidung
-  const requiredFields = ['loai', 'tieu_de', 'noi_dung', 'matk_admin'];
+  const requiredFields = ['loai', 'tieu_de', 'matk_admin'];
   for (const field of requiredFields) {
     if (!data[field]) {
       throw new Error(`Thiếu trường bắt buộc: ${field}`);

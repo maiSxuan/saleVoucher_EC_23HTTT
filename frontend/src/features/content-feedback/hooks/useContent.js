@@ -13,11 +13,12 @@ export function useContent() {
       if (background) setIsUpdating(true);
       else setLoading(true);
       const [contentRes, catRes] = await Promise.all([
-        contentApi.list().catch(() => ({ data: [] })),
-        categoryApi.fetchCategories().catch(() => ({ data: [] }))
+        contentApi.list().catch(() => []),
+        categoryApi.fetchCategories().catch(() => [])
       ]);
-      const contents = contentRes.data || [];
-      const categories = (catRes.data || []).map(c => ({ ...c, type: 'danh_muc' }));
+      const contents = Array.isArray(contentRes) ? contentRes : (contentRes.data || []);
+      const rawCats = Array.isArray(catRes) ? catRes : (catRes.data || []);
+      const categories = rawCats.map(c => ({ ...c, type: 'danh_muc' }));
       setData([...contents, ...categories]);
     } catch (err) {
       setError(err.message);

@@ -3,8 +3,19 @@ const service = require("../../business/services/review.service");
 // Lấy danh sách đánh giá
 async function getReviewList(req, res, next) {
   try {
-    const result = await service.getReviewList();
-    res.status(200).json({ success: true, data: result });
+    const filters = {
+      search: req.query.search,
+      rating: req.query.rating,
+      userId: req.query.userId,
+      voucherId: req.query.voucherId,
+      voucherPurchaseId: req.query.voucherPurchaseId,
+      fromDate: req.query.fromDate,
+      toDate: req.query.toDate,
+      page: req.query.page,
+      limit: req.query.limit,
+    };
+    const result = await service.getReviewList(filters);
+    res.status(200).json({ success: true, data: result.data, pagination: result.pagination });
   } catch (error) {
     next(error);
   }
@@ -33,7 +44,8 @@ async function createReview(req, res, next) {
 // Xóa đánh giá
 async function deleteReview(req, res, next) {
   try {
-    await service.deleteReview(req.params.id);
+    const adminAccountId = req.user?.accountId || req.user?.id;
+    await service.deleteReview(req.params.id, adminAccountId);
     res.status(200).json({ success: true, message: "Deleted successfully" });
   } catch (error) {
     next(error);

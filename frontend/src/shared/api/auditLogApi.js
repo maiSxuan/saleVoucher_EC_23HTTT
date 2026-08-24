@@ -11,6 +11,8 @@ export async function fetchAuditLogsApi({
   hanhDong = '',
   doiTuong = '',
   ketQua = '',
+  search = '',
+  signal,
 } = {}) {
   const token = localStorage.getItem('accessToken');
   const params = new URLSearchParams();
@@ -19,6 +21,7 @@ export async function fetchAuditLogsApi({
   if (hanhDong) params.set('hanhDong', hanhDong);
   if (doiTuong) params.set('doiTuong', doiTuong);
   if (ketQua) params.set('ketQua', ketQua);
+  if (search) params.set('search', search);
 
   try {
     const res = await fetch(`${API_BASE}/admin/logs?${params.toString()}`, {
@@ -26,6 +29,7 @@ export async function fetchAuditLogsApi({
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
+      signal,
     });
 
     if (res.ok) {
@@ -41,12 +45,26 @@ export async function fetchAuditLogsApi({
       };
     }
   } catch (err) {
+    if (err.name === 'AbortError') throw err;
     console.warn('[auditLogApi] Backend API unavailable, fallback to mockStore:', err.message);
   }
 
   // Fallback sang mockStore nếu backend offline hoặc token dev
   const mockLogs = mockStore.getAuditLogs() || [];
   let filtered = [...mockLogs];
+  if (search) {
+    const keyword = search.toLowerCase();
+    filtered = filtered.filter((log) => [
+      log.hanh_dong,
+      log.doi_tuong,
+      log.vai_tro_thuc_hien,
+      log.ly_do_thuc_hien,
+      log.ket_qua,
+      log.log_id,
+      log.ma_tk_thuc_hien,
+      log.ma_doi_tuong,
+    ].some((value) => String(value || '').toLowerCase().includes(keyword)));
+  }
   if (hanhDong) {
     filtered = filtered.filter((l) =>
       (l.hanh_dong || '').toLowerCase().includes(hanhDong.toLowerCase())

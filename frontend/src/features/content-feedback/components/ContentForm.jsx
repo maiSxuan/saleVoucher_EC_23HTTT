@@ -87,12 +87,12 @@ export default function ContentForm({ initialData, onSubmit, onCancel, contentTy
               <label className="block text-xs font-semibold text-gray-700">
                 {contentType === 'danh_muc' ? 'Mô tả' : 'Nội dung chi tiết'}
               </label>
-              {contentType === 'bai_viet' && (
+              {(contentType === 'bai_viet' || contentType === 'chinh_sach') && (
                 <span className="text-[10px] text-blue-600 font-medium">Sử dụng Tiptap Rich Text Editor</span>
               )}
             </div>
 
-            {contentType === 'bai_viet' ? (
+            {contentType === 'bai_viet' || contentType === 'chinh_sach' ? (
               <TiptapEditor 
                 content={formData.content} 
                 onChange={(html) => setFormData(prev => ({ ...prev, content: html }))} 

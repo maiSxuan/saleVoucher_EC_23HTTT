@@ -13,11 +13,11 @@ class AuditLogController {
 
   /**
    * GET /admin/logs
-   * Query params: page, limit, maTkThucHien, doiTuong, hanhDong, ketQua
+   * Query params: page, limit, maTkThucHien, doiTuong, hanhDong, ketQua, search
    */
   async list(req, res, next) {
     try {
-      const { page, limit, maTkThucHien, doiTuong, hanhDong, ketQua } = req.query;
+      const { page, limit, maTkThucHien, doiTuong, hanhDong, ketQua, search } = req.query;
 
       const result = await this.auditLogService.listLogs({
         page,
@@ -26,6 +26,7 @@ class AuditLogController {
         doiTuong,
         hanhDong,
         ketQua,
+        search,
       });
 
       return paginatedResponse(

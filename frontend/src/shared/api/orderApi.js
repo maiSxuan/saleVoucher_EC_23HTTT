@@ -21,16 +21,23 @@ async function handleResponse(res) {
 }
 
 // --- Customer API ---
-export async function fetchCustomerOrders(status = "", page = 1, limit = 10) {
+export async function fetchCustomerOrders(
+  status = "",
+  page = 1,
+  limit = 10,
+  { signal, summary = true } = {},
+) {
   const lang = localStorage.getItem("app_lang") || "vi";
   const params = new URLSearchParams();
   if (status && status !== "all") params.append("status", status);
   params.append("page", page);
   params.append("limit", limit);
   params.append("lang", lang);
+  if (summary) params.append("summary", "1");
   const res = await fetch(`${BASE_URL}/orders/history?${params.toString()}`, {
     method: "GET",
     headers: authHeaders(),
+    signal,
   });
   const json = await handleResponse(res);
   return {

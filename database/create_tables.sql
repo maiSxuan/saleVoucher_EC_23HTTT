@@ -421,7 +421,6 @@ create table NOIDUNG (
         loai in ('banner', 'bai_viet', 'popup', 'chinh_sach')
     ),
     tieu_de text not null,
-    vai_tro text,
     trang_thai text not null default 'Dang hien thi' check (
         trang_thai in ('Dang hien thi', 'Tam an', 'Ngung hien thi')
     ),
@@ -559,18 +558,23 @@ end if;
 end $$;
 -- Orders, payments, refunds and issued voucher codes.
 create index if not exists idx_perf_donhang_customer_date on public.DONHANG (ma_tk_dat, ngay_dat desc);
+create index if not exists idx_perf_donhang_customer_status_date on public.DONHANG (ma_tk_dat, trang_thai, ngay_dat desc);
 create index if not exists idx_perf_donhang_status_date on public.DONHANG (trang_thai, ngay_dat desc);
 create index if not exists idx_perf_thanhtoan_order_status_date on public.THANHTOAN (ma_dh, trang_thai, thoi_gian_tt desc);
 create index if not exists idx_perf_thanhtoan_status_date on public.THANHTOAN (trang_thai, thoi_gian_tt desc);
 create index if not exists idx_perf_hoantien_payment_date on public.HOANTIEN (ma_thanh_toan, ngay_xu_ly desc);
 create index if not exists idx_perf_voucher_mua_order_status_date on public.VOUCHER_MUA (ma_dh, trang_thai, thoi_gian_sinh_ma desc);
+CREATE INDEX if not exists idx_voucher_mua_ma_voucher ON voucher_mua (ma_voucher);
 create index if not exists idx_perf_voucher_mua_status_date on public.VOUCHER_MUA (trang_thai, thoi_gian_sinh_ma desc);
 create index if not exists idx_perf_voucher_mua_used_branch_date on public.VOUCHER_MUA (ma_chi_nhanh_su_dung, ngay_su_dung desc)
 where trang_thai = 'Da su dung';
+CREATE if not exists INDEX idx_voucher_mua_ma_dh ON voucher_mua (ma_dh);
+CREATE UNIQUE INDEX if not exists idx_danhgia_ma_voucher_mua ON danhgia (ma_voucher_mua);
 create index if not exists idx_perf_lssinhma_voucher_date on public.LSSINHMA (ma_voucher_mua, tg_thuc_hien desc);
 create index if not exists idx_perf_khieunai_status_date on public.KHIEUNAI (trang_thai, ngay_khieu_nai desc);
 create index if not exists idx_perf_khieunai_voucher_date on public.KHIEUNAI (ma_voucher_mua, ngay_khieu_nai desc);
 create index if not exists idx_perf_yeucauhuy_status_date on public.YEUCAUHUY (trang_thai, ngay_yeu_cau desc);
+create index if not exists idx_perf_yeucauhuy_order_status_date on public.YEUCAUHUY (ma_dh, trang_thai, ngay_yeu_cau desc);
 -- Audit log listing and rejection-history lookups.
 create index if not exists idx_perf_log_time on public.LOG_HT (thoi_diem_thuc_hien desc);
 create index if not exists idx_perf_log_actor_time on public.LOG_HT (ma_tk_thuc_hien, thoi_diem_thuc_hien desc);
@@ -580,3 +584,7 @@ create index if not exists idx_perf_log_target_time on public.LOG_HT (
     thoi_diem_thuc_hien desc
 );
 create index if not exists idx_perf_log_action_trgm on public.LOG_HT using gin (hanh_dong gin_trgm_ops);
+create index if not exists idx_perf_log_result_time on public.LOG_HT (ket_qua, thoi_diem_thuc_hien desc);
+create index if not exists idx_perf_log_target_trgm on public.LOG_HT using gin (doi_tuong gin_trgm_ops);
+create index if not exists idx_perf_log_actor_role_trgm on public.LOG_HT using gin (vai_tro_thuc_hien gin_trgm_ops);
+create index if not exists idx_perf_log_reason_trgm on public.LOG_HT using gin (ly_do_thuc_hien gin_trgm_ops);
