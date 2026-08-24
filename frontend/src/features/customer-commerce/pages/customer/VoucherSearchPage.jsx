@@ -70,8 +70,12 @@ export default function VoucherSearchPage() {
       .list("banner")
       .then((res) => {
         if (!ignore) {
-          const active = (res.data || []).filter(
-            (b) => b.status === "visible" || !b.status,
+          const list = Array.isArray(res) ? res : (res.data || []);
+          const active = list.filter(
+            (b) => {
+              const st = b.status || b.trang_thai;
+              return st === "visible" || st === "Dang hien thi" || !st;
+            }
           );
           setBanners(active);
         }
@@ -82,8 +86,12 @@ export default function VoucherSearchPage() {
       .list("bai_viet")
       .then((res) => {
         if (!ignore) {
-          const active = (res.data || []).filter(
-            (a) => a.status === "visible" || !a.status,
+          const list = Array.isArray(res) ? res : (res.data || []);
+          const active = list.filter(
+            (a) => {
+              const st = a.status || a.trang_thai;
+              return st === "visible" || st === "Dang hien thi" || !st;
+            }
           );
           setArticles(active);
         }
@@ -96,14 +104,14 @@ export default function VoucherSearchPage() {
     };
   }, []);
 
-  // Auto-slide banner every 5 seconds
+  // Auto-slide banner every 5 seconds, resets timer on manual change
   useEffect(() => {
     if (banners.length <= 1) return;
     const interval = setInterval(() => {
       setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, [banners.length]);
+  }, [banners.length, currentBannerIndex]);
 
   const filtered = useMemo(() => {
     return vouchers
@@ -147,6 +155,20 @@ export default function VoucherSearchPage() {
     priceRange,
     sortBy,
   ]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Reset page to 1 when filters or search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchValue, activeCategory, activePartner, priceRange, sortBy]);
+
+  const pageSize = 12;
+  const totalPages = Math.ceil(filtered.length / pageSize) || 1;
+  const paginatedVouchers = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, currentPage]);
 
   const brandList = useMemo(() => {
     const brands = new Map();
@@ -251,7 +273,7 @@ export default function VoucherSearchPage() {
                     (prev) => (prev - 1 + banners.length) % banners.length,
                   )
                 }
-                className="absolute left-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors backdrop-blur-sm z-20"
+                className="absolute left-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors backdrop-blur-sm z-20 cursor-pointer"
                 title={t("Banner trước")}
               >
                 <ChevronLeft size={20} />
@@ -260,7 +282,7 @@ export default function VoucherSearchPage() {
                 onClick={() =>
                   setCurrentBannerIndex((prev) => (prev + 1) % banners.length)
                 }
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors backdrop-blur-sm z-20"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors backdrop-blur-sm z-20 cursor-pointer"
                 title={t("Banner tiếp")}
               >
                 <ChevronRight size={20} />
@@ -271,7 +293,7 @@ export default function VoucherSearchPage() {
                   <button
                     key={idx}
                     onClick={() => setCurrentBannerIndex(idx)}
-                    className={`h-2 rounded-full transition-all ${
+                    className={`h-2 rounded-full transition-all cursor-pointer ${
                       currentBannerIndex === idx
                         ? "w-6 bg-white"
                         : "w-2 bg-white/50 hover:bg-white/80"
@@ -444,15 +466,154 @@ export default function VoucherSearchPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filtered.map((voucher) => (
-            <VoucherCard
-              key={voucher.id}
-              voucher={voucher}
-              onClick={() => navigate(`/customer/vouchers/${voucher.id}`)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {paginatedVouchers.map((voucher) => (
+              <VoucherCard
+                key={voucher.id}
+                voucher={voucher}
+                onClick={() => navigate(`/customer/vouchers/${voucher.id}`)}
+              />
+            ))}
+          </div>
+
+          {/* Phân trang (Pagination) */}
+          {totalPages > 1 && (() => {
+            const blockSize = 6;
+            const currentBlock = Math.floor((currentPage - 1) / blockSize);
+            const totalBlocks = Math.ceil(totalPages / blockSize);
+            const visiblePages = Array.from(
+              { length: Math.min(blockSize, totalPages - currentBlock * blockSize) },
+              (_, i) => currentBlock * blockSize + i + 1
+            );
+            const hasPrevBlock = currentBlock > 0;
+            const hasNextBlock = currentBlock < totalBlocks - 1;
+
+            return (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 pb-2 border-t border-slate-200 mt-8">
+                <p className="text-sm text-slate-500 font-medium">
+                  {t("Hiển thị")} {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, filtered.length)} {t("trên tổng số")} {filtered.length} {t("voucher")}
+                </p>
+                <div className="flex items-center gap-1.5">
+                  {/* << Chuyển list page trước */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (hasPrevBlock) {
+                        const newPage = (currentBlock - 1) * blockSize + 1;
+                        setCurrentPage(newPage);
+                        document.getElementById("customer-voucher-results")?.scrollIntoView({ behavior: "smooth" });
+                      }
+                    }}
+                    disabled={!hasPrevBlock}
+                    className="px-2.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-sky-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all shadow-xs"
+                    title={t("Danh sách trang trước (<<)")}
+                  >
+                    &lt;&lt;
+                  </button>
+
+                  {/* < Trang trước */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCurrentPage((p) => Math.max(1, p - 1));
+                      document.getElementById("customer-voucher-results")?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    disabled={currentPage <= 1}
+                    className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-sky-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all shadow-xs"
+                    title={t("Trang trước (<)")}
+                  >
+                    &lt;
+                  </button>
+                  
+                  {/* Các số trang với 1 ... ở đầu nếu ở block sau và ... N ở cuối */}
+                  <div className="flex items-center gap-1">
+                    {currentBlock > 0 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCurrentPage(1);
+                            document.getElementById("customer-voucher-results")?.scrollIntoView({ behavior: "smooth" });
+                          }}
+                          className="w-9 h-9 rounded-xl text-xs font-bold bg-white border border-slate-200 text-slate-700 hover:bg-sky-50 hover:text-sky-700 cursor-pointer transition-all"
+                        >
+                          1
+                        </button>
+                        <span className="px-1 text-slate-400 font-bold">...</span>
+                      </>
+                    )}
+
+                    {visiblePages.map((page) => (
+                      <button
+                        type="button"
+                        key={page}
+                        onClick={() => {
+                          setCurrentPage(page);
+                          document.getElementById("customer-voucher-results")?.scrollIntoView({ behavior: "smooth" });
+                        }}
+                        className={`w-9 h-9 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          currentPage === page
+                            ? "bg-sky-600 text-white shadow-soft"
+                            : "bg-white border border-slate-200 text-slate-700 hover:bg-sky-50 hover:text-sky-700"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+
+                    {(currentBlock + 1) * blockSize < totalPages && (
+                      <>
+                        <span className="px-1 text-slate-400 font-bold">...</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCurrentPage(totalPages);
+                            document.getElementById("customer-voucher-results")?.scrollIntoView({ behavior: "smooth" });
+                          }}
+                          className={`w-9 h-9 rounded-xl text-xs font-bold bg-white border border-slate-200 text-slate-700 hover:bg-sky-50 hover:text-sky-700 cursor-pointer transition-all`}
+                        >
+                          {totalPages}
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {/* > Trang sau */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCurrentPage((p) => Math.min(totalPages, p + 1));
+                      document.getElementById("customer-voucher-results")?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    disabled={currentPage >= totalPages}
+                    className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-sky-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all shadow-xs"
+                    title={t("Trang sau (>)")}
+                  >
+                    &gt;
+                  </button>
+
+                  {/* >> Chuyển list page tiếp theo */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (hasNextBlock) {
+                        const newPage = (currentBlock + 1) * blockSize + 1;
+                        setCurrentPage(newPage);
+                        document.getElementById("customer-voucher-results")?.scrollIntoView({ behavior: "smooth" });
+                      }
+                    }}
+                    disabled={!hasNextBlock}
+                    className="px-2.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-sky-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all shadow-xs"
+                    title={t("Danh sách trang tiếp theo (>>)")}
+                  >
+                    &gt;&gt;
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+        </>
       )}
 
       {/* Khối Cẩm nang & Bài viết (Có đường dẫn sang trang chi tiết bài viết) */}
