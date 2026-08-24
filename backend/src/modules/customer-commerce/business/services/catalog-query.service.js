@@ -68,8 +68,8 @@ function mapVoucher(v) {
     hinh_anh_url: v.hinh_anh_url,
     originalPrice,
     gia_goc: originalPrice,
-    salePrice: originalPrice - discountAmount,
-    gia_ban: originalPrice - discountAmount,
+    salePrice: discountAmount,
+    gia_ban: discountAmount,
     totalQty: v.so_luong_phat_hanh,
     soldQty: v.so_luong_da_ban,
     startSaleDate: v.tg_bat_dau_ban,
@@ -83,10 +83,16 @@ function mapVoucher(v) {
 class CatalogQueryService {
   async listCatalog(query = {}) {
     const vouchers = await catalogRepository.findSellingVouchers();
-    let mapped = vouchers.map(mapVoucher).filter((v) => v.availability === "selling"); // NFR-02.1
+    let mapped = vouchers
+      .map(mapVoucher)
+      .filter((v) => v.availability === "selling"); // NFR-02.1
     const lang = query?.lang;
     if (lang && lang.toLowerCase().startsWith("en")) {
-      mapped = await translationService.translateVoucherFields(mapped, undefined, "en");
+      mapped = await translationService.translateVoucherFields(
+        mapped,
+        undefined,
+        "en",
+      );
     }
     return mapped;
   }
@@ -114,7 +120,11 @@ class CatalogQueryService {
     }
     let mapped = mapVoucher(v);
     if (lang && lang.toLowerCase().startsWith("en")) {
-      mapped = await translationService.translateVoucherFields(mapped, undefined, "en");
+      mapped = await translationService.translateVoucherFields(
+        mapped,
+        undefined,
+        "en",
+      );
     }
     return mapped;
   }

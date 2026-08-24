@@ -108,7 +108,7 @@ class VoucherRepository {
             new VoucherModel({
               ...item,
               ten_dn: resolvedTenDn,
-              gia_ban: item.gia_goc - (item.gia_tri_giam || 0),
+              gia_ban: item.gia_tri_giam,
               ten_danh_muc: item.danh_muc?.ten_danh_muc || item.ten_danh_muc || "",
             })
           );
@@ -181,7 +181,7 @@ class VoucherRepository {
               ...v,
               ma_hs: targetMaHs,
               ten_dn: v.ten_dn || partnerTenDn,
-              gia_ban: v.gia_goc - (v.gia_tri_giam || 0),
+              gia_ban: v.gia_tri_giam,
               ten_danh_muc: v.danh_muc?.ten_danh_muc || "",
             })
         ),
@@ -248,7 +248,7 @@ class VoucherRepository {
         ma_hs: targetHs || data.ma_hs || "",
         ly_do_tu_choi: lyDoTuChoi || data.ly_do_tu_choi || "",
         ten_dn: resolvedTenDn,
-        gia_ban: data.gia_goc - (data.gia_tri_giam || 0),
+        gia_ban: data.gia_tri_giam,
         ten_danh_muc: data.danh_muc?.ten_danh_muc || "",
         ma_chi_nhanh: branchIds,
       });
@@ -260,8 +260,7 @@ class VoucherRepository {
 
   async create(payload) {
     const giaGoc = Number(payload.gia_goc) || 0;
-    const giaBan = Number(payload.gia_ban) || giaGoc;
-    const giaTriGiam = Math.max(0, giaGoc - giaBan);
+    const giaBan = Number(payload.gia_ban ?? payload.gia_tri_giam) || giaGoc;
 
     let maHs = payload.ma_hs || payload.id_partner || payload.partnerId || null;
     let tenDn = payload.ten_dn || "";
@@ -282,7 +281,7 @@ class VoucherRepository {
       ten_voucher: payload.ten_voucher,
       mo_ta: payload.mo_ta || "",
       gia_goc: giaGoc,
-      gia_tri_giam: giaTriGiam,
+      gia_tri_giam: giaBan,
       so_luong_phat_hanh: Number(payload.so_luong_phat_hanh) || 100,
       so_luong_da_ban: Number(payload.so_luong_da_ban) || 0,
       tg_bat_dau_ban: payload.tg_bat_dau_ban || new Date().toISOString(),
@@ -356,10 +355,10 @@ class VoucherRepository {
     const memoryVoucher = VOUCHERS_MEMORY_STORE.get(id);
     if (memoryVoucher) {
       Object.assign(memoryVoucher, payload);
-      if (payload.gia_goc !== undefined || payload.gia_ban !== undefined) {
-        const giaGoc = Number(payload.gia_goc ?? memoryVoucher.gia_goc);
-        const giaBan = Number(payload.gia_ban ?? memoryVoucher.gia_ban);
-        memoryVoucher.gia_tri_giam = Math.max(0, giaGoc - giaBan);
+      if (payload.gia_goc !== undefined || payload.gia_ban !== undefined || payload.gia_tri_giam !== undefined) {
+        const giaBan = Number(payload.gia_ban ?? payload.gia_tri_giam ?? memoryVoucher.gia_tri_giam);
+        memoryVoucher.gia_tri_giam = giaBan;
+        memoryVoucher.gia_ban = giaBan;
       }
       VOUCHERS_MEMORY_STORE.set(id, memoryVoucher);
     }
@@ -386,6 +385,10 @@ class VoucherRepository {
       if (allowedColumns.includes(key)) {
         updatePayload[key] = payload[key];
       }
+    }
+
+    if (payload.gia_ban !== undefined) {
+      updatePayload.gia_tri_giam = Number(payload.gia_ban);
     }
 
     if (payload.gia_goc !== undefined) {

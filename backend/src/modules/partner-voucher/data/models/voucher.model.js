@@ -47,7 +47,7 @@ class VoucherModel {
     this.ma_danh_muc = ma_danh_muc;
 
     // Joined & calculated attributes
-    this.gia_ban = gia_ban !== null ? Number(gia_ban) : Number(gia_goc) - Number(gia_tri_giam);
+    this.gia_ban = gia_ban !== null ? Number(gia_ban) : Number(gia_tri_giam);
     this.ten_danh_muc = ten_danh_muc;
     this.ma_hs = ma_hs;
     this.ten_dn = ten_dn;

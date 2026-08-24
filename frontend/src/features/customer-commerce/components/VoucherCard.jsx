@@ -6,7 +6,10 @@ export default function VoucherCard({ voucher: v, onClick }) {
   // tính toán tỉ lệ giảm giá và số lượng còn lại
   const discountPct = Math.round((1 - v.salePrice / v.originalPrice) * 100);
   const remaining = v.totalQty - v.soldQty;
-  const voucherName = typeof v.name === "object" && v.name !== null ? v.name.name || v.name.ten_voucher : (v.name || v.ten_voucher);
+  const voucherName =
+    typeof v.name === "object" && v.name !== null
+      ? v.name.name || v.name.ten_voucher
+      : v.name || v.ten_voucher;
 
   return (
     <button
@@ -29,10 +32,14 @@ export default function VoucherCard({ voucher: v, onClick }) {
       <div className="p-4 flex flex-col flex-1 justify-between">
         <div>
           <p className="text-xs text-sky-600 font-semibold uppercase tracking-wider mb-1">
-            {typeof v.partner === 'object' && v.partner !== null ? (v.partner.ten_dn || v.partner.name || t("Đối tác")) : (v.partner || t("Đối tác"))}
+            {typeof v.partner === "object" && v.partner !== null
+              ? v.partner.ten_dn || v.partner.name || t("Đối tác")
+              : v.partner || t("Đối tác")}
           </p>
           <p className="text-base font-bold text-snow-900 line-clamp-2 mb-3 group-hover:text-sky-700 transition-colors">
-            {typeof v.name === 'object' && v.name !== null ? v.name.name : v.name}
+            {typeof v.name === "object" && v.name !== null
+              ? v.name.name
+              : v.name}
           </p>
         </div>
 
@@ -52,7 +59,9 @@ export default function VoucherCard({ voucher: v, onClick }) {
                 {t("Còn lại")} {remaining}
               </span>
             ) : (
-              <span>{t("Còn lại")} {remaining}</span>
+              <span>
+                {t("Còn lại")} {remaining}
+              </span>
             )}
             <div className="flex items-center gap-1">
               <Clock size={12} />

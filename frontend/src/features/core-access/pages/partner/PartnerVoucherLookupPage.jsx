@@ -625,17 +625,15 @@ export default function PartnerVoucherLookupPage() {
                             </span>
                           </div>
                           <div className="p-2 bg-emerald-50/70 rounded-lg border border-emerald-200/80 shadow-2xs">
-                            <span className="text-[11px] text-emerald-700 font-bold block">{t("Mức giảm giá:")}</span>
+                            <span className="text-[11px] text-emerald-700 font-bold block">{t("Giá bán:")}</span>
                             <span className="text-base font-extrabold text-emerald-600">
-                              -{Number(voucherData.discountValue).toLocaleString('vi-VN')} đ
+                              {Number(voucherData.salePrice).toLocaleString('vi-VN')} đ
                             </span>
                           </div>
                           <div className="p-2 bg-indigo-50/70 rounded-lg border border-indigo-200/80 shadow-2xs">
                             <span className="text-[11px] text-indigo-900 font-bold block">{t("Khách cần trả:")}</span>
                             <span className="text-base font-extrabold text-indigo-700">
-                              {Number(
-                                Math.max(0, voucherData.originalPrice - voucherData.discountValue)
-                              ).toLocaleString('vi-VN')}{' '}
+                              {Number(voucherData.salePrice).toLocaleString('vi-VN')}{' '}
                               đ
                             </span>
                           </div>
@@ -846,9 +844,9 @@ export default function PartnerVoucherLookupPage() {
                 <span className="font-bold text-slate-900 text-right line-clamp-1">{voucherData.voucherName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">{t("Mức giảm:")}</span>
+                <span className="text-slate-500">{t("Giá bán:")}</span>
                 <span className="font-bold text-emerald-700">
-                  -{Number(voucherData.discountValue).toLocaleString('vi-VN')} đ
+                  {Number(voucherData.salePrice).toLocaleString('vi-VN')} đ
                 </span>
               </div>
               <div className="flex justify-between border-t border-slate-200/80 pt-2">

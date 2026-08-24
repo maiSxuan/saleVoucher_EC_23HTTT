@@ -9,7 +9,7 @@ const translationService = require("../../../../common/services/translation.serv
 function mapCartItem(row) {
   const v = row.voucher;
   const originalPrice = Number(v.gia_goc);
-  const salePrice = originalPrice - (Number(v.gia_tri_giam) || 0);
+  const salePrice = Number(v.gia_tri_giam) || 0;
   const partner = v.voucher_cn?.[0]?.chinhanh?.hosodn?.ten_dn || "Đối tác";
   const remaining = v.so_luong_phat_hanh - v.so_luong_da_ban;
   const availability = computeAvailability(v);

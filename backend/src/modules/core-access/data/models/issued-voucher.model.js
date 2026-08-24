@@ -26,7 +26,7 @@ class IssuedVoucherModel {
     voucherName = '',
     description = '',
     originalPrice = 0,
-    discountValue = 0,
+    salePrice = 0,
     conditions = '',
     validFrom = null,
     validUntil = null,
@@ -57,7 +57,7 @@ class IssuedVoucherModel {
     this.voucherName = voucherName;
     this.description = description;
     this.originalPrice = Number(originalPrice) || 0;
-    this.discountValue = Number(discountValue) || 0;
+    this.salePrice = Number(salePrice) || 0;
     this.conditions = conditions;
     this.validFrom = validFrom;
     this.validUntil = validUntil;
@@ -75,12 +75,12 @@ class IssuedVoucherModel {
   }
 
   /**
-   * Tính toán thông tin giá sau khi giảm
+  * Tính toán thông tin giá hiển thị
    */
   get priceCalculation() {
     const original = this.originalPrice;
-    const discount = Math.min(this.discountValue, original);
-    const finalPrice = Math.max(0, original - discount);
+    const finalPrice = this.salePrice;
+    const discount = Math.max(0, original - finalPrice);
 
     return {
       originalPrice: original,
@@ -161,7 +161,7 @@ class IssuedVoucherModel {
       voucherName: voucher.ten_voucher || '',
       description: voucher.mo_ta || '',
       originalPrice: voucher.gia_goc || 0,
-      discountValue: voucher.gia_tri_giam || 0,
+      salePrice: voucher.gia_tri_giam || 0,
       conditions: voucher.dieu_kien_ap_dung || 'Áp dụng tại các chi nhánh được chỉ định.',
       validFrom: voucher.tg_bat_dau_ban,
       validUntil: voucher.tg_ket_thuc_ban,

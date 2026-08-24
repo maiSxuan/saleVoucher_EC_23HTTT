@@ -32,11 +32,8 @@ export default function VoucherSearchPage() {
 
   const {
     searchValue,
-    setSearchValue,
     activeCategory,
-    setActiveCategory,
     activePartner = "",
-    categories = [],
   } = useOutletContext();
 
   useEffect(() => {
@@ -50,7 +47,9 @@ export default function VoucherSearchPage() {
         .catch(
           () =>
             !ignore &&
-            setErrorMsg("Không thể tải danh sách voucher. Vui lòng thử lại sau."),
+            setErrorMsg(
+              "Không thể tải danh sách voucher. Vui lòng thử lại sau.",
+            ),
         )
         .finally(() => !ignore && setLoading(false));
     };
@@ -120,8 +119,7 @@ export default function VoucherSearchPage() {
 
         const matchCat =
           activeCategory === "Tất cả" || v.category === activeCategory;
-        const matchPartner =
-          !activePartner || partnerStr === activePartner;
+        const matchPartner = !activePartner || partnerStr === activePartner;
         let matchPrice = true;
         if (priceRange === "under200") matchPrice = v.salePrice < 200000;
         else if (priceRange === "200-500")
@@ -354,7 +352,7 @@ export default function VoucherSearchPage() {
                           : t("Hôm nay")}
                       </span>
                       <span className="text-sky-700 font-semibold group-hover:underline">
-                         {t("Đọc tiếp →")}
+                        {t("Đọc tiếp →")}
                       </span>
                     </div>
                   </div>

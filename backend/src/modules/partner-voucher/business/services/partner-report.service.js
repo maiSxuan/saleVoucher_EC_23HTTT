@@ -100,7 +100,7 @@ class PartnerReportService {
 
     const breakdown = filtered.map((v) => {
       const issued = Number(v.so_luong_phat_hanh) || 0;
-      const giaBan = Number(v.gia_ban) || (Number(v.gia_goc) - Number(v.gia_tri_giam || 0)) || 0;
+      const giaBan = Number(v.gia_ban ?? v.gia_tri_giam) || 0;
 
       // Filter voucher_mua items for this specific voucher within date range [start, end]
       const vMuaItems = voucherMuaList.filter((m) => m.ma_voucher === v.ma_voucher);
@@ -166,7 +166,7 @@ class PartnerReportService {
     if (voucherMuaList.length > 0) {
       const voucherPriceMap = new Map();
       filtered.forEach((v) => {
-        const price = Number(v.gia_ban) || (Number(v.gia_goc) - Number(v.gia_tri_giam || 0)) || 0;
+        const price = Number(v.gia_ban ?? v.gia_tri_giam) || 0;
         voucherPriceMap.set(v.ma_voucher, price);
       });
 

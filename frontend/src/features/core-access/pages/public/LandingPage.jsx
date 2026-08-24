@@ -117,7 +117,7 @@ export default function LandingPage() {
       const ma_danh_muc = v.ma_danh_muc || v.categoryId || v.danh_muc_id || v.danh_muc?.ma_danh_muc || categoryName;
 
       const giaGoc = Number(v.gia_goc ?? v.originalPrice ?? 0);
-      const giaBan = Number(v.gia_ban ?? v.salePrice ?? (giaGoc > 0 && v.gia_tri_giam ? giaGoc - Number(v.gia_tri_giam) : giaGoc));
+      const giaBan = Number(v.gia_ban ?? v.salePrice ?? v.gia_tri_giam ?? giaGoc);
 
       const hinhAnh = v.image || v.hinh_anh || v.hinh_anh_url || "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=600&auto=format&fit=crop";
       const ngayTao = v.ngay_tao || v.tg_bat_dau_ban || v.startSaleDate || v.createdAt || "";

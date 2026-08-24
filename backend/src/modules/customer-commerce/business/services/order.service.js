@@ -37,7 +37,7 @@ class OrderService {
     const items = selected.map((r) => {
       const v = r.voucher;
       const originalPrice = Number(v.gia_goc);
-      const salePrice = originalPrice - (Number(v.gia_tri_giam) || 0);
+      const salePrice = Number(v.gia_tri_giam) || 0;
       const remaining = v.so_luong_phat_hanh - v.so_luong_da_ban;
       return {
         voucherId: v.ma_voucher,
