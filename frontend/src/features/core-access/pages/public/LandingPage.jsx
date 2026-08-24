@@ -16,6 +16,7 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { fetchSellingVouchers, fetchCategories } from "../../../../shared/api/catalogApi";
+import { contentApi } from "../../../content-feedback/api/contentApi";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "../../../../shared/components/LanguageSwitcher";
 
@@ -51,10 +52,21 @@ export default function LandingPage() {
 
   const [vouchers, setVouchers] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [banners, setBanners] = useState([]);
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const deferredSearchQuery = useDeferredValue(searchQuery);
+
+  // Auto-slide banners every 10 seconds, resets timer on manual index change
+  useEffect(() => {
+    if (banners.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [banners.length, currentBannerIndex]);
 
   useEffect(() => {
     let ignore = false;
@@ -64,14 +76,23 @@ export default function LandingPage() {
       Promise.allSettled([
         fetchSellingVouchers(),
         fetchCategories(),
+        contentApi.list('banner'),
       ])
-        .then(([vRes, cRes]) => {
+        .then(([vRes, cRes, bRes]) => {
           if (ignore) return;
           if (vRes.status === "fulfilled" && Array.isArray(vRes.value)) {
             setVouchers(vRes.value);
           }
           if (cRes.status === "fulfilled" && Array.isArray(cRes.value)) {
             setCategories(cRes.value);
+          }
+          if (bRes.status === "fulfilled") {
+            const list = Array.isArray(bRes.value) ? bRes.value : (bRes.value?.data || []);
+            const activeBanners = list.filter(b => {
+              const st = b.status || b.trang_thai;
+              return st === 'visible' || st === 'Dang hien thi';
+            });
+            setBanners(activeBanners);
           }
         })
         .finally(() => {
@@ -378,7 +399,7 @@ export default function LandingPage() {
                 <p className="text-xs text-sky-100 mt-0.5">{t("Voucher Chính Hãng")}</p>
               </div>
               <div>
-                <p className="text-2xl font-black text-brand-accent-soft">500+</p>
+                <p className="text-2xl font-black text-brand-accent-soft">30+</p>
                 <p className="text-xs text-sky-100 mt-0.5">{t("Đối Tác Uy Tín")}</p>
               </div>
               <div>
@@ -388,28 +409,110 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Hero Visual Card Carousel Mockup */}
+          {/* Hero Visual Card Carousel / Dynamic Banners */}
           <div className="lg:col-span-5 relative flex justify-center">
-            <div className="w-full max-w-md bg-white/90 border border-white rounded-3xl p-6 shadow-card backdrop-blur-xl relative space-y-5 text-snow-900">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-red-400" />
-                  <span className="w-3 h-3 rounded-full bg-yellow-300" />
-                  <span className="w-3 h-3 rounded-full bg-emerald-400" />
+            {banners.length > 0 ? (
+              <div className="w-full max-w-md bg-white/95 border border-white rounded-3xl p-6 shadow-card backdrop-blur-xl relative space-y-4 text-snow-900 overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-red-400" />
+                    <span className="w-3 h-3 rounded-full bg-yellow-300" />
+                    <span className="w-3 h-3 rounded-full bg-emerald-400" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono font-bold text-brand-accent-foreground bg-brand-accent-soft border border-brand-accent-border px-2.5 py-1 rounded-full">
+                      📢 BANNER ({currentBannerIndex + 1}/{banners.length})
+                    </span>
+                  </div>
                 </div>
-                <span className="text-xs font-mono font-bold text-brand-accent-foreground bg-brand-accent-soft border border-brand-accent-border px-2.5 py-1 rounded-full">
-                  ⚡ HOT DEAL AT SNOW VOUCHER!
-                </span>
-              </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs text-snow-600">
-                  <span className="flex items-center gap-1.5 text-semantic-success font-semibold">
-                    <CheckCircle2 size={14} /> {t("Mã QR Sử Dụng Trực Tiếp")}
+                <div className="space-y-3 relative group">
+                  {(() => {
+                    const banner = banners[currentBannerIndex] || banners[0];
+                    const hasImage = Boolean(banner.imageUrl || banner.hinh_anh_url);
+                    return (
+                      <div className="space-y-3 relative">
+                        {hasImage && (
+                          <div className="aspect-video w-full rounded-2xl overflow-hidden border border-slate-200 shadow-sm relative bg-slate-100">
+                            <img
+                              src={cleanImageUrl(banner.imageUrl || banner.hinh_anh_url)}
+                              alt={banner.title || banner.tieu_de}
+                              className="w-full h-full object-cover transition-opacity duration-500"
+                              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                            />
+                          </div>
+                        )}
+
+                        {/* Navigation arrows positioned over container if multiple banners */}
+                        {banners.length > 1 && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => setCurrentBannerIndex((prev) => (prev === 0 ? banners.length - 1 : prev - 1))}
+                              className="absolute left-1 top-1/3 -translate-y-1/2 w-8 h-8 rounded-full bg-slate-900/60 hover:bg-slate-900/85 text-white flex items-center justify-center transition-all cursor-pointer shadow-md z-10"
+                              title="Banner trước"
+                            >
+                              <ChevronLeft size={18} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setCurrentBannerIndex((prev) => (prev + 1) % banners.length)}
+                              className="absolute right-1 top-1/3 -translate-y-1/2 w-8 h-8 rounded-full bg-slate-900/60 hover:bg-slate-900/85 text-white flex items-center justify-center transition-all cursor-pointer shadow-md z-10"
+                              title="Banner tiếp theo"
+                            >
+                              <ChevronRight size={18} />
+                            </button>
+                          </>
+                        )}
+
+                        <div className="cursor-default">
+                          <h3 className="font-extrabold text-base text-slate-900">{banner.title || banner.tieu_de}</h3>
+                          {(banner.content || banner.noi_dung) && (
+                            <div className="text-xs text-slate-600 mt-1 line-clamp-3" dangerouslySetInnerHTML={{ __html: banner.content || banner.noi_dung }} />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Pagination Dots */}
+                  {banners.length > 1 && (
+                    <div className="flex items-center justify-center gap-1.5 pt-2">
+                      {banners.map((_, i) => (
+                        <button
+                          type="button"
+                          key={i}
+                          onClick={() => setCurrentBannerIndex(i)}
+                          className={`h-2 rounded-full transition-all cursor-pointer ${currentBannerIndex === i ? 'w-6 bg-sky-600' : 'w-2 bg-slate-300 hover:bg-slate-400'}`}
+                          title={`Chuyển đến banner ${i + 1}`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="w-full max-w-md bg-white/90 border border-white rounded-3xl p-6 shadow-card backdrop-blur-xl relative space-y-5 text-snow-900">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-red-400" />
+                    <span className="w-3 h-3 rounded-full bg-yellow-300" />
+                    <span className="w-3 h-3 rounded-full bg-emerald-400" />
+                  </div>
+                  <span className="text-xs font-mono font-bold text-brand-accent-foreground bg-brand-accent-soft border border-brand-accent-border px-2.5 py-1 rounded-full">
+                    ⚡ HOT DEAL AT SNOW VOUCHER!
                   </span>
                 </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs text-snow-600">
+                    <span className="flex items-center gap-1.5 text-semantic-success font-semibold">
+                      <CheckCircle2 size={14} /> {t("Mã QR Sử Dụng Trực Tiếp")}
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </section>

@@ -6,43 +6,39 @@ import {
   ChevronRight,
   FileText,
   Home,
-  LogIn,
   ShieldCheck,
   User,
 } from "lucide-react";
-import { ADMIN_PORTAL_ROLES } from "../../../../shared/constants/admin-roles";
+import { useAuth } from "../../../../app/auth-context";
+import { ADMIN_PORTAL_ROLES, getAdminRole } from "../../../../shared/constants/admin-roles";
 import { contentApi } from "../../../content-feedback/api/contentApi";
 
-function getAccountAction() {
-  const token = localStorage.getItem("accessToken") || localStorage.getItem("ec_auth_token");
-  if (!token) return { to: "/login", label: "Đăng nhập", Icon: LogIn };
+function getAccountPath(user) {
+  const role = getAdminRole(user) || "";
+  if (ADMIN_PORTAL_ROLES.includes(role)) return "/admin";
 
-  let user = null;
-  try {
-    user = JSON.parse(localStorage.getItem("user") || localStorage.getItem("ec_auth_user") || "null");
-  } catch {
-    user = null;
-  }
+  const partnerRoles = [
+    "PARTNER_OWNER",
+    "PARTNER_MANAGER",
+    "PARTNER_STAFF",
+    "Nguoi dai dien",
+    "Nhan vien quan ly voucher",
+    "Nhan vien ban hang",
+  ];
 
-  const role = user?.role || localStorage.getItem("role") || "";
-  const to = ADMIN_PORTAL_ROLES.includes(role)
-    ? "/admin"
-    : role.includes("PARTNER") || role.includes("DOI_TAC")
-      ? "/partner"
-      : "/customer";
-
-  return { to, label: "Tài khoản", Icon: User };
+  return partnerRoles.includes(role) ? "/partner" : "/customer";
 }
 
 export default function PolicyPage() {
   const { t } = useTranslation();
   const { id } = useParams();
+  const { user, isAuthenticated } = useAuth();
 
   const [policies, setPolicies] = useState([]);
   const [currentPolicy, setCurrentPolicy] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const accountAction = getAccountAction();
+  const accountPath = getAccountPath(user);
 
   useEffect(() => {
     setLoading(true);
@@ -97,9 +93,11 @@ export default function PolicyPage() {
             <Link to="/" className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">
               <Home size={14} aria-hidden="true" /> <span className="hidden sm:inline">{t("Trang chủ")}</span>
             </Link>
-            <Link to={accountAction.to} className="inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-sky-700 shadow-xs">
-              <accountAction.Icon size={14} aria-hidden="true" /> {t(accountAction.label)}
-            </Link>
+            {isAuthenticated ? (
+              <Link to={accountPath} className="inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-sky-700 shadow-xs">
+                <User size={14} aria-hidden="true" /> {t("Tài khoản")}
+              </Link>
+            ) : null}
           </div>
         </div>
       </header>
@@ -232,19 +230,21 @@ export default function PolicyPage() {
               </div>
             )}
 
-            <div className="rounded-3xl bg-gradient-to-r from-cyan-700 to-blue-700 p-6 text-white shadow-lg sm:p-8">
-              <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="text-xl font-black">{t("Cần hỗ trợ về giao dịch?")}</h2>
-                  <p className="mt-2 max-w-xl text-sm leading-6 text-cyan-50">
-                    {t("Hãy đăng nhập để theo dõi đơn hàng, gửi yêu cầu hủy hoặc khiếu nại kèm thông tin giao dịch chính xác.")}
-                  </p>
+            {isAuthenticated ? (
+              <div className="rounded-3xl bg-gradient-to-r from-cyan-700 to-blue-700 p-6 text-white shadow-lg sm:p-8">
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-xl font-black">{t("Cần hỗ trợ về giao dịch?")}</h2>
+                    <p className="mt-2 max-w-xl text-sm leading-6 text-cyan-50">
+                      {t("Truy cập tài khoản để theo dõi đơn hàng, gửi yêu cầu hủy hoặc khiếu nại kèm thông tin giao dịch chính xác.")}
+                    </p>
+                  </div>
+                  <Link to={accountPath} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-cyan-800 shadow-sm hover:bg-cyan-50">
+                    <User size={16} aria-hidden="true" /> {t("Tài khoản")}
+                  </Link>
                 </div>
-                <Link to={accountAction.to} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-cyan-800 shadow-sm hover:bg-cyan-50">
-                  <accountAction.Icon size={16} aria-hidden="true" /> {t(accountAction.label)}
-                </Link>
               </div>
-            </div>
+            ) : null}
           </div>
         </div>
       </main>
