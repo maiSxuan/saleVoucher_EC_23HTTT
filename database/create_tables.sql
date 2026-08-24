@@ -421,7 +421,6 @@ create table NOIDUNG (
         loai in ('banner', 'bai_viet', 'popup', 'chinh_sach')
     ),
     tieu_de text not null,
-    vai_tro text,
     trang_thai text not null default 'Dang hien thi' check (
         trang_thai in ('Dang hien thi', 'Tam an', 'Ngung hien thi')
     ),
@@ -565,9 +564,12 @@ create index if not exists idx_perf_thanhtoan_order_status_date on public.THANHT
 create index if not exists idx_perf_thanhtoan_status_date on public.THANHTOAN (trang_thai, thoi_gian_tt desc);
 create index if not exists idx_perf_hoantien_payment_date on public.HOANTIEN (ma_thanh_toan, ngay_xu_ly desc);
 create index if not exists idx_perf_voucher_mua_order_status_date on public.VOUCHER_MUA (ma_dh, trang_thai, thoi_gian_sinh_ma desc);
+CREATE INDEX if not exists idx_voucher_mua_ma_voucher ON voucher_mua (ma_voucher);
 create index if not exists idx_perf_voucher_mua_status_date on public.VOUCHER_MUA (trang_thai, thoi_gian_sinh_ma desc);
 create index if not exists idx_perf_voucher_mua_used_branch_date on public.VOUCHER_MUA (ma_chi_nhanh_su_dung, ngay_su_dung desc)
 where trang_thai = 'Da su dung';
+CREATE if not exists INDEX idx_voucher_mua_ma_dh ON voucher_mua (ma_dh);
+CREATE UNIQUE INDEX if not exists idx_danhgia_ma_voucher_mua ON danhgia (ma_voucher_mua);
 create index if not exists idx_perf_lssinhma_voucher_date on public.LSSINHMA (ma_voucher_mua, tg_thuc_hien desc);
 create index if not exists idx_perf_khieunai_status_date on public.KHIEUNAI (trang_thai, ngay_khieu_nai desc);
 create index if not exists idx_perf_khieunai_voucher_date on public.KHIEUNAI (ma_voucher_mua, ngay_khieu_nai desc);
