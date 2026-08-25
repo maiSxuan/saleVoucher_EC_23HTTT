@@ -14,7 +14,9 @@ const { errorMiddleware } = require("./common/middleware/error.middleware");
 const config = loadEnvironment();
 
 const app = express();
-app.use(cors(corsOptions));
+if (config.nodeEnv !== "production") {
+  app.use(cors(corsOptions));
+}
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));

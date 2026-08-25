@@ -22,26 +22,10 @@ function getActiveTransporter(type = "register") {
   const isForgotPassword = type === "forgot_password";
   const cfg = isForgotPassword ? loadAuthGmail() : loadGmail();
 
-  const host =
-    cfg.host ||
-    process.env.SMTP_HOST ||
-    process.env.AUTH_SMTP_HOST ||
-    "smtp.gmail.com";
-  const port = Number(
-    cfg.port || process.env.SMTP_PORT || process.env.AUTH_SMTP_PORT || 587,
-  );
-  const user = (
-    cfg.user ||
-    process.env.SMTP_USER ||
-    process.env.AUTH_SMTP_USER ||
-    ""
-  ).trim();
-  const rawPass = (
-    cfg.pass ||
-    process.env.SMTP_PASS ||
-    process.env.AUTH_SMTP_PASS ||
-    ""
-  ).trim();
+  const host = cfg.host || process.env.SMTP_HOST || process.env.AUTH_SMTP_HOST || "smtp.gmail.com";
+  const port = Number(cfg.port || process.env.SMTP_PORT || process.env.AUTH_SMTP_PORT || 587);
+  const user = (cfg.user || process.env.SMTP_USER || process.env.AUTH_SMTP_USER || "").trim();
+  const rawPass = (cfg.pass || process.env.SMTP_PASS || process.env.AUTH_SMTP_PASS || "").trim();
   // Google displays its 16-character App Password in four groups. Nodemailer
   // must authenticate with the compact value, without the visual separators.
   const pass = /(^|\.)gmail\.com$/i.test(host)
@@ -56,10 +40,6 @@ function getActiveTransporter(type = "register") {
     host,
     port,
     secure: port === 465,
-    family: 4,
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
     auth: { user, pass },
   });
 
@@ -102,54 +82,28 @@ async function sendMailWithAuthFallback(primaryMailer, mailOptions) {
  */
 async function validateEmailDomain(email) {
   if (!email || typeof email !== "string" || !email.includes("@")) {
-    throw new AppError(
-      "Địa chỉ email không đúng định dạng.",
-      400,
-      "INVALID_EMAIL_FORMAT",
-    );
+    throw new AppError("Địa chỉ email không đúng định dạng.", 400, "INVALID_EMAIL_FORMAT");
   }
 
   const parts = email.trim().split("@");
   if (parts.length !== 2) {
-    throw new AppError(
-      "Địa chỉ email không hợp lệ.",
-      400,
-      "INVALID_EMAIL_FORMAT",
-    );
+    throw new AppError("Địa chỉ email không hợp lệ.", 400, "INVALID_EMAIL_FORMAT");
   }
 
   const [localPart, domain] = parts;
   const cleanDomain = domain.toLowerCase().trim();
 
   if (!localPart || !cleanDomain) {
-    throw new AppError(
-      "Địa chỉ email không được để trống phần tên hoặc tên miền.",
-      400,
-      "INVALID_EMAIL_FORMAT",
-    );
+    throw new AppError("Địa chỉ email không được để trống phần tên hoặc tên miền.", 400, "INVALID_EMAIL_FORMAT");
   }
 
   // Chặn đầu các tên miền nội bộ / giả lập không thể nhận thư qua SMTP thực tế
-  const blockedSuffixes = [
-    ".local",
-    ".test",
-    ".example",
-    ".invalid",
-    "localhost",
-    ".lan",
-    ".internal",
-    ".dummy",
-  ];
-  if (
-    blockedSuffixes.some(
-      (suffix) =>
-        cleanDomain.endsWith(suffix) || cleanDomain === suffix.replace(".", ""),
-    )
-  ) {
+  const blockedSuffixes = [".local", ".test", ".example", ".invalid", "localhost", ".lan", ".internal", ".dummy"];
+  if (blockedSuffixes.some((suffix) => cleanDomain.endsWith(suffix) || cleanDomain === suffix.replace(".", ""))) {
     throw new AppError(
       `Địa chỉ email với tên miền "@${cleanDomain}" là email nội bộ/giả lập, không có máy chủ nhận thư (SMTP) trên Internet. Vui lòng sử dụng địa chỉ email thực tế (ví dụ: @gmail.com, @yahoo.com...).`,
       400,
-      "DUMMY_DOMAIN_NOT_ALLOWED",
+      "DUMMY_DOMAIN_NOT_ALLOWED"
     );
   }
 
@@ -201,11 +155,7 @@ async function sendOtpEmail(toEmail, otp, type = "register") {
 
   if (!mailerObj || !mailerObj.user || !mailerObj.pass) {
     console.error(`[Mailer] Chưa cấu hình SMTP USER/PASS cho tác vụ ${type}`);
-    throw new AppError(
-      "Chưa cấu hình tài khoản máy chủ SMTP gửi mail trong hệ thống.",
-      500,
-      "SMTP_NOT_CONFIGURED",
-    );
+    throw new AppError("Chưa cấu hình tài khoản máy chủ SMTP gửi mail trong hệ thống.", 500, "SMTP_NOT_CONFIGURED");
   }
 
   try {
@@ -218,13 +168,11 @@ async function sendOtpEmail(toEmail, otp, type = "register") {
     console.info(`[Mailer] Đã gửi mã OTP thành công đến email: ${toEmail}`);
     return result;
   } catch (err) {
-    console.error(
-      `[Mailer] Gửi mail qua SMTP thất bại (${err.message}) đến ${toEmail}`,
-    );
+    console.error(`[Mailer] Gửi mail qua SMTP thất bại (${err.message}) đến ${toEmail}`);
     throw new AppError(
       `Không thể gửi email đến "${toEmail}" qua máy chủ SMTP (${err.message}). Vui lòng kiểm tra lại địa chỉ email hoặc tài khoản gửi.`,
       400,
-      "SMTP_SEND_FAILED",
+      "SMTP_SEND_FAILED"
     );
   }
 }
@@ -233,17 +181,14 @@ async function sendOtpEmail(toEmail, otp, type = "register") {
  * Send a transactional notification (voucher delivery, complaint result, ...).
  * Callers decide whether a delivery failure blocks their business workflow.
  */
-async function sendNotificationEmail(
-  toEmail,
-  {
-    subject,
-    title,
-    message,
-    voucherCode,
-    voucherDetails = null,
-    qrValue = null,
-  } = {},
-) {
+async function sendNotificationEmail(toEmail, {
+  subject,
+  title,
+  message,
+  voucherCode,
+  voucherDetails = null,
+  qrValue = null,
+} = {}) {
   await validateEmailDomain(toEmail);
 
   const mailerObj = getActiveTransporter("register");
@@ -251,29 +196,22 @@ async function sendNotificationEmail(
     throw new AppError(
       "Chưa cấu hình tài khoản máy chủ SMTP gửi mail trong hệ thống.",
       500,
-      "SMTP_NOT_CONFIGURED",
+      "SMTP_NOT_CONFIGURED"
     );
   }
 
   const safeTitle = escapeHtml(title || "Thông báo từ EC Voucher");
-  const safeMessage = escapeHtml(
-    message || "Thông tin tài khoản của bạn vừa được cập nhật.",
-  );
+  const safeMessage = escapeHtml(message || "Thông tin tài khoản của bạn vừa được cập nhật.");
   const safeVoucherCode = escapeHtml(voucherCode);
   const formatDate = (value) => {
     if (!value) return "Không giới hạn";
     const date = new Date(value);
-    return Number.isNaN(date.getTime())
-      ? escapeHtml(value)
-      : date.toLocaleString("vi-VN");
+    return Number.isNaN(date.getTime()) ? escapeHtml(value) : date.toLocaleString("vi-VN");
   };
   const formatCurrency = (value) => {
-    if (value === null || value === undefined || value === "")
-      return "Chưa cập nhật";
+    if (value === null || value === undefined || value === "") return "Chưa cập nhật";
     const amount = Number(value);
-    return Number.isFinite(amount)
-      ? `${amount.toLocaleString("vi-VN")} đ`
-      : "Chưa cập nhật";
+    return Number.isFinite(amount) ? `${amount.toLocaleString("vi-VN")} đ` : "Chưa cập nhật";
   };
   const codeBlock = voucherCode
     ? `<div style="margin:20px 0;padding:16px;text-align:center;border:1px solid #bfdbfe;border-radius:8px;background:#eff6ff;font-size:24px;font-weight:700;letter-spacing:3px;color:#1d4ed8">${safeVoucherCode}</div>`
@@ -330,7 +268,7 @@ async function sendNotificationEmail(
       throw new AppError(
         `Không thể tạo mã QR cho voucher (${error.message}).`,
         500,
-        "QR_GENERATION_FAILED",
+        "QR_GENERATION_FAILED"
       );
     }
   }
@@ -348,13 +286,15 @@ async function sendNotificationEmail(
         ${qrBlock}
         <p style="font-size:12px;color:#9ca3af">Đây là email tự động từ hệ thống EC Voucher.</p>
       </div>`,
-      attachments: qrAttachment ? [qrAttachment, qrDownloadAttachment] : [],
+      attachments: qrAttachment
+        ? [qrAttachment, qrDownloadAttachment]
+        : [],
     });
   } catch (err) {
     throw new AppError(
       `Không thể gửi thông báo đến "${toEmail}" (${err.message}).`,
       400,
-      "SMTP_SEND_FAILED",
+      "SMTP_SEND_FAILED"
     );
   }
 }
