@@ -280,7 +280,6 @@ values -- Quản trị hệ thống
     );
 -- =====================================================================
 -- 3. HỒ SƠ DOANH NGHIỆP
--- Trigger trg_hosodn_nvql_voucher_vai_tro sẽ kiểm tra đúng vai trò NVQL voucher.
 -- =====================================================================
 insert into HOSODN (
         ma_hs,
@@ -290,8 +289,7 @@ insert into HOSODN (
         giay_phep_kinh_doanh,
         logo,
         ngay_tao,
-        trang_thai,
-        id_nvql_voucher
+        trang_thai
     )
 values (
         '20000000-0000-0000-0000-000000000001',
@@ -301,8 +299,7 @@ values (
         'https://example.local/licenses/am-thuc-sai-gon.pdf',
         'https://upload.wikimedia.org/wikipedia/commons/3/38/Honda_logo.svg',
         now() - interval '280 days',
-        'Dang hoat dong',
-        '00000000-0000-0000-0000-000000000012'
+        'Dang hoat dong'
     ),
     (
         '20000000-0000-0000-0000-000000000002',
@@ -312,8 +309,7 @@ values (
         'https://example.local/licenses/spa-an-nhien.pdf',
         'https://upload.wikimedia.org/wikipedia/commons/4/44/Toyota_Car_Logo.png',
         now() - interval '15 days',
-        'Cho duyet',
-        '00000000-0000-0000-0000-000000000022'
+        'Cho duyet'
     ),
     (
         '20000000-0000-0000-0000-000000000003',
@@ -323,8 +319,7 @@ values (
         'https://example.local/licenses/giao-duc-tuong-lai.pdf',
         'https://upload.wikimedia.org/wikipedia/commons/9/90/Mercedes-Logo.svg',
         now() - interval '35 days',
-        'Tu choi',
-        '00000000-0000-0000-0000-000000000032'
+        'Tu choi'
     ),
     (
         '20000000-0000-0000-0000-000000000004',
@@ -334,8 +329,7 @@ values (
         'https://example.local/licenses/du-lich-thanh-pho.pdf',
         'https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg',
         now() - interval '230 days',
-        'Tam khoa',
-        '00000000-0000-0000-0000-000000000042'
+        'Tam khoa'
     );
 -- Gắn người đại diện và nhân viên quản lý voucher vào đúng hồ sơ doanh nghiệp
 -- sau khi HOSODN đã tồn tại (tránh quan hệ khóa ngoại vòng khi seed).

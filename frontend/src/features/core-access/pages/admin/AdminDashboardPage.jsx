@@ -52,7 +52,7 @@ const DASHBOARD_CONFIG = {
     eyebrow: 'Trung Tâm Kiểm Duyệt',
     title: 'Tổng quan kiểm duyệt',
     description: 'Đây là bảng điều khiển các hồ sơ đối tác và voucher đang chờ kiểm duyệt.',
-    statKeys: ['pendingPartners', 'profileChangeRequests', 'pendingVouchers'],
+    statKeys: ['pendingPartners', 'branchChangeRequests', 'profileChangeRequests', 'pendingVouchers'],
     showSystemCharts: false,
     showPartnerQueue: true,
     showCustomerQueue: false,
@@ -353,6 +353,17 @@ export default function AdminDashboardPage() {
       linkTo: '/admin/partners',
       badge: summary?.pendingPartners > 0 ? 'Cần xử lý' : null,
       badgeColor: 'bg-semantic-warning-soft text-semantic-warning border border-semantic-warning-border',
+    },
+    {
+      key: 'branchChangeRequests',
+      icon: Building2,
+      label: 'Yêu cầu thêm/thay đổi chi nhánh',
+      value: summary?.workQueue?.partnerManagement?.counts?.branchChangeRequests ?? null,
+      sub: 'Chi nhánh mới, cập nhật hoặc xóa đang chờ duyệt',
+      color: { bg: 'bg-cyan-50', icon: 'text-cyan-700', border: 'border-cyan-200' },
+      linkTo: '/admin/partners',
+      badge: summary?.workQueue?.partnerManagement?.counts?.branchChangeRequests > 0 ? 'Cần xử lý' : null,
+      badgeColor: 'bg-cyan-50 text-cyan-700 border border-cyan-200',
     },
     {
       key: 'profileChangeRequests',
@@ -824,10 +835,10 @@ export default function AdminDashboardPage() {
                 getDetailLink={(item) => `/admin/partners/${item.partnerId || item.id}`}
               />
               <WorkQueueGroup
-                title="Yêu cầu thay đổi chi nhánh"
+                title="Yêu cầu thêm/thay đổi chi nhánh"
                 items={partnerWork.branchChangeRequests || []}
                 total={partnerWork.counts?.branchChangeRequests}
-                emptyText="Không có yêu cầu thay đổi chi nhánh."
+                emptyText="Không có yêu cầu thêm hoặc thay đổi chi nhánh."
                 allLink="/admin/partners"
                 dotClass="bg-cyan-500"
                 getDetailLink={(item) => `/admin/partners/${item.partnerId}`}

@@ -13,10 +13,13 @@
 --  - Mọi FK đều được đánh index thủ công (Postgres không tự tạo index
 --    cho FK, chỉ tự tạo cho PK/UNIQUE).
 -- =====================================================================
+-- Chay toan bo schema trong mot transaction: neu bat ky cau lenh nao loi,
+-- PostgreSQL se rollback thay vi de lai database o trang thai tao dang do.
+begin;
 create extension if not exists pgcrypto;
 create schema if not exists extensions;
 create extension if not exists pg_trgm with schema extensions;
-set search_path = public,
+set local search_path = public,
     extensions;
 -- =====================================================================
 -- XÓA BẢNG CŨ NẾU ĐÃ TỒN TẠI (giúp chạy lại script nhiều lần không bị lỗi)
@@ -24,11 +27,14 @@ set search_path = public,
 -- =====================================================================
 DROP TABLE IF EXISTS NOIDUNG CASCADE;
 DROP TABLE IF EXISTS LOG_HT CASCADE;
+DROP TABLE IF EXISTS YEU_CAU_CAP_NHAT_CHINHANH CASCADE;
+DROP TABLE IF EXISTS YEU_CAU_CAP_NHAT_HOSODN CASCADE;
+DROP TABLE IF EXISTS HOANTIEN CASCADE;
+DROP TABLE IF EXISTS YEUCAUHUY CASCADE;
 DROP TABLE IF EXISTS KHIEUNAI CASCADE;
 DROP TABLE IF EXISTS DANHGIA CASCADE;
 DROP TABLE IF EXISTS LSSINHMA CASCADE;
 DROP TABLE IF EXISTS VOUCHER_MUA CASCADE;
-DROP TABLE IF EXISTS HOANTIEN CASCADE;
 DROP TABLE IF EXISTS THANHTOAN CASCADE;
 DROP TABLE IF EXISTS CHITIETDONHANG CASCADE;
 DROP TABLE IF EXISTS DONHANG CASCADE;
@@ -41,7 +47,6 @@ DROP TABLE IF EXISTS HOSODN CASCADE;
 DROP TABLE IF EXISTS CHINHANH CASCADE;
 DROP TABLE IF EXISTS NGUOIDUNG CASCADE;
 DROP TABLE IF EXISTS DANH_MUC CASCADE;
-DROP TABLE IF EXISTS YEUCAUHUY CASCADE;
 DROP FUNCTION IF EXISTS fn_check_hosodn_vai_tro() CASCADE;
 -- =====================================================================
 -- 1. DANH_MUC
@@ -138,9 +143,7 @@ create table HOSODN (
             'Tam khoa'
         )
     ),
-    id_nvql_voucher uuid references NGUOIDUNG(ma_nguoi_dung)
 );
-create index idx_ho_so_dn_nvql_voucher on HOSODN(id_nvql_voucher);
 -- Sau khi HOSODN ton tai, gan FK tu CHINHANH.ma_hs -> HOSODN
 -- [FIX] FK duoc them bang ALTER TABLE vi CHINHANH tao truoc HOSODN
 alter table CHINHANH
@@ -430,11 +433,12 @@ create table NOIDUNG (
     ket_thuc_hien_thi timestamptz,
     ngay_tao timestamptz not null default now(),
     ngay_cap_nhat timestamptz not null default now(),
-    matk_admin uuid not null references TAIKHOAN(ma_tk)
+    matk_admin uuid not null references TAIKHOAN(ma_tk),
+    hinh_anh_url text
 );
 -- [FIX] Doi noi_dung -> NOIDUNG cho nhat quan
 create index idx_noi_dung_id_admin on NOIDUNG(matk_admin);
-CREATE TABLE IF NOT EXISTS public.yeu_cau_cap_nhat_hosodn (
+CREATE TABLE public.yeu_cau_cap_nhat_hosodn (
     ma_yc UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     ma_hs UUID NOT NULL REFERENCES public.hosodn(ma_hs) ON DELETE CASCADE,
     -- 1. Thông tin Hồ sơ Doanh nghiệp đề xuất mới
@@ -448,6 +452,8 @@ CREATE TABLE IF NOT EXISTS public.yeu_cau_cap_nhat_hosodn (
     sdt_nguoi_dai_dien_moi TEXT NULL,
     email_nguoi_dai_dien_moi TEXT NULL,
     cccd_moi TEXT NULL,
+    ngay_sinh DATE NULL,
+    gioi_tinh TEXT NULL,
     -- 3. Quản lý Trạng thái & Vết phê duyệt
     trang_thai VARCHAR(50) NOT NULL DEFAULT 'Cho duyet',
     -- 'Cho duyet', 'Da duyet', 'Tu choi'
@@ -458,10 +464,11 @@ CREATE TABLE IF NOT EXISTS public.yeu_cau_cap_nhat_hosodn (
 );
 -- Index truy vấn nhanh
 CREATE INDEX IF NOT EXISTS idx_yc_hoso_trang_thai ON public.yeu_cau_cap_nhat_hosodn(trang_thai);
-CREATE TABLE IF NOT EXISTS public.yeu_cau_cap_nhat_chinhanh (
+CREATE TABLE public.yeu_cau_cap_nhat_chinhanh (
     ma_yc UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     ma_chi_nhanh UUID NULL REFERENCES public.chinhanh(ma_chi_nhanh) ON DELETE CASCADE,
     -- NULL nếu là yêu cầu THEM_MOI
+    -- Cot mo rong nullable cho dashboard/audit; data.sql hien chua co cot nay.
     ma_hs UUID NULL REFERENCES public.hosodn(ma_hs) ON DELETE CASCADE,
     loai_yeu_cau VARCHAR(50) NOT NULL,
     -- 'THEM_MOI', 'CAP_NHAT', 'XOA'
@@ -479,10 +486,6 @@ CREATE TABLE IF NOT EXISTS public.yeu_cau_cap_nhat_chinhanh (
 );
 -- Index truy vấn nhanh
 CREATE INDEX IF NOT EXISTS idx_yc_cn_trang_thai ON public.yeu_cau_cap_nhat_chinhanh(trang_thai);
-alter table yeu_cau_cap_nhat_hosodn
-add ngay_sinh date;
-alter table yeu_cau_cap_nhat_hosodn
-add gioi_tinh text;
 -- =====================================================================
 -- 20. YEU_CAU_HUY (Yeu cau huy don hang)
 -- =====================================================================
@@ -569,7 +572,7 @@ CREATE INDEX if not exists idx_voucher_mua_ma_voucher ON voucher_mua (ma_voucher
 create index if not exists idx_perf_voucher_mua_status_date on public.VOUCHER_MUA (trang_thai, thoi_gian_sinh_ma desc);
 create index if not exists idx_perf_voucher_mua_used_branch_date on public.VOUCHER_MUA (ma_chi_nhanh_su_dung, ngay_su_dung desc)
 where trang_thai = 'Da su dung';
-CREATE if not exists INDEX idx_voucher_mua_ma_dh ON voucher_mua (ma_dh);
+CREATE INDEX if not exists idx_voucher_mua_ma_dh ON voucher_mua (ma_dh);
 CREATE UNIQUE INDEX if not exists idx_danhgia_ma_voucher_mua ON danhgia (ma_voucher_mua);
 create index if not exists idx_perf_lssinhma_voucher_date on public.LSSINHMA (ma_voucher_mua, tg_thuc_hien desc);
 create index if not exists idx_perf_khieunai_status_date on public.KHIEUNAI (trang_thai, ngay_khieu_nai desc);
@@ -589,3 +592,4 @@ create index if not exists idx_perf_log_result_time on public.LOG_HT (ket_qua, t
 create index if not exists idx_perf_log_target_trgm on public.LOG_HT using gin (doi_tuong gin_trgm_ops);
 create index if not exists idx_perf_log_actor_role_trgm on public.LOG_HT using gin (vai_tro_thuc_hien gin_trgm_ops);
 create index if not exists idx_perf_log_reason_trgm on public.LOG_HT using gin (ly_do_thuc_hien gin_trgm_ops);
+commit;

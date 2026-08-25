@@ -311,6 +311,12 @@ class DashboardRepository {
           .eq('trang_thai', 'Cho duyet')
           .order('ngay_yeu_cau', { ascending: false })
           .limit(5),
+        // Yêu cầu thêm mới không nằm trong bảng yêu cầu: chi nhánh được tạo
+        // trực tiếp với trạng thái Cho duyet (xem BranchRequestRepository.create).
+        supabase.from('chinhanh')
+          .select('ma_chi_nhanh, ma_hs, ten_chi_nhanh, trang_thai', { count: 'exact' })
+          .eq('trang_thai', 'Cho duyet')
+          .limit(5),
         supabase.from('yeu_cau_cap_nhat_hosodn')
           .select('ma_yc, ma_hs, ten_dn_moi, ngay_yeu_cau, trang_thai', { count: 'exact' })
           .eq('trang_thai', 'Cho duyet')
@@ -346,6 +352,7 @@ class DashboardRepository {
       const labels = [
         'đối tác chờ duyệt',
         'yêu cầu thay đổi chi nhánh',
+        'yêu cầu thêm chi nhánh',
         'yêu cầu thay đổi hồ sơ',
         'voucher chờ duyệt',
         'yêu cầu hủy đơn',
@@ -366,7 +373,7 @@ class DashboardRepository {
       };
       const orderCode = (id) => id ? `#${String(id).slice(0, 8).toUpperCase()}` : '—';
 
-      const [partners, branchChanges, profileChanges, vouchers, cancellations, complaints, refunds, failedCodes]
+      const [partners, branchChanges, pendingBranchAdditions, profileChanges, vouchers, cancellations, complaints, refunds, failedCodes]
         = results.map(readResult);
 
       const loadRowsByIds = async (table, columns, key, ids, label) => {
@@ -427,21 +434,16 @@ class DashboardRepository {
       const orderById = new Map(orderRows.map(item => [item.ma_dh, item]));
       const voucherById = new Map(complaintVoucherRows.map(item => [item.ma_voucher, item]));
 
-      const partnerManagement = {
-        counts: {
-          pendingPartners: partners.count,
-          branchChangeRequests: branchChanges.count,
-          profileChangeRequests: profileChanges.count,
-          pendingVouchers: vouchers.count,
-        },
-        pendingPartners: partners.data.map((item) => ({
-          id: item.ma_hs,
+      const branchRequestItems = [
+        ...pendingBranchAdditions.data.map((item) => ({
+          id: item.ma_chi_nhanh,
           partnerId: item.ma_hs,
-          name: item.ten_dn || 'Đối tác chưa đặt tên',
-          date: item.ngay_tao,
+          name: item.ten_chi_nhanh || `Chi nhánh ${String(item.ma_chi_nhanh || '').slice(0, 8)}`,
+          description: 'Thêm chi nhánh',
+          date: null,
           status: item.trang_thai,
         })),
-        branchChangeRequests: branchChanges.data.map((item) => {
+        ...branchChanges.data.map((item) => {
           const branch = branchById.get(item.ma_chi_nhanh) || {};
           return {
             id: item.ma_yc,
@@ -452,6 +454,24 @@ class DashboardRepository {
             status: item.trang_thai,
           };
         }),
+      ].slice(0, 5);
+      const branchRequestCount = branchChanges.count + pendingBranchAdditions.count;
+
+      const partnerManagement = {
+        counts: {
+          pendingPartners: partners.count,
+          branchChangeRequests: branchRequestCount,
+          profileChangeRequests: profileChanges.count,
+          pendingVouchers: vouchers.count,
+        },
+        pendingPartners: partners.data.map((item) => ({
+          id: item.ma_hs,
+          partnerId: item.ma_hs,
+          name: item.ten_dn || 'Đối tác chưa đặt tên',
+          date: item.ngay_tao,
+          status: item.trang_thai,
+        })),
+        branchChangeRequests: branchRequestItems,
         profileChangeRequests: profileChanges.data.map((item) => ({
           id: item.ma_yc,
           partnerId: item.ma_hs,
@@ -525,7 +545,7 @@ class DashboardRepository {
       };
 
       return {
-        totalPending: partners.count + branchChanges.count + profileChanges.count + vouchers.count
+        totalPending: partners.count + branchRequestCount + profileChanges.count + vouchers.count
           + cancellations.count + complaints.count + refunds.count + failedCodes.count,
         partnerManagement,
         customerRequests,
