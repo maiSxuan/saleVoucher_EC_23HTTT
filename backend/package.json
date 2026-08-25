@@ -1,6 +1,7 @@
 {
   "name": "sale-voucher-backend",
   "version": "1.0.0",
+  "type": "commonjs",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
@@ -16,7 +17,8 @@
     "nodemailer": "^9.0.3",
     "pg": "^8.22.0",
     "qrcode": "^1.5.4",
-    "qs": "^6.15.3"
+    "qs": "^6.15.3",
+    "sale-voucher-platform": "file:.."
   },
   "devDependencies": {
     "nodemon": "^3.1.7"
