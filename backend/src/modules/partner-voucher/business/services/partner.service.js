@@ -118,10 +118,9 @@ class PartnerService {
     try {
       await sendOtpEmail(cleanEmail, otp, "register");
     } catch (mailErr) {
-      console.warn(
-        "[PartnerService] Direct mailer send failed, OTP available in log/console:",
-        mailErr.message,
-      );
+      console.warn("[PartnerService] Gửi email OTP thất bại:", mailErr.message);
+      pendingPartnerRegistrations.delete(cleanEmail);
+      throw mailErr;
     }
 
     return {
