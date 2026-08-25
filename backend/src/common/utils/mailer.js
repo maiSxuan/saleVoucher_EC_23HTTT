@@ -1,6 +1,6 @@
 /**
  * Purpose: Gửi email dùng chung cho toàn backend (OTP, thông báo...).
- * Chặn đầu và kiểm tra tính hợp lệ của địa chỉ email và máy chủ SMTP trước khi gửi.
+ * Chặn đầu và kiểm tra tính hợp lệ của địa chỉ email trước khi gửi qua Resend.
  */
 const { Resend } = require("resend");
 const QRCode = require("qrcode");
@@ -40,7 +40,9 @@ async function sendWithResend(mailer, mailOptions) {
   });
 
   if (error) {
-    const resendError = new Error(error.message || "Resend API từ chối gửi email");
+    const resendError = new Error(
+      error.message || "Resend API từ chối gửi email",
+    );
     resendError.code = error.name || "RESEND_API_ERROR";
     throw resendError;
   }
@@ -49,8 +51,8 @@ async function sendWithResend(mailer, mailOptions) {
 }
 
 /**
- * Kiểm tra tính hợp lệ và sự tồn tại của máy chủ nhận thư (SMTP / MX records) trên Internet.
- * Chặn đầu các email cục bộ, không có miền thực hoặc máy chủ thư không tồn tại.
+ * Kiểm tra tính hợp lệ của tên miền email trước khi gửi qua Resend.
+ * Chặn đầu các email cục bộ hoặc không có tên miền thực.
  */
 async function validateEmailDomain(email) {
   if (!email || typeof email !== "string" || !email.includes("@")) {
@@ -81,7 +83,7 @@ async function validateEmailDomain(email) {
     );
   }
 
-  // Chặn đầu các tên miền nội bộ / giả lập không thể nhận thư qua SMTP thực tế
+  // Chặn đầu các tên miền nội bộ / giả lập không thể nhận thư thực tế
   const blockedSuffixes = [
     ".local",
     ".test",
@@ -114,7 +116,7 @@ async function validateEmailDomain(email) {
  * Chặn đầu kiểm tra máy chủ SMTP trước khi gửi.
  */
 async function sendOtpEmail(toEmail, otp, type = "register") {
-  // 1. Chặn đầu: Kiểm tra định dạng và máy chủ DNS/SMTP của tên miền email
+  // 1. Chặn đầu: Kiểm tra định dạng và tên miền email
   await validateEmailDomain(toEmail);
 
   const isForgotPassword = type === "forgot_password";
@@ -152,7 +154,9 @@ async function sendOtpEmail(toEmail, otp, type = "register") {
   const mailerObj = getActiveMailer(type);
 
   if (!mailerObj) {
-    console.error(`[Mailer] Chưa cấu hình RESEND_API_KEY/RESEND_FROM cho tác vụ ${type}`);
+    console.error(
+      `[Mailer] Chưa cấu hình RESEND_API_KEY/RESEND_FROM cho tác vụ ${type}`,
+    );
     throw new AppError(
       "Chưa cấu hình Resend API key hoặc địa chỉ email gửi trong hệ thống.",
       500,

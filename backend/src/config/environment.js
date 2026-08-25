@@ -24,30 +24,6 @@ function loadDatabase() {
   };
 }
 
-// Cấu hình email cho đăng ký khách hàng
-function loadGmail() {
-  return {
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
-    secure: process.env.SMTP_SECURE,
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-    from: process.env.MAIL_FROM,
-  };
-}
-
-// Cấu hình email cho OTP Quên mật khẩu
-function loadAuthGmail() {
-  return {
-    host: process.env.AUTH_SMTP_HOST,
-    port: process.env.AUTH_SMTP_PORT,
-    secure: process.env.AUTH_SMTP_SECURE,
-    user: process.env.AUTH_SMTP_USER,
-    pass: process.env.AUTH_SMTP_PASS,
-    from: process.env.AUTH_MAIL_FROM,
-  };
-}
-
 function loadResend() {
   return {
     apiKey: process.env.RESEND_API_KEY,
@@ -115,8 +91,6 @@ function loadPayment() {
 module.exports = {
   loadEnvironment,
   loadDatabase,
-  loadGmail,
-  loadAuthGmail,
   loadResend,
   loadAuthResend,
   loadJwt,
