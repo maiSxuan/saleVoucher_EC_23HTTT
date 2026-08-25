@@ -104,6 +104,8 @@ class CatalogQueryService {
       ma_danh_muc: c.ma_danh_muc,
       name: formatCat(c.ten_danh_muc),
       ten_danh_muc: c.ten_danh_muc,
+      imageUrl: c.hinh_anh_url || null,
+      hinh_anh_url: c.hinh_anh_url || null,
     }));
     const lang = query?.lang;
     if (lang && lang.toLowerCase().startsWith("en")) {

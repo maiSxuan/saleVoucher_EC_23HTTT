@@ -52,7 +52,7 @@ class CatalogRepository {
   async findAllCategories() {
     const { data, error } = await supabase
       .from("danh_muc")
-      .select("ma_danh_muc, ten_danh_muc")
+      .select("ma_danh_muc, ten_danh_muc, hinh_anh_url")
       .order("ten_danh_muc", { ascending: true });
 
     if (error) {

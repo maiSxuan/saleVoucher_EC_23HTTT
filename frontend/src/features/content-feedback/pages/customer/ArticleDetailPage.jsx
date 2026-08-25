@@ -13,8 +13,9 @@ export default function ArticleDetailPage() {
   useEffect(() => {
     contentApi.getById(id)
       .then(res => {
-        if (res && res.data) {
-          setArticle(res.data);
+        const articleData = res && res.data ? res.data : res;
+        if (articleData && (articleData.id || articleData.ma_nd || articleData.title)) {
+          setArticle(articleData);
         } else {
           setErrorMsg("Không tìm thấy bài viết.");
         }

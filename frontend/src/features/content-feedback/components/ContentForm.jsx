@@ -108,37 +108,35 @@ export default function ContentForm({ initialData, onSubmit, onCancel, contentTy
             )}
           </div>
 
-          {/* Image upload field - Ẩn đối với danh_muc */}
-          {contentType !== 'danh_muc' && (
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Hình ảnh minh họa (Tùy chọn — Tự động căn chỉnh kích thước)
+          {/* Image upload field */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">
+              Hình ảnh minh họa / Icon (Tùy chọn)
+            </label>
+            <div className="flex items-center gap-3">
+              <label className="flex-1 border-2 border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:border-blue-500 transition-colors bg-gray-50/50">
+                <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                <div className="flex flex-col items-center gap-1 text-xs text-gray-500">
+                  <Upload size={18} className="text-blue-500" />
+                  <span className="font-medium text-gray-700">{uploading ? 'Đang xử lý ảnh...' : 'Tải lên tệp ảnh'}</span>
+                  <span className="text-[10px] text-gray-400">PNG, JPG, WEBP</span>
+                </div>
               </label>
-              <div className="flex items-center gap-3">
-                <label className="flex-1 border-2 border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:border-blue-500 transition-colors bg-gray-50/50">
-                  <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
-                  <div className="flex flex-col items-center gap-1 text-xs text-gray-500">
-                    <Upload size={18} className="text-blue-500" />
-                    <span className="font-medium text-gray-700">{uploading ? 'Đang xử lý ảnh...' : 'Tải lên tệp ảnh'}</span>
-                    <span className="text-[10px] text-gray-400">PNG, JPG, WEBP</span>
-                  </div>
-                </label>
-                {formData.imageUrl && (
-                  <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200 flex-shrink-0 bg-gray-100">
-                    <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
-                    <button 
-                      type="button" 
-                      onClick={() => setFormData(prev => ({ ...prev, imageUrl: '' }))}
-                      className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-0.5 shadow hover:bg-red-700"
-                      title="Xóa ảnh"
-                    >
-                      <X size={12} />
-                    </button>
-                  </div>
-                )}
-              </div>
+              {formData.imageUrl && (
+                <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200 flex-shrink-0 bg-gray-100">
+                  <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                  <button 
+                    type="button" 
+                    onClick={() => setFormData(prev => ({ ...prev, imageUrl: '' }))}
+                    className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-0.5 shadow hover:bg-red-700 cursor-pointer"
+                    title="Xóa ảnh"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           <div className="flex gap-2.5 pt-4 border-t">
             <button type="submit" className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm transition-colors shadow-xs">Lưu lại</button>

@@ -7,6 +7,8 @@ function buildCategoryDto(item) {
     ma_danh_muc: item.ma_danh_muc,
     ten_danh_muc: item.ten_danh_muc,
     mo_ta: item.mo_ta || "",
+    imageUrl: item.hinh_anh_url || null,
+    hinh_anh_url: item.hinh_anh_url || null,
     id: item.ma_danh_muc,
     name: item.ten_danh_muc,
     title: item.ten_danh_muc,

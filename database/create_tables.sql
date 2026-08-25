@@ -49,7 +49,8 @@ DROP FUNCTION IF EXISTS fn_check_hosodn_vai_tro() CASCADE;
 create table DANH_MUC (
     ma_danh_muc uuid primary key default gen_random_uuid(),
     ten_danh_muc text not null unique,
-    mo_ta text
+    mo_ta text,
+    hinh_anh_url text
 );
 -- =====================================================================
 -- 2. NGUOI_DUNG

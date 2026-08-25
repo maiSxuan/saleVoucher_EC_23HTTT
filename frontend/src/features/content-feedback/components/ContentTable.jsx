@@ -4,7 +4,7 @@ import { StatusBadge, getContentStatusBadge } from "./ui/StatusBadge";
 export default function ContentTable({ items, onEdit, onHide, onShow, onStop, onDelete, contentType }) {
   if (items.length === 0) return <div className="py-16 text-center text-gray-400 text-sm">Chưa có dữ liệu.</div>;
 
-  const showImage = contentType !== 'danh_muc';
+  const showImage = true;
 
   return (
     <table className="w-full">
@@ -50,17 +50,19 @@ export default function ContentTable({ items, onEdit, onHide, onShow, onStop, on
             </td>
             <td className="px-4 py-3">
               <div className="flex items-center gap-1">
-                {item.type !== 'danh_gia' && item.type !== 'danh_muc' && (
+                {item.type !== 'danh_gia' && (
                   <button onClick={() => onEdit(item)} className="p-1.5 text-gray-400 hover:text-blue-600" title="Chỉnh sửa"><Edit2 size={14} /></button>
                 )}
-                {item.type === 'danh_muc' || item.type === 'danh_gia' ? (
+                {item.type === 'danh_gia' ? (
                   <button onClick={() => onDelete && onDelete(item)} className="p-1.5 text-gray-400 hover:text-red-600" title="Xóa"><Trash2 size={14} /></button>
-                ) : (
+                ) : item.type !== 'danh_muc' ? (
                   <>
                     {item.status !== 'hidden' && item.status !== 'stopped' && <button onClick={() => onHide(item)} className="p-1.5 text-gray-400 hover:text-sky-600" title="Tạm ẩn"><EyeOff size={14} /></button>}
                     {item.status === 'hidden' && <button onClick={() => onShow(item)} className="p-1.5 text-gray-400 hover:text-green-600" title="Hiển thị"><Eye size={14} /></button>}
                     {item.status !== 'stopped' && <button onClick={() => onStop(item)} className="p-1.5 text-gray-400 hover:text-red-600" title="Ngừng"><StopCircle size={14} /></button>}
                   </>
+                ) : (
+                  <button onClick={() => onDelete && onDelete(item)} className="p-1.5 text-gray-400 hover:text-red-600" title="Xóa"><Trash2 size={14} /></button>
                 )}
               </div>
             </td>

@@ -106,7 +106,11 @@ export default function CustomerLayout() {
     // Fetch popups
     contentApi.list("popup")
       .then(res => {
-        const active = (res.data || []).filter(p => p.status === 'visible' || !p.status);
+        const list = Array.isArray(res) ? res : (res.data || []);
+        const active = list.filter(p => {
+          const st = p.status || p.trang_thai;
+          return st === 'visible' || st === 'Dang hien thi' || !st;
+        });
         setPopups(active);
       })
       .catch(() => { });
@@ -272,12 +276,15 @@ export default function CustomerLayout() {
                 >
                   <button
                     onClick={() => selectCategory(cat.name)}
-                    className={`flex items-center gap-1 whitespace-nowrap py-1 border-b-2 transition-all ${activeCategory === cat.name
+                    className={`flex items-center gap-1.5 whitespace-nowrap py-1 border-b-2 transition-all ${activeCategory === cat.name
                         ? "border-white text-white font-semibold"
                         : "border-transparent text-white/80 hover:text-white"
                       }`}
                     aria-haspopup="menu"
                   >
+                    {(cat.imageUrl || cat.hinh_anh_url) && (
+                      <img src={cat.imageUrl || cat.hinh_anh_url} alt="" className="w-4 h-4 object-cover rounded shrink-0" />
+                    )}
                     {t(cat.name)}
                     <ChevronDown
                       size={13}
@@ -326,7 +333,12 @@ export default function CustomerLayout() {
                           className="flex w-full items-center justify-between gap-3 px-4 py-2 text-left text-base text-gray-700 transition-colors hover:bg-sky-50 hover:text-sky-700"
                           aria-haspopup="menu"
                         >
-                          <span>{t(cat.name)}</span>
+                          <span className="flex items-center gap-2">
+                            {(cat.imageUrl || cat.hinh_anh_url) && (
+                              <img src={cat.imageUrl || cat.hinh_anh_url} alt="" className="w-4 h-4 object-cover rounded shrink-0" />
+                            )}
+                            {t(cat.name)}
+                          </span>
                           <ChevronRight size={14} className="text-sky-400" />
                         </button>
                         <PartnerDropdown
@@ -358,11 +370,14 @@ export default function CustomerLayout() {
               <button
                 key={cat.id}
                 onClick={() => selectCategory(cat.name)}
-                className={`whitespace-nowrap py-1 border-b-2 transition-all ${activeCategory === cat.name
+                className={`whitespace-nowrap py-1 border-b-2 transition-all flex items-center gap-1.5 ${activeCategory === cat.name
                     ? "border-white text-white font-semibold"
                     : "border-transparent text-white/80"
                   }`}
               >
+                {(cat.imageUrl || cat.hinh_anh_url) && (
+                  <img src={cat.imageUrl || cat.hinh_anh_url} alt="" className="w-4 h-4 object-cover rounded shrink-0" />
+                )}
                 {t(cat.name)}
               </button>
             ))}

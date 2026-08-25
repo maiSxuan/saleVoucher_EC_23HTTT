@@ -34,7 +34,11 @@ export function useContent() {
 
   const create = async (item) => {
     if (item.type === 'danh_muc' || item.loai === 'danh_muc') {
-      await categoryApi.createCategory({ ten_danh_muc: item.title || item.tieu_de, mo_ta: item.content || item.noi_dung });
+      await categoryApi.createCategory({ 
+        ten_danh_muc: item.title || item.tieu_de, 
+        mo_ta: item.content || item.noi_dung,
+        hinh_anh_url: item.imageUrl || item.hinh_anh_url || null
+      });
     } else {
       await contentApi.create(item);
     }
@@ -43,7 +47,11 @@ export function useContent() {
 
   const update = async (id, item) => {
     if (item.type === 'danh_muc' || item.loai === 'danh_muc') {
-      await categoryApi.updateCategory(id, { ten_danh_muc: item.title || item.tieu_de, mo_ta: item.content || item.noi_dung });
+      await categoryApi.updateCategory(id, { 
+        ten_danh_muc: item.title || item.tieu_de, 
+        mo_ta: item.content || item.noi_dung,
+        hinh_anh_url: item.imageUrl !== undefined ? item.imageUrl : (item.hinh_anh_url !== undefined ? item.hinh_anh_url : null)
+      });
     } else {
       await contentApi.update(id, item);
     }

@@ -669,8 +669,12 @@ export default function LandingPage() {
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg ${isSelected ? "bg-white/20 text-white" : "bg-sky-50 text-sky-600"}`}>
-                          🏷️
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden ${isSelected ? "bg-white/20 text-white" : "bg-sky-50 text-sky-600"}`}>
+                          {cat.imageUrl || cat.hinh_anh_url ? (
+                            <img src={cat.imageUrl || cat.hinh_anh_url} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            "🏷️"
+                          )}
                         </div>
                         <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${isSelected ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"}`}>
                           {count} deal
