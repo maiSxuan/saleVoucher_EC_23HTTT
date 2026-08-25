@@ -143,7 +143,7 @@ class AuthService {
         reason: "Tài khoản đã bị tạm khóa",
       });
       throw new ForbiddenError(
-        "Tài khoản đã tạm khóa, vui lòng liên hệ với admin để mở khóa tài khoản",
+        "Tài khoản đã tạm khóa, vui lòng liên hệ nkngan23@clc.fitus.edu.vn để mở khóa tài khoản",
       );
     }
 
