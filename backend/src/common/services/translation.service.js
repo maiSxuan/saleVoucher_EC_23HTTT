@@ -46,6 +46,8 @@ class TranslationService {
 
     // 2. Try official Google Cloud Translation REST API if key is present
     const apiKey = process.env.GOOGLE_TRANSLATE_API_KEY;
+    const isHtml = /<[a-z][\s\S]*>/i.test(text);
+
     if (apiKey) {
       try {
         const url = `https://translation.googleapis.com/language/translate/v2?key=${apiKey}`;
@@ -56,7 +58,7 @@ class TranslationService {
             q: text,
             target: targetLang,
             source: "vi",
-            format: "text",
+            format: isHtml ? "html" : "text",
           }),
         });
 
@@ -79,13 +81,17 @@ class TranslationService {
       }
     }
 
-    // 3. Fallback to public endpoint if official API not configured or failed
+    // 3. Fallback to Google GTX public endpoint
     if (!translatedText) {
       try {
         const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=vi&tl=${targetLang}&dt=t&q=${encodeURIComponent(
           text
         )}`;
-        const response = await fetch(url);
+        const response = await fetch(url, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          },
+        });
         if (response.ok) {
           const json = await response.json();
           if (Array.isArray(json) && Array.isArray(json[0])) {
@@ -93,20 +99,38 @@ class TranslationService {
           }
         }
       } catch (err) {
-        console.warn(
-          "[TranslationService] Fallback translation API failed:",
-          err.message
-        );
+        // Continue to next fallback
       }
     }
 
-    // 4. If translation succeeded, cache and return
+    // 4. Fallback to MyMemory Free Translation API
+    if (!translatedText) {
+      try {
+        const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(
+          text
+        )}&langpair=vi|${targetLang}`;
+        const response = await fetch(url);
+        if (response.ok) {
+          const json = await response.json();
+          if (json.responseData && json.responseData.translatedText) {
+            // MyMemory may return warning messages inside translatedText if daily limit reached
+            if (!json.responseData.translatedText.startsWith("MYMEMORY WARNING")) {
+              translatedText = json.responseData.translatedText;
+            }
+          }
+        }
+      } catch (err) {
+        // Ignore and fallback
+      }
+    }
+
+    // 5. If translation succeeded, cache and return
     if (translatedText) {
       translationCache.set(text, targetLang, translatedText);
       return translatedText;
     }
 
-    // 5. Fallback to original text on failure (RB-17: log warning, do not throw)
+    // 6. Fallback to original text on failure (RB-17: log warning, do not throw)
     console.warn(
       `[TranslationService] Warning: Could not translate text "${text.substring(
         0,

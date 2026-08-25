@@ -6,9 +6,10 @@ class OrderController {
   async review(req, res, next) {
     try {
       const accountId = req.user.accountId || req.user.id;
+      const lang = req.query.lang || req.headers["accept-language"] || "vi";
       // Chấp nhận cả contract chuẩn { voucherIds } và body mảng từ client cũ.
       const voucherIds = Array.isArray(req.body) ? req.body : req.body?.voucherIds;
-      const result = await orderService.reviewOrder({ accountId, voucherIds });
+      const result = await orderService.reviewOrder({ accountId, voucherIds, lang });
       return res.json({ success: true, data: result });
     } catch (e) {
       next(e);

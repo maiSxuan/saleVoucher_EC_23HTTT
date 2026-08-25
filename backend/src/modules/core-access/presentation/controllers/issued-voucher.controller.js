@@ -21,8 +21,8 @@ class IssuedVoucherController {
    */
   async getMyVouchers(req, res, next) {
     try {
-      const accountId = req.user?.accountId;
-      const lang = req.query.lang || req.headers["accept-language"];
+      const accountId = req.user?.accountId || req.user?.id;
+      const lang = req.query.lang || req.headers["accept-language"] || "vi";
       const { page = 1, limit = 20, status } = req.query;
 
       const result = await this.service.getMyVouchers(accountId, {
@@ -44,10 +44,11 @@ class IssuedVoucherController {
    */
   async getVouchersByOrder(req, res, next) {
     try {
-      const accountId = req.user?.accountId;
+      const accountId = req.user?.accountId || req.user?.id;
       const { orderId } = req.params;
+      const lang = req.query.lang || req.headers["accept-language"] || "vi";
 
-      const rows = await this.service.getVouchersByOrder(orderId, accountId);
+      const rows = await this.service.getVouchersByOrder(orderId, accountId, lang);
       res.json({ success: true, data: rows });
     } catch (err) {
       next(err);
@@ -60,9 +61,9 @@ class IssuedVoucherController {
    */
   async getIssuedVoucherDetail(req, res, next) {
     try {
-      const accountId = req.user?.accountId;
+      const accountId = req.user?.accountId || req.user?.id;
       const { issuedId } = req.params;
-      const lang = req.query.lang || req.headers["accept-language"];
+      const lang = req.query.lang || req.headers["accept-language"] || "vi";
 
       const data = await this.service.getIssuedVoucherDetail(issuedId, accountId, lang);
       if (!data) {
@@ -80,7 +81,7 @@ class IssuedVoucherController {
    */
   async issueVoucher(req, res, next) {
     try {
-      const actorId = req.user?.accountId;
+      const actorId = req.user?.accountId || req.user?.id;
       const actorRole = req.user?.role || req.user?.vai_tro_he_thong || 'SYSTEM';
       const result = await this.service.issueAfterPayment(req.body, { actorId, actorRole });
       res.status(201).json({ success: true, data: result });

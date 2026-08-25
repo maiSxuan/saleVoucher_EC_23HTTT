@@ -3,7 +3,8 @@ const service = require("../../business/services/content.service");
 // Lấy danh sách nội dung
 async function getContentList(req, res, next) {
   try {
-    const result = await service.getContentList(req.query);
+    const lang = req.query.lang || req.headers["accept-language"] || "vi";
+    const result = await service.getContentList(req.query, lang);
     res.status(200).json({ success: true, data: result });
   } catch (error) {
     next(error);
@@ -13,7 +14,8 @@ async function getContentList(req, res, next) {
 // Lấy nội dung theo id
 async function getContentById(req, res, next) {
   try {
-    const result = await service.getContentById(req.params.id);
+    const lang = req.query.lang || req.headers["accept-language"] || "vi";
+    const result = await service.getContentById(req.params.id, lang);
     res.status(200).json({ success: true, data: result });
   } catch (error) {
     next(error);

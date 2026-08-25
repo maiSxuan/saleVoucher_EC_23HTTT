@@ -9,15 +9,20 @@ function getHeaders() {
 }
 
 export const contentApi = {
-  list: async (type) => {
-    const url = type ? `${API_BASE}/content?loai=${type}` : `${API_BASE}/content`;
+  list: async (type, lang) => {
+    const currentLang = lang || localStorage.getItem("i18nextLng") || "vi";
+    const params = new URLSearchParams();
+    if (type) params.append("loai", type);
+    if (currentLang) params.append("lang", currentLang);
+    const url = `${API_BASE}/content?${params.toString()}`;
     const response = await fetch(url);
     if (!response.ok) throw new Error("Failed to fetch contents");
     const json = await response.json();
     return json.data || json;
   },
-  getById: async (id) => {
-    const response = await fetch(`${API_BASE}/content/${id}`);
+  getById: async (id, lang) => {
+    const currentLang = lang || localStorage.getItem("i18nextLng") || "vi";
+    const response = await fetch(`${API_BASE}/content/${id}?lang=${encodeURIComponent(currentLang)}`);
     if (!response.ok) throw new Error("Failed to fetch content");
     const json = await response.json();
     return json.data || json;

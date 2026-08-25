@@ -5,11 +5,12 @@ import { useTranslation } from "react-i18next";
 import { contentApi } from "../../features/content-feedback/api/contentApi";
 
 export default function SiteFooter() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [policies, setPolicies] = useState([]);
 
   useEffect(() => {
-    contentApi.list("chinh_sach")
+    const lang = i18n.language || "vi";
+    contentApi.list("chinh_sach", lang)
       .then((data) => {
         const list = Array.isArray(data) ? data : (data.data || []);
         const visiblePolicies = list.filter(p => p.status === 'visible' || p.trang_thai === 'Dang hien thi');
@@ -18,7 +19,7 @@ export default function SiteFooter() {
       .catch((err) => {
         console.warn("Failed to load footer policies:", err);
       });
-  }, []);
+  }, [i18n.language]);
 
   return (
     <footer className="border-t border-slate-200 bg-white text-slate-600">
@@ -65,7 +66,7 @@ export default function SiteFooter() {
                 className="inline-flex items-center gap-1.5 py-0.5 text-xs font-semibold text-slate-600 transition-colors hover:text-sky-700"
               >
                 <ArrowRight size={12} className="text-sky-600 shrink-0" aria-hidden="true" />
-                <span>{p.title}</span>
+                <span>{t(p.title) || p.title}</span>
               </Link>
             ))
           ) : (

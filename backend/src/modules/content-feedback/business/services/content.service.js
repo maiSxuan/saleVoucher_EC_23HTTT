@@ -2,6 +2,7 @@ const repository = require("../../data/repositories/content.repository");
 const validator = require("../../presentation/validators/content.validator");
 const dto = require("../../presentation/dtos/content.dto");
 const supabase = require("../../../../config/supabase");
+const translationService = require("../../../../common/services/translation.service");
 
 async function uploadBase64ToSupabase(base64String, folder = "content") {
   if (!base64String || typeof base64String !== "string" || !base64String.startsWith("data:")) {
@@ -39,20 +40,41 @@ async function uploadBase64ToSupabase(base64String, folder = "content") {
 }
 
 // Lấy danh sách nội dung
-async function getContentList(query) {
+async function getContentList(query, lang = "vi") {
   let items;
   if (query && query.loai) {
     items = await repository.findByType(query.loai);
   } else {
     items = await repository.findAll();
   }
-  return (items || []).map(item => dto.buildContentDto(item));
+  const dtos = (items || []).map(item => dto.buildContentDto(item));
+
+  if ((lang || "").toLowerCase().startsWith("en")) {
+    for (const item of dtos) {
+      if (item.title) item.title = await translationService.translateText(item.title, "en");
+      if (item.tieu_de) item.tieu_de = item.title;
+      if (item.content) item.content = await translationService.translateText(item.content, "en");
+      if (item.noi_dung) item.noi_dung = item.content;
+    }
+  }
+
+  return dtos;
 }
 
 // Lấy nội dung theo id
-async function getContentById(id) {
+async function getContentById(id, lang = "vi") {
   const item = await repository.findById(id);
-  return dto.buildContentDto(item);
+  if (!item) return null;
+  const contentDto = dto.buildContentDto(item);
+
+  if ((lang || "").toLowerCase().startsWith("en")) {
+    if (contentDto.title) contentDto.title = await translationService.translateText(contentDto.title, "en");
+    if (contentDto.tieu_de) contentDto.tieu_de = contentDto.title;
+    if (contentDto.content) contentDto.content = await translationService.translateText(contentDto.content, "en");
+    if (contentDto.noi_dung) contentDto.noi_dung = contentDto.content;
+  }
+
+  return contentDto;
 }
 
 async function getDefaultModerationAccountId() {

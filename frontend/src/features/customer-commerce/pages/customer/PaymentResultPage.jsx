@@ -6,6 +6,7 @@
  */
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   CheckCircle,
   XCircle,
@@ -26,12 +27,21 @@ import QrCodeDisplay from "../../../core-access/component/QRCodeDisplay";
 
 // Hiển thị một voucher đã phát hành trong kết quả thanh toán
 function IssuedVoucherMini({ vm, onClick }) {
+  const { t } = useTranslation();
   const v = vm.voucher || {};
   const qrValue = vm.gia_tri_qr_mo_phong || `ECQR:${vm.voucher_code}`;
   const validUntil = v.tg_ket_thuc_ban
     ? new Date(v.tg_ket_thuc_ban).toLocaleDateString("vi-VN")
     : "—";
   const branches = vm.applicableBranches || [];
+
+  const rawVoucherName = typeof v.ten_voucher === 'object' && v.ten_voucher !== null 
+    ? (v.ten_voucher.name || v.ten_voucher.ten_voucher || "Voucher") 
+    : (v.name || v.ten_voucher || "Voucher");
+
+  const rawPartnerName = typeof vm.partnerName === 'object' && vm.partnerName !== null 
+    ? (vm.partnerName.name || vm.partnerName.ten_dn || "") 
+    : (vm.partnerName || "");
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
@@ -42,10 +52,10 @@ function IssuedVoucherMini({ vm, onClick }) {
         </div>
         <div className="min-w-0">
           <p className="font-semibold text-slate-800 truncate text-sm">
-            {typeof v.ten_voucher === 'object' && v.ten_voucher !== null ? (v.ten_voucher.name || v.ten_voucher.ten_voucher || "Voucher") : (v.ten_voucher || "Voucher")}
+            {t(rawVoucherName)}
           </p>
-          <p className="text-xs text-slate-500">
-            {typeof vm.partnerName === 'object' && vm.partnerName !== null ? (vm.partnerName.name || vm.partnerName.ten_dn || "") : (vm.partnerName || "")}
+          <p className="text-xs text-slate-500 truncate">
+            {t(rawPartnerName)}
           </p>
         </div>
       </div>
@@ -54,8 +64,8 @@ function IssuedVoucherMini({ vm, onClick }) {
       <QrCodeDisplay
         value={qrValue}
         size={180}
-        title="Mã QR Voucher"
-        subtitle="Đưa mã này cho nhân viên tại quầy"
+        title={t("Mã QR Voucher")}
+        subtitle={t("Đưa mã này cho nhân viên tại quầy")}
         showDownload={true}
         className="mb-3"
       />
@@ -63,7 +73,7 @@ function IssuedVoucherMini({ vm, onClick }) {
       {/* Hạn sử dụng + Chi nhánh */}
       <div className="mt-3 space-y-1.5 text-xs text-slate-500">
         <p>
-          <span className="font-medium text-slate-700">HSD:</span> {validUntil}
+          <span className="font-medium text-slate-700">{t("HSD:")}</span> {validUntil}
         </p>
         {branches.length > 0 && (
           <div className="flex items-start gap-1">
@@ -71,7 +81,7 @@ function IssuedVoucherMini({ vm, onClick }) {
             <span>
               {branches
                 .slice(0, 2)
-                .map((b) => b.branchName)
+                .map((b) => t(b.branchName) || b.branchName)
                 .join(", ")}
               {branches.length > 2 ? ` +${branches.length - 2}` : ""}
             </span>
@@ -84,7 +94,7 @@ function IssuedVoucherMini({ vm, onClick }) {
         onClick={onClick}
         className="mt-4 w-full flex items-center justify-center gap-1.5 py-2 text-sm font-medium text-sky-600 hover:text-sky-700 border border-sky-200 hover:border-sky-400 rounded-xl transition-colors"
       >
-        Xem chi tiết
+        {t("Xem chi tiết")}
         <ArrowRight className="w-3.5 h-3.5" />
       </button>
     </div>
@@ -92,6 +102,7 @@ function IssuedVoucherMini({ vm, onClick }) {
 }
 
 export default function PaymentResultPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState("processing");
@@ -123,10 +134,15 @@ export default function PaymentResultPage() {
           if (res.orderId) {
             setLoadingVouchers(true);
             try {
-              const rows = await getVouchersByOrder(res.orderId);
+              let rows = await getVouchersByOrder(res.orderId);
+              if (!rows || rows.length === 0) {
+                // Retry sau 800ms đề phòng DB vừa commit xong
+                await new Promise((r) => setTimeout(r, 800));
+                rows = await getVouchersByOrder(res.orderId);
+              }
               setIssuedVouchers(Array.isArray(rows) ? rows : []);
-            } catch {
-              // Không hiển thị lỗi fetch voucher — người dùng vẫn có thể vào "Voucher của tôi"
+            } catch (err) {
+              console.warn("[PaymentResult] Lỗi tải voucher:", err);
             } finally {
               setLoadingVouchers(false);
             }
@@ -144,10 +160,10 @@ export default function PaymentResultPage() {
       <div className="flex flex-col items-center py-24 gap-3">
         <Loader size={40} className="text-orange-500 animate-spin" />
         <p className="text-lg font-semibold text-gray-800">
-          Đang xác nhận thanh toán...
+          {t("Đang xác nhận thanh toán...")}
         </p>
         <p className="text-sm text-slate-400">
-          Hệ thống đang xử lý và phát hành voucher cho bạn.
+          {t("Hệ thống đang xử lý và phát hành voucher cho bạn.")}
         </p>
       </div>
     );
@@ -163,10 +179,10 @@ export default function PaymentResultPage() {
             <CheckCircle className="w-9 h-9 text-green-500" />
           </div>
           <h2 className="text-2xl font-bold text-slate-900 mb-1">
-            Đặt mua thành công!
+            {t("Đặt mua thành công!")}
           </h2>
           <p className="text-sm text-slate-500">
-            Mã đơn:{" "}
+            {t("Mã đơn:")}{" "}
             <span className="font-mono font-semibold text-slate-700">
               {orderId}
             </span>
@@ -177,7 +193,7 @@ export default function PaymentResultPage() {
         {loadingVouchers && (
           <div className="flex flex-col items-center py-8 gap-2">
             <Loader className="w-6 h-6 text-orange-400 animate-spin" />
-            <p className="text-sm text-slate-500">Đang phát hành mã voucher...</p>
+            <p className="text-sm text-slate-500">{t("Đang phát hành mã voucher...")}</p>
           </div>
         )}
 
@@ -187,12 +203,10 @@ export default function PaymentResultPage() {
             <AlertCircle className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-semibold text-orange-700">
-                Chưa thể phát hành mã voucher
+                {t("Chưa thể phát hành mã voucher")}
               </p>
               <p className="text-xs text-orange-600 mt-0.5">
-                Hệ thống đang xử lý. Mã của bạn sẽ sớm xuất hiện trong "Voucher
-                của tôi". Nếu sau 5 phút vẫn chưa nhận được, vui lòng liên hệ
-                hỗ trợ.
+                {t("Hệ thống đang xử lý. Mã của bạn sẽ sớm xuất hiện trong \"Voucher của tôi\". Nếu sau 5 phút vẫn chưa nhận được, vui lòng liên hệ hỗ trợ.")}
               </p>
             </div>
           </div>
@@ -204,7 +218,7 @@ export default function PaymentResultPage() {
             <div className="flex items-center gap-2 mb-3">
               <QrCode className="w-4 h-4 text-orange-500" />
               <h3 className="text-sm font-semibold text-slate-800">
-                Voucher của bạn ({issuedVouchers.length})
+                {t("Voucher của bạn")} ({issuedVouchers.length})
               </h3>
             </div>
             <div className="flex flex-col gap-3">
@@ -221,7 +235,7 @@ export default function PaymentResultPage() {
               ))}
               {issuedVouchers.length > 3 && (
                 <p className="text-xs text-slate-400 text-center">
-                  và {issuedVouchers.length - 3} voucher khác...
+                  {t("và")} {issuedVouchers.length - 3} {t("voucher khác...")}
                 </p>
               )}
             </div>
@@ -235,20 +249,20 @@ export default function PaymentResultPage() {
             className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-sky-500 text-white font-semibold rounded-xl hover:bg-sky-600 transition-colors"
           >
             <Ticket className="w-4 h-4" />
-            Xem voucher của tôi
+            {t("Xem voucher của tôi")}
           </button>
           <button
             onClick={() => navigate("/customer/orders")}
             className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl hover:border-sky-300 hover:text-sky-600 transition-colors"
           >
             <ShoppingBag className="w-4 h-4" />
-            Lịch sử đơn hàng
+            {t("Lịch sử đơn hàng")}
           </button>
           <button
             onClick={() => navigate("/customer")}
-            className="text-sm text-slate-400 hover:text-slate-600 py-2 transition-colors"
+            className="text-sm text-slate-400 hover:text-slate-600 py-2 transition-colors text-center"
           >
-            Tiếp tục mua sắm
+            {t("Tiếp tục mua sắm")}
           </button>
         </div>
       </div>
@@ -262,16 +276,16 @@ export default function PaymentResultPage() {
         <XCircle className="w-9 h-9 text-red-500" />
       </div>
       <h2 className="text-xl font-bold text-slate-900 mb-2">
-        Thanh toán thất bại
+        {t("Thanh toán thất bại")}
       </h2>
       <p className="text-sm text-slate-500 mb-8">
-        Giao dịch không thành công. Bạn có thể thử lại từ giỏ hàng.
+        {t("Giao dịch không thành công. Bạn có thể thử lại từ giỏ hàng.")}
       </p>
       <button
         onClick={() => navigate("/customer/cart")}
         className="w-full px-4 py-3 bg-sky-500 text-white font-semibold rounded-xl hover:bg-sky-600"
       >
-        Quay lại giỏ hàng
+        {t("Quay lại giỏ hàng")}
       </button>
     </div>
   );

@@ -96,8 +96,9 @@ class VoucherIssuanceService {
    * Lấy danh sách voucher đã phát hành của một đơn hàng (dùng để hiển thị sau thanh toán).
    * @param {string} orderId - Mã đơn hàng
    * @param {string} accountId - ma_tk của người dùng (để ownership check)
+   * @param {string} lang - Ngôn ngữ hiển thị (vi | en)
    */
-  async getVouchersByOrder(orderId, accountId) {
+  async getVouchersByOrder(orderId, accountId, lang = null) {
     if (!orderId) {
       const err = new Error('Thiếu mã đơn hàng');
       err.status = 400;
@@ -124,13 +125,30 @@ class VoucherIssuanceService {
     }
 
     const rows = await issuedVoucherRepository.findByOrderId(orderId);
+    if (lang && lang.toLowerCase().startsWith("en") && Array.isArray(rows)) {
+      for (const row of rows) {
+        if (row.voucher) {
+          await translationService.translateVoucherFields(row.voucher, undefined, "en");
+        }
+        if (row.partnerName) {
+          row.partnerName = await translationService.translateText(row.partnerName, "en");
+        }
+        if (Array.isArray(row.applicableBranches)) {
+          for (const b of row.applicableBranches) {
+            if (b.branchName) b.branchName = await translationService.translateText(b.branchName, "en");
+            if (b.address) b.address = await translationService.translateText(b.address, "en");
+            if (b.area) b.area = await translationService.translateText(b.area, "en");
+          }
+        }
+      }
+    }
     return rows;
   }
 
   /**
    * Lấy tất cả voucher của khách hàng đang đăng nhập ("Voucher của tôi").
    * @param {string} accountId - ma_tk
-   * @param {object} opts - { page, limit, status }
+   * @param {object} opts - { page, limit, status, lang }
    */
   async getMyVouchers(accountId, opts = {}) {
     if (!accountId) {
@@ -140,13 +158,21 @@ class VoucherIssuanceService {
     }
     const result = await issuedVoucherRepository.findByCustomer(accountId, opts);
     if (opts.lang && opts.lang.toLowerCase().startsWith("en") && result && Array.isArray(result.records)) {
-      await Promise.all(
-        result.records.map(async (row) => {
-          if (row.voucher) {
-            await translationService.translateVoucherFields(row.voucher, undefined, "en");
+      for (const row of result.records) {
+        if (row.voucher) {
+          await translationService.translateVoucherFields(row.voucher, undefined, "en");
+        }
+        if (row.partnerName) {
+          row.partnerName = await translationService.translateText(row.partnerName, "en");
+        }
+        if (Array.isArray(row.applicableBranches)) {
+          for (const b of row.applicableBranches) {
+            if (b.branchName) b.branchName = await translationService.translateText(b.branchName, "en");
+            if (b.address) b.address = await translationService.translateText(b.address, "en");
+            if (b.area) b.area = await translationService.translateText(b.area, "en");
           }
-        })
-      );
+        }
+      }
     }
     return result;
   }
@@ -155,6 +181,7 @@ class VoucherIssuanceService {
    * Lấy chi tiết một voucher đã mua (kiểm tra ownership).
    * @param {string} issuedVoucherId - ma_voucher_mua
    * @param {string} accountId - ma_tk người đang đăng nhập
+   * @param {string} lang - Ngôn ngữ hiển thị (vi | en)
    */
   async getIssuedVoucherDetail(issuedVoucherId, accountId, lang = null) {
     if (!issuedVoucherId) {

@@ -30,7 +30,7 @@ function getAccountPath(user) {
 }
 
 export default function PolicyPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { id } = useParams();
   const { user, isAuthenticated } = useAuth();
 
@@ -42,7 +42,8 @@ export default function PolicyPage() {
 
   useEffect(() => {
     setLoading(true);
-    contentApi.list("chinh_sach")
+    const lang = i18n.language || "vi";
+    contentApi.list("chinh_sach", lang)
       .then((data) => {
         const rawList = Array.isArray(data) ? data : (data.data || []);
         const visibleList = rawList.filter(p => p.status === 'visible' || p.trang_thai === 'Dang hien thi');
@@ -52,7 +53,7 @@ export default function PolicyPage() {
           if (found) {
             setCurrentPolicy(found);
           } else {
-            contentApi.getById(id)
+            contentApi.getById(id, lang)
               .then((res) => {
                 const item = res.data || res;
                 if (item && (item.status === 'visible' || item.trang_thai === 'Dang hien thi')) {
@@ -72,7 +73,7 @@ export default function PolicyPage() {
         console.warn("Failed to fetch policies:", err);
         setLoading(false);
       });
-  }, [id]);
+  }, [id, i18n.language]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -111,7 +112,7 @@ export default function PolicyPage() {
               <span>{t("Hệ thống pháp lý & Quy chế sàn giao dịch e-voucher")}</span>
             </div>
             <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-4xl">
-              {currentPolicy ? currentPolicy.title : t("Điều khoản & Chính sách Sàn")}
+              {currentPolicy ? (t(currentPolicy.title) || currentPolicy.title) : t("Điều khoản & Chính sách Sàn")}
             </h1>
             <p className="mt-3 text-sm leading-6 text-slate-300 sm:text-base">
               {currentPolicy
@@ -148,7 +149,7 @@ export default function PolicyPage() {
                   }`}
                 >
                   <span className="text-xs font-black text-cyan-600">{String(index + 1).padStart(2, "0")}</span>
-                  <span className="flex-1 truncate">{p.title}</span>
+                  <span className="flex-1 truncate">{t(p.title) || p.title}</span>
                   <ChevronRight size={14} className="opacity-0 transition-opacity group-hover:opacity-100 shrink-0" aria-hidden="true" />
                 </Link>
               ))}
@@ -162,43 +163,43 @@ export default function PolicyPage() {
           <div className="min-w-0 space-y-6">
             {loading ? (
               <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center text-slate-500">
-                Đang tải nội dung chính sách...
+                {t("Đang tải nội dung chính sách...")}
               </div>
             ) : currentPolicy ? (
               <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10 space-y-6">
                 <div className="border-b pb-4">
-                  <span className="text-xs font-bold uppercase tracking-wider text-sky-600">Chính sách chính thức</span>
-                  <h2 className="text-2xl font-black text-slate-900 mt-1">{currentPolicy.title}</h2>
+                  <span className="text-xs font-bold uppercase tracking-wider text-sky-600">{t("Chính sách chính thức")}</span>
+                  <h2 className="text-2xl font-black text-slate-900 mt-1">{t(currentPolicy.title) || currentPolicy.title}</h2>
                   {currentPolicy.updatedAt && (
-                    <p className="text-xs text-slate-400 mt-1">Cập nhật lần cuối: {new Date(currentPolicy.updatedAt).toLocaleDateString('vi-VN')}</p>
+                    <p className="text-xs text-slate-400 mt-1">{t("Cập nhật lần cuối:")} {new Date(currentPolicy.updatedAt).toLocaleDateString('vi-VN')}</p>
                   )}
                 </div>
 
                 {currentPolicy.imageUrl || currentPolicy.hinh_anh_url ? (
                   <div className="rounded-2xl overflow-hidden border border-slate-200 max-h-96">
-                    <img src={currentPolicy.imageUrl || currentPolicy.hinh_anh_url} alt={currentPolicy.title} className="w-full h-full object-cover" />
+                    <img src={currentPolicy.imageUrl || currentPolicy.hinh_anh_url} alt={t(currentPolicy.title) || currentPolicy.title} className="w-full h-full object-cover" />
                   </div>
                 ) : null}
 
                 <div 
-                  className="prose prose-slate max-w-none text-slate-700 leading-7 space-y-4"
-                  dangerouslySetInnerHTML={{ __html: currentPolicy.content || currentPolicy.noi_dung || "<p>Chưa có nội dung chi tiết.</p>" }}
+                  className="prose prose-slate max-w-none text-slate-700 leading-7 space-y-4 prose-headings:text-slate-900 prose-h1:text-2xl prose-h1:font-black prose-h2:text-xl prose-h2:font-bold prose-h3:text-lg prose-h3:font-bold prose-blockquote:border-l-4 prose-blockquote:border-sky-500 prose-blockquote:bg-sky-50/60 prose-blockquote:p-4 prose-blockquote:rounded-r-2xl prose-blockquote:not-italic prose-li:my-1 prose-hr:my-6"
+                  dangerouslySetInnerHTML={{ __html: currentPolicy.content || currentPolicy.noi_dung || `<p>${t("Chưa có nội dung chi tiết.")}</p>` }}
                 />
 
                 <div className="pt-6 border-t flex justify-between items-center">
                   <Link to="/policy" className="inline-flex items-center gap-2 text-xs font-bold text-sky-700 hover:underline">
-                    <ArrowLeft size={14} /> Quay lại danh mục chính sách
+                    <ArrowLeft size={14} /> {t("Quay lại danh mục chính sách")}
                   </Link>
                   <Link to="/" className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-900">
-                    <Home size={14} /> Về trang chủ
+                    <Home size={14} /> {t("Về trang chủ")}
                   </Link>
                 </div>
               </article>
             ) : (
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 space-y-6">
                 <div className="border-b pb-4">
-                  <h2 className="text-xl font-black text-slate-900">Danh mục Điều khoản & Chính sách Sàn</h2>
-                  <p className="text-sm text-slate-500 mt-1">Vui lòng chọn một chính sách bên dưới hoặc từ thanh mục lục để xem chi tiết.</p>
+                  <h2 className="text-xl font-black text-slate-900">{t("Danh mục Điều khoản & Chính sách Sàn")}</h2>
+                  <p className="text-sm text-slate-500 mt-1">{t("Vui lòng chọn một chính sách bên dưới hoặc từ thanh mục lục để xem chi tiết.")}</p>
                 </div>
 
                 {policies.length > 0 ? (
@@ -213,7 +214,7 @@ export default function PolicyPage() {
                           {String(idx + 1).padStart(2, "0")}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-bold text-slate-900 group-hover:text-sky-700 truncate">{p.title}</h4>
+                          <h4 className="text-sm font-bold text-slate-900 group-hover:text-sky-700 truncate">{t(p.title) || p.title}</h4>
                           <p className="text-xs text-slate-500 mt-1 line-clamp-2">
                             {(p.content || p.noi_dung || "").replace(/<[^>]*>/g, "")}
                           </p>
@@ -224,7 +225,7 @@ export default function PolicyPage() {
                   </div>
                 ) : (
                   <div className="py-12 text-center text-slate-400 text-sm">
-                    Chưa có chính sách nào được cấu hình trong hệ thống.
+                    {t("Chưa có chính sách nào được cấu hình trong hệ thống.")}
                   </div>
                 )}
               </div>

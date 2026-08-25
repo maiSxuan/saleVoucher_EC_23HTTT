@@ -15,7 +15,7 @@ const translationService = require("../../../../common/services/translation.serv
 
 class OrderService {
   // kiểm tra khả dụng, tính tổng tiền — CHƯA ghi DB
-  async reviewOrder({ accountId, voucherIds }) {
+  async reviewOrder({ accountId, voucherIds, lang = "vi" }) {
     if (!Array.isArray(voucherIds) || voucherIds.length === 0) {
       const err = new Error("Giỏ hàng trống, không thể tạo đơn hàng");
       err.status = 400;
@@ -64,6 +64,15 @@ class OrderService {
     }
 
     const total = items.reduce((sum, i) => sum + i.subtotal, 0);
+
+    if ((lang || "").toLowerCase().startsWith("en")) {
+      for (const item of items) {
+        if (item.name) {
+          item.name = await translationService.translateText(item.name, "en");
+        }
+      }
+    }
+
     return { items, total };
   }
 
@@ -111,7 +120,7 @@ class OrderService {
           reason,
           after: { trang_thai: "Cho xu ly" },
         })
-        .catch(() => {});
+        .catch(() => { });
       return { type: "yeu_cau_huy", data: ycHuy };
     }
     // Chưa thanh toán → hủy trực tiếp
@@ -128,7 +137,7 @@ class OrderService {
         after: { orderStatus: OrderStatus.DA_HUY },
         reason: "Khách hàng hủy đơn hàng chưa thanh toán",
       })
-      .catch(() => {});
+      .catch(() => { });
 
     return { type: "huy_truc_tiep", orderId, status: OrderStatus.DA_HUY };
   }
@@ -186,6 +195,7 @@ class OrderService {
       if (Array.isArray(order.items)) {
         for (const item of order.items) {
           if (item.voucherName) item.voucherName = await translationService.translateText(item.voucherName, "en");
+          if (item.name) item.name = await translationService.translateText(item.name, "en");
           if (item.partnerName) item.partnerName = await translationService.translateText(item.partnerName, "en");
         }
       }
@@ -250,7 +260,7 @@ class OrderService {
         targetId: maVoucherMua,
         after: { noiDung },
       })
-      .catch(() => {});
+      .catch(() => { });
 
     return complaint;
   }
@@ -273,7 +283,7 @@ class OrderService {
         targetId: maVoucherMua,
         after: { diem, noiDung },
       })
-      .catch(() => {});
+      .catch(() => { });
 
     return review;
   }
@@ -812,11 +822,11 @@ class OrderService {
       sandboxResult =
         gateway === "vnpay"
           ? await vnpayGateway.queryRefundStatus({
-              paymentId: payment.ma_thanh_toan,
-              refundId: ht.ma_gd_hoan,
-              transactionDate: payment.thoi_gian_tt,
-              ipAddr,
-            })
+            paymentId: payment.ma_thanh_toan,
+            refundId: ht.ma_gd_hoan,
+            transactionDate: payment.thoi_gian_tt,
+            ipAddr,
+          })
           : await paypalGateway.queryRefundStatus({ refundId: ht.ma_gd_hoan });
     } catch (error) {
       await supabase
