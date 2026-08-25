@@ -8,9 +8,18 @@ function getHeaders() {
   };
 }
 
+function getActiveLang(explicitLang) {
+  return (
+    explicitLang ||
+    localStorage.getItem("app_lang") ||
+    localStorage.getItem("i18nextLng") ||
+    "vi"
+  );
+}
+
 export const contentApi = {
   list: async (type, lang) => {
-    const currentLang = lang || localStorage.getItem("i18nextLng") || "vi";
+    const currentLang = getActiveLang(lang);
     const params = new URLSearchParams();
     if (type) params.append("loai", type);
     if (currentLang) params.append("lang", currentLang);
@@ -21,7 +30,7 @@ export const contentApi = {
     return json.data || json;
   },
   getById: async (id, lang) => {
-    const currentLang = lang || localStorage.getItem("i18nextLng") || "vi";
+    const currentLang = getActiveLang(lang);
     const response = await fetch(`${API_BASE}/content/${id}?lang=${encodeURIComponent(currentLang)}`);
     if (!response.ok) throw new Error("Failed to fetch content");
     const json = await response.json();

@@ -63,44 +63,54 @@ export default function VoucherSearchPage() {
 
     loadVouchersData();
 
-    window.addEventListener("app_language_changed", loadVouchersData);
+    const loadBannersAndArticles = () => {
+      const lang = localStorage.getItem("app_lang") || localStorage.getItem("i18nextLng") || "vi";
+      contentApi
+        .list("banner", lang)
+        .then((res) => {
+          if (!ignore) {
+            const list = Array.isArray(res) ? res : (res.data || []);
+            const active = list.filter(
+              (b) => {
+                const st = b.status || b.trang_thai;
+                return st === "visible" || st === "Dang hien thi" || !st;
+              }
+            );
+            setBanners(active);
+          }
+        })
+        .catch(() => {});
 
-    // Fetch active banners and articles from content management
-    contentApi
-      .list("banner")
-      .then((res) => {
-        if (!ignore) {
-          const list = Array.isArray(res) ? res : (res.data || []);
-          const active = list.filter(
-            (b) => {
-              const st = b.status || b.trang_thai;
-              return st === "visible" || st === "Dang hien thi" || !st;
-            }
-          );
-          setBanners(active);
-        }
-      })
-      .catch(() => {});
+      contentApi
+        .list("bai_viet", lang)
+        .then((res) => {
+          if (!ignore) {
+            const list = Array.isArray(res) ? res : (res.data || []);
+            const active = list.filter(
+              (a) => {
+                const st = a.status || a.trang_thai;
+                return st === "visible" || st === "Dang hien thi" || !st;
+              }
+            );
+            setArticles(active);
+          }
+        })
+        .catch(() => {});
+    };
 
-    contentApi
-      .list("bai_viet")
-      .then((res) => {
-        if (!ignore) {
-          const list = Array.isArray(res) ? res : (res.data || []);
-          const active = list.filter(
-            (a) => {
-              const st = a.status || a.trang_thai;
-              return st === "visible" || st === "Dang hien thi" || !st;
-            }
-          );
-          setArticles(active);
-        }
-      })
-      .catch(() => {});
+    loadVouchersData();
+    loadBannersAndArticles();
+
+    const handleLangChange = () => {
+      loadVouchersData();
+      loadBannersAndArticles();
+    };
+
+    window.addEventListener("app_language_changed", handleLangChange);
 
     return () => {
       ignore = true;
-      window.removeEventListener("app_language_changed", loadVouchersData);
+      window.removeEventListener("app_language_changed", handleLangChange);
     };
   }, []);
 
@@ -257,10 +267,10 @@ export default function VoucherSearchPage() {
               {t("✨ Tin nổi bật")}
             </span>
             <h1 className="text-2xl sm:text-4xl font-extrabold mb-3 leading-tight drop-shadow-md">
-              {currentBanner.title}
+              {t(currentBanner.title)}
             </h1>
             <p className="text-sm sm:text-base opacity-95 leading-relaxed drop-shadow-md line-clamp-3">
-              {currentBanner.content}
+              {t(currentBanner.content)}
             </p>
           </div>
 

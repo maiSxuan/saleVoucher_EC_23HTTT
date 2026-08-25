@@ -104,19 +104,31 @@ export default function CustomerLayout() {
       .catch(() => setPartnersByCategory({}));
 
     // Fetch popups
-    contentApi.list("popup")
-      .then(res => {
-        const list = Array.isArray(res) ? res : (res.data || []);
-        const active = list.filter(p => {
-          const st = p.status || p.trang_thai;
-          return st === 'visible' || st === 'Dang hien thi' || !st;
-        });
-        setPopups(active);
-      })
-      .catch(() => { });
+    const loadPopups = () => {
+      const lang = localStorage.getItem("app_lang") || localStorage.getItem("i18nextLng") || "vi";
+      contentApi.list("popup", lang)
+        .then(res => {
+          const list = Array.isArray(res) ? res : (res.data || []);
+          const active = list.filter(p => {
+            const st = p.status || p.trang_thai;
+            return st === 'visible' || st === 'Dang hien thi' || !st;
+          });
+          setPopups(active);
+        })
+        .catch(() => { });
+    };
+
+    loadPopups();
+
+    const handleLangChange = () => {
+      loadCategories();
+      loadPopups();
+    };
+
+    window.addEventListener("app_language_changed", handleLangChange);
 
     return () => {
-      window.removeEventListener("app_language_changed", loadCategories);
+      window.removeEventListener("app_language_changed", handleLangChange);
     };
   }, []);
 
@@ -405,7 +417,7 @@ export default function CustomerLayout() {
             <button
               onClick={() => setPopups([])}
               className="absolute top-4 right-4 z-20 p-2 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors backdrop-blur-sm"
-              title="Đóng"
+              title={t("Đóng")}
             >
               <X size={16} />
             </button>
@@ -417,9 +429,9 @@ export default function CustomerLayout() {
             )}
 
             <div className="p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-2">{activePopup.title}</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{t(activePopup.title)}</h3>
               <div className="text-sm text-gray-600 max-h-48 overflow-y-auto leading-relaxed mb-6">
-                {activePopup.content}
+                {t(activePopup.content)}
               </div>
               <div className="flex items-center justify-between">
                 {popups.length > 1 ? (
@@ -443,7 +455,7 @@ export default function CustomerLayout() {
                 ) : <div />}
                 <button
                   onClick={() => setPopups([])}
-                  className="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors shadow-sm text-sm ml-auto"
+                  className="px-6 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-semibold transition-colors shadow-sm text-sm ml-auto"
                 >
                   {t("Đã hiểu")}
                 </button>

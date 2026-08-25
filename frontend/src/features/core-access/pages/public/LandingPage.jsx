@@ -73,10 +73,11 @@ export default function LandingPage() {
 
     const loadData = () => {
       setLoading(true);
+      const lang = localStorage.getItem("app_lang") || localStorage.getItem("i18nextLng") || "vi";
       Promise.allSettled([
         fetchSellingVouchers(),
         fetchCategories(),
-        contentApi.list('banner'),
+        contentApi.list('banner', lang),
       ])
         .then(([vRes, cRes, bRes]) => {
           if (ignore) return;
@@ -421,7 +422,7 @@ export default function LandingPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-mono font-bold text-brand-accent-foreground bg-brand-accent-soft border border-brand-accent-border px-2.5 py-1 rounded-full">
-                      📢 BANNER ({currentBannerIndex + 1}/{banners.length})
+                      📢 {t("BANNER")} ({currentBannerIndex + 1}/{banners.length})
                     </span>
                   </div>
                 </div>
@@ -450,7 +451,7 @@ export default function LandingPage() {
                               type="button"
                               onClick={() => setCurrentBannerIndex((prev) => (prev === 0 ? banners.length - 1 : prev - 1))}
                               className="absolute left-1 top-1/3 -translate-y-1/2 w-8 h-8 rounded-full bg-slate-900/60 hover:bg-slate-900/85 text-white flex items-center justify-center transition-all cursor-pointer shadow-md z-10"
-                              title="Banner trước"
+                              title={t("Banner trước")}
                             >
                               <ChevronLeft size={18} />
                             </button>
@@ -458,7 +459,7 @@ export default function LandingPage() {
                               type="button"
                               onClick={() => setCurrentBannerIndex((prev) => (prev + 1) % banners.length)}
                               className="absolute right-1 top-1/3 -translate-y-1/2 w-8 h-8 rounded-full bg-slate-900/60 hover:bg-slate-900/85 text-white flex items-center justify-center transition-all cursor-pointer shadow-md z-10"
-                              title="Banner tiếp theo"
+                              title={t("Banner tiếp theo")}
                             >
                               <ChevronRight size={18} />
                             </button>
@@ -466,7 +467,7 @@ export default function LandingPage() {
                         )}
 
                         <div className="cursor-default">
-                          <h3 className="font-extrabold text-base text-slate-900">{banner.title || banner.tieu_de}</h3>
+                          <h3 className="font-extrabold text-base text-slate-900">{t(banner.title || banner.tieu_de)}</h3>
                           {(banner.content || banner.noi_dung) && (
                             <div className="text-xs text-slate-600 mt-1 line-clamp-3" dangerouslySetInnerHTML={{ __html: banner.content || banner.noi_dung }} />
                           )}
