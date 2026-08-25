@@ -1,6 +1,6 @@
 /**
  * Dịch vụ gửi email của module Core Access.
- * Bọc mailer dùng chung để AuthService không phụ thuộc trực tiếp vào Resend.
+ * Bọc mailer dùng chung để AuthService không phụ thuộc trực tiếp vào SendGrid.
  */
 const { sendOtpEmail } = require("../../../../common/utils/mailer");
 

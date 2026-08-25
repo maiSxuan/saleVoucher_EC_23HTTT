@@ -348,7 +348,7 @@ class AuthService {
     const expiresAt = Date.now() + 5 * 60 * 1000;
 
     try {
-      // Gửi OTP qua Resend API sau khi kiểm tra tên miền email
+      // Gửi OTP qua SendGrid API sau khi kiểm tra tên miền email
       await emailService.sendOtpEmail(targetEmail, otp, "forgot_password");
 
       // Gửi email thành công mới lưu vào store và ghi audit log thành công

@@ -1,10 +1,10 @@
 /**
  * Purpose: Gửi email dùng chung cho toàn backend (OTP, thông báo...).
- * Chặn đầu và kiểm tra tính hợp lệ của địa chỉ email trước khi gửi qua Resend.
+ * Chặn đầu và kiểm tra tính hợp lệ của địa chỉ email trước khi gửi qua SendGrid.
  */
-const { Resend } = require("resend");
+const sgMail = require("@sendgrid/mail");
 const QRCode = require("qrcode");
-const { loadResend, loadAuthResend } = require("../../config/environment");
+const { loadSendGrid, loadAuthSendGrid } = require("../../config/environment");
 const AppError = require("../errors/AppError");
 
 function escapeHtml(value) {
@@ -19,7 +19,7 @@ function escapeHtml(value) {
 function getActiveMailer(type = "register") {
   require("dotenv").config();
   const isForgotPassword = type === "forgot_password";
-  const cfg = isForgotPassword ? loadAuthResend() : loadResend();
+  const cfg = isForgotPassword ? loadAuthSendGrid() : loadSendGrid();
   const apiKey = (cfg.apiKey || "").trim();
   const from = (cfg.from || "").trim();
 
@@ -27,31 +27,35 @@ function getActiveMailer(type = "register") {
     return null;
   }
 
+  sgMail.setApiKey(apiKey);
+
   return {
-    client: new Resend(apiKey),
     from,
   };
 }
 
-async function sendWithResend(mailer, mailOptions) {
-  const { data, error } = await mailer.client.emails.send({
+async function sendWithSendGrid(mailer, mailOptions) {
+  const attachments = (mailOptions.attachments || []).map((attachment) => ({
+    content: Buffer.isBuffer(attachment.content)
+      ? attachment.content.toString("base64")
+      : attachment.content,
+    filename: attachment.filename,
+    type: attachment.contentType || "application/octet-stream",
+    disposition: attachment.contentDisposition || "attachment",
+    ...(attachment.cid ? { content_id: attachment.cid } : {}),
+  }));
+
+  const [response] = await sgMail.send({
     ...mailOptions,
+    attachments,
     from: mailer.from,
   });
 
-  if (error) {
-    const resendError = new Error(
-      error.message || "Resend API từ chối gửi email",
-    );
-    resendError.code = error.name || "RESEND_API_ERROR";
-    throw resendError;
-  }
-
-  return data;
+  return response;
 }
 
 /**
- * Kiểm tra tính hợp lệ của tên miền email trước khi gửi qua Resend.
+ * Kiểm tra tính hợp lệ của tên miền email trước khi gửi qua SendGrid.
  * Chặn đầu các email cục bộ hoặc không có tên miền thực.
  */
 async function validateEmailDomain(email) {
@@ -155,17 +159,17 @@ async function sendOtpEmail(toEmail, otp, type = "register") {
 
   if (!mailerObj) {
     console.error(
-      `[Mailer] Chưa cấu hình RESEND_API_KEY/RESEND_FROM cho tác vụ ${type}`,
+      `[Mailer] Chưa cấu hình SENDGRID_API_KEY/SENDGRID_FROM cho tác vụ ${type}`,
     );
     throw new AppError(
-      "Chưa cấu hình Resend API key hoặc địa chỉ email gửi trong hệ thống.",
+      "Chưa cấu hình SendGrid API key hoặc địa chỉ email gửi trong hệ thống.",
       500,
-      "RESEND_NOT_CONFIGURED",
+      "SENDGRID_NOT_CONFIGURED",
     );
   }
 
   try {
-    const result = await sendWithResend(mailerObj, {
+    const result = await sendWithSendGrid(mailerObj, {
       to: toEmail,
       subject: subject,
       html: content,
@@ -174,12 +178,12 @@ async function sendOtpEmail(toEmail, otp, type = "register") {
     return result;
   } catch (err) {
     console.error(
-      `[Mailer] Gửi mail qua Resend thất bại (${err.message}) đến ${toEmail}`,
+      `[Mailer] Gửi mail qua SendGrid thất bại (${err.message}) đến ${toEmail}`,
     );
     throw new AppError(
-      `Không thể gửi email đến "${toEmail}" qua Resend (${err.message}). Vui lòng kiểm tra lại địa chỉ gửi và cấu hình Resend.`,
+      `Không thể gửi email đến "${toEmail}" qua SendGrid (${err.message}). Vui lòng kiểm tra lại địa chỉ gửi và cấu hình SendGrid.`,
       400,
-      "RESEND_SEND_FAILED",
+      "SENDGRID_SEND_FAILED",
     );
   }
 }
@@ -204,9 +208,9 @@ async function sendNotificationEmail(
   const mailerObj = getActiveMailer("register");
   if (!mailerObj) {
     throw new AppError(
-      "Chưa cấu hình Resend API key hoặc địa chỉ email gửi trong hệ thống.",
+      "Chưa cấu hình SendGrid API key hoặc địa chỉ email gửi trong hệ thống.",
       500,
-      "RESEND_NOT_CONFIGURED",
+      "SENDGRID_NOT_CONFIGURED",
     );
   }
 
@@ -291,7 +295,7 @@ async function sendNotificationEmail(
   }
 
   try {
-    return await sendWithResend(mailerObj, {
+    return await sendWithSendGrid(mailerObj, {
       to: toEmail,
       subject: subject || safeTitle,
       html: `<div style="font-family:Arial,sans-serif;padding:20px;max-width:560px;margin:auto;border:1px solid #e5e7eb;border-radius:10px">
@@ -306,9 +310,9 @@ async function sendNotificationEmail(
     });
   } catch (err) {
     throw new AppError(
-      `Không thể gửi thông báo đến "${toEmail}" qua Resend (${err.message}).`,
+      `Không thể gửi thông báo đến "${toEmail}" qua SendGrid (${err.message}).`,
       400,
-      "RESEND_SEND_FAILED",
+      "SENDGRID_SEND_FAILED",
     );
   }
 }

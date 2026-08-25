@@ -24,17 +24,17 @@ function loadDatabase() {
   };
 }
 
-function loadResend() {
+function loadSendGrid() {
   return {
-    apiKey: process.env.RESEND_API_KEY,
-    from: process.env.RESEND_FROM,
+    apiKey: process.env.SENDGRID_API_KEY,
+    from: process.env.SENDGRID_FROM,
   };
 }
 
-function loadAuthResend() {
+function loadAuthSendGrid() {
   return {
-    apiKey: process.env.AUTH_RESEND_API_KEY || process.env.RESEND_API_KEY,
-    from: process.env.AUTH_RESEND_FROM || process.env.RESEND_FROM,
+    apiKey: process.env.AUTH_SENDGRID_API_KEY || process.env.SENDGRID_API_KEY,
+    from: process.env.AUTH_SENDGRID_FROM || process.env.SENDGRID_FROM,
   };
 }
 
@@ -91,8 +91,8 @@ function loadPayment() {
 module.exports = {
   loadEnvironment,
   loadDatabase,
-  loadResend,
-  loadAuthResend,
+  loadSendGrid,
+  loadAuthSendGrid,
   loadJwt,
   loadVnpay,
   loadPaypal,
