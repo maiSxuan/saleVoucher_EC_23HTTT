@@ -48,6 +48,20 @@ function loadAuthGmail() {
   };
 }
 
+function loadResend() {
+  return {
+    apiKey: process.env.RESEND_API_KEY,
+    from: process.env.RESEND_FROM,
+  };
+}
+
+function loadAuthResend() {
+  return {
+    apiKey: process.env.AUTH_RESEND_API_KEY || process.env.RESEND_API_KEY,
+    from: process.env.AUTH_RESEND_FROM || process.env.RESEND_FROM,
+  };
+}
+
 // Cấu hình JWT (Access Token + Refresh Token)
 function loadJwt() {
   const secret = process.env.JWT_SECRET;
@@ -103,6 +117,8 @@ module.exports = {
   loadDatabase,
   loadGmail,
   loadAuthGmail,
+  loadResend,
+  loadAuthResend,
   loadJwt,
   loadVnpay,
   loadPaypal,
