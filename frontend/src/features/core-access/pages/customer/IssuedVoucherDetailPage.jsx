@@ -368,7 +368,7 @@ export default function IssuedVoucherDetailPage() {
                     {t(b.branchName)}
                   </p>
                   {b.address && (
-                    <p className="text-xs text-slate-400 truncate">
+                    <p className="text-xs text-slate-700 truncate">
                       {t(b.address)}
                     </p>
                   )}
