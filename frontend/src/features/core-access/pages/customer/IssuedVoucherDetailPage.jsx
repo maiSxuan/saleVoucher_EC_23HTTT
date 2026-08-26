@@ -86,6 +86,21 @@ function InfoRow({ icon, label, value }) {
   );
 }
 
+function renderBulletList(content) {
+  const lines = String(content)
+    .split(/\r?\n/)
+    .map((line) => line.trim().replace(/^(?:[-*•]|\d+[.)])\s+/, ""))
+    .filter(Boolean);
+
+  return (
+    <ul className="list-disc pl-5 space-y-1">
+      {lines.map((line, index) => (
+        <li key={`${line}-${index}`}>{line}</li>
+      ))}
+    </ul>
+  );
+}
+
 export default function IssuedVoucherDetailPage() {
   const { t } = useTranslation();
   const { issuedId } = useParams();
@@ -98,25 +113,50 @@ export default function IssuedVoucherDetailPage() {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [existingReview, setExistingReview] = useState(null);
   const [showViewReviewModal, setShowViewReviewModal] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   // Complaint states
   const [showComplaintModal, setShowComplaintModal] = useState(false);
   const [existingComplaint, setExistingComplaint] = useState(null);
   const [showViewComplaintModal, setShowViewComplaintModal] = useState(false);
+  const [submittingComplaint, setSubmittingComplaint] = useState(false);
 
   const { create: createReview } = useReview();
 
   const handleSubmitReview = async (reviewData) => {
+    if (submittingReview) return;
+    setSubmittingReview(true);
     try {
       await createReview({ ...reviewData, ma_voucher_mua: issuedId });
       setShowReviewModal(false);
-      toast.success(t('Đã gửi đánh giá!'));
+      toast.success(t("Đã gửi đánh giá!"));
       // Refresh existing review
-      reviewApi.getByPurchaseId(issuedId)
+      reviewApi
+        .getByPurchaseId(issuedId)
         .then((rev) => setExistingReview(rev))
-        .catch(() => { });
+        .catch(() => {});
     } catch (err) {
-      toast.error(t(err.message || 'Gửi đánh giá thất bại'));
+      toast.error(t(err.message || "Gửi đánh giá thất bại"));
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const handleSubmitComplaint = async (feedbackData) => {
+    if (submittingComplaint) return;
+    setSubmittingComplaint(true);
+    try {
+      const complaint = await feedbackApi.create({
+        ...feedbackData,
+        ma_voucher_mua: issuedId,
+      });
+      setExistingComplaint(complaint?.data || complaint);
+      setShowComplaintModal(false);
+      toast.success(t("Đã gửi khiếu nại!"));
+    } catch (err) {
+      toast.error(t(err.message || "Gửi khiếu nại thất bại"));
+    } finally {
+      setSubmittingComplaint(false);
     }
   };
 
@@ -127,20 +167,28 @@ export default function IssuedVoucherDetailPage() {
     getIssuedVoucherDetail(issuedId)
       .then((data) => setVm(data))
       .catch((err) =>
-        setError(t(err.message || "Không thể tải thông tin voucher."))
+        setError(t(err.message || "Không thể tải thông tin voucher.")),
       )
       .finally(() => setLoading(false));
 
-    reviewApi.getByPurchaseId(issuedId)
+    reviewApi
+      .getByPurchaseId(issuedId)
       .then((rev) => setExistingReview(rev))
       .catch(() => setExistingReview(null));
+
+    feedbackApi
+      .getByPurchaseId(issuedId)
+      .then((complaint) => setExistingComplaint(complaint))
+      .catch(() => setExistingComplaint(null));
   }, [issuedId, t]);
 
   if (loading) {
     return (
       <div className="flex flex-col items-center py-24 gap-3">
         <RefreshCw className="w-8 h-8 text-sky-400 animate-spin" />
-        <p className="text-sm text-slate-500">{t("Đang tải thông tin voucher...")}</p>
+        <p className="text-sm text-slate-500">
+          {t("Đang tải thông tin voucher...")}
+        </p>
       </div>
     );
   }
@@ -156,7 +204,9 @@ export default function IssuedVoucherDetailPage() {
           {t(error) || t("Không tìm thấy voucher này.")}
         </p>
         <p className="text-xs text-slate-400 mb-4">
-          {t("Voucher của bạn vẫn được lưu. Bạn có thể xem lại tại mục \"Đơn hàng của tôi\".")}
+          {t(
+            'Voucher của bạn vẫn được lưu. Bạn có thể xem lại tại mục "Đơn hàng của tôi".',
+          )}
         </p>
         <div className="flex flex-col gap-2">
           <button
@@ -257,7 +307,9 @@ export default function IssuedVoucherDetailPage() {
           icon={<Calendar className="w-4 h-4" />}
           label="Thời hạn sử dụng"
           value={
-            validFrom ? `${validFrom} → ${validUntil}` : `${t("Đến")} ${validUntil}`
+            validFrom
+              ? `${validFrom} → ${validUntil}`
+              : `${t("Đến")} ${validUntil}`
           }
         />
         <InfoRow
@@ -265,11 +317,19 @@ export default function IssuedVoucherDetailPage() {
           label="Thời gian phát hành"
           value={issuedAt}
         />
-        <InfoRow
-          icon={<FileText className="w-4 h-4" />}
-          label="Điều kiện sử dụng"
-          value={t(v.dieu_kien_ap_dung) || t("Áp dụng tại các chi nhánh được chỉ định.")}
-        />
+        {v.dieu_kien_ap_dung && (
+          <div className="flex items-start gap-3 py-3 border-b border-slate-100">
+            <div className="mt-0.5 text-slate-400">
+              <FileText className="w-4 h-4" />
+            </div>
+            <div className="text-sm text-slate-700 leading-relaxed">
+              <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1.5">
+                {t("Điều kiện sử dụng")}
+              </p>
+              {renderBulletList(t(v.dieu_kien_ap_dung))}
+            </div>
+          </div>
+        )}
         {vm.mo_ta && (
           <InfoRow
             icon={<FileText className="w-4 h-4" />}
@@ -308,7 +368,9 @@ export default function IssuedVoucherDetailPage() {
                     {t(b.branchName)}
                   </p>
                   {b.address && (
-                    <p className="text-xs text-slate-400 truncate">{t(b.address)}</p>
+                    <p className="text-xs text-slate-400 truncate">
+                      {t(b.address)}
+                    </p>
                   )}
                   {b.area && (
                     <p className="text-xs text-sky-500">{t(b.area)}</p>
@@ -357,7 +419,13 @@ export default function IssuedVoucherDetailPage() {
       </div>
 
       {/* Modals */}
-      {showReviewModal && <ReviewForm onSubmit={handleSubmitReview} onCancel={() => setShowReviewModal(false)} />}
+      {showReviewModal && (
+        <ReviewForm
+          isSubmitting={submittingReview}
+          onSubmit={handleSubmitReview}
+          onCancel={() => setShowReviewModal(false)}
+        />
+      )}
       {showViewReviewModal && existingReview && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
@@ -370,16 +438,25 @@ export default function IssuedVoucherDetailPage() {
                 <Star
                   key={s}
                   size={16}
-                  className={s <= (existingReview.rating || 5) ? "text-yellow-500 fill-yellow-500" : "text-gray-300"}
+                  className={
+                    s <= (existingReview.rating || 5)
+                      ? "text-yellow-500 fill-yellow-500"
+                      : "text-gray-300"
+                  }
                 />
               ))}
-              <span className="text-sm font-semibold text-slate-700 ml-2">{existingReview.rating} / 5 {t("sao")}</span>
+              <span className="text-sm font-semibold text-slate-700 ml-2">
+                {existingReview.rating} / 5 {t("sao")}
+              </span>
             </div>
             <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-xl mb-4">
               {existingReview.comment || t("Không có nội dung.")}
             </p>
             <p className="text-xs text-slate-400 mb-5">
-              {t("Ngày đánh giá:")} {existingReview.createdAt ? new Date(existingReview.createdAt).toLocaleString("vi-VN") : "—"}
+              {t("Ngày đánh giá:")}{" "}
+              {existingReview.createdAt
+                ? new Date(existingReview.createdAt).toLocaleString("vi-VN")
+                : "—"}
             </p>
             <button
               onClick={() => setShowViewReviewModal(false)}
@@ -392,7 +469,13 @@ export default function IssuedVoucherDetailPage() {
       )}
 
       {/* Complaint Modal */}
-      {showComplaintModal && <FeedbackForm onSubmit={handleSubmitComplaint} onCancel={() => setShowComplaintModal(false)} />}
+      {showComplaintModal && (
+        <FeedbackForm
+          isSubmitting={submittingComplaint}
+          onSubmit={handleSubmitComplaint}
+          onCancel={() => setShowComplaintModal(false)}
+        />
+      )}
       {showViewComplaintModal && existingComplaint && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
@@ -401,13 +484,21 @@ export default function IssuedVoucherDetailPage() {
               Chi tiết khiếu nại của bạn
             </h3>
             <div className="mb-2 text-xs font-semibold text-slate-500">
-              Trạng thái: <span className="text-orange-600">{existingComplaint.status || 'Mới'}</span>
+              Trạng thái:{" "}
+              <span className="text-orange-600">
+                {existingComplaint.status || "Mới"}
+              </span>
             </div>
             <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-xl mb-4">
-              {existingComplaint.content || existingComplaint.noi_dung || "Không có nội dung."}
+              {existingComplaint.content ||
+                existingComplaint.noi_dung ||
+                "Không có nội dung."}
             </p>
             <p className="text-xs text-slate-400 mb-5">
-              Ngày gửi: {existingComplaint.createdAt ? new Date(existingComplaint.createdAt).toLocaleString("vi-VN") : "—"}
+              Ngày gửi:{" "}
+              {existingComplaint.createdAt
+                ? new Date(existingComplaint.createdAt).toLocaleString("vi-VN")
+                : "—"}
             </p>
             <button
               onClick={() => setShowViewComplaintModal(false)}
