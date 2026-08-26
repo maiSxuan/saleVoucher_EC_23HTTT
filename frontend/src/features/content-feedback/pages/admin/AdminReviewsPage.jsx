@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Star, Search, Filter, ArrowUpDown, Trash2, ShieldAlert, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { reviewApi } from "../../api/reviewApi";
+import { reviewApi } from "../../../../shared/api/reviewApi";
 import { ConfirmModal } from "../../components/ui/ConfirmModal";
 
 export default function AdminReviewsPage() {

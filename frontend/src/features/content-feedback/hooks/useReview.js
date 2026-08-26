@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { reviewApi } from '../api/reviewApi';
+import { reviewApi } from '../../../shared/api/reviewApi';
 
 export function useReview() {
   const [data, setData] = useState(null);

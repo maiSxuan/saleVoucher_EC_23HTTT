@@ -9,7 +9,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { fetchSellingVouchers } from "../../../../shared/api/catalogApi";
-import { contentApi } from "../../../../features/content-feedback/api/contentApi";
+import { contentApi } from "../../../../shared/api/contentApi";
 import VoucherCard from "../../components/VoucherCard";
 import { useTranslation } from "react-i18next";
 

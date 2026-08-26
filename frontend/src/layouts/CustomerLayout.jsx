@@ -18,7 +18,7 @@ import {
   fetchCategories,
   fetchSellingVouchers,
 } from "../shared/api/catalogApi";
-import { contentApi } from "../features/content-feedback/api/contentApi";
+import { contentApi } from "../shared/api/contentApi";
 
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "../shared/components/LanguageSwitcher";

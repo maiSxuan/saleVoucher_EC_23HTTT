@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { feedbackApi } from '../api/feedbackApi';
+import { feedbackApi } from '../../../shared/api/feedbackApi';
 
 export function useFeedback({ loadList = true } = {}) {
   const [data, setData] = useState(null);

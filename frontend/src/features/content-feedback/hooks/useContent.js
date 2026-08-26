@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { contentApi } from '../api/contentApi';
+import { contentApi } from '../../../shared/api/contentApi';
 import { categoryApi } from '../../../shared/api/categoryApi';
 
 export function useContent() {
