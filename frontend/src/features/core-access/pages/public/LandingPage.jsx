@@ -508,21 +508,19 @@ export default function LandingPage() {
             <div className="grid grid-cols-3 gap-4 pt-6 border-t border-white/20 max-w-md mx-auto lg:mx-0">
               <div>
                 <p className="text-2xl font-black text-white">100%</p>
-                <p className="text-xs text-sky-100 mt-0.5">
+                <p className="text-xs  text-white mt-0.5">
                   {t("Voucher Chính Hãng")}
                 </p>
               </div>
               <div>
-                <p className="text-2xl font-black text-brand-accent-soft">
-                  50+
-                </p>
-                <p className="text-xs text-sky-100 mt-0.5">
+                <p className="text-2xl font-black text-white">50+</p>
+                <p className="text-xs  text-white mt-0.5">
                   {t("Đối Tác Uy Tín")}
                 </p>
               </div>
               <div>
                 <p className="text-2xl font-black text-white">24/7</p>
-                <p className="text-xs text-sky-100 mt-0.5">
+                <p className="text-xs  text-white mt-0.5">
                   {t("Hỗ Trợ Siêu Tốc")}
                 </p>
               </div>
@@ -672,7 +670,7 @@ export default function LandingPage() {
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight pt-1">
               {t("voucher.featuredBrands", "Thương Hiệu Đối Tác Nổi Bật")}
             </h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-700">
               {t(
                 "landing.partnerSub",
                 "Các doanh nghiệp & chuỗi cửa hàng chính hãng trên hệ thống Snow Voucher",
@@ -775,7 +773,7 @@ export default function LandingPage() {
               <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-2">
                 {t("landing.categoryTitle", "Danh Mục Voucher Đang Mở Bán")}
               </h2>
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="text-sm text-slate-700 mt-1">
                 {t(
                   "landing.categorySub",
                   "Xem nhanh số lượng voucher chính hãng đang có sẵn theo từng ngành hàng",
@@ -884,7 +882,7 @@ export default function LandingPage() {
               <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-2">
                 {t("Các Voucher Mới Nhất")}
               </h2>
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="text-sm text-slate-700 mt-1">
                 {t("Săn deal hot vừa phát hành với chiết khấu hấp dẫn")}
               </p>
             </div>
@@ -986,7 +984,7 @@ export default function LandingPage() {
                           {t(v.ten_voucher)}
                         </h3>
 
-                        <div className="text-xs text-slate-500 line-clamp-1">
+                        <div className="text-xs text-slate-700 line-clamp-1">
                           {t(v.categoryName)}
                         </div>
 
@@ -1032,7 +1030,7 @@ export default function LandingPage() {
               <h3 className="font-bold text-slate-700">
                 {t("Chưa tìm thấy voucher phù hợp")}
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-700">
                 {t("Hãy thử tìm kiếm với từ khóa khác hoặc bỏ chọn danh mục.")}
               </p>
               <button
