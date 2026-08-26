@@ -157,11 +157,7 @@ export default function LandingPage() {
 
       const partnerObj =
         v.partner || (v.voucher_cn && v.voucher_cn[0]?.chinhanh?.hosodn) || {};
-      const ten_dn =
-        v.ten_dn ||
-        partnerObj.name ||
-        partnerObj.ten_dn ||
-        "Thương hiệu đối tác";
+      const ten_dn = v.ten_dn || partnerObj.name || partnerObj.ten_dn;
       const logo_dn = v.logo || partnerObj.logo;
 
       const categoryName =
