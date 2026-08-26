@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../../../app/auth-context";
 import { ADMIN_PORTAL_ROLES, getAdminRole } from "../../../../shared/constants/admin-roles";
-import { contentApi } from "../../../content-feedback/api/contentApi";
+import { contentApi } from "../../../../shared/api/contentApi";
 
 function getAccountPath(user) {
   const role = getAdminRole(user) || "";

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Calendar, BookOpen } from "lucide-react";
-import { contentApi } from "../../api/contentApi";
+import { contentApi } from "../../../../shared/api/contentApi";
 
 export default function ArticleDetailPage() {
   const { id } = useParams();

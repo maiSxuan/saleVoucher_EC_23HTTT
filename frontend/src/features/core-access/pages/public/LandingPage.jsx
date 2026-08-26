@@ -16,7 +16,7 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { fetchSellingVouchers, fetchCategories } from "../../../../shared/api/catalogApi";
-import { contentApi } from "../../../content-feedback/api/contentApi";
+import { contentApi } from "../../../../shared/api/contentApi";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "../../../../shared/components/LanguageSwitcher";
 

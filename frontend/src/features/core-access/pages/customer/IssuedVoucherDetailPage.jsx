@@ -25,8 +25,8 @@ import QrCodeDisplay from "../../component/QRCodeDisplay";
 import ReviewForm from "../../../content-feedback/components/ReviewForm";
 import FeedbackForm from "../../../content-feedback/components/FeedbackForm";
 import { useReview } from "../../../content-feedback/hooks/useReview";
-import { reviewApi } from "../../../content-feedback/api/reviewApi";
-import { feedbackApi } from "../../../content-feedback/api/feedbackApi";
+import { reviewApi } from "../../../../shared/api/reviewApi";
+import { feedbackApi } from "../../../../shared/api/feedbackApi";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 

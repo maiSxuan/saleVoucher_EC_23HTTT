@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { MessageSquare, RefreshCw, AlertCircle, CheckCircle2, Clock, XCircle, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
-import { feedbackApi } from "../../api/feedbackApi";
+import { feedbackApi } from "../../../../shared/api/feedbackApi";
 import {
   openComplaint,
   resendComplaintCode,

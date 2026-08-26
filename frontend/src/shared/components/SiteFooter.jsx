@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ArrowRight, Mail, MapPin, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { contentApi } from "../../features/content-feedback/api/contentApi";
+import { contentApi } from "../api/contentApi";
 
 export default function SiteFooter() {
   const { t, i18n } = useTranslation();
