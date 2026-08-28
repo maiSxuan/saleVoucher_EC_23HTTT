@@ -75,11 +75,7 @@ export function AdminLayout({ children }) {
   // handleLogout — Xóa session và chuyển về trang login
   // -----------------------------------------------------------------------
   const handleLogout = () => {
-    localStorage.removeItem('accessToken'); // Xóa JWT token
-    localStorage.removeItem('user');         // Xóa thông tin user
-    localStorage.removeItem('ec_auth_token');
-    localStorage.removeItem('ec_auth_user');
-    navigate('/login', { replace: true });   // Chuyển về login
+    navigate('/logout', { replace: true });
   };
 
   // Lấy tên trang hiện tại từ nav items (dùng cho breadcrumb topbar)

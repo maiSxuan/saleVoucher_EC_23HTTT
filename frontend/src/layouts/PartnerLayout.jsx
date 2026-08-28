@@ -107,11 +107,7 @@ export function PartnerLayout({ children }) {
   const { t } = useTranslation();
 
   const handleLogout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("user");
-    localStorage.removeItem("ec_auth_token");
-    localStorage.removeItem("ec_auth_user");
-    navigate("/login", { replace: true });
+    navigate("/logout", { replace: true });
   };
 
   const allNavItems = [

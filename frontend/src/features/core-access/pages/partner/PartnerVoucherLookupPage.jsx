@@ -241,11 +241,7 @@ export default function PartnerVoucherLookupPage() {
     'Đang kết nối';
 
   const handleLogout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('user');
-    localStorage.removeItem('ec_auth_token');
-    localStorage.removeItem('ec_auth_user');
-    navigate('/login', { replace: true });
+    navigate('/logout', { replace: true });
   };
 
   return (
