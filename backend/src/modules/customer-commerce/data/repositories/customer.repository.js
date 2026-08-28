@@ -14,14 +14,7 @@ class CustomerRepository {
     return !!data;
   }
 
-  async createCustomerAccount({
-    ho_ten,
-    email,
-    sdt,
-    loginInfo,
-    hashedPassword,
-  }) {
-    //Insert NGUOIDUNG trước
+  async createCustomerAccount({ ho_ten, email, loginInfo, hashedPassword }) {
     const { data: user, error: userErr } = await supabase
       .from("nguoidung")
       .insert({ ho_ten, email, vai_tro: "Khach hang" })
@@ -29,7 +22,7 @@ class CustomerRepository {
       .single();
     if (userErr) throw userErr;
 
-    //Insert TAIKHOAN, nếu lỗi -> xóa lại NGUOIDUNG vừa tạo (compensating action)
+    // nếu lỗi -> xóa lại NGUOIDUNG vừa tạo
     const { data: account, error: accErr } = await supabase
       .from("taikhoan")
       .insert({
