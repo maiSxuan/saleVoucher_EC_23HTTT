@@ -146,16 +146,25 @@ export function AuthProvider({ children }) {
   // ---------------------------------------------------------------
   const logout = async () => {
     setLoading(true);
+
+    const currentAccessToken =
+      token ||
+      localStorage.getItem("accessToken") ||
+      localStorage.getItem(LEGACY_TOKEN_KEY) ||
+      "";
+    const currentRefreshToken =
+      refreshToken || localStorage.getItem("refreshToken") || "";
+
+    // Xóa phiên phía trình duyệt ngay lập tức, không chờ API đăng xuất hoàn tất.
+    persistSession("", null, "");
+
     try {
-      const currentRefreshToken =
-        refreshToken || localStorage.getItem("refreshToken");
-      if (token) {
-        await logoutApi(token, currentRefreshToken);
+      if (currentAccessToken || currentRefreshToken) {
+        await logoutApi(currentAccessToken, currentRefreshToken);
       }
     } catch (e) {
       console.warn("Logout error:", e);
     } finally {
-      persistSession("", null, "");
       setLoading(false);
     }
   };
