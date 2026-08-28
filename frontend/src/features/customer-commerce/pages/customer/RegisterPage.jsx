@@ -16,13 +16,16 @@ export default function RegisterPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  // step: 'form' -> nhập thông tin | 'otp' -> nhập mã xác thực
-  const [step, setStep] = useState("form");
-
   // form fields
-  const [loginInfo, setLoginInfo] = useState(""); // email
+  const [loginInfo, setLoginInfo] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  /* Form hiển thị
+    'form': from đăng ký
+    'otp': form nhập OTP
+  */
+  const [step, setStep] = useState("form");
+
   const [showPw, setShowPw] = useState(false);
 
   // otp fields
@@ -43,9 +46,10 @@ export default function RegisterPage() {
     setErrors((e) => ({ ...e, [field]: message }));
   const clearErrors = () => setErrors({});
 
-  // ---------- Validate Client ----------
+  // Kiểm tra định dạng thông tin nhập vào
   const validateForm = () => {
     const errs = {};
+    // ktra cấu trúc của input email (Regular expression)
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginInfo);
     if (!loginInfo) errs.loginInfo = "Vui lòng nhập địa chỉ Email.";
     else if (!isEmail) errs.loginInfo = "Vui lòng nhập đúng định dạng email.";
@@ -68,7 +72,6 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      // Gọi API Đăng ký
       await registerCustomerApi({ loginInfo, password, confirmPassword });
 
       setOtp("");
@@ -97,12 +100,12 @@ export default function RegisterPage() {
       // 2. Tự động đăng nhập
       const loginData = await loginApi({ username: loginInfo, password });
 
-      // 3. Lưu Token & Điều hướng
+      // 3. Lưu Token
       localStorage.setItem("accessToken", loginData.accessToken);
       localStorage.setItem("user", JSON.stringify(loginData.user));
       navigate("/customer");
     } catch (err) {
-      // Nếu tự động đăng nhập lỗi hoặc OTP sai -> báo lỗi UI
+      // Nếu tự động đăng nhập lỗi hoặc OTP sai
       setFieldError("otp", err.message || "Xác thực OTP thất bại.");
     } finally {
       setLoading(false);
@@ -217,7 +220,7 @@ export default function RegisterPage() {
             </button>
 
             <p className="text-center text-sm text-gray-500 mt-3">
-              {t("Đã có tài khoản?")}{" "}
+              {t("Đã có tài khoản?")}
               <Link
                 to="/login"
                 className="text-sky-700 hover:text-sky-800 font-medium transition-colors"
@@ -244,7 +247,7 @@ export default function RegisterPage() {
               {t("Xác thực OTP")}
             </h2>
             <p className="text-sm text-gray-500 mb-4">
-              {t("Mã xác thực mô phỏng đã được gửi đến")}{" "}
+              {t("Mã xác thực mô phỏng đã được gửi đến")}
               <strong>{loginInfo}</strong>.
             </p>
 

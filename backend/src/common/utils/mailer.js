@@ -116,7 +116,7 @@ async function validateEmailDomain(email) {
 }
 
 /**
- * Gửi email OTP (Đăng ký hoặc Quên mật khẩu)
+ * Gửi email OTP (Đăng ký)
  * Chặn đầu kiểm tra máy chủ SMTP trước khi gửi.
  */
 async function sendOtpEmail(toEmail, otp, type = "register") {

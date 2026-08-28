@@ -8,6 +8,7 @@ function authHeaders() {
   };
 }
 
+// đọc JSON và check HTTP status
 async function handleResponse(res) {
   const json = await res.json().catch(() => null);
   if (!res.ok) {

@@ -1,11 +1,9 @@
-/**
- * Purpose: Service xử lý logic khách hàng như profile, lịch sử và thông tin cá nhân.
- */
 const bcrypt = require("bcryptjs");
 const customerRepository = require("../../data/repositories/customer.repository");
 const { sendOtpEmail } = require("../../../../common/utils/mailer");
 
-const pendingRegistrations = new Map(); // key: loginInfo -> { gmail, hashedPassword, otp, expiresAt, attempts }
+// thông tin đăng ký: loginInfo -> { gmail, hashedPassword, otp, expiresAt, attempts }
+const pendingRegistrations = new Map();
 const OTP_TTL_MS = 5 * 60 * 1000;
 
 function genOtp() {
@@ -13,8 +11,8 @@ function genOtp() {
 }
 
 class CustomerService {
+  // Xử lý nghiệp vụ đăng ký
   async register({ loginInfo, password, confirmPassword }) {
-    // A5: kiểm tra định dạng
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginInfo);
 
     if (!isEmail) {
@@ -33,7 +31,7 @@ class CustomerService {
       throw err;
     }
 
-    // A6: kiểm tra trùng lặp
+    // kiểm tra trùng lặp dữ liệu
     const exists = await customerRepository.checkLoginInfoExists(loginInfo);
     if (exists) {
       const err = new Error("Email đã được đăng ký");
@@ -130,9 +128,7 @@ class CustomerService {
     pending.otp = genOtp();
     pending.expiresAt = Date.now() + OTP_TTL_MS;
     pending.attempts = 0;
-    pending.otp = genOtp();
-    pending.expiresAt = Date.now() + OTP_TTL_MS;
-    pending.attempts = 0;
+
     await sendOtpEmail(loginInfo, pending.otp);
     return { message: "Đã gửi lại mã xác thực" };
   }
