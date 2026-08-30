@@ -116,11 +116,10 @@ async function validateEmailDomain(email) {
 }
 
 /**
- * Gửi email OTP (Đăng ký)
- * Chặn đầu kiểm tra máy chủ SMTP trước khi gửi.
+ * Gửi email OTP (Đăng ký/Quên mật khẩu)
  */
 async function sendOtpEmail(toEmail, otp, type = "register") {
-  // 1. Chặn đầu: Kiểm tra định dạng và tên miền email
+  // 1.Kiểm tra định dạng và tên miền email
   await validateEmailDomain(toEmail);
 
   const isForgotPassword = type === "forgot_password";

@@ -1,7 +1,3 @@
-/**
- * Purpose: Controller cho các request liên quan đến khách hàng.
- * Ví dụ: xem profile, cập nhật thông tin, xem lịch sử giao dịch.
- */
 class CustomerController {
   constructor(customerService) {
     this.customerService = customerService;

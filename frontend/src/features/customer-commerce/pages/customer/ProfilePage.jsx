@@ -53,13 +53,13 @@ export default function ProfilePage() {
   useEffect(() => {
     fetchProfile()
       .then(setProfile)
-      .catch(() => setErrorMsg(t("Không thể tải thông tin hồ sơ."))) // E1
+      .catch(() => setErrorMsg(t("Không thể tải thông tin hồ sơ.")))
       .finally(() => setLoading(false));
   }, [t]);
 
   const handleSaveProfile = async () => {
     setFieldErrors({});
-    setSaving(true); // NFR-01.3
+    setSaving(true);
     try {
       const updated = await updateProfile({
         ho_ten: profile.ho_ten,
@@ -68,7 +68,7 @@ export default function ProfilePage() {
         ngay_sinh: profile.ngay_sinh,
         gioi_tinh: profile.gioi_tinh,
       });
-      setProfile(updated); // bước 11: hiển thị lại hồ sơ đã cập nhật
+      setProfile(updated);
       toast.success(t("Cập nhật hồ sơ thành công!"));
     } catch (err) {
       if (err.details?.fieldErrors) setFieldErrors(err.details.fieldErrors); // A7
@@ -106,7 +106,9 @@ export default function ProfilePage() {
     );
   if (errorMsg)
     return (
-      <div className="py-16 text-center text-red-500 text-base">{t(errorMsg)}</div>
+      <div className="py-16 text-center text-red-500 text-base">
+        {t(errorMsg)}
+      </div>
     );
   if (!profile) return null;
 
@@ -155,7 +157,9 @@ export default function ProfilePage() {
               className={`w-full border rounded-xl px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-orange-300 ${fieldErrors.ho_ten ? "border-red-300" : "border-gray-300"}`}
             />
             {fieldErrors.ho_ten && (
-              <p className="text-sm text-red-500 mt-1">{t(fieldErrors.ho_ten)}</p>
+              <p className="text-sm text-red-500 mt-1">
+                {t(fieldErrors.ho_ten)}
+              </p>
             )}
           </div>
 
@@ -172,7 +176,9 @@ export default function ProfilePage() {
               className={`w-full border rounded-xl px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-orange-300 ${fieldErrors.email ? "border-red-300" : "border-gray-300"}`}
             />
             {fieldErrors.email && (
-              <p className="text-sm text-red-500 mt-1">{t(fieldErrors.email)}</p>
+              <p className="text-sm text-red-500 mt-1">
+                {t(fieldErrors.email)}
+              </p>
             )}
           </div>
 
@@ -267,7 +273,8 @@ export default function ProfilePage() {
             disabled={changingPw}
             className="w-full flex items-center justify-center gap-2 bg-sky-500 text-white py-2.5 rounded-xl font-semibold text-base hover:bg-sky-600 disabled:opacity-50"
           >
-            <Lock size={15} /> {changingPw ? t("Đang xử lý...") : t("Đổi mật khẩu")}
+            <Lock size={15} />
+            {changingPw ? t("Đang xử lý...") : t("Đổi mật khẩu")}
           </button>
         </div>
       )}

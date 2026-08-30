@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, X, Tag, XCircle, Eye } from "lucide-react";
 import { getVouchersApi } from "../../../../shared/api/partnerApi";
-import { formatCategoryName } from "../../../../shared/utils/categoryFormatter";
 import { getVoucherPublicationStatus } from "../../../../shared/utils/publicationStatusHelper";
 
 const SESSION_KEY = "ec_admin_voucher_approval_list_state_v1";
@@ -19,12 +18,18 @@ export function VoucherApprovalListPage() {
   const savedState = getSavedState();
 
   const [vouchers, setVouchers] = useState(savedState?.cachedVouchers || []);
-  const [loading, setLoading] = useState(!savedState?.cachedVouchers || savedState.cachedVouchers.length === 0);
+  const [loading, setLoading] = useState(
+    !savedState?.cachedVouchers || savedState.cachedVouchers.length === 0,
+  );
 
   // Filters state matching prototype code
   const [searchName, setSearchName] = useState(savedState?.searchName || "");
-  const [filterPartner, setFilterPartner] = useState(savedState?.filterPartner || "");
-  const [filterReview, setFilterReview] = useState(savedState?.filterReview || "Cho duyet");
+  const [filterPartner, setFilterPartner] = useState(
+    savedState?.filterPartner || "",
+  );
+  const [filterReview, setFilterReview] = useState(
+    savedState?.filterReview || "Cho duyet",
+  );
 
   // Pagination state
   const [page, setPage] = useState(savedState?.page || 1);
@@ -55,7 +60,7 @@ export function VoucherApprovalListPage() {
           filterPartner,
           filterReview,
           cachedVouchers: vouchers,
-        })
+        }),
       );
     } catch (e) {}
   }, [searchName, filterPartner, filterReview, vouchers]);
@@ -65,17 +70,39 @@ export function VoucherApprovalListPage() {
   }, []);
 
   const getReviewStatusBadge = (v) => {
-    const status = typeof v === "string" ? v : (v.trang_thai_kiem_duyet || (["Cho duyet", "Tu choi", "Nhap"].includes(v.trang_thai) ? v.trang_thai : "Da duyet"));
+    const status =
+      typeof v === "string"
+        ? v
+        : v.trang_thai_kiem_duyet ||
+          (["Cho duyet", "Tu choi", "Nhap"].includes(v.trang_thai)
+            ? v.trang_thai
+            : "Da duyet");
     if (status === "Cho duyet") {
-      return { label: "Chờ duyệt", color: "bg-amber-50 text-amber-700 border-amber-200", dot: "bg-amber-500" };
+      return {
+        label: "Chờ duyệt",
+        color: "bg-amber-50 text-amber-700 border-amber-200",
+        dot: "bg-amber-500",
+      };
     }
     if (status === "Tu choi") {
-      return { label: "Bị từ chối", color: "bg-rose-50 text-rose-700 border-rose-200", dot: "bg-rose-500" };
+      return {
+        label: "Bị từ chối",
+        color: "bg-rose-50 text-rose-700 border-rose-200",
+        dot: "bg-rose-500",
+      };
     }
     if (status === "Nhap") {
-      return { label: "Bản nháp", color: "bg-slate-50 text-slate-700 border-slate-200", dot: "bg-slate-500" };
+      return {
+        label: "Bản nháp",
+        color: "bg-slate-50 text-slate-700 border-slate-200",
+        dot: "bg-slate-500",
+      };
     }
-    return { label: "Đã duyệt", color: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" };
+    return {
+      label: "Đã duyệt",
+      color: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      dot: "bg-emerald-500",
+    };
   };
 
   const getPublicationStatusBadge = (v) => {
@@ -88,12 +115,21 @@ export function VoucherApprovalListPage() {
       return false;
     }
 
-    const matchName = !searchName || (v.ten_voucher || "").toLowerCase().includes(searchName.toLowerCase());
+    const matchName =
+      !searchName ||
+      (v.ten_voucher || "").toLowerCase().includes(searchName.toLowerCase());
     const partnerName = v.ten_dn || "";
     const partnerId = v.ma_hs || "";
-    const matchPartner = !filterPartner || partnerId === filterPartner || partnerName === filterPartner;
+    const matchPartner =
+      !filterPartner ||
+      partnerId === filterPartner ||
+      partnerName === filterPartner;
 
-    const kiemDuyetStatus = v.trang_thai_kiem_duyet || (["Cho duyet", "Tu choi"].includes(v.trang_thai) ? v.trang_thai : "Da duyet");
+    const kiemDuyetStatus =
+      v.trang_thai_kiem_duyet ||
+      (["Cho duyet", "Tu choi"].includes(v.trang_thai)
+        ? v.trang_thai
+        : "Da duyet");
 
     const matchReview =
       !filterReview ||
@@ -103,25 +139,35 @@ export function VoucherApprovalListPage() {
     return matchName && matchPartner && matchReview;
   });
 
-  const partnerNames = [...new Set(vouchers.map((voucher) => voucher.ten_dn).filter(Boolean))];
+  const partnerNames = [
+    ...new Set(vouchers.map((voucher) => voucher.ten_dn).filter(Boolean)),
+  ];
 
   const totalVouchers = filteredVouchers.length;
   const totalPages = Math.ceil(totalVouchers / limit) || 1;
-  const paginatedVouchers = filteredVouchers.slice((page - 1) * limit, page * limit);
+  const paginatedVouchers = filteredVouchers.slice(
+    (page - 1) * limit,
+    page * limit,
+  );
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-5">
       {/* Title */}
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Duyệt voucher</h1>
-        <p className="text-sm text-slate-500 mt-1">Kiểm tra và phê duyệt voucher do đối tác gửi.</p>
+        <p className="text-sm text-slate-500 mt-1">
+          Kiểm tra và phê duyệt voucher do đối tác gửi.
+        </p>
       </div>
 
       {/* Filters Bar matching prototype */}
       <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3 shadow-xs">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="relative">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search
+              size={15}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            />
             <input
               value={searchName}
               onChange={(e) => setSearchName(e.target.value)}
@@ -175,9 +221,13 @@ export function VoucherApprovalListPage() {
       {/* Main Table */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
         {loading ? (
-          <div className="p-12 text-center text-slate-400">Đang tải danh sách voucher...</div>
+          <div className="p-12 text-center text-slate-400">
+            Đang tải danh sách voucher...
+          </div>
         ) : filteredVouchers.length === 0 ? (
-          <div className="p-12 text-center text-slate-400">Không tìm thấy voucher nào phù hợp.</div>
+          <div className="p-12 text-center text-slate-400">
+            Không tìm thấy voucher nào phù hợp.
+          </div>
         ) : (
           <div>
             <div className="overflow-x-auto">
@@ -205,16 +255,27 @@ export function VoucherApprovalListPage() {
                     const rb = getReviewStatusBadge(v);
                     const pb = getPublicationStatusBadge(v);
 
-                    const startDate = v.tg_bat_dau_ban ? v.tg_bat_dau_ban.slice(0, 10) : "2025-08-01";
-                    const endDate = v.tg_ket_thuc_ban ? v.tg_ket_thuc_ban.slice(0, 10) : "2025-12-31";
+                    const startDate = v.tg_bat_dau_ban
+                      ? v.tg_bat_dau_ban.slice(0, 10)
+                      : "2025-08-01";
+                    const endDate = v.tg_ket_thuc_ban
+                      ? v.tg_ket_thuc_ban.slice(0, 10)
+                      : "2025-12-31";
 
                     return (
-                      <tr key={v.ma_voucher} className="hover:bg-slate-50 transition-colors">
+                      <tr
+                        key={v.ma_voucher}
+                        className="hover:bg-slate-50 transition-colors"
+                      >
                         {/* Tên voucher */}
                         <td className="px-3.5 py-3.5 font-medium text-slate-900 max-w-xs">
                           <div className="flex items-center gap-2">
                             {isInvalidPrice && (
-                              <XCircle size={15} className="text-rose-500 shrink-0" title="Giá bán không hợp lệ" />
+                              <XCircle
+                                size={15}
+                                className="text-rose-500 shrink-0"
+                                title="Giá bán không hợp lệ"
+                              />
                             )}
                             <Link
                               to={`/admin/vouchers/${v.ma_voucher}`}
@@ -231,13 +292,19 @@ export function VoucherApprovalListPage() {
                         </td>
 
                         {/* Danh mục */}
-                        <td className="px-3.5 py-3.5 text-slate-600">{v.ten_danh_muc || "---"}</td>
+                        <td className="px-3.5 py-3.5 text-slate-600">
+                          {v.ten_danh_muc || "---"}
+                        </td>
 
                         {/* Giá gốc */}
-                        <td className="px-3.5 py-3.5 font-medium text-slate-700">{giaGoc.toLocaleString("vi-VN")}đ</td>
+                        <td className="px-3.5 py-3.5 font-medium text-slate-700">
+                          {giaGoc.toLocaleString("vi-VN")}đ
+                        </td>
 
                         {/* Giá bán */}
-                        <td className={`px-3.5 py-3.5 font-bold ${isInvalidPrice ? "text-rose-600" : "text-emerald-600"}`}>
+                        <td
+                          className={`px-3.5 py-3.5 font-bold ${isInvalidPrice ? "text-rose-600" : "text-emerald-600"}`}
+                        >
                           {giaBan.toLocaleString("vi-VN")}đ
                         </td>
 
@@ -247,20 +314,30 @@ export function VoucherApprovalListPage() {
                         </td>
 
                         {/* SL */}
-                        <td className="px-3.5 py-3.5 text-center text-slate-700 font-medium">{v.so_luong_phat_hanh || 0}</td>
+                        <td className="px-3.5 py-3.5 text-center text-slate-700 font-medium">
+                          {v.so_luong_phat_hanh || 0}
+                        </td>
 
                         {/* Kiểm duyệt Badge */}
                         <td className="px-3.5 py-3.5">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${rb.color}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${rb.dot}`} />
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${rb.color}`}
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${rb.dot}`}
+                            />
                             {rb.label}
                           </span>
                         </td>
 
                         {/* Công bố Badge */}
                         <td className="px-3.5 py-3.5">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${pb.color}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${pb.dot}`} />
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${pb.color}`}
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${pb.dot}`}
+                            />
                             {pb.label}
                           </span>
                         </td>

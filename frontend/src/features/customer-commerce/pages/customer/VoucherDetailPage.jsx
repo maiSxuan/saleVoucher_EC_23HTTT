@@ -109,7 +109,7 @@ export default function VoucherDetailPage({ publicView = false }) {
     reviewCurrentPage * reviewPageSize,
   );
 
-  // Bước 2-3: hệ thống tiếp nhận yêu cầu và truy xuất thông tin chi tiết
+  //Hệ thống tiếp nhận yêu cầu và truy xuất thông tin chi tiết
   useEffect(() => {
     let ignore = false;
     const loadDetail = () => {

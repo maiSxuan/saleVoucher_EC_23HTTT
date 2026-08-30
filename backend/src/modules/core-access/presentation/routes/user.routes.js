@@ -1,9 +1,13 @@
-const express = require('express');
-const UserController = require('../controllers/user.controller');
-const userService = require('../../business/services/user.service');
-const { authenticateMiddleware } = require('../../../../common/middleware/authenticate.middleware');
-const { authorizeMiddleware } = require('../../../../common/middleware/authorize.middleware');
-const { JWT_ROLES } = require('../../../../common/constants/roles');
+const express = require("express");
+const UserController = require("../controllers/user.controller");
+const userService = require("../../business/services/user.service");
+const {
+  authenticateMiddleware,
+} = require("../../../../common/middleware/authenticate.middleware");
+const {
+  authorizeMiddleware,
+} = require("../../../../common/middleware/authorize.middleware");
+const { JWT_ROLES } = require("../../../../common/constants/roles");
 
 const router = express.Router();
 // Tạo instance controller, inject service (theo pattern đã dùng ở audit-log.routes.js)
@@ -16,62 +20,70 @@ const controller = new UserController(userService);
 // Lấy danh sách người dùng (có lọc + phân trang)
 // GET /admin/users?page=1&limit=20&name=...&role=...&status=...
 router.get(
-  '/admin/users',
-  authenticateMiddleware,                   // Bước 1: Kiểm tra JWT hợp lệ, gắn req.user
+  "/admin/users",
+  authenticateMiddleware, // Bước 1: Kiểm tra JWT hợp lệ, gắn req.user
   authorizeMiddleware(JWT_ROLES.ADMIN_SYSTEM),
-  controller.listUsers.bind(controller)     // Bước 3: Gọi controller
+  controller.listUsers.bind(controller), // Bước 3: Gọi controller
 );
 
 // Xem chi tiết người dùng theo UUID
 // GET /admin/users/:userId
 router.get(
-  '/admin/users/:userId',
+  "/admin/users/:userId",
   authenticateMiddleware,
   authorizeMiddleware(JWT_ROLES.ADMIN_SYSTEM),
-  controller.getUserById.bind(controller)
+  controller.getUserById.bind(controller),
 );
 
 // Khóa tài khoản người dùng
 // PATCH /admin/users/:userId/lock    Body: { reason: string }
 router.patch(
-  '/admin/users/:userId/lock',
+  "/admin/users/:userId/lock",
   authenticateMiddleware,
   authorizeMiddleware(JWT_ROLES.ADMIN_SYSTEM),
-  controller.lockUser.bind(controller)
+  controller.lockUser.bind(controller),
 );
 
 // Mở khóa tài khoản người dùng
 // PATCH /admin/users/:userId/unlock  Body: { reason: string }
 router.patch(
-  '/admin/users/:userId/unlock',
+  "/admin/users/:userId/unlock",
   authenticateMiddleware,
   authorizeMiddleware(JWT_ROLES.ADMIN_SYSTEM),
-  controller.unlockUser.bind(controller)
+  controller.unlockUser.bind(controller),
 );
 
 // Cập nhật vai trò người dùng
 // PATCH /admin/users/:userId/role    Body: { newRole: string, reason?: string }
 router.patch(
-  '/admin/users/:userId/role',
+  "/admin/users/:userId/role",
   authenticateMiddleware,
   authorizeMiddleware(JWT_ROLES.ADMIN_SYSTEM),
-  controller.updateUserRole.bind(controller)
+  controller.updateUserRole.bind(controller),
 );
 
 // Lấy danh sách chi nhánh (để lấy danh sách combo box)
 router.get(
-  '/admin/branches',
+  "/admin/branches",
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN_SYSTEM, JWT_ROLES.PARTNER_OWNER, JWT_ROLES.PARTNER_STAFF),
-  controller.listBranches.bind(controller)
+  authorizeMiddleware(
+    JWT_ROLES.ADMIN_SYSTEM,
+    JWT_ROLES.PARTNER_OWNER,
+    JWT_ROLES.PARTNER_STAFF,
+  ),
+  controller.listBranches.bind(controller),
 );
 
 // Lấy danh sách đối tác (để lấy danh sách combo box)
 router.get(
-  '/admin/partners',
+  "/admin/partners",
   authenticateMiddleware,
-  authorizeMiddleware(JWT_ROLES.ADMIN_SYSTEM, JWT_ROLES.PARTNER_OWNER, JWT_ROLES.PARTNER_STAFF),
-  controller.listPartners.bind(controller)
+  authorizeMiddleware(
+    JWT_ROLES.ADMIN_SYSTEM,
+    JWT_ROLES.PARTNER_OWNER,
+    JWT_ROLES.PARTNER_STAFF,
+  ),
+  controller.listPartners.bind(controller),
 );
 
 // -----------------------------------------------------------------------
@@ -81,9 +93,9 @@ router.get(
 // Xem thông tin profile của chính mình (userId lấy từ JWT token)
 // GET /users/profile
 router.get(
-  '/users/profile',
-  authenticateMiddleware,                   // Chỉ cần xác thực, không cần role cụ thể
-  controller.getProfile.bind(controller)
+  "/users/profile",
+  authenticateMiddleware,
+  controller.getProfile.bind(controller),
 );
 
 module.exports = router;

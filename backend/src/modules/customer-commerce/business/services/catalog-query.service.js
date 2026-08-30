@@ -22,7 +22,7 @@ function formatCat(name) {
 
 function mapVoucher(v) {
   const originalPrice = Number(v.gia_goc) || 0;
-  const discountAmount = Number(v.gia_tri_giam) || 0;
+  const salePrice = Number(v.gia_tri_giam) || 0;
 
   // Lấy danh sách chi nhánh
   const branches = (v.voucher_cn || [])
@@ -51,25 +51,14 @@ function mapVoucher(v) {
 
   return {
     id: v.ma_voucher,
-    ma_voucher: v.ma_voucher,
     name: v.ten_voucher,
-    ten_voucher: v.ten_voucher,
     description: v.mo_ta,
     category: formatCat(v.danh_muc?.ten_danh_muc),
-    categoryRaw: v.danh_muc?.ten_danh_muc,
-    categoryId: v.ma_danh_muc || v.danh_muc?.ma_danh_muc,
-    ma_danh_muc: v.ma_danh_muc || v.danh_muc?.ma_danh_muc,
-    ten_danh_muc: formatCat(v.danh_muc?.ten_danh_muc),
     partner,
-    ten_dn: partner?.name || "Thương hiệu đối tác",
-    logo_dn: partner?.logo,
     branches,
     image: v.hinh_anh_url || "https://placehold.co/800x400?text=Voucher",
-    hinh_anh_url: v.hinh_anh_url,
     originalPrice,
-    gia_goc: originalPrice,
-    salePrice: discountAmount,
-    gia_ban: discountAmount,
+    salePrice,
     totalQty: v.so_luong_phat_hanh,
     soldQty: v.so_luong_da_ban,
     startSaleDate: v.tg_bat_dau_ban,
@@ -77,6 +66,13 @@ function mapVoucher(v) {
     conditions: v.dieu_kien_ap_dung,
     cancellationPolicy: v.chinh_sach_hoan_huy,
     availability: computeAvailability(v),
+
+    ma_voucher: v.ma_voucher,
+    ten_voucher: v.ten_voucher,
+    ten_dn: partner?.name || "Thương hiệu đối tác",
+    logo_dn: partner?.logo || null,
+    hinh_anh_url: v.hinh_anh_url || null,
+    gia_ban: salePrice,
   };
 }
 
@@ -85,7 +81,7 @@ class CatalogQueryService {
     const vouchers = await catalogRepository.findSellingVouchers();
     let mapped = vouchers
       .map(mapVoucher)
-      .filter((v) => v.availability === "selling"); // NFR-02.1
+      .filter((v) => v.availability === "selling");
     const lang = query?.lang;
     if (lang && lang.toLowerCase().startsWith("en")) {
       mapped = await translationService.translateVoucherFields(
@@ -101,11 +97,8 @@ class CatalogQueryService {
     const categories = await catalogRepository.findAllCategories();
     let mapped = categories.map((c) => ({
       id: c.ma_danh_muc,
-      ma_danh_muc: c.ma_danh_muc,
       name: formatCat(c.ten_danh_muc),
-      ten_danh_muc: c.ten_danh_muc,
       imageUrl: c.hinh_anh_url || null,
-      hinh_anh_url: c.hinh_anh_url || null,
     }));
     const lang = query?.lang;
     if (lang && lang.toLowerCase().startsWith("en")) {
@@ -117,7 +110,6 @@ class CatalogQueryService {
   async getVoucherDetail(id, lang = null) {
     const v = await catalogRepository.findVoucherById(id);
     if (!v) {
-      // E1: Không thể truy xuất thông tin voucher
       throw new NotFoundError("Không tìm thấy voucher");
     }
     let mapped = mapVoucher(v);
