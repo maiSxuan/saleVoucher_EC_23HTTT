@@ -36,7 +36,6 @@ export async function fetchSellingVouchers() {
       headers: { "Accept-Language": lang },
     });
     if (!res.ok) {
-      // E1: Không thể truy xuất dữ liệu voucher
       throw new Error("Không thể tải danh sách voucher");
     }
     const json = await res.json();

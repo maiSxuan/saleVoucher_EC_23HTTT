@@ -1,12 +1,25 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
-import { loginApi, logoutApi, getMeApi, refreshApi } from "../shared/api/authApi";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+} from "react";
+import {
+  loginApi,
+  logoutApi,
+  getMeApi,
+  refreshApi,
+} from "../shared/api/authApi";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
-      const storedUser = localStorage.getItem("user") || localStorage.getItem("ec_auth_user");
+      const storedUser =
+        localStorage.getItem("user") || localStorage.getItem("ec_auth_user");
       return storedUser ? JSON.parse(storedUser) : null;
     } catch {
       return null;
@@ -14,11 +27,14 @@ export function AuthProvider({ children }) {
   });
 
   const [token, setToken] = useState(
-    () => localStorage.getItem("accessToken") || localStorage.getItem("ec_auth_token") || ""
+    () =>
+      localStorage.getItem("accessToken") ||
+      localStorage.getItem("ec_auth_token") ||
+      "",
   );
 
   const [refreshToken, setRefreshToken] = useState(
-    () => localStorage.getItem("refreshToken") || ""
+    () => localStorage.getItem("refreshToken") || "",
   );
 
   const [loading, setLoading] = useState(false);
@@ -28,31 +44,34 @@ export function AuthProvider({ children }) {
   // ---------------------------------------------------------------
   // persistSession — lưu/xóa toàn bộ session (access + refresh + user)
   // ---------------------------------------------------------------
-  const persistSession = useCallback((nextToken, nextUser, nextRefreshToken) => {
-    setToken(nextToken || "");
-    setUser(nextUser || null);
-    setRefreshToken(nextRefreshToken || "");
+  const persistSession = useCallback(
+    (nextToken, nextUser, nextRefreshToken) => {
+      setToken(nextToken || "");
+      setUser(nextUser || null);
+      setRefreshToken(nextRefreshToken || "");
 
-    if (nextToken && nextUser) {
-      localStorage.setItem("accessToken", nextToken);
-      localStorage.setItem("user", JSON.stringify(nextUser));
-      // Tương thích với các màn hình cũ
-      localStorage.setItem("ec_auth_token", nextToken);
-      localStorage.setItem("ec_auth_user", JSON.stringify(nextUser));
+      if (nextToken && nextUser) {
+        localStorage.setItem("accessToken", nextToken);
+        localStorage.setItem("user", JSON.stringify(nextUser));
+        // Tương thích với các màn hình cũ
+        localStorage.setItem("ec_auth_token", nextToken);
+        localStorage.setItem("ec_auth_user", JSON.stringify(nextUser));
 
-      if (nextRefreshToken) {
-        localStorage.setItem("refreshToken", nextRefreshToken);
+        if (nextRefreshToken) {
+          localStorage.setItem("refreshToken", nextRefreshToken);
+        }
+        return;
       }
-      return;
-    }
 
-    // Clear all
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("user");
-    localStorage.removeItem("ec_auth_token");
-    localStorage.removeItem("ec_auth_user");
-    localStorage.removeItem("refreshToken");
-  }, []);
+      // Clear all
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("user");
+      localStorage.removeItem("ec_auth_token");
+      localStorage.removeItem("ec_auth_user");
+      localStorage.removeItem("refreshToken");
+    },
+    [],
+  );
 
   // ---------------------------------------------------------------
   // refreshSession — dùng refreshToken để lấy accessToken mới
@@ -68,8 +87,13 @@ export function AuthProvider({ children }) {
       const result = await refreshApi(storedRefreshToken);
       if (result && result.accessToken) {
         // Cập nhật access token + refresh token mới (rotation)
-        const currentUser = user || JSON.parse(localStorage.getItem("user") || "null");
-        persistSession(result.accessToken, currentUser, result.refreshToken || storedRefreshToken);
+        const currentUser =
+          user || JSON.parse(localStorage.getItem("user") || "null");
+        persistSession(
+          result.accessToken,
+          currentUser,
+          result.refreshToken || storedRefreshToken,
+        );
         return true;
       }
     } catch (e) {

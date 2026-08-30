@@ -1,7 +1,3 @@
-/**
- * Purpose: Repository cho thao tác dữ liệu khách hàng.
- */
-
 const supabase = require("../../../../config/supabase");
 
 class CustomerRepository {
@@ -78,7 +74,7 @@ class CustomerRepository {
       .select("ma_nguoi_dung, ho_ten, email, sdt, ngay_sinh, gioi_tinh")
       .single();
     if (error) {
-      const err = new Error("Không thể cập nhật hồ sơ"); // E2
+      const err = new Error("Không thể cập nhật hồ sơ");
       err.status = 500;
       throw err;
     }

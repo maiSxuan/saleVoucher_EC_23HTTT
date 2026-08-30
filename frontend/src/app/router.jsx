@@ -6,43 +6,124 @@ import Forbidden from "../shared/components/Forbidden";
 
 // Các màn hình ngoài luồng mở đầu được tách chunk để Landing/Login không phải tải
 // trước thư viện QR, biểu đồ và trình soạn thảo của toàn bộ portal.
-const LoginPage = lazy(() => import("../features/core-access/pages/auth/LoginPage"));
-const RegisterPage = lazy(() => import("../features/customer-commerce/pages/customer/RegisterPage"));
-const LogoutPage = lazy(() => import("../features/core-access/pages/auth/LogoutPage"));
-const LandingPage = lazy(() => import("../features/core-access/pages/public/LandingPage"));
+const LoginPage = lazy(
+  () => import("../features/core-access/pages/auth/LoginPage"),
+);
+const RegisterPage = lazy(
+  () => import("../features/customer-commerce/pages/customer/RegisterPage"),
+);
+const LogoutPage = lazy(
+  () => import("../features/core-access/pages/auth/LogoutPage"),
+);
+const LandingPage = lazy(
+  () => import("../features/core-access/pages/public/LandingPage"),
+);
 const AdminLayout = lazy(() => import("../layouts/AdminLayout"));
-const AdminDashboardPage = lazy(() => import("../features/core-access/pages/admin/AdminDashboardPage"));
-const PartnerManagementPage = lazy(() => import("../features/partner-voucher/pages/admin/PartnerManagementPage"));
-const PartnerDetailPage = lazy(() => import("../features/partner-voucher/pages/admin/PartnerDetailPage"));
-const VoucherApprovalListPage = lazy(() => import("../features/partner-voucher/pages/admin/VoucherApprovalListPage"));
-const VoucherApprovalDetailPage = lazy(() => import("../features/partner-voucher/pages/admin/VoucherApprovalDetailPage"));
-const UserListPage = lazy(() => import("../features/core-access/pages/admin/UserListPage"));
-const PartnerVoucherLookupPage = lazy(() => import("../features/core-access/pages/partner/PartnerVoucherLookupPage"));
-const ContentListPage = lazy(() => import("../features/content-feedback/pages/admin/ContentListPage"));
-const AdminReviewsPage = lazy(() => import("../features/content-feedback/pages/admin/AdminReviewsPage"));
-const PartnerRegisterPage = lazy(() => import("../features/partner-voucher/pages/partner/PartnerRegisterPage"));
-const PartnerProfilePage = lazy(() => import("../features/partner-voucher/pages/partner/PartnerProfilePage"));
-const BranchManagementPage = lazy(() => import("../features/partner-voucher/pages/partner/BranchManagementPage"));
-const VoucherListPage = lazy(() => import("../features/partner-voucher/pages/partner/VoucherListPage"));
-const VoucherFormPage = lazy(() => import("../features/partner-voucher/pages/partner/VoucherFormPage"));
-const PartnerVoucherDetailPage = lazy(() => import("../features/partner-voucher/pages/partner/VoucherDetailPage"));
-const PartnerReportsPage = lazy(() => import("../features/partner-voucher/pages/partner/PartnerReportsPage"));
-const StaffManagementPage = lazy(() => import("../features/partner-voucher/pages/partner/StaffManagementPage"));
-const AuditLogPage = lazy(() => import("../features/partner-voucher/pages/admin/AuditLogPage"));
+const AdminDashboardPage = lazy(
+  () => import("../features/core-access/pages/admin/AdminDashboardPage"),
+);
+const PartnerManagementPage = lazy(
+  () => import("../features/partner-voucher/pages/admin/PartnerManagementPage"),
+);
+const PartnerDetailPage = lazy(
+  () => import("../features/partner-voucher/pages/admin/PartnerDetailPage"),
+);
+const VoucherApprovalListPage = lazy(
+  () =>
+    import("../features/partner-voucher/pages/admin/VoucherApprovalListPage"),
+);
+const VoucherApprovalDetailPage = lazy(
+  () =>
+    import("../features/partner-voucher/pages/admin/VoucherApprovalDetailPage"),
+);
+const UserListPage = lazy(
+  () => import("../features/core-access/pages/admin/UserListPage"),
+);
+const PartnerVoucherLookupPage = lazy(
+  () =>
+    import("../features/core-access/pages/partner/PartnerVoucherLookupPage"),
+);
+const ContentListPage = lazy(
+  () => import("../features/content-feedback/pages/admin/ContentListPage"),
+);
+const AdminReviewsPage = lazy(
+  () => import("../features/content-feedback/pages/admin/AdminReviewsPage"),
+);
+const PartnerRegisterPage = lazy(
+  () => import("../features/partner-voucher/pages/partner/PartnerRegisterPage"),
+);
+const PartnerProfilePage = lazy(
+  () => import("../features/partner-voucher/pages/partner/PartnerProfilePage"),
+);
+const BranchManagementPage = lazy(
+  () =>
+    import("../features/partner-voucher/pages/partner/BranchManagementPage"),
+);
+const VoucherListPage = lazy(
+  () => import("../features/partner-voucher/pages/partner/VoucherListPage"),
+);
+const VoucherFormPage = lazy(
+  () => import("../features/partner-voucher/pages/partner/VoucherFormPage"),
+);
+const PartnerVoucherDetailPage = lazy(
+  () => import("../features/partner-voucher/pages/partner/VoucherDetailPage"),
+);
+const PartnerReportsPage = lazy(
+  () => import("../features/partner-voucher/pages/partner/PartnerReportsPage"),
+);
+const StaffManagementPage = lazy(
+  () => import("../features/partner-voucher/pages/partner/StaffManagementPage"),
+);
+const AuditLogPage = lazy(
+  () => import("../features/partner-voucher/pages/admin/AuditLogPage"),
+);
 const CustomerLayout = lazy(() => import("../layouts/CustomerLayout"));
-const VoucherSearchPage = lazy(() => import("../features/customer-commerce/pages/customer/VoucherSearchPage"));
-const VoucherDetailPage = lazy(() => import("../features/customer-commerce/pages/customer/VoucherDetailPage"));
-const CartPage = lazy(() => import("../features/customer-commerce/pages/customer/CartPage"));
-const CheckoutPage = lazy(() => import("../features/customer-commerce/pages/customer/CheckoutPage"));
-const PaymentResultPage = lazy(() => import("../features/customer-commerce/pages/customer/PaymentResultPage"));
-const CustomerOrdersPage = lazy(() => import("../features/customer-commerce/pages/customer/CustomerOrdersPage"));
-const AdminOrdersPage = lazy(() => import("../features/customer-commerce/pages/admin/AdminOrdersPage"));
-const ProfilePage = lazy(() => import("../features/customer-commerce/pages/customer/ProfilePage"));
-const MyVoucherPage = lazy(() => import("../features/core-access/pages/customer/MyVoucherPage"));
-const IssuedVoucherDetailPage = lazy(() => import("../features/core-access/pages/customer/IssuedVoucherDetailPage"));
-const ArticleDetailPage = lazy(() => import("../features/content-feedback/pages/customer/ArticleDetailPage"));
-const PolicyPage = lazy(() => import("../features/core-access/pages/public/PolicyPage"));
-import { ADMIN_PORTAL_ROLES, ADMIN_ROLES, getAdminDefaultPath } from "../shared/constants/admin-roles";
+const VoucherSearchPage = lazy(
+  () =>
+    import("../features/customer-commerce/pages/customer/VoucherSearchPage"),
+);
+const VoucherDetailPage = lazy(
+  () =>
+    import("../features/customer-commerce/pages/customer/VoucherDetailPage"),
+);
+const CartPage = lazy(
+  () => import("../features/customer-commerce/pages/customer/CartPage"),
+);
+const CheckoutPage = lazy(
+  () => import("../features/customer-commerce/pages/customer/CheckoutPage"),
+);
+const PaymentResultPage = lazy(
+  () =>
+    import("../features/customer-commerce/pages/customer/PaymentResultPage"),
+);
+const CustomerOrdersPage = lazy(
+  () =>
+    import("../features/customer-commerce/pages/customer/CustomerOrdersPage"),
+);
+const AdminOrdersPage = lazy(
+  () => import("../features/customer-commerce/pages/admin/AdminOrdersPage"),
+);
+const ProfilePage = lazy(
+  () => import("../features/customer-commerce/pages/customer/ProfilePage"),
+);
+const MyVoucherPage = lazy(
+  () => import("../features/core-access/pages/customer/MyVoucherPage"),
+);
+const IssuedVoucherDetailPage = lazy(
+  () =>
+    import("../features/core-access/pages/customer/IssuedVoucherDetailPage"),
+);
+const ArticleDetailPage = lazy(
+  () => import("../features/content-feedback/pages/customer/ArticleDetailPage"),
+);
+const PolicyPage = lazy(
+  () => import("../features/core-access/pages/public/PolicyPage"),
+);
+import {
+  ADMIN_PORTAL_ROLES,
+  ADMIN_ROLES,
+  getAdminDefaultPath,
+} from "../shared/constants/admin-roles";
 
 function PartnerHome() {
   try {
@@ -151,7 +232,6 @@ const routes = [
                 index: true,
                 element: <VoucherSearchPage />,
               },
-              // BR-CUS-07: Static routes trước dynamic routes
               {
                 path: "vouchers/my",
                 element: <MyVoucherPage />,
@@ -246,7 +326,10 @@ const routes = [
             children: [
               { path: "users", element: <UserListPage /> },
               { path: "logs", element: <AuditLogPage /> },
-              { path: "audit-logs", element: <Navigate to="/admin/logs" replace /> },
+              {
+                path: "audit-logs",
+                element: <Navigate to="/admin/logs" replace />,
+              },
             ],
           },
           {
@@ -263,7 +346,10 @@ const routes = [
             element: <ProtectedRoute allowedRoles={[ADMIN_ROLES.OPERATION]} />,
             children: [
               { path: "orders", element: <AdminOrdersPage /> },
-              { path: "complaints", element: <Navigate to="/admin/orders" replace /> },
+              {
+                path: "complaints",
+                element: <Navigate to="/admin/orders" replace />,
+              },
               { path: "reviews", element: <AdminReviewsPage /> },
             ],
           },

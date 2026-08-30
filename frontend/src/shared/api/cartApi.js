@@ -23,7 +23,9 @@ async function handleResponse(res, message) {
 
 export async function fetchCart() {
   const lang = localStorage.getItem("app_lang") || "vi";
-  const res = await fetch(`${BASE_URL}/cart?lang=${lang}`, { headers: authHeaders() });
+  const res = await fetch(`${BASE_URL}/cart?lang=${lang}`, {
+    headers: authHeaders(),
+  });
   return handleResponse(res, "Không thể fetch dữ liệu trong giỏ hàng");
 }
 
@@ -46,7 +48,6 @@ export async function updateCartItemQuantity(voucherId, quantity) {
   return handleResponse(res, "Không thể update được số lượng của voucher");
 }
 
-// xóa các voucher được chọn
 export async function removeCartItems(voucherIds) {
   const res = await fetch(`${BASE_URL}/cart/items`, {
     method: "DELETE",
